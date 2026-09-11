@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "subagent_depth": 2,
+  "permission": {
+    "task": {
+      "*": "deny",
+      "frontend-lead": "allow",
+      "backend-lead": "allow",
+      "security-auditor": "allow",
+      "code-reviewer": "allow",
+      "flutter-mobile": "allow"
+    }
+  }
+}

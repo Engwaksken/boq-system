@@ -2,6 +2,18 @@
 
 return [
 
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
+        'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com'),
+    ],
+    'ai_provider' => env('AI_PROVIDER', 'gemini'),
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+        'model' => env('OPENAI_MODEL', 'gpt-4.1-mini'),
+        'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

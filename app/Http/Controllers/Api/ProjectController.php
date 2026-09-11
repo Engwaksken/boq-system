@@ -36,30 +36,12 @@ class ProjectController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+$validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'code' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'client' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'contractor' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'consultant' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'quantity_surveyor' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'project_manager' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'site_engineer' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'funding_organisation' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'country' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'district' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'location' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'project_type' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'start_date' => ['sometimes', 'nullable', 'date'],
-            'expected_completion_date' => ['sometimes', 'nullable', 'date'],
             'contract_value' => ['sometimes', 'nullable', 'numeric'],
             'currency' => ['sometimes', 'string', 'max:10'],
-            'description' => ['sometimes', 'nullable', 'string'],
-            'original_language' => ['sometimes', 'string', 'max:10'],
-            'report_language' => ['sometimes', 'string', 'max:10'],
         ]);
-
-        $user = $request->user();
 
         $project = Project::create(array_merge($validated, [
             'user_id' => $user->id,

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BoqController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\PlanController;
 use App\Http\Controllers\Api\ProjectController;
@@ -33,9 +34,19 @@ Route::prefix('v1')->group(function () {
         // Auth
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::get('auth/me', [AuthController::class, 'me']);
+        Route::put('auth/profile', [AuthController::class, 'updateProfile']);
 
         // Dashboard
         Route::get('dashboard', [DashboardController::class, 'index']);
+        Route::post('boqs', [BoqController::class, 'store']);
+        Route::get('boqs/{boq}', [BoqController::class, 'show']);
+        Route::get('boqs/{boq}/pdf', [BoqController::class, 'pdf']);
+        Route::post('boqs/{boq}/process', [BoqController::class, 'process']);
+        Route::post('boqs/{boq}/price-all', [BoqController::class, 'priceAll']);
+        Route::post('boqs/{boq}/pricing-batches', [BoqController::class, 'startPricingBatch']);
+        Route::get('pricing-batches/{batch}', [BoqController::class, 'pricingBatch']);
+        Route::post('boq-items/{boqItem}/price', [BoqController::class, 'price']);
+        Route::get('boqs/{boq}/pricing-history/{location}', [BoqController::class, 'pricingHistory']);
 
         // Plans
         Route::get('plans/{plan}', [PlanController::class, 'show']);

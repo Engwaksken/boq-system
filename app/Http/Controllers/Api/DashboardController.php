@@ -32,7 +32,9 @@ class DashboardController extends Controller
                     ->orWhere('organisation_id', $user->organisation_id);
             });
 
-        $currentSubscription = $subscriptionService->currentSubscription($user, $user->organisation_id);
+        $currentSubscription = cache()->remember('dashboard_subscription_' . $user->id, 30, function () use ($subscriptionService, $user) {
+            return $subscriptionService->currentSubscription($user, $user->organisation_id);
+        });
 
         return response()->json([
             'success' => true,
@@ -44,6 +46,7 @@ class DashboardController extends Controller
                 'boqs_awaiting_review' => (clone $boqQuery)->where('status', 'under_review')->count(),
                 'boqs_analysed' => (clone $boqQuery)->where('status', 'analysed')->count(),
                 'total_estimated_value' => (clone $projectQuery)->sum('contract_value'),
+                'recent_projects' => (clone $projectQuery)->withCount('boqs')->latest()->limit(5)->get(['id', 'name', 'code', 'status']),
                 'current_subscription' => $currentSubscription ? [
                     'plan' => $currentSubscription->plan?->name,
                     'status' => $currentSubscription->status,

@@ -10,6 +10,7 @@ return [
     'registered' => 'Akaawunti yo eweereddwa obulungi.',
     'logged_in' => 'Oyingiziddwa mu bulungi.',
     'logged_out' => 'Ofulumiziddwa mu bulungi.',
+    'profile_updated' => 'Puloofaayiro yo eterezeddwa bulungi.',
     'account_disabled' => 'Akaawunti yo gizziddwa. Kiraama wansi.',
     'invalid_credentials' => 'Email oba ekigambo ky\'okukkiriza tekituufu.',
     'email_required' => 'Email yeetaagisa.',

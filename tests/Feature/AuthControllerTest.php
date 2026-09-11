@@ -127,6 +127,46 @@ class AuthControllerTest extends TestCase
         $response->assertStatus(401);
     }
 
+    public function test_authenticated_user_can_update_profile_and_password(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'before@example.com',
+            'password' => Hash::make('old-password'),
+            'locale' => 'en',
+        ]);
+
+        $response = $this->actingAs($user)->putJson('/api/v1/auth/profile', [
+            'name' => 'Updated User',
+            'email' => 'after@example.com',
+            'locale' => 'lg',
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ]);
+
+        $response->assertOk()
+            ->assertJson(['success' => true])
+            ->assertJsonPath('data.user.email', 'after@example.com');
+
+        $user->refresh();
+        $this->assertSame('Updated User', $user->name);
+        $this->assertSame('lg', $user->locale);
+        $this->assertTrue(Hash::check('new-password', $user->password));
+    }
+
+    public function test_profile_email_must_be_unique(): void
+    {
+        User::factory()->create(['email' => 'taken@example.com']);
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->putJson('/api/v1/auth/profile', [
+            'name' => $user->name,
+            'email' => 'taken@example.com',
+            'locale' => 'en',
+        ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors('email');
+    }
+
     public function test_logout_revokes_token(): void
     {
         $user = User::factory()->create();

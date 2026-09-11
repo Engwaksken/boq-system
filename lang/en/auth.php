@@ -10,6 +10,7 @@ return [
     'registered' => 'Account registered successfully.',
     'logged_in' => 'Logged in successfully.',
     'logged_out' => 'Logged out successfully.',
+    'profile_updated' => 'Profile updated successfully.',
     'account_disabled' => 'Your account has been disabled. Please contact support.',
     'invalid_credentials' => 'Invalid email or password.',
     'email_required' => 'The email field is required.',
