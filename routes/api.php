@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BoqController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\HardwarePriceController;
+use App\Http\Controllers\Api\Mcp\McpToolController;
 use App\Http\Controllers\Api\PlanController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\SubscriptionController;
@@ -31,6 +32,9 @@ Route::prefix('v1')->group(function () {
 
     // Authenticated routes
     Route::middleware('auth:sanctum')->group(function () {
+
+        // Dedicated service-token boundary for MCP. Only whitelisted read/calculation tools are dispatched.
+        Route::post('mcp/tools/{tool}', McpToolController::class)->middleware('throttle:60,1');
 
         // Auth
         Route::post('auth/logout', [AuthController::class, 'logout']);

@@ -36,7 +36,9 @@ class ProjectController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-$validated = $request->validate([
+        $user = $request->user();
+
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'code' => ['sometimes', 'nullable', 'string', 'max:255'],
             'contract_value' => ['sometimes', 'nullable', 'numeric'],

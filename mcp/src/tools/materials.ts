@@ -1,0 +1,1 @@
+export const materialTools = ["search_materials", "get_material", "get_material_current_price", "get_material_price_history", "compare_material_prices", "find_material_substitutes", "recommend_material_supplier", "find_cheaper_alternatives"] as const;

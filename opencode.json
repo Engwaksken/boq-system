@@ -1,6 +1,18 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "subagent_depth": 2,
+  "mcp": {
+    "boq": {
+      "type": "local",
+      "command": ["node", "./mcp/dist/index.js"],
+      "enabled": true,
+      "environment": {
+        "BOQ_API_URL": "{env:BOQ_API_URL}",
+        "BOQ_MCP_TOKEN": "{env:BOQ_MCP_TOKEN}",
+        "BOQ_MCP_MODEL": "opencode"
+      }
+    }
+  },
   "permission": {
     "task": {
       "*": "deny",
