@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BoqController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\HardwarePriceController;
 use App\Http\Controllers\Api\PlanController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\SubscriptionController;
@@ -47,6 +48,23 @@ Route::prefix('v1')->group(function () {
         Route::get('pricing-batches/{batch}', [BoqController::class, 'pricingBatch']);
         Route::post('boq-items/{boqItem}/price', [BoqController::class, 'price']);
         Route::get('boqs/{boq}/pricing-history/{location}', [BoqController::class, 'pricingHistory']);
+
+        // Hardware Prices
+        Route::middleware('permission:hardware-prices.view')->group(function () {
+            Route::get('hardware-prices', [HardwarePriceController::class, 'index']);
+            Route::get('hardware-prices/statistics', [HardwarePriceController::class, 'statistics']);
+            Route::get('hardware-prices/categories', [HardwarePriceController::class, 'categories']);
+            Route::get('hardware-prices/recommendations', [HardwarePriceController::class, 'recommendations']);
+            Route::post('hardware-prices/compare', [HardwarePriceController::class, 'compare']);
+            Route::get('hardware-prices/{hardwarePrice}', [HardwarePriceController::class, 'show']);
+            Route::get('hardware-prices/{hardwarePrice}/history', [HardwarePriceController::class, 'history']);
+            Route::get('boq-items/{boqItem}/matches', [HardwarePriceController::class, 'matchBoqItem']);
+            Route::post('boq-items/{boqItem}/apply-price', [HardwarePriceController::class, 'applyPrice']);
+        });
+
+        Route::middleware('permission:hardware-prices.manage')->group(function () {
+            Route::post('hardware-prices/fetch', [HardwarePriceController::class, 'fetchNow']);
+        });
 
         // Plans
         Route::get('plans/{plan}', [PlanController::class, 'show']);
