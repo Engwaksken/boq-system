@@ -9,7 +9,11 @@ class Modal extends Component
     public bool $isOpen = false;
     public string $title = '';
     public string $size = 'md';
-    public array $listeners = ['openModal', 'closeModal'];
+
+    protected $listeners = [
+        'openModal',
+        'closeModal',
+    ];
 
     public function openModal(array $data = []): void
     {
