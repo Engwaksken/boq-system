@@ -10,124 +10,69 @@
     @livewireStyles
 </head>
 <body class="font-sans antialiased">
-    <div class="min-h-screen bg-gray-100">
-        {{-- Desktop + Mobile Nav --}}
-        <nav x-data="{ mobileOpen: false, userMenuOpen: false }" class="bg-white border-b border-gray-200 sticky top-0 z-50">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
-                    {{-- Left: Brand + Desktop Links --}}
-                    <div class="flex items-center">
-                        <a href="{{ url('/dashboard') }}" class="flex items-center gap-2 shrink-0">
-                            <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-600">
-                                <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                                </svg>
-                            </span>
-                            <span class="text-lg font-bold text-gray-900 hidden sm:inline">BOQ System</span>
-                        </a>
-                        <div class="hidden md:flex md:ml-8 md:items-center md:space-x-1">
-                            <a href="{{ url('/dashboard') }}" class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition {{ request()->is('dashboard') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
-                                Dashboard
-                            </a>
-                            <a href="{{ url('/projects') }}" class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition {{ request()->is('projects*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
-                                Projects
-                            </a>
-                            <a href="{{ url('/boqs') }}" class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition {{ request()->is('boqs*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
-                                BOQs
-                            </a>
-                            <a href="{{ url('/hardware-prices') }}" class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition {{ request()->is('hardware-prices*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
-                                Hardware Prices
-                            </a>
-                            <a href="{{ url('/plans') }}" class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition {{ request()->is('plans*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
-                                Plans
-                            </a>
-                            <a href="{{ url('/subscriptions') }}" class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition {{ request()->is('subscriptions*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
-                                Subscriptions
-                            </a>
-                        </div>
-                    </div>
+    @php
+        $navigation = [
+            ['label' => 'Dashboard', 'url' => url('/dashboard'), 'active' => request()->is('dashboard')],
+            ['label' => 'Projects', 'url' => url('/projects'), 'active' => request()->is('projects*')],
+            ['label' => 'BOQs', 'url' => url('/boqs'), 'active' => request()->is('boqs*')],
+            ['label' => 'Hardware Prices', 'url' => url('/hardware-prices'), 'active' => request()->is('hardware-prices*')],
+            ['label' => 'Plans', 'url' => url('/plans'), 'active' => request()->is('plans*')],
+            ['label' => 'Subscriptions', 'url' => url('/subscriptions'), 'active' => request()->is('subscriptions*')],
+        ];
+    @endphp
+    <div x-data="{ sidebarOpen: false }" class="min-h-screen bg-slate-100">
+        <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false" class="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm lg:hidden"></div>
 
-                    {{-- Right: Desktop User Dropdown --}}
-                    <div class="hidden md:flex md:items-center md:ml-6">
-                        <div class="relative" @click.outside="userMenuOpen = false">
-                            <button @click="userMenuOpen = !userMenuOpen" type="button" class="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold">{{ strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}</span>
-                                <span class="font-medium text-gray-700">{{ Auth::user()->name }}</span>
-                                <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-                            <div x-show="userMenuOpen" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" x-cloak
-                                 class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                                <div class="px-4 py-2 border-b border-gray-100">
-                                    <p class="text-sm font-medium text-gray-900">{{ Auth::user()->name }}</p>
-                                    <p class="text-xs text-gray-500 truncate">{{ Auth::user()->email }}</p>
-                                </div>
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button type="submit" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition">
-                                        Log Out
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
+        <aside x-cloak :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col bg-slate-950 text-white transition-transform duration-200 lg:translate-x-0">
+            <div class="flex h-20 items-center justify-between border-b border-white/10 px-6">
+                <a href="{{ url('/dashboard') }}" class="flex items-center gap-3">
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500 shadow-lg shadow-indigo-950/40">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h10M4 18h10" /></svg>
+                    </span>
+                    <span><span class="block text-base font-bold tracking-wide">BOQ System</span><span class="block text-xs text-slate-400">Cost intelligence</span></span>
+                </a>
+                <button @click="sidebarOpen = false" class="rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-white lg:hidden" aria-label="Close navigation">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
 
-                    {{-- Mobile Hamburger --}}
-                    <div class="flex items-center md:hidden">
-                        <button @click="mobileOpen = !mobileOpen" type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
-                            <svg x-show="!mobileOpen" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                            <svg x-show="mobileOpen" x-cloak class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
+            <nav class="flex-1 space-y-1 overflow-y-auto px-4 py-6">
+                <p class="mb-3 px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Workspace</p>
+                @foreach($navigation as $item)
+                    <a href="{{ $item['url'] }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition {{ $item['active'] ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-950/30' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
+                        <span class="h-2 w-2 rounded-full {{ $item['active'] ? 'bg-white' : 'bg-slate-600' }}"></span>
+                        {{ $item['label'] }}
+                    </a>
+                @endforeach
+            </nav>
+
+            <div class="border-t border-white/10 p-4">
+                <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 rounded-xl p-3 transition {{ request()->is('profile') ? 'bg-white/10' : 'hover:bg-white/10' }}">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-400 text-sm font-bold text-slate-950">{{ strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}</span>
+                    <span class="min-w-0 flex-1"><span class="block truncate text-sm font-semibold">{{ Auth::user()->name }}</span><span class="block truncate text-xs text-slate-400">Update profile</span></span>
+                    <svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
+                </a>
+                <form method="POST" action="{{ route('logout') }}" class="mt-2">
+                    @csrf
+                    <button type="submit" class="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-400 transition hover:bg-white/10 hover:text-white">Log out</button>
+                </form>
+            </div>
+        </aside>
+
+        <div class="min-h-screen lg:pl-72">
+            <header class="sticky top-0 z-30 flex h-16 items-center border-b border-slate-200 bg-white/90 px-4 backdrop-blur sm:px-6 lg:hidden">
+                <button @click="sidebarOpen = true" class="rounded-lg p-2 text-slate-600 hover:bg-slate-100" aria-label="Open navigation">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </button>
+                <span class="ml-3 font-bold text-slate-900">BOQ System</span>
+            </header>
+
+            <main class="px-4 py-6 sm:px-6 sm:py-8 xl:px-10">
+                <div class="mx-auto max-w-7xl">
+                    {{ $slot }}
                 </div>
-            </div>
-
-            {{-- Mobile Menu --}}
-            <div x-show="mobileOpen" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1" class="md:hidden border-t border-gray-200 bg-white">
-                <div class="px-2 pt-2 pb-3 space-y-1">
-                    <a href="{{ url('/dashboard') }}" class="block px-3 py-2 rounded-md text-base font-medium {{ request()->is('dashboard') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">Dashboard</a>
-                    <a href="{{ url('/projects') }}" class="block px-3 py-2 rounded-md text-base font-medium {{ request()->is('projects*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">Projects</a>
-                    <a href="{{ url('/boqs') }}" class="block px-3 py-2 rounded-md text-base font-medium {{ request()->is('boqs*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">BOQs</a>
-                    <a href="{{ url('/hardware-prices') }}" class="block px-3 py-2 rounded-md text-base font-medium {{ request()->is('hardware-prices*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">Hardware Prices</a>
-                    <a href="{{ url('/plans') }}" class="block px-3 py-2 rounded-md text-base font-medium {{ request()->is('plans*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">Plans</a>
-                    <a href="{{ url('/subscriptions') }}" class="block px-3 py-2 rounded-md text-base font-medium {{ request()->is('subscriptions*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">Subscriptions</a>
-                </div>
-                <div class="border-t border-gray-200 pt-4 pb-3">
-                    <div class="px-4 flex items-center gap-3">
-                        <span class="flex items-center justify-center w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 text-sm font-bold">{{ strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}</span>
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">{{ Auth::user()->name }}</p>
-                            <p class="text-xs text-gray-500">{{ Auth::user()->email }}</p>
-                        </div>
-                    </div>
-                    <div class="mt-3 px-2">
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition">Log Out</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </nav>
-
-        {{-- Main Content --}}
-        <main class="py-8">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {{ $slot }}
-            </div>
-        </main>
-
-        {{-- Footer --}}
-        <footer class="border-t border-gray-200 bg-white">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                <p class="text-center text-sm text-gray-500">&copy; {{ date('Y') }} BOQ System. All rights reserved.</p>
-            </div>
-        </footer>
+            </main>
+        </div>
     </div>
 
     @livewireScripts

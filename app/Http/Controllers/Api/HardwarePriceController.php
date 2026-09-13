@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\BoqItem;
 use App\Models\HardwarePrice;
 use App\Models\PriceHistory;
 use App\Services\HardwarePriceFetchingService;
@@ -113,8 +114,8 @@ class HardwarePriceController extends Controller
     public function compare(Request $request): JsonResponse
     {
         $ids = $request->get('ids', []);
-        
-        if (!is_array($ids) || count($ids) < 2 || count($ids) > 10) {
+
+        if (! is_array($ids) || count($ids) < 2 || count($ids) > 10) {
             return response()->json([
                 'success' => false,
                 'message' => 'Please provide 2 to 10 item IDs to compare',
@@ -157,9 +158,9 @@ class HardwarePriceController extends Controller
                     'lowest' => min($prices),
                     'highest' => max($prices),
                     'average' => round(array_sum($prices) / count($prices), 2),
-                    'change' => count($prices) > 1 ? round($prices[count($prices)-1] - $prices[0], 2) : 0,
-                    'change_percent' => count($prices) > 1 && $prices[0] > 0 
-                        ? round((($prices[count($prices)-1] - $prices[0]) / $prices[0]) * 100, 2) 
+                    'change' => count($prices) > 1 ? round($prices[count($prices) - 1] - $prices[0], 2) : 0,
+                    'change_percent' => count($prices) > 1 && $prices[0] > 0
+                        ? round((($prices[count($prices) - 1] - $prices[0]) / $prices[0]) * 100, 2)
                         : 0,
                     'trend' => $this->calculateTrend($prices),
                 ],
@@ -173,9 +174,15 @@ class HardwarePriceController extends Controller
 
         foreach ($comparison as $item) {
             $item['badges'] = [];
-            if ($item['id'] === $bestValue['id']) $item['badges'][] = 'Best Value';
-            if ($item['id'] === $lowestPrice['id']) $item['badges'][] = 'Lowest Price';
-            if ($item['id'] === $bestRated['id']) $item['badges'][] = 'Best Rated';
+            if ($item['id'] === $bestValue['id']) {
+                $item['badges'][] = 'Best Value';
+            }
+            if ($item['id'] === $lowestPrice['id']) {
+                $item['badges'][] = 'Lowest Price';
+            }
+            if ($item['id'] === $bestRated['id']) {
+                $item['badges'][] = 'Best Rated';
+            }
         }
 
         return response()->json([
@@ -236,17 +243,17 @@ class HardwarePriceController extends Controller
                     'lowest' => min($prices),
                     'highest' => max($prices),
                     'average' => round(array_sum($prices) / count($prices), 2),
-                    'change' => count($prices) > 1 ? round($prices[count($prices)-1] - $prices[0], 2) : 0,
-                    'change_percent' => count($prices) > 1 && $prices[0] > 0 
-                        ? round((($prices[count($prices)-1] - $prices[0]) / $prices[0]) * 100, 2) 
+                    'change' => count($prices) > 1 ? round($prices[count($prices) - 1] - $prices[0], 2) : 0,
+                    'change_percent' => count($prices) > 1 && $prices[0] > 0
+                        ? round((($prices[count($prices) - 1] - $prices[0]) / $prices[0]) * 100, 2)
                         : 0,
                     'trend' => $this->calculateTrend($prices),
                 ],
             ];
         })
-        ->sortByDesc(fn ($i) => $i['rating']['overall'])
-        ->take($limit)
-        ->values();
+            ->sortByDesc(fn ($i) => $i['rating']['overall'])
+            ->take($limit)
+            ->values();
 
         return response()->json([
             'success' => true,
@@ -256,8 +263,8 @@ class HardwarePriceController extends Controller
 
     public function matchBoqItem(Request $request, int $boqItemId): JsonResponse
     {
-        $boqItem = \App\Models\BoqItem::with('boq.project')->findOrFail($boqItemId);
-        
+        $boqItem = BoqItem::with('boq.project')->findOrFail($boqItemId);
+
         abort_unless($boqItem->boq->project->organisation_id === $request->user()->organisation_id, 403);
 
         $comparison = $this->matchingService->getPriceComparison($boqItem);
@@ -270,19 +277,25 @@ class HardwarePriceController extends Controller
 
     public function applyPrice(Request $request, int $boqItemId): JsonResponse
     {
+        $user = $request->user()->fresh();
+        abort_unless($user->hasPermission('boq.edit'), 403);
+
         $request->validate([
             'hardware_price_id' => 'required|exists:hardware_prices,id',
         ]);
 
-        $boqItem = \App\Models\BoqItem::with('boq.project')->findOrFail($boqItemId);
-        
-        abort_unless($boqItem->boq->project->organisation_id === $request->user()->organisation_id, 403);
+        $boqItem = BoqItem::with('boq.project')->findOrFail($boqItemId);
+
+        abort_unless(
+            $user->organisation_id !== null
+            && $boqItem->boq->organisation_id === $user->organisation_id
+            && $boqItem->boq->project->organisation_id === $user->organisation_id,
+            403
+        );
 
         $hardwarePrice = HardwarePrice::findOrFail($request->hardware_price_id);
-        
-        abort_unless($hardwarePrice->organisation_id === $request->user()->organisation_id, 403);
 
-        $this->matchingService->applyPriceToBoqItem($boqItem, $hardwarePrice);
+        $this->matchingService->applyManualPrice($boqItem, $hardwarePrice, $user->id);
 
         return response()->json([
             'success' => true,
@@ -317,7 +330,7 @@ class HardwarePriceController extends Controller
             ->where('is_active', true)
             ->distinct('supplier')
             ->count('supplier');
-        
+
         $avgChange = HardwarePrice::where('organisation_id', $orgId)
             ->where('is_active', true)
             ->whereNotNull('price_change_percent')
@@ -328,7 +341,7 @@ class HardwarePriceController extends Controller
             ->whereRaw('price < (SELECT AVG(price) FROM hardware_prices hp2 WHERE hp2.category = hardware_prices.category AND hp2.organisation_id = ?)', [$orgId])
             ->count();
 
-        $boqItemsWithMatches = \App\Models\BoqItem::whereHas('boq.project', fn ($q) => $q->where('organisation_id', $orgId))
+        $boqItemsWithMatches = BoqItem::whereHas('boq.project', fn ($q) => $q->where('organisation_id', $orgId))
             ->whereNotNull('ai_rate')
             ->count();
 
@@ -362,20 +375,29 @@ class HardwarePriceController extends Controller
 
     private function calculateTrend(array $prices): string
     {
-        if (count($prices) < 2) return 'stable';
-        
+        if (count($prices) < 2) {
+            return 'stable';
+        }
+
         $recent = array_slice($prices, -3);
         $older = array_slice($prices, 0, 3);
-        
+
         $recentAvg = array_sum($recent) / count($recent);
         $olderAvg = array_sum($older) / count($older);
-        
-        if ($olderAvg == 0) return 'stable';
-        
+
+        if ($olderAvg == 0) {
+            return 'stable';
+        }
+
         $change = (($recentAvg - $olderAvg) / $olderAvg) * 100;
-        
-        if ($change > 5) return 'rising';
-        if ($change < -5) return 'falling';
+
+        if ($change > 5) {
+            return 'rising';
+        }
+        if ($change < -5) {
+            return 'falling';
+        }
+
         return 'stable';
     }
 
@@ -387,7 +409,7 @@ class HardwarePriceController extends Controller
         $maxPrice = max($prices);
         $priceStability = $maxPrice > 0 ? 1 - (($maxPrice - $minPrice) / $maxPrice) : 1;
         $dataFreshness = $item->fetched_at->diffInDays(now()) <= 7 ? 1 : max(0, 1 - ($item->fetched_at->diffInDays(now()) / 30));
-        
+
         $priceScore = $currentPrice <= $avgPrice ? 100 : max(0, 100 - (($currentPrice - $avgPrice) / $avgPrice) * 50);
         $stabilityScore = $priceStability * 100;
         $freshnessScore = $dataFreshness * 100;

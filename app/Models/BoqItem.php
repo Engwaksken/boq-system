@@ -29,6 +29,11 @@ class BoqItem extends Model
         'quantity',
         'original_rate',
         'ai_suggested_rate',
+        'hardware_price_id',
+        'match_type',
+        'matched_by',
+        'matched_at',
+        'reviewed_rate',
         'approved_rate',
         'amount',
         'currency',
@@ -41,6 +46,13 @@ class BoqItem extends Model
         'translation_confidence',
         'notes',
         'status',
+        'reviewed_by',
+        'reviewed_at',
+        'approved_by',
+        'approved_at',
+        'rejected_by',
+        'rejected_at',
+        'rejection_reason',
     ];
 
     /**
@@ -54,11 +66,16 @@ class BoqItem extends Model
             'quantity' => 'decimal:4',
             'original_rate' => 'decimal:2',
             'ai_suggested_rate' => 'decimal:2',
+            'reviewed_rate' => 'decimal:2',
             'approved_rate' => 'decimal:2',
             'amount' => 'decimal:2',
             'ai_confidence' => 'decimal:2',
             'translation_confidence' => 'decimal:2',
             'pricing_date' => 'date',
+            'matched_at' => 'datetime',
+            'reviewed_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'rejected_at' => 'datetime',
         ];
     }
 
@@ -102,6 +119,31 @@ class BoqItem extends Model
         return $this->belongsTo(SubElement::class);
     }
 
+    public function reviewedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function hardwarePrice(): BelongsTo
+    {
+        return $this->belongsTo(HardwarePrice::class);
+    }
+
+    public function matchedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'matched_by');
+    }
+
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function rejectedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
+    }
+
     /**
      * Translations for this item.
      */
@@ -115,7 +157,10 @@ class BoqItem extends Model
      */
     public function recalculateAmount(): void
     {
-        $rate = $this->approved_rate ?? $this->original_rate ?? 0;
-        $this->amount = round($this->quantity * $rate, 2);
+        if ($this->approved_rate === null) {
+            return;
+        }
+
+        $this->amount = round($this->quantity * $this->approved_rate, 2);
     }
 }

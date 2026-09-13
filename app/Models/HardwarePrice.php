@@ -46,6 +46,11 @@ class HardwarePrice extends Model
         return $this->hasMany(PriceHistory::class);
     }
 
+    public function boqItems(): HasMany
+    {
+        return $this->hasMany(BoqItem::class);
+    }
+
     public function latestHistory(): HasMany
     {
         return $this->hasMany(PriceHistory::class)->latest('recorded_at');
@@ -75,9 +80,10 @@ class HardwarePrice extends Model
     {
         return $query->where(function ($q) use ($term) {
             $q->where('item_name', 'like', "%{$term}%")
-              ->orWhere('brand', 'like', "%{$term}%")
-              ->orWhere('specification', 'like', "%{$term}%")
-              ->orWhere('supplier', 'like', "%{$term}%");
+                ->orWhere('brand', 'like', "%{$term}%")
+                ->orWhere('specification', 'like', "%{$term}%")
+                ->orWhere('category', 'like', "%{$term}%")
+                ->orWhere('supplier', 'like', "%{$term}%");
         });
     }
 
@@ -89,6 +95,7 @@ class HardwarePrice extends Model
         }
         $first = $histories->first()->price;
         $last = $histories->last()->price;
+
         return $last - $first;
     }
 
@@ -103,6 +110,7 @@ class HardwarePrice extends Model
         if ($first == 0) {
             return null;
         }
+
         return round((($last - $first) / $first) * 100, 2);
     }
 
@@ -120,4 +128,4 @@ class HardwarePrice extends Model
     {
         return $this->priceHistories()->avg('price') ?? $this->price;
     }
-};
+}

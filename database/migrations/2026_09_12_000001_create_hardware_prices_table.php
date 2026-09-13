@@ -10,21 +10,31 @@ return new class extends Migration
     {
         Schema::create('hardware_prices', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('organisation_id')->constrained()->cascadeOnDelete();
-            $table->string('item_name');
-            $table->string('brand')->nullable();
-            $table->string('category');
-            $table->string('specification')->nullable();
-            $table->string('unit');
+
+            $table->foreignId('organisation_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->string('item_name', 150);
+            $table->string('brand', 100)->nullable();
+            $table->string('category', 100);
+            $table->string('specification', 191)->nullable();
+            $table->string('unit', 50);
+
             $table->decimal('price', 15, 2);
             $table->string('currency', 3)->default('UGX');
-            $table->string('supplier');
-            $table->string('location')->nullable();
-            $table->string('source_url')->nullable();
-            $table->string('source_reference')->nullable();
+
+            $table->string('supplier', 150);
+            $table->string('location', 150)->nullable();
+
+            $table->string('source_url', 500)->nullable();
+            $table->string('source_reference', 191)->nullable();
+
             $table->timestamp('fetched_at');
             $table->boolean('is_active')->default(true);
+
             $table->json('ai_metadata')->nullable();
+
             $table->timestamps();
 
             $table->index(['organisation_id', 'category']);
@@ -32,7 +42,9 @@ return new class extends Migration
             $table->index(['organisation_id', 'supplier']);
             $table->index(['organisation_id', 'location']);
             $table->index(['organisation_id', 'fetched_at']);
-            $table->index(['item_name', 'brand', 'category', 'supplier']);
+
+            $table->index(['item_name', 'brand']);
+            $table->index(['category', 'supplier']);
         });
     }
 
