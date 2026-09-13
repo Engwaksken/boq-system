@@ -52,6 +52,7 @@ Route::prefix('v1')->group(function () {
         Route::get('pricing-batches/{batch}', [BoqController::class, 'pricingBatch']);
         Route::post('boq-items/{boqItem}/price', [BoqController::class, 'price']);
         Route::get('boqs/{boq}/pricing-history/{location}', [BoqController::class, 'pricingHistory']);
+        Route::get('boqs/{boq}/pricing-history', [BoqController::class, 'pricingHistory']);
 
         // Hardware Prices
         Route::middleware('permission:hardware-prices.view')->group(function () {

@@ -40,6 +40,14 @@ class ProfileController extends Controller
     /**
      * Delete the user's account.
      */
+    public function delete(Request $request): RedirectResponse
+    {
+        return $this->destroy($request);
+    }
+
+    /**
+     * Delete the user's account.
+     */
     public function destroy(Request $request): RedirectResponse
     {
         $request->validateWithBag('userDeletion', [

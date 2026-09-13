@@ -35,7 +35,7 @@ class BoqController extends Controller
         abort_unless($user->hasPermission('boq.edit'), 403);
         $location = $request->validate(['location' => ['required', 'string', 'max:255']])['location'];
         $itemIds = $boq->items()->pluck('id');
-        $batch = BoqPricingBatch::create(['boq_id' => $boq->id, 'user_id' => $user->id, 'location' => $location, 'status' => 'running', 'total_items' => $itemIds->count()]);
+        $batch = BoqPricingBatch::create(['boq_id' => $boq->id, 'organisation_id' => $user->organisation_id, 'user_id' => $user->id, 'location' => $location, 'operation' => 'location_pricing', 'provider' => config('services.ai_provider'), 'current_stage' => 'running', 'status' => 'running', 'total_items' => $itemIds->count(), 'started_at' => now()]);
         foreach ($itemIds as $itemId) {
             ProcessBoqPricingItem::dispatch($batch->id, $itemId);
         }
@@ -50,7 +50,17 @@ class BoqController extends Controller
     {
         abort_unless($batch->user_id === $request->user()->id, 403);
 
-        return response()->json(['success' => true, 'data' => $batch]);
+        $pricedItems = BoqItemPriceSuggestion::query()
+            ->whereIn('boq_item_id', $batch->boq->items()->pluck('id'))
+            ->where('location', $batch->location)
+            ->when($batch->started_at, fn ($query) => $query->where('created_at', '>=', $batch->started_at))
+            ->distinct('boq_item_id')
+            ->count('boq_item_id');
+        if ($pricedItems > $batch->processed_items) {
+            $batch->update(['processed_items' => $pricedItems]);
+        }
+
+        return response()->json(['success' => true, 'data' => $batch->fresh()]);
     }
 
     public function pdf(Request $request, Boq $boq)
@@ -204,13 +214,13 @@ class BoqController extends Controller
         return response()->json(['success' => true, 'data' => $boq], 201);
     }
 
-    public function pricingHistory(Request $request, Boq $boq, string $location): JsonResponse
+    public function pricingHistory(Request $request, Boq $boq, ?string $location = null): JsonResponse
     {
         abort_unless($this->canAccess($boq, $request->user()->id, $request->user()->organisation_id), 403);
         $itemIds = $boq->items()->pluck('id');
         $suggestions = BoqItemPriceSuggestion::query()
             ->whereIn('boq_item_id', $itemIds)
-            ->where('location', $location)
+            ->when($location !== null, fn ($query) => $query->where('location', $location))
             ->with('boqItem')
             ->latest()
             ->get();

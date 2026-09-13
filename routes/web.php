@@ -11,12 +11,16 @@ use App\Livewire\HardwarePrices\Index as HardwarePricesIndex;
 use App\Livewire\HardwarePrices\Recommendations as HardwarePricesRecommendations;
 use App\Livewire\HardwarePrices\Show as HardwarePricesShow;
 use App\Livewire\Plans\Index as PlansIndex;
+use App\Livewire\Profile\Index as ProfileIndex;
 use App\Livewire\Projects\Create as ProjectsCreate;
 use App\Livewire\Projects\Edit as ProjectsEdit;
 use App\Livewire\Projects\Index as ProjectsIndex;
 use App\Livewire\Projects\Show as ProjectsShow;
 use App\Livewire\Subscriptions\Index as SubscriptionsIndex;
 use App\Livewire\System\McpActivity;
+use App\Livewire\Admin\Index as AdminIndex;
+use App\Livewire\Admin\HardwareScanner as HardwareScanner;
+use App\Livewire\Admin\SubscriptionsManager as SubscriptionsManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -78,10 +82,17 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:admin,manager,super-admin')
         ->name('system.mcp-activity');
 
-    // Profile (Breeze)
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    // Profile
+    Route::get('/profile', ProfileIndex::class)->name('profile.edit');
+    Route::delete('/profile', [ProfileController::class, 'delete'])->name('profile.delete');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Super Admin
+    Route::middleware('role:super-admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/', AdminIndex::class)->name('index');
+        Route::get('/hardware-scanner', HardwareScanner::class)->name('hardware-scanner');
+        Route::get('/subscriptions', SubscriptionsManager::class)->name('subscriptions');
+    });
 });
 
 require __DIR__.'/auth.php';
