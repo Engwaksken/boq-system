@@ -23,12 +23,14 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'organisation_id',
         'name',
         'email',
         'password',
         'locale',
         'timezone',
         'phone',
+        'is_active',
         'last_login_at',
     ];
 
@@ -70,7 +72,9 @@ class User extends Authenticatable
      */
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(Role::class)->withTimestamps();
+        return $this->belongsToMany(Role::class, 'role_user')
+            ->withPivot('organisation_id')
+            ->withTimestamps();
     }
 
     /**
@@ -78,7 +82,9 @@ class User extends Authenticatable
      */
     public function permissions(): BelongsToMany
     {
-        return $this->belongsToMany(Permission::class)->withTimestamps();
+        return $this->belongsToMany(Permission::class, 'permission_user')
+            ->withPivot('organisation_id')
+            ->withTimestamps();
     }
 
     /**
@@ -130,11 +136,21 @@ class User extends Authenticatable
     }
 
     /**
+     * Hardware price bookmarks owned by this user.
+     */
+    public function hardwareBookmarks(): HasMany
+    {
+        return $this->hasMany(HardwareBookmark::class);
+    }
+
+    /**
      * Check whether the user has a given role by slug.
      */
     public function hasRole(string $role): bool
     {
-        return $this->roles()->where('slug', $role)->exists();
+        return $this->roles()
+            ->where('roles.slug', $role)
+            ->exists();
     }
 
     /**
@@ -142,7 +158,17 @@ class User extends Authenticatable
      */
     public function hasAnyRole(array $roles): bool
     {
-        return $this->roles()->whereIn('slug', $roles)->exists();
+        return $this->roles()
+            ->whereIn('roles.slug', $roles)
+            ->exists();
+    }
+
+    /**
+     * Check whether this user is a Super Admin.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole('super_admin');
     }
 
     /**
@@ -150,12 +176,23 @@ class User extends Authenticatable
      */
     public function hasPermission(string $permission): bool
     {
-        if ($this->hasRole('super-admin')) {
+        if ($this->isSuperAdmin()) {
             return true;
         }
 
-        return $this->permissions()->where('slug', $permission)->exists()
-            || $this->roles()->whereHas('permissions', fn ($q) => $q->where('slug', $permission))->exists();
+        $hasDirectPermission = $this->permissions()
+            ->where('permissions.slug', $permission)
+            ->exists();
+
+        if ($hasDirectPermission) {
+            return true;
+        }
+
+        return $this->roles()
+            ->whereHas('permissions', function ($query) use ($permission) {
+                $query->where('permissions.slug', $permission);
+            })
+            ->exists();
     }
 
     /**
@@ -163,12 +200,27 @@ class User extends Authenticatable
      */
     public function hasAnyPermission(array $permissions): bool
     {
-        if ($this->hasRole('super-admin')) {
+        if ($this->isSuperAdmin()) {
             return true;
         }
 
-        return $this->permissions()->whereIn('slug', $permissions)->exists()
-            || $this->roles()->whereHas('permissions', fn ($q) => $q->whereIn('slug', $permissions))->exists();
+        if (empty($permissions)) {
+            return true;
+        }
+
+        $hasDirectPermission = $this->permissions()
+            ->whereIn('permissions.slug', $permissions)
+            ->exists();
+
+        if ($hasDirectPermission) {
+            return true;
+        }
+
+        return $this->roles()
+            ->whereHas('permissions', function ($query) use ($permissions) {
+                $query->whereIn('permissions.slug', $permissions);
+            })
+            ->exists();
     }
 
     /**
@@ -176,7 +228,7 @@ class User extends Authenticatable
      */
     public function hasAllPermissions(array $permissions): bool
     {
-        if ($this->hasRole('super-admin')) {
+        if ($this->isSuperAdmin()) {
             return true;
         }
 
@@ -190,16 +242,31 @@ class User extends Authenticatable
     }
 
     /**
-     * Get all permission slugs for this user (via roles and direct grants).
+     * Get all permission slugs for this user
+     * through roles and direct grants.
+     *
+     * @return array<int, string>
      */
     public function getAllPermissionSlugs(): array
     {
-        if ($this->hasRole('super-admin')) {
-            return Permission::pluck('slug')->all();
+        if ($this->isSuperAdmin()) {
+            return Permission::query()
+                ->pluck('slug')
+                ->all();
         }
 
-        return $this->permissions()->pluck('permissions.slug')
-            ->merge($this->roles()->with('permissions')->get()->flatMap(fn ($role) => $role->permissions->pluck('slug')))
+        $directPermissions = $this->permissions()
+            ->pluck('permissions.slug');
+
+        $rolePermissions = $this->roles()
+            ->with('permissions')
+            ->get()
+            ->flatMap(
+                fn (Role $role) => $role->permissions->pluck('slug')
+            );
+
+        return $directPermissions
+            ->merge($rolePermissions)
             ->unique()
             ->values()
             ->all();
