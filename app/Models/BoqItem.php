@@ -12,6 +12,16 @@ class BoqItem extends Model
     use HasFactory;
 
     /**
+     * Keep approved BOQ values in sync whenever the model is persisted.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $boqItem): void {
+            $boqItem->recalculateAmount();
+        });
+    }
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>

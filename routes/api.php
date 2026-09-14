@@ -43,10 +43,25 @@ Route::prefix('v1')->group(function () {
 
         // Dashboard
         Route::get('dashboard', [DashboardController::class, 'index']);
-        Route::post('boqs', [BoqController::class, 'store']);
-        Route::get('boqs/{boq}', [BoqController::class, 'show']);
-        Route::get('boqs/{boq}/pdf', [BoqController::class, 'pdf']);
-        Route::post('boqs/{boq}/process', [BoqController::class, 'process']);
+        Route::middleware(['permission:boq.edit', 'entitlement:boq.management'])->group(function () {
+            Route::post('boqs', [BoqController::class, 'store'])
+                ->middleware('throttle:10,1')
+                ->name('api.v1.boqs.store');
+        });
+
+        Route::middleware(['permission:boq.view', 'entitlement:boq.management'])->group(function () {
+            Route::get('boqs/{boq}', [BoqController::class, 'show'])->name('api.v1.boqs.show');
+            Route::get('boqs/{boq}/pdf', [BoqController::class, 'pdf'])
+                ->middleware('throttle:10,1')
+                ->name('api.v1.boqs.pdf');
+        });
+
+        Route::middleware(['permission:boq.edit', 'entitlement:boq.management', 'entitlement:boq.import.excel,boq_imports'])
+            ->group(function () {
+                Route::post('boqs/{boq}/process', [BoqController::class, 'process'])
+                    ->middleware('throttle:5,1')
+                    ->name('api.v1.boqs.process');
+            });
         Route::post('boqs/{boq}/price-all', [BoqController::class, 'priceAll']);
         Route::post('boqs/{boq}/pricing-batches', [BoqController::class, 'startPricingBatch']);
         Route::get('pricing-batches/{batch}', [BoqController::class, 'pricingBatch']);

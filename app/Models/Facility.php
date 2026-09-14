@@ -59,4 +59,12 @@ class Facility extends Model
     {
         return $this->hasMany(BoqItem::class);
     }
+
+    /**
+     * Summaries for this facility.
+     */
+    public function summaries(): HasMany
+    {
+        return $this->hasMany(BoqSummary::class);
+    }
 }

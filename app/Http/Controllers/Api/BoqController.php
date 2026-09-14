@@ -3,19 +3,21 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ProcessBoqRequest;
+use App\Http\Requests\StoreBoqRequest;
+use App\Http\Resources\BoqResource;
 use App\Jobs\ProcessBoqPricingItem;
 use App\Models\Boq;
 use App\Models\BoqItem;
 use App\Models\BoqItemPriceSuggestion;
 use App\Models\BoqPricingBatch;
 use App\Models\Project;
+use App\Services\BoqSpreadsheetImporter;
 use App\Services\GeminiPricingService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use OpenSpout\Reader\Common\Creator\ReaderFactory;
 
 class BoqController extends Controller
 {
@@ -109,99 +111,50 @@ class BoqController extends Controller
 
     public function show(Request $request, Boq $boq): JsonResponse
     {
-        $user = $request->user();
-        abort_unless($this->canAccess($boq, $user->id, $user->organisation_id), 403);
+        $this->authorize('view', $boq);
 
-        return response()->json(['success' => true, 'data' => $boq->load(['items' => fn ($query) => $query->orderBy('id')])]);
+        return (new BoqResource($this->loadPhaseFourRelations($boq)))
+            ->additional(['success' => true])
+            ->response();
     }
 
-    public function process(Request $request, Boq $boq): JsonResponse
+    public function process(ProcessBoqRequest $request, Boq $boq, BoqSpreadsheetImporter $importer): JsonResponse
     {
         set_time_limit(300);
-        $user = $request->user();
-        abort_unless($this->canAccess($boq, $user->id, $user->organisation_id), 403);
-        abort_unless($user->hasPermission('boq.edit'), 403);
-        abort_unless($boq->source_type === 'excel', 422, 'Only Excel and CSV BOQs can be processed automatically.');
-
-        $reader = ReaderFactory::createFromFile(Storage::path($boq->source_file_path));
-        $reader->open(Storage::path($boq->source_file_path));
-        $headers = null;
-        $created = 0;
-        $items = [];
-        BoqItem::where('boq_id', $boq->id)->delete();
-
-        foreach ($reader->getSheetIterator() as $sheet) {
-            foreach ($sheet->getRowIterator() as $row) {
-                $values = array_map(fn ($cell) => trim((string) ($cell->getValue() ?? '')), $row->getCells());
-                if ($headers === null) {
-                    $normalised = array_map(fn ($value) => strtoupper($value), $values);
-                    if (in_array('DESCRIPTION', $normalised, true) && (in_array('QTY', $normalised, true) || in_array('QUANTITY', $normalised, true))) {
-                        $headers = $normalised;
-                    }
-
-                    continue;
-                }
-                $description = $values[array_search('DESCRIPTION', $headers, true)] ?? '';
-                if ($description === '') {
-                    continue;
-                }
-                $quantityIndex = $this->headerIndex($headers, ['QUANTITY', 'QTY']);
-                $rateIndex = $this->headerIndex($headers, ['RATE']);
-                $amountIndex = $this->headerIndex($headers, ['AMOUNT']);
-                $itemIndex = $this->headerIndex($headers, ['ITEM']);
-                $unitIndex = $this->headerIndex($headers, ['UNIT']);
-                $quantity = (float) str_replace(',', '', $values[$quantityIndex] ?? 0);
-                $rate = $rateIndex !== false ? (float) str_replace(',', '', $values[$rateIndex] ?? 0) : null;
-                $amount = $amountIndex !== false ? (float) str_replace(',', '', $values[$amountIndex] ?? 0) : null;
-                if ($rate === null && $amount !== null && $quantity > 0) {
-                    $rate = round($amount / $quantity, 2);
-                }
-                if ($amount === null && $rate !== null) {
-                    $amount = round($quantity * $rate, 2);
-                }
-                $items[] = ['boq_id' => $boq->id, 'item_code' => $values[$itemIndex] ?? null, 'description' => $description, 'unit' => $values[$unitIndex] ?? null, 'quantity' => $quantity, 'original_rate' => $rate, 'approved_rate' => null, 'amount' => $amount ?? 0, 'currency' => $boq->currency, 'status' => 'pending', 'created_at' => now(), 'updated_at' => now()];
-                $created++;
-                if (count($items) === 500) {
-                    DB::table('boq_items')->insert($items);
-                    $items = [];
-                }
-            }
-        }
-        $reader->close();
-        if ($items) {
-            DB::table('boq_items')->insert($items);
-        }
+        $created = $importer->import($boq);
         $boq->update(['status' => 'under_review']);
 
-        return response()->json(['success' => true, 'data' => ['items_created' => $created]]);
+        return (new BoqResource($this->loadPhaseFourRelations($boq->fresh() ?? $boq)))
+            ->additional(['success' => true, 'meta' => ['items_imported' => $created]])
+            ->response();
     }
 
-    private function headerIndex(array $headers, array $names): int|false
+    private function loadPhaseFourRelations(Boq $boq): Boq
     {
-        foreach ($headers as $index => $header) {
-            foreach ($names as $name) {
-                if (str_contains($header, $name)) {
-                    return $index;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    public function store(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'project_id' => ['required', 'exists:projects,id'],
-            'file' => ['required', 'file', 'mimes:xlsx,csv,pdf,jpg,jpeg,png', 'max:20480'],
-            'name' => ['sometimes', 'nullable', 'string', 'max:255'],
+        return $boq->load([
+            'facilities.bills.elements.subElements.items.translations',
+            'facilities.bills.elements.items.translations',
+            'facilities.bills.items.translations',
+            'facilities.items.translations',
+            'facilities.summaries',
+            'facilities.bills.summaries',
+            'items' => fn ($query) => $query->with([
+                'facility',
+                'bill',
+                'element',
+                'subElement',
+                'translations',
+            ])->orderBy('id'),
+            'summaries.facility',
+            'summaries.bill',
         ]);
+    }
+
+    public function store(StoreBoqRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
 
         $project = Project::findOrFail($validated['project_id']);
-        $user = $request->user();
-        $tenantAccess = $user->organisation_id !== null && $project->organisation_id === $user->organisation_id;
-        $personalAccess = $project->user_id === $user->id && $project->organisation_id === null && $user->organisation_id === null;
-        abort_unless($tenantAccess || $personalAccess, 403);
 
         $file = $request->file('file');
         $path = $file->store("boqs/{$project->id}");
@@ -217,7 +170,10 @@ class BoqController extends Controller
             'source_file_path' => $path,
         ]);
 
-        return response()->json(['success' => true, 'data' => $boq], 201);
+        return (new BoqResource($boq))
+            ->additional(['success' => true])
+            ->response()
+            ->setStatusCode(201);
     }
 
     public function pricingHistory(Request $request, Boq $boq, ?string $location = null): JsonResponse

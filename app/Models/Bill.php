@@ -59,4 +59,12 @@ class Bill extends Model
     {
         return $this->hasMany(BoqItem::class);
     }
+
+    /**
+     * Summaries for this bill.
+     */
+    public function summaries(): HasMany
+    {
+        return $this->hasMany(BoqSummary::class);
+    }
 }
