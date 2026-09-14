@@ -84,6 +84,13 @@ class BoqCurrentPriceGenerator
                             'rejected_at' => null,
                             'rejection_reason' => null,
                         ])->save();
+                    } elseif ($item->match_type === null && $item->original_rate !== null) {
+                        $item->fill([
+                            'ai_suggested_rate' => $item->original_rate,
+                            'pricing_source' => 'spreadsheet',
+                            'pricing_date' => now()->toDateString(),
+                            'status' => 'under_review',
+                        ])->save();
                     }
 
                     continue;

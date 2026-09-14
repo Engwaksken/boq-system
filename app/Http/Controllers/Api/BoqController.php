@@ -151,9 +151,15 @@ class BoqController extends Controller
                 $itemIndex = $this->headerIndex($headers, ['ITEM']);
                 $unitIndex = $this->headerIndex($headers, ['UNIT']);
                 $quantity = (float) str_replace(',', '', $values[$quantityIndex] ?? 0);
-                $rate = (float) str_replace(',', '', $values[$rateIndex] ?? 0);
-                $amount = (float) str_replace(',', '', $values[$amountIndex] ?? 0);
-                $items[] = ['boq_id' => $boq->id, 'item_code' => $values[$itemIndex] ?? null, 'description' => $description, 'unit' => $values[$unitIndex] ?? null, 'quantity' => $quantity, 'original_rate' => $rate ?: null, 'approved_rate' => null, 'amount' => $amount ?: $quantity * $rate, 'currency' => $boq->currency, 'status' => 'pending', 'created_at' => now(), 'updated_at' => now()];
+                $rate = $rateIndex !== false ? (float) str_replace(',', '', $values[$rateIndex] ?? 0) : null;
+                $amount = $amountIndex !== false ? (float) str_replace(',', '', $values[$amountIndex] ?? 0) : null;
+                if ($rate === null && $amount !== null && $quantity > 0) {
+                    $rate = round($amount / $quantity, 2);
+                }
+                if ($amount === null && $rate !== null) {
+                    $amount = round($quantity * $rate, 2);
+                }
+                $items[] = ['boq_id' => $boq->id, 'item_code' => $values[$itemIndex] ?? null, 'description' => $description, 'unit' => $values[$unitIndex] ?? null, 'quantity' => $quantity, 'original_rate' => $rate, 'approved_rate' => null, 'amount' => $amount ?? 0, 'currency' => $boq->currency, 'status' => 'pending', 'created_at' => now(), 'updated_at' => now()];
                 $created++;
                 if (count($items) === 500) {
                     DB::table('boq_items')->insert($items);

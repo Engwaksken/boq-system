@@ -100,6 +100,15 @@ class BoqSpreadsheetImporter
                     $rate = $this->number($this->value($values, $headers, ['RATE']), 'rate');
                     $amount = $this->number($this->value($values, $headers, ['AMOUNT']), 'amount');
 
+                    if ($amount === null && $rate !== null) {
+                        $amount = round($quantity * $rate, 2);
+                    } elseif ($rate === null && $amount !== null && $quantity > 0) {
+                        $rate = round($amount / $quantity, 2);
+                        $amount = round($amount, 2);
+                    } elseif ($amount === null && $rate === null) {
+                        $amount = 0;
+                    }
+
                     $rows[] = [
                         'boq_id' => $boq->id,
                         'item_code' => $this->value($values, $headers, ['ITEM', 'ITEM CODE']) ?: null,
@@ -108,7 +117,7 @@ class BoqSpreadsheetImporter
                         'quantity' => $quantity,
                         'original_rate' => $rate,
                         'approved_rate' => null,
-                        'amount' => $amount ?? $quantity * ($rate ?? 0),
+                        'amount' => $amount,
                         'currency' => $boq->currency,
                         'status' => 'pending',
                         'created_at' => now(),

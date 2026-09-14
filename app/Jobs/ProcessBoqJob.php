@@ -94,6 +94,23 @@ class ProcessBoqJob implements ShouldQueue
                                         'rejection_reason' => null,
                                     ])->save();
                                 });
+                            } elseif ($item->match_type === null && $item->original_rate !== null) {
+                                DB::transaction(function () use ($item): void {
+                                    $locked = $item->boq->items()->lockForUpdate()->findOrFail($item->id);
+                                    $locked->fill([
+                                        'ai_suggested_rate' => $locked->original_rate,
+                                        'pricing_source' => 'spreadsheet',
+                                        'pricing_date' => now()->toDateString(),
+                                        'status' => 'under_review',
+                                        'reviewed_by' => null,
+                                        'reviewed_at' => null,
+                                        'approved_by' => null,
+                                        'approved_at' => null,
+                                        'rejected_by' => null,
+                                        'rejected_at' => null,
+                                        'rejection_reason' => null,
+                                    ])->save();
+                                });
                             }
                         } else {
                             $matcher->applyPriceToBoqItem($item, $match['hardware_price'], $match['similarity_score'], $location);
