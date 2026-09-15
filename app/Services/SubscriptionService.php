@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Entitlement;
 use App\Models\Feature;
+use App\Models\Organisation;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
@@ -155,5 +156,46 @@ class SubscriptionService
             ->first();
 
         return $version?->version_number ?? '1.0';
+    }
+
+    /**
+     * Grant a 7-day trial subscription to a new user/organisation.
+     */
+    public function grantTrial(User $user, ?Organisation $organisation = null): Subscription
+    {
+        $trialPlan = Plan::where('code', 'free-trial')->first() ?? Plan::where('has_trial', true)->first();
+        if (! $trialPlan) {
+            $trialPlan = Plan::create([
+                'name' => 'Free Trial',
+                'code' => 'free-trial',
+                'description' => '7-day trial access',
+                'type' => 'monthly',
+                'duration_days' => 7,
+                'price' => 0,
+                'currency' => 'UGX',
+                'has_trial' => true,
+                'trial_days' => 7,
+                'is_active' => true,
+            ]);
+        }
+
+        $startDate = now();
+        $endDate = $startDate->copy()->addDays(7);
+
+        $subscription = Subscription::create([
+            'user_id' => $user->id,
+            'organisation_id' => $organisation?->id ?? $user->organisation_id,
+            'plan_id' => $trialPlan->id,
+            'status' => 'trial',
+            'access_type' => 'trial',
+            'payment_status' => 'paid',
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'product_version' => $this->currentProductVersion(),
+        ]);
+
+        $this->grantPlanEntitlements($subscription);
+
+        return $subscription;
     }
 }

@@ -59,6 +59,9 @@ class AuthController extends Controller
                 $user->roles()->attach($viewerRole->id);
             }
 
+            // Grant 7-day trial subscription
+            app(\App\Services\SubscriptionService::class)->grantTrial($user, $organisation);
+
             return $user;
         });
 

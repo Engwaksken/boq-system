@@ -39,7 +39,7 @@ class PaymentGateway extends Model
     protected function casts(): array
     {
         return [
-            'config' => 'array',
+            'config' => 'encrypted:array',
             'supported_currencies' => 'array',
             'supported_countries' => 'array',
             'supported_methods' => 'array',

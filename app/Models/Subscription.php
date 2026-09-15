@@ -18,8 +18,13 @@ class Subscription extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'user_id',
+        'organisation_id',
         'plan_id',
         'previous_plan_id',
+        'status',
+        'access_type',
+        'payment_status',
         'start_date',
         'end_date',
         'renewal_date',
