@@ -1,0 +1,126 @@
+/* Append these rules to public/css/boq-overrides.css */
+
+.hardware-admin-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .85rem;
+    align-items: start;
+}
+
+.hardware-admin-card {
+    padding: 1rem;
+}
+
+.hardware-card-head,
+.hardware-category-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: 1rem;
+}
+
+.hardware-card-head h2,
+.hardware-category-header h2 {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin: 0;
+    color: var(--boq-text);
+    font-size: .9rem;
+    font-weight: 800;
+}
+
+.hardware-card-head p,
+.hardware-category-header p,
+.hardware-help {
+    margin: .25rem 0 0;
+    color: var(--boq-text-muted);
+    font-size: .7rem;
+    line-height: 1.1rem;
+}
+
+.hardware-card-actions {
+    margin-top: 1rem;
+    padding-top: .85rem;
+    border-top: 1px solid var(--boq-border);
+}
+
+.hardware-result-block {
+    margin-top: 1rem;
+    border-top: 1px solid var(--boq-border);
+    padding-top: 1rem;
+}
+
+.hardware-result-block h3 {
+    margin: 0 0 .6rem;
+    color: var(--boq-text);
+    font-size: .8rem;
+    font-weight: 800;
+}
+
+.hardware-mini-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .5rem;
+    margin-top: 1rem;
+}
+
+.hardware-mini-stats > div {
+    border: 1px solid var(--boq-border);
+    border-radius: .6rem;
+    background: var(--boq-bg-soft);
+    padding: .65rem;
+    text-align: center;
+}
+
+.hardware-mini-stats strong {
+    display: block;
+    color: var(--boq-text);
+    font-size: 1.1rem;
+}
+
+.hardware-mini-stats span {
+    color: var(--boq-text-muted);
+    font-size: .62rem;
+}
+
+.hardware-command-output {
+    margin-top: 1rem;
+}
+
+.hardware-command-output pre {
+    max-height: 230px;
+    overflow: auto;
+    border: 1px solid var(--boq-border);
+    border-radius: .6rem;
+    background: #0f172a;
+    padding: .7rem;
+    color: #e2e8f0;
+    font-size: .68rem;
+    line-height: 1.1rem;
+    white-space: pre-wrap;
+}
+
+.hardware-category-header {
+    margin: 0;
+    padding: 1rem;
+    border-bottom: 1px solid var(--boq-border);
+}
+
+@media (max-width: 1000px) {
+    .hardware-admin-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .hardware-admin-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hardware-card-head,
+    .hardware-category-header {
+        flex-direction: column;
+    }
+}

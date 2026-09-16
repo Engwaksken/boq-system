@@ -1,129 +1,327 @@
-<div class="min-h-screen bg-slate-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-slate-900">Hardware Price Scanner</h1>
-            <p class="mt-2 text-slate-600">Scan and import hardware prices from external sources.</p>
+<div class="boq-page-stack">
+
+    <div class="boq-page-header">
+        <div>
+            <h1 class="boq-page-title">
+                <i class="fas fa-magnifying-glass-dollar"></i>
+                Hardware Price Scanner
+            </h1>
+            <p class="boq-page-subtitle">
+                Manage hardware categories, scan current prices, import CSV files and run the scheduled daily fetch.
+            </p>
         </div>
 
-        <div class="grid gap-6 lg:grid-cols-2">
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <h2 class="text-xl font-semibold text-slate-900 mb-4">AI Price Scanner</h2>
-                <p class="text-slate-600 mb-6">Scan current market prices for a specific category and location using AI.</p>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <button type="button" wire:click="createCategory" class="boq-btn-secondary">
+                <i class="fas fa-folder-plus"></i>
+                Add Category
+            </button>
 
-                <form wire:submit.prevent="scanPrices" class="space-y-4">
-                    <div class="grid gap-4 sm:grid-cols-2">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Category</label>
-                            <select wire:model="scanForm.category" class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                                <option value="">Select category...</option>
-                                @foreach($categories as $cat)
-                                    <option value="{{ $cat }}">{{ $cat }}</option>
-                                @endforeach
-                            </select>
-                            @error('scanForm.category') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Location</label>
-                            <input type="text" wire:model="scanForm.location" class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required placeholder="e.g., Kampala, Nairobi">
-                            @error('scanForm.location') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Items to Fetch</label>
-                            <input type="number" wire:model="scanForm.limit" min="1" max="50" class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                            @error('scanForm.limit') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-
-                    <div class="pt-4 border-t border-slate-200">
-                        <button wire:submit.prevent="scanPrices" wire:loading.attr="disabled" type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition">
-                            <svg wire:loading.class="animate-spin" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
-                            <span wire:loading.remove>Scan Prices</span>
-                            <span wire:loading>Scanning...</span>
-                        </button>
-                    </div>
-                </form>
-
-                @if($scanResults)
-                    <div class="mt-6">
-                        <h3 class="text-lg font-semibold text-slate-900 mb-3">Scan Results ({{ count($scanResults) }})</h3>
-                        <div class="max-h-64 overflow-y-auto bg-slate-50 rounded-xl p-4">
-                            <table class="min-w-full text-sm">
-                                <thead class="text-left text-slate-500">
-                                    <tr>
-                                        <th class="pb-2">Item</th>
-                                        <th class="pb-2 text-right">Price</th>
-                                        <th class="pb-2">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($scanResults as $result)
-                                        <tr class="border-t border-slate-200">
-                                            <td class="py-2 font-medium">{{ $result['item'] }}</td>
-                                            <td class="py-2 text-right font-mono">{{ number_format($result['price'], 2) }}</td>
-                                            <td class="py-2">
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $result['status'] === 'created' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800' }}">
-                                                    {{ ucfirst($result['status']) }}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                @endif
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <h2 class="text-xl font-semibold text-slate-900 mb-4">CSV Import</h2>
-                <p class="text-slate-600 mb-6">Import hardware prices from a CSV file.</p>
-
-                <form wire:submit.prevent="importCsv" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">CSV File</label>
-                        <input type="file" wire:model="csvFile" accept=".csv,.txt" class="mt-1 w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" required>
-                        @error('csvFile') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                    </div>
-
-                    <p class="text-sm text-slate-500">Required columns: item_name, category, unit, price, currency, supplier. Optional: brand, specification, location, source_url, source_reference.</p>
-
-                    <button wire:submit.prevent="importCsv" wire:loading.attr="disabled" type="submit" class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition">
-                        <svg wire:loading.class="animate-spin" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
-                        <span wire:loading.remove>Import CSV</span>
-                        <span wire:loading>Importing...</span>
-                    </button>
-                </form>
-
-                @if($importResults)
-                    <div class="mt-6 grid gap-4 sm:grid-cols-3">
-                        <div class="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
-                            <p class="text-3xl font-bold text-emerald-800">{{ $importResults['created'] }}</p>
-                            <p class="text-sm text-emerald-700">Created</p>
-                        </div>
-                        <div class="bg-indigo-50 rounded-xl p-4 border border-indigo-200">
-                            <p class="text-3xl font-bold text-indigo-800">{{ $importResults['updated'] }}</p>
-                            <p class="text-sm text-indigo-700">Updated</p>
-                        </div>
-                        <div class="bg-red-50 rounded-xl p-4 border border-red-200">
-                            <p class="text-3xl font-bold text-red-800">{{ $importResults['errors'] }}</p>
-                            <p class="text-sm text-red-700">Errors</p>
-                        </div>
-                    </div>
-                @endif
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <h2 class="text-xl font-semibold text-slate-900 mb-4">Scheduled Fetch</h2>
-                <p class="text-slate-600 mb-4">Run the daily hardware price fetch command manually.</p>
-
-                <button wire:click="runFetchCommand" wire:loading.attr="disabled" type="button" class="inline-flex items-center px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-300 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition">
-                    <svg wire:loading.class="animate-spin" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
-                    <span wire:loading.remove>Run Daily Fetch</span>
-                    <span wire:loading>Running...</span>
-                </button>
-            </div>
+            <button type="button" wire:click="downloadCsvTemplate" class="boq-btn-secondary">
+                <i class="fas fa-file-arrow-down"></i>
+                CSV Template
+            </button>
         </div>
     </div>
+
+    @include('livewire.admin._tabs')
+
+    @if(session()->has('modal_success'))
+        <div class="boq-flash">
+            <i class="fas fa-circle-check"></i>
+            {{ session('modal_success') }}
+        </div>
+    @endif
+
+    @if(session()->has('modal_error'))
+        <div class="boq-flash boq-flash-error">
+            <i class="fas fa-circle-xmark"></i>
+            {{ session('modal_error') }}
+        </div>
+    @endif
+
+    <div class="boq-stats-grid">
+        <div class="boq-stat-card boq-stat-green">
+            <div><p class="boq-stat-label">Categories</p><p class="boq-stat-value">{{ $stats['categories'] }}</p></div>
+            <span class="boq-stat-icon"><i class="fas fa-folder-tree"></i></span>
+        </div>
+        <div class="boq-stat-card boq-stat-blue">
+            <div><p class="boq-stat-label">Active Categories</p><p class="boq-stat-value">{{ $stats['active_categories'] }}</p></div>
+            <span class="boq-stat-icon"><i class="fas fa-folder-open"></i></span>
+        </div>
+        <div class="boq-stat-card boq-stat-amber">
+            <div><p class="boq-stat-label">Hardware Prices</p><p class="boq-stat-value">{{ $stats['prices'] }}</p></div>
+            <span class="boq-stat-icon"><i class="fas fa-tags"></i></span>
+        </div>
+        <div class="boq-stat-card boq-stat-purple">
+            <div><p class="boq-stat-label">Active Prices</p><p class="boq-stat-value">{{ $stats['active_prices'] }}</p></div>
+            <span class="boq-stat-icon"><i class="fas fa-circle-check"></i></span>
+        </div>
+    </div>
+
+    {{-- Scanner / CSV / Daily Fetch --}}
+    <div class="hardware-admin-grid">
+
+        <section class="boq-panel hardware-admin-card">
+            <div class="hardware-card-head">
+                <div>
+                    <h2><i class="fas fa-robot"></i> AI Price Scanner</h2>
+                    <p>Fetch current market estimates through the configured default AI provider.</p>
+                </div>
+            </div>
+
+            <form wire:submit.prevent="scanPrices">
+                <div class="boq-form-grid">
+                    <div>
+                        <label class="boq-field-label">Category</label>
+                        <select wire:model="scanForm.category" class="boq-field">
+                            <option value="">Select category...</option>
+                            @foreach($activeCategories as $category)
+                                <option value="{{ $category->name }}">{{ $category->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('scanForm.category')<div class="boq-field-error">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div>
+                        <label class="boq-field-label">Location</label>
+                        <input wire:model="scanForm.location" class="boq-field" placeholder="e.g. Kampala">
+                        @error('scanForm.location')<div class="boq-field-error">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div>
+                        <label class="boq-field-label">Items to Fetch</label>
+                        <input type="number" min="1" max="50" wire:model="scanForm.limit" class="boq-field">
+                        @error('scanForm.limit')<div class="boq-field-error">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+
+                <div class="hardware-card-actions">
+                    <button type="submit" wire:loading.attr="disabled" wire:target="scanPrices" class="boq-btn-primary">
+                        <i wire:loading.remove wire:target="scanPrices" class="fas fa-magnifying-glass-dollar"></i>
+                        <i wire:loading wire:target="scanPrices" class="fas fa-spinner fa-spin"></i>
+                        <span wire:loading.remove wire:target="scanPrices">Scan Prices</span>
+                        <span wire:loading wire:target="scanPrices">Scanning...</span>
+                    </button>
+                </div>
+            </form>
+
+            @if($scanResults)
+                <div class="hardware-result-block">
+                    <h3>Scan Results ({{ count($scanResults) }})</h3>
+                    <div class="boq-table-wrapper">
+                        <table class="boq-table">
+                            <thead><tr><th>Item</th><th>Supplier</th><th class="text-right">Price</th><th>Status</th></tr></thead>
+                            <tbody>
+                            @foreach($scanResults as $result)
+                                <tr>
+                                    <td>{{ $result['item'] }}</td>
+                                    <td>{{ $result['supplier'] ?: '—' }}</td>
+                                    <td class="text-right">{{ $result['currency'] }} {{ number_format($result['price'], 0) }}</td>
+                                    <td><span class="boq-badge {{ $result['status'] === 'created' ? 'boq-badge-success' : 'boq-badge-info' }}">{{ ucfirst($result['status']) }}</span></td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+        </section>
+
+        <section class="boq-panel hardware-admin-card">
+            <div class="hardware-card-head">
+                <div>
+                    <h2><i class="fas fa-file-csv"></i> CSV Import</h2>
+                    <p>Import hardware prices using the standard template.</p>
+                </div>
+
+                <button type="button" wire:click="downloadCsvTemplate" class="boq-btn-secondary">
+                    <i class="fas fa-download"></i>
+                    Download Template
+                </button>
+            </div>
+
+            <form wire:submit.prevent="importCsv">
+                <div>
+                    <label class="boq-field-label">CSV File</label>
+                    <input type="file" wire:model="csvFile" accept=".csv,.txt">
+                    @error('csvFile')<div class="boq-field-error">{{ $message }}</div>@enderror
+                </div>
+
+                <p class="hardware-help">
+                    Required: item_name, category, unit, price, currency, supplier.
+                    Optional: brand, specification, location, source_url, source_reference.
+                </p>
+
+                <div class="hardware-card-actions">
+                    <button type="submit" wire:loading.attr="disabled" wire:target="importCsv" class="boq-btn-primary">
+                        <i wire:loading.remove wire:target="importCsv" class="fas fa-file-import"></i>
+                        <i wire:loading wire:target="importCsv" class="fas fa-spinner fa-spin"></i>
+                        <span wire:loading.remove wire:target="importCsv">Import CSV</span>
+                        <span wire:loading wire:target="importCsv">Importing...</span>
+                    </button>
+                </div>
+            </form>
+
+            @if($importResults)
+                <div class="hardware-mini-stats">
+                    <div><strong>{{ $importResults['created'] }}</strong><span>Created</span></div>
+                    <div><strong>{{ $importResults['updated'] }}</strong><span>Updated</span></div>
+                    <div><strong>{{ $importResults['errors'] }}</strong><span>Errors</span></div>
+                </div>
+            @endif
+        </section>
+
+        <section class="boq-panel hardware-admin-card">
+            <div class="hardware-card-head">
+                <div>
+                    <h2><i class="fas fa-clock-rotate-left"></i> Scheduled Fetch</h2>
+                    <p>Manually execute the same command used by the daily scheduler.</p>
+                </div>
+            </div>
+
+            <p class="hardware-help">
+                Location: <strong>{{ $scanForm['location'] ?: 'Kampala' }}</strong>.
+                The command fetches a small batch for every active category.
+            </p>
+
+            <div class="hardware-card-actions">
+                <button type="button" wire:click="runFetchCommand" wire:loading.attr="disabled" wire:target="runFetchCommand" class="boq-btn-primary">
+                    <i wire:loading.remove wire:target="runFetchCommand" class="fas fa-arrows-rotate"></i>
+                    <i wire:loading wire:target="runFetchCommand" class="fas fa-spinner fa-spin"></i>
+                    <span wire:loading.remove wire:target="runFetchCommand">Run Daily Fetch</span>
+                    <span wire:loading wire:target="runFetchCommand">Running...</span>
+                </button>
+            </div>
+
+            @if($dailyFetchResults)
+                <div class="hardware-command-output">
+                    <div class="boq-field-label">Command Output</div>
+                    <pre>{{ $dailyFetchResults['output'] ?: 'No command output.' }}</pre>
+                </div>
+            @endif
+        </section>
+    </div>
+
+    {{-- Categories --}}
+    <section class="boq-panel">
+        <div class="hardware-category-header">
+            <div>
+                <h2><i class="fas fa-folder-tree"></i> Hardware Categories</h2>
+                <p>Add categories and the default items the AI scanner should request.</p>
+            </div>
+
+            <button type="button" wire:click="createCategory" class="boq-btn-primary">
+                <i class="fas fa-plus"></i>
+                Add Category
+            </button>
+        </div>
+
+        <div class="boq-table-wrapper">
+            <table class="boq-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Default Items</th>
+                        <th>Prices</th>
+                        <th>Status</th>
+                        <th>Order</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @forelse($categories as $category)
+                    <tr wire:key="hardware-category-{{ $category->id }}">
+                        <td>
+                            <div class="boq-table-title">{{ $category->name }}</div>
+                            <div class="boq-table-subtitle">{{ $category->description ?: 'No description' }}</div>
+                        </td>
+                        <td>{{ count($category->default_items ?? []) }}</td>
+                        <td>{{ $category->hardwarePrices()->count() }}</td>
+                        <td><span class="boq-badge {{ $category->is_active ? 'boq-badge-success' : '' }}">{{ $category->is_active ? 'Active' : 'Inactive' }}</span></td>
+                        <td>{{ $category->sort_order }}</td>
+                        <td class="text-right">
+                            <div class="boq-table-actions">
+                                <button type="button" wire:click="editCategory({{ $category->id }})" class="boq-icon-btn" title="Edit"><i class="fas fa-pen"></i></button>
+                                <button type="button" wire:click="toggleCategory({{ $category->id }})" class="boq-icon-btn" title="{{ $category->is_active ? 'Deactivate' : 'Activate' }}"><i class="fas {{ $category->is_active ? 'fa-toggle-on' : 'fa-toggle-off' }}"></i></button>
+                                <button type="button" wire:click="confirmDeleteCategory({{ $category->id }})" class="boq-icon-btn boq-icon-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="6" class="boq-empty-table"><i class="fas fa-folder-open"></i><span>No hardware categories configured.</span></td></tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    {{-- Category Add/Edit Modal --}}
+    @if($showCategoryModal)
+        <div class="boq-modal-backdrop" wire:key="hardware-category-modal">
+            <div class="boq-modal boq-modal-lg">
+                <div class="boq-modal-head">
+                    <div>
+                        <h2>{{ $editingCategoryId ? 'Edit Hardware Category' : 'Add Hardware Category' }}</h2>
+                        <p class="boq-table-subtitle">Default items are comma-separated and used by AI scanning.</p>
+                    </div>
+                    <button type="button" wire:click="cancelCategory" class="boq-modal-close"><i class="fas fa-xmark"></i></button>
+                </div>
+
+                <form wire:submit.prevent="saveCategory">
+                    <div class="boq-modal-body">
+                        <div class="boq-form-grid">
+                            <div>
+                                <label class="boq-field-label">Category Name</label>
+                                <input wire:model="categoryForm.name" class="boq-field" placeholder="e.g. Doors & Windows">
+                                @error('categoryForm.name')<div class="boq-field-error">{{ $message }}</div>@enderror
+                            </div>
+
+                            <div>
+                                <label class="boq-field-label">Sort Order</label>
+                                <input type="number" min="0" wire:model="categoryForm.sort_order" class="boq-field">
+                            </div>
+
+                            <div class="boq-form-span-2">
+                                <label class="boq-field-label">Description</label>
+                                <textarea wire:model="categoryForm.description" class="boq-field boq-textarea" placeholder="Short description"></textarea>
+                            </div>
+
+                            <div class="boq-form-span-2">
+                                <label class="boq-field-label">Default Items</label>
+                                <textarea wire:model="categoryForm.default_items" class="boq-field boq-textarea" placeholder="Door frames, Timber doors, Aluminium windows"></textarea>
+                            </div>
+
+                            <div class="boq-form-span-2 boq-check-row">
+                                <label><input type="checkbox" wire:model="categoryForm.is_active"> Active category</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="boq-modal-foot">
+                        <button type="button" wire:click="cancelCategory" class="boq-btn-secondary">Cancel</button>
+                        <button class="boq-btn-primary"><i class="fas fa-save"></i> Save Category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- Delete Category Modal --}}
+    @if($showDeleteCategoryModal)
+        <div class="boq-modal-backdrop" wire:key="hardware-category-delete-modal">
+            <div class="boq-modal boq-modal-sm">
+                <div class="boq-modal-head"><h2>Delete hardware category?</h2></div>
+                <div class="boq-modal-body">
+                    <p class="boq-modal-message">
+                        The category can only be deleted when no hardware prices use it. Otherwise, deactivate it.
+                    </p>
+                </div>
+                <div class="boq-modal-foot">
+                    <button type="button" wire:click="$set('showDeleteCategoryModal', false)" class="boq-btn-secondary">Cancel</button>
+                    <button type="button" wire:click="deleteCategory" class="boq-btn-danger"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

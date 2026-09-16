@@ -2,6 +2,15 @@
 
 use App\Http\Controllers\Api\BoqController;
 use App\Http\Controllers\ProfileController;
+use App\Livewire\Admin\AiProviders;
+use App\Livewire\Admin\HardwareScanner as AdminHardwareScanner;
+use App\Livewire\Admin\Index as AdminIndex;
+use App\Livewire\Admin\PaymentGateways;
+use App\Livewire\Admin\PlansManager;
+use App\Livewire\Admin\RolesManager;
+use App\Livewire\Admin\SiteSettings;
+use App\Livewire\Admin\SubscriptionsManager;
+use App\Livewire\Admin\UsersManager;
 use App\Livewire\Boqs\Create as BoqsCreate;
 use App\Livewire\Boqs\Index as BoqsIndex;
 use App\Livewire\Boqs\Show as BoqsShow;
@@ -18,25 +27,46 @@ use App\Livewire\Projects\Index as ProjectsIndex;
 use App\Livewire\Projects\Show as ProjectsShow;
 use App\Livewire\Subscriptions\Index as SubscriptionsIndex;
 use App\Livewire\System\McpActivity;
-use App\Livewire\Admin\Index as AdminIndex;
-use App\Livewire\Admin\HardwareScanner as HardwareScanner;
-use App\Livewire\Admin\SubscriptionsManager as SubscriptionsManager;
-use App\Livewire\Admin\SiteSettings;
-use App\Livewire\Admin\PaymentGateways;
-use App\Livewire\Admin\PlansManager;
-use App\Livewire\Admin\UsersManager;
-use App\Livewire\Admin\RolesManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Root
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/', function () {
-    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
+    return auth()->check()
+        ? redirect()->route('dashboard')
+        : redirect()->route('login');
 });
 
-Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', Dashboard::class)->name('dashboard');
 
-    // Projects
+/*
+|--------------------------------------------------------------------------
+| Authenticated Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->group(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/dashboard', Dashboard::class)
+        ->name('dashboard');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Projects
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/projects', ProjectsIndex::class)
         ->middleware('permission:projects.view')
         ->name('projects.index');
@@ -53,56 +83,227 @@ Route::middleware('auth')->group(function () {
         ->middleware('permission:projects.edit')
         ->name('projects.edit');
 
-    // BOQs
-    Route::get('/boqs', BoqsIndex::class)->name('boqs.index');
 
-    Route::get('/boqs/create', BoqsCreate::class)->name('boqs.create');
+    /*
+    |--------------------------------------------------------------------------
+    | BOQs
+    |--------------------------------------------------------------------------
+    */
 
-    Route::get('/boqs/{boq}', BoqsShow::class)->name('boqs.show');
+    Route::get('/boqs', BoqsIndex::class)
+        ->name('boqs.index');
 
-    Route::get('/boqs/{boq}/pdf', function (Request $request, \App\Models\Boq $boq) {
-        $apiRequest = Request::create('/api/v1/boqs/'.$boq->id.'/pdf', 'GET');
-        $apiRequest->setUserResolver(fn () => $request->user());
+    Route::get('/boqs/create', BoqsCreate::class)
+        ->name('boqs.create');
 
-        return app(BoqController::class)->pdf($apiRequest, $boq);
-    })->name('boqs.pdf');
+    Route::get('/boqs/{boq}', BoqsShow::class)
+        ->name('boqs.show');
 
-    // Hardware Prices
-    Route::middleware('permission:hardware-prices.view')->group(function () {
-        Route::get('/hardware-prices', HardwarePricesIndex::class)->name('hardware-prices.index');
+    Route::get('/boqs/{boq}/pdf', function (
+        Request $request,
+        \App\Models\Boq $boq
+    ) {
+        $apiRequest = Request::create(
+            '/api/v1/boqs/'.$boq->id.'/pdf',
+            'GET'
+        );
 
-        Route::get('/hardware-prices/compare', HardwarePricesCompare::class)->name('hardware-prices.compare');
+        $apiRequest->setUserResolver(
+            fn () => $request->user()
+        );
 
-        Route::get('/hardware-prices/recommendations', HardwarePricesRecommendations::class)->name('hardware-prices.recommendations');
+        return app(BoqController::class)->pdf(
+            $apiRequest,
+            $boq
+        );
+    })
+        ->name('boqs.pdf');
 
-        Route::get('/hardware-prices/{hardwarePrice}', HardwarePricesShow::class)->name('hardware-prices.show');
-    });
 
-    // Plans & Subscriptions
-    Route::get('/plans', PlansIndex::class)->name('plans.index');
+    /*
+    |--------------------------------------------------------------------------
+    | Hardware Prices
+    |--------------------------------------------------------------------------
+    */
 
-    Route::get('/subscriptions', SubscriptionsIndex::class)->name('subscriptions.index');
+    Route::middleware('permission:hardware-prices.view')
+        ->group(function () {
+
+            Route::get(
+                '/hardware-prices',
+                HardwarePricesIndex::class
+            )
+                ->name('hardware-prices.index');
+
+            Route::get(
+                '/hardware-prices/compare',
+                HardwarePricesCompare::class
+            )
+                ->name('hardware-prices.compare');
+
+            Route::get(
+                '/hardware-prices/recommendations',
+                HardwarePricesRecommendations::class
+            )
+                ->name('hardware-prices.recommendations');
+
+            Route::get(
+                '/hardware-prices/{hardwarePrice}',
+                HardwarePricesShow::class
+            )
+                ->name('hardware-prices.show');
+
+        });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Plans & Subscriptions
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/plans', PlansIndex::class)
+        ->name('plans.index');
+
+    Route::get('/subscriptions', SubscriptionsIndex::class)
+        ->name('subscriptions.index');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | AI / MCP Activity
+    |--------------------------------------------------------------------------
+    */
 
     Route::get('/system/ai-mcp/activity', McpActivity::class)
         ->middleware('role:admin,manager,super-admin')
         ->name('system.mcp-activity');
 
-    // Profile
-    Route::get('/profile', ProfileIndex::class)->name('profile.edit');
-    Route::delete('/profile', [ProfileController::class, 'delete'])->name('profile.delete');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
-    // Super Admin
-    Route::middleware('role:super-admin')->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/', AdminIndex::class)->name('index');
-        Route::get('/hardware-scanner', HardwareScanner::class)->name('hardware-scanner');
-        Route::get('/subscriptions', SubscriptionsManager::class)->name('subscriptions');
-        Route::get('/settings', SiteSettings::class)->name('settings');
-        Route::get('/payment-gateways', PaymentGateways::class)->name('payment-gateways');
-        Route::get('/plans', PlansManager::class)->name('plans');
-        Route::get('/users', UsersManager::class)->name('users');
-        Route::get('/roles-permissions', RolesManager::class)->name('roles-permissions');
-    });
+    /*
+    |--------------------------------------------------------------------------
+    | Profile
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/profile', ProfileIndex::class)
+        ->name('profile.edit');
+
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
+
+    Route::delete('/profile', [ProfileController::class, 'delete'])
+        ->name('profile.delete');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Super Admin
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware('role:super-admin')
+        ->prefix('admin')
+        ->name('admin.')
+        ->group(function () {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Admin Overview
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get('/', AdminIndex::class)
+                ->name('index');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Plans
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get('/plans', PlansManager::class)
+                ->name('plans');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Subscriptions
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get('/subscriptions', SubscriptionsManager::class)
+                ->name('subscriptions');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | AI API Providers
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get('/ai-providers', AiProviders::class)
+                ->name('ai-providers');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Payment Gateways
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get('/payment-gateways', PaymentGateways::class)
+                ->name('payment-gateways');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Users
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get('/users', UsersManager::class)
+                ->name('users');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Roles & Permissions
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get('/roles-permissions', RolesManager::class)
+                ->name('roles-permissions');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Hardware Scanner
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get('/hardware-scanner', AdminHardwareScanner::class)
+                ->name('hardware-scanner');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Settings
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get('/settings', SiteSettings::class)
+                ->name('settings');
+
+        });
 });
+
+
+/*
+|--------------------------------------------------------------------------
+| Authentication Routes
+|--------------------------------------------------------------------------
+*/
 
 require __DIR__.'/auth.php';

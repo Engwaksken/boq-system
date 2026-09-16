@@ -1,62 +1,138 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use App\Models\HardwareCategory;
 use App\Models\HardwarePrice;
 use App\Models\PriceHistory;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Collection;
+use RuntimeException;
+use Throwable;
 
 class HardwarePriceFetchingService
 {
-    private const UGANDA_HARDWARE_CATEGORIES = [
-        'Cement' => ['Portland Cement', 'Waterproof Cement', 'White Cement'],
-        'Steel' => ['TMT Bars', 'Binding Wire', 'Steel Mesh', 'Steel Plates'],
-        'Aggregates' => ['Sand', 'Gravel', 'Crushed Stone', 'Murram'],
-        'Bricks & Blocks' => ['Clay Bricks', 'Concrete Blocks', 'Interlocking Blocks'],
-        'Roofing' => ['Iron Sheets', 'Roofing Tiles', 'Ridges', 'Valleys', 'Gutters'],
-        'Paint' => ['Emulsion Paint', 'Oil Paint', 'Weather Guard', 'Primer', 'Thinner'],
-        'Plumbing' => ['PVC Pipes', 'HDPE Pipes', 'Fittings', 'Valves', 'Taps', 'Water Tanks'],
-        'Electrical' => ['Cables', 'Conduits', 'Switches', 'Sockets', 'DB Boxes', 'Bulbs'],
-        'Timber' => ['Treated Timber', 'Plywood', 'MDF', 'Blockboard', 'Cypress', 'Pine'],
-        'Tiles' => ['Ceramic Tiles', 'Porcelain Tiles', 'Floor Tiles', 'Wall Tiles'],
-        'Adhesives' => ['Tile Adhesive', 'Grout', 'Silicone', 'Construction Adhesive'],
-        'Tools' => ['Cement Mixers', 'Vibrators', 'Trowels', 'Levels', 'Measuring Tools'],
-        'Safety' => ['Helmets', 'Boots', 'Gloves', 'Reflective Vests', 'Safety Nets'],
-    ];
+    public function __construct(
+        private readonly AiProviderService $ai
+    ) {
+    }
 
-    private const UGANDA_SUPPLIERS = [
-        'Hardware World Uganda',
-        'Kampala Hardware',
-        'Uganda Building Supplies',
-        'Mukwano Hardware',
-        'Steel & Tube Industries',
-        'Hima Cement',
-        'Tororo Cement',
-        'Rwenzori Cement',
-        'National Cement',
-        'Afrisam Cement',
-        'Simba Cement',
-        'Crown Paints',
-        'Sadolin Paints',
-        'Kansai Plascon',
-        'Berger Paints',
-        'Bamburi Cement',
-        'Savannah Hardware',
-        'Quality Hardware',
-        'Prime Hardware',
-        'Buildmart Uganda',
-    ];
+    /**
+     * Fetch a small number of current market prices for one category.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function fetchPricesForCategory(
+        string $category,
+        string $location,
+        int $limit = 10,
+        ?int $organisationId = null
+    ): array {
+        $categoryRecord = HardwareCategory::query()
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($category))])
+            ->first();
 
-    private const UGANDA_LOCATIONS = [
-        'Kampala', 'Wakiso', 'Mukono', 'Entebbe', 'Jinja', 'Mbale', 'Mbarara',
-        'Gulu', 'Arua', 'Fort Portal', 'Masaka', 'Lira', 'Soroti', 'Moroto',
-        'Kabale', 'Kasese', 'Hoima', 'Masindi', 'Kiboga', 'Luweero',
-    ];
+        $items = $categoryRecord?->default_items ?? [];
 
-    public function fetchDailyPrices(): array
-    {
+        if (! is_array($items) || $items === []) {
+            $items = [$category];
+        }
+
+        $items = array_values(array_unique(array_filter(array_map(
+            static fn ($item) => trim((string) $item),
+            $items
+        ))));
+
+        $limit = max(1, min(50, $limit));
+
+        // Repeat generic category only if there are fewer configured items.
+        while (count($items) < $limit) {
+            $items[] = $category.' item '.(count($items) + 1);
+        }
+
+        $items = array_slice($items, 0, $limit);
+
+        $results = [];
+
+        foreach ($items as $itemName) {
+            try {
+                $prompt = $this->buildPrompt(
+                    itemName: $itemName,
+                    category: $categoryRecord?->name ?? $category,
+                    location: $location
+                );
+
+                $response = $this->ai->json(
+                    prompt: $prompt,
+                    operation: 'hardware_price_scan',
+                    organisationId: $organisationId,
+                    context: [
+                        'metadata' => [
+                            'category' => $categoryRecord?->name ?? $category,
+                            'location' => $location,
+                        ],
+                    ]
+                );
+
+                $price = (float) ($response['price'] ?? 0);
+
+                if ($price <= 0) {
+                    throw new RuntimeException('AI provider returned an invalid price.');
+                }
+
+                $results[] = [
+                    'hardware_category_id' => $categoryRecord?->id,
+                    'item_name' => trim((string) ($response['item_name'] ?? $itemName)),
+                    'brand' => $this->nullableString($response['brand'] ?? null),
+                    'category' => $categoryRecord?->name ?? $category,
+                    'specification' => $this->nullableString($response['specification'] ?? null),
+                    'unit' => trim((string) ($response['unit'] ?? 'piece')),
+                    'price' => $price,
+                    'currency' => strtoupper(trim((string) ($response['currency'] ?? 'UGX'))),
+                    'supplier' => trim((string) ($response['supplier'] ?? 'Uganda market estimate')),
+                    'location' => trim((string) ($response['location'] ?? $location)),
+                    'source_url' => $this->nullableString($response['source_url'] ?? null),
+                    'source_reference' => $this->nullableString(
+                        $response['source_reference'] ?? 'AI-assisted Uganda market estimate'
+                    ),
+                    'fetched_at' => now(),
+                    'is_active' => true,
+                    'ai_metadata' => [
+                        'confidence' => $response['confidence'] ?? null,
+                        'notes' => $response['notes'] ?? null,
+                        'source' => 'configured_ai_provider',
+                    ],
+                ];
+            } catch (Throwable $exception) {
+                Log::warning('Hardware price scan item failed', [
+                    'category' => $category,
+                    'item' => $itemName,
+                    'location' => $location,
+                    'error' => $exception->getMessage(),
+                ]);
+            }
+        }
+
+        if ($results === []) {
+            throw new RuntimeException(
+                'No hardware prices could be fetched. Check the default AI provider configuration and connection.'
+            );
+        }
+
+        return $results;
+    }
+
+    /**
+     * Fetch and store daily prices for all active categories.
+     *
+     * @return array{fetched:int,created:int,updated:int,errors:array<int,string>}
+     */
+    public function fetchDailyPrices(
+        int $organisationId,
+        string $location = 'Kampala',
+        int $limitPerCategory = 3
+    ): array {
         $results = [
             'fetched' => 0,
             'created' => 0,
@@ -64,248 +140,145 @@ class HardwarePriceFetchingService
             'errors' => [],
         ];
 
-        foreach (self::UGANDA_HARDWARE_CATEGORIES as $category => $items) {
-            foreach ($items as $itemName) {
-                foreach (self::UGANDA_SUPPLIERS as $supplier) {
-                    $location = self::UGANDA_LOCATIONS[array_rand(self::UGANDA_LOCATIONS)];
-                    
-                    try {
-                        $priceData = $this->fetchPriceForItem($itemName, $category, $supplier, $location);
-                        
-                        if ($priceData) {
-                            $result = $this->storePrice($priceData);
-                            $results['fetched']++;
-                            if ($result === 'created') {
-                                $results['created']++;
-                            } else {
-                                $results['updated']++;
-                            }
-                        }
-                    } catch (\Exception $e) {
-                        $results['errors'][] = "{$itemName} - {$supplier}: {$e->getMessage()}";
-                        Log::error("Failed to fetch price for {$itemName} from {$supplier}: {$e->getMessage()}");
+        $categories = HardwareCategory::query()
+            ->active()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        if ($categories->isEmpty()) {
+            $results['errors'][] = 'No active hardware categories are configured.';
+
+            return $results;
+        }
+
+        foreach ($categories as $category) {
+            try {
+                $items = $this->fetchPricesForCategory(
+                    category: $category->name,
+                    location: $location,
+                    limit: $limitPerCategory,
+                    organisationId: $organisationId
+                );
+
+                foreach ($items as $item) {
+                    $status = $this->storePrice(
+                        organisationId: $organisationId,
+                        priceData: $item
+                    );
+
+                    $results['fetched']++;
+
+                    if ($status === 'created') {
+                        $results['created']++;
+                    } else {
+                        $results['updated']++;
                     }
                 }
+            } catch (Throwable $exception) {
+                $results['errors'][] = $category->name.': '.$exception->getMessage();
+
+                Log::error('Daily hardware category fetch failed', [
+                    'organisation_id' => $organisationId,
+                    'category' => $category->name,
+                    'error' => $exception->getMessage(),
+                ]);
             }
         }
 
         return $results;
     }
 
-    private function fetchPriceForItem(string $itemName, string $category, string $supplier, string $location): ?array
-    {
-        $prompt = $this->buildPricePrompt($itemName, $category, $supplier, $location);
-        
-        try {
-            $response = Http::timeout(30)
-                ->withHeaders([
-                    'Authorization' => 'Bearer ' . config('services.gemini.api_key'),
-                    'Content-Type' => 'application/json',
-                ])
-                ->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', [
-                    'contents' => [[
-                        'parts' => [['text' => $prompt]]
-                    ]],
-                    'generationConfig' => [
-                        'temperature' => 0.3,
-                        'maxOutputTokens' => 1024,
-                    ],
-                ]);
-
-            if (!$response->successful()) {
-                return $this->generateMockPrice($itemName, $category, $supplier, $location);
-            }
-
-            $data = $response->json();
-            $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
-            
-            return $this->parsePriceResponse($text, $itemName, $category, $supplier, $location);
-        } catch (\Exception $e) {
-            Log::warning("AI price fetch failed, using mock data: {$e->getMessage()}");
-            return $this->generateMockPrice($itemName, $category, $supplier, $location);
-        }
-    }
-
-    private function buildPricePrompt(string $itemName, string $category, string $supplier, string $location): string
-    {
+    private function buildPrompt(
+        string $itemName,
+        string $category,
+        string $location
+    ): string {
         return <<<PROMPT
-You are a construction material price researcher for Uganda market. Provide current market price for:
+Estimate a current retail construction-material price in Uganda.
+
+Return JSON only in this exact structure:
+{
+  "item_name": "string",
+  "brand": null,
+  "category": "{$category}",
+  "specification": "string or null",
+  "unit": "bag|ton|piece|meter|litre|kg|roll|sheet|box|sqm",
+  "price": 0,
+  "currency": "UGX",
+  "supplier": "supplier or market reference",
+  "location": "{$location}",
+  "source_url": null,
+  "source_reference": "brief source/reference description",
+  "confidence": 0,
+  "notes": "brief note"
+}
 
 Item: {$itemName}
 Category: {$category}
-Supplier: {$supplier}
 Location: {$location}, Uganda
-Currency: UGX (Uganda Shillings)
 
-Return ONLY a valid JSON object with these exact fields:
-{
-  "item_name": "exact item name",
-  "brand": "brand/manufacturer or null",
-  "category": "category",
-  "specification": "specification/grade/size",
-  "unit": "unit of measure (bag, ton, piece, meter, litre, kg, roll, sheet, box)",
-  "price": 123456.78,
-  "currency": "UGX",
-  "supplier": "supplier name",
-  "location": "location in Uganda",
-  "source_reference": "market survey / supplier website / price list date",
-  "confidence": 0.85,
-  "notes": "any relevant notes about price conditions"
-}
-
-Use realistic current Uganda market prices. Price should be numeric only.
+Rules:
+- price must be numeric and greater than zero;
+- currency must be UGX unless there is a compelling reason otherwise;
+- do not claim a named supplier if you cannot support it;
+- reflect current Uganda market context;
+- return JSON only.
 PROMPT;
     }
 
-    private function parsePriceResponse(string $text, string $itemName, string $category, string $supplier, string $location): ?array
-    {
-        $jsonStart = strpos($text, '{');
-        $jsonEnd = strrpos($text, '}');
-        
-        if ($jsonStart === false || $jsonEnd === false) {
-            return null;
-        }
-
-        $json = substr($text, $jsonStart, $jsonEnd - $jsonStart + 1);
-        $data = json_decode($json, true);
-
-        if (!$data || !isset($data['price'])) {
-            return null;
-        }
-
-        return [
-            'item_name' => $data['item_name'] ?? $itemName,
-            'brand' => $data['brand'] ?? null,
-            'category' => $data['category'] ?? $category,
-            'specification' => $data['specification'] ?? null,
-            'unit' => $data['unit'] ?? 'piece',
-            'price' => (float) $data['price'],
-            'currency' => $data['currency'] ?? 'UGX',
-            'supplier' => $data['supplier'] ?? $supplier,
-            'location' => $data['location'] ?? $location,
-            'source_url' => null,
-            'source_reference' => $data['source_reference'] ?? 'AI market survey',
-            'fetched_at' => now(),
-            'ai_metadata' => [
-                'confidence' => $data['confidence'] ?? 0.7,
-                'notes' => $data['notes'] ?? null,
-                'source' => 'gemini_ai',
-            ],
-        ];
-    }
-
-    private function generateMockPrice(string $itemName, string $category, string $supplier, string $location): array
-    {
-        $basePrices = [
-            'Cement' => ['Portland Cement' => 35000, 'Waterproof Cement' => 42000, 'White Cement' => 55000],
-            'Steel' => ['TMT Bars' => 3800000, 'Binding Wire' => 85000, 'Steel Mesh' => 45000, 'Steel Plates' => 280000],
-            'Aggregates' => ['Sand' => 120000, 'Gravel' => 150000, 'Crushed Stone' => 180000, 'Murram' => 80000],
-            'Bricks & Blocks' => ['Clay Bricks' => 800, 'Concrete Blocks' => 2500, 'Interlocking Blocks' => 3200],
-            'Roofing' => ['Iron Sheets' => 45000, 'Roofing Tiles' => 85000, 'Ridges' => 15000, 'Valleys' => 18000, 'Gutters' => 25000],
-            'Paint' => ['Emulsion Paint' => 85000, 'Oil Paint' => 95000, 'Weather Guard' => 120000, 'Primer' => 45000, 'Thinner' => 25000],
-            'Plumbing' => ['PVC Pipes' => 35000, 'HDPE Pipes' => 55000, 'Fittings' => 8000, 'Valves' => 25000, 'Taps' => 35000, 'Water Tanks' => 450000],
-            'Electrical' => ['Cables' => 180000, 'Conduits' => 12000, 'Switches' => 8000, 'Sockets' => 10000, 'DB Boxes' => 45000, 'Bulbs' => 12000],
-            'Timber' => ['Treated Timber' => 4500, 'Plywood' => 85000, 'MDF' => 65000, 'Blockboard' => 75000, 'Cypress' => 5500, 'Pine' => 4000],
-            'Tiles' => ['Ceramic Tiles' => 45000, 'Porcelain Tiles' => 65000, 'Floor Tiles' => 55000, 'Wall Tiles' => 48000],
-            'Adhesives' => ['Tile Adhesive' => 35000, 'Grout' => 18000, 'Silicone' => 25000, 'Construction Adhesive' => 15000],
-            'Tools' => ['Cement Mixers' => 1200000, 'Vibrators' => 850000, 'Trowels' => 15000, 'Levels' => 25000, 'Measuring Tools' => 35000],
-            'Safety' => ['Helmets' => 25000, 'Boots' => 45000, 'Gloves' => 8000, 'Reflective Vests' => 15000, 'Safety Nets' => 85000],
-        ];
-
-        $units = [
-            'Cement' => 'bag',
-            'Steel' => 'ton',
-            'Aggregates' => 'ton',
-            'Bricks & Blocks' => 'piece',
-            'Roofing' => 'sheet',
-            'Paint' => 'litre',
-            'Plumbing' => 'piece',
-            'Electrical' => 'meter',
-            'Timber' => 'meter',
-            'Tiles' => 'sqm',
-            'Adhesives' => 'bag',
-            'Tools' => 'piece',
-            'Safety' => 'piece',
-        ];
-
-        $basePrice = $basePrices[$category][$itemName] ?? 50000;
-        $variation = 0.85 + (mt_rand(0, 30) / 100);
-        $price = round($basePrice * $variation, 2);
-
-        return [
-            'item_name' => $itemName,
-            'brand' => null,
-            'category' => $category,
-            'specification' => 'Standard grade',
-            'unit' => $units[$category] ?? 'piece',
-            'price' => $price,
-            'currency' => 'UGX',
-            'supplier' => $supplier,
-            'location' => $location,
-            'source_url' => null,
-            'source_reference' => 'Mock market data',
-            'fetched_at' => now(),
-            'ai_metadata' => [
-                'confidence' => 0.6,
-                'notes' => 'Generated mock price for development',
-                'source' => 'mock_data',
-            ],
-        ];
-    }
-
-    private function storePrice(array $priceData): string
-    {
-        $existing = HardwarePrice::where('organisation_id', auth()->id() ? auth()->user()->organisation_id : 1)
+    private function storePrice(
+        int $organisationId,
+        array $priceData
+    ): string {
+        $existing = HardwarePrice::query()
+            ->where('organisation_id', $organisationId)
             ->where('item_name', $priceData['item_name'])
-            ->where('brand', $priceData['brand'])
             ->where('category', $priceData['category'])
             ->where('supplier', $priceData['supplier'])
             ->where('location', $priceData['location'])
             ->first();
 
-        $orgId = auth()->id() ? auth()->user()->organisation_id : 1;
-
         if ($existing) {
-            if ($existing->price != $priceData['price']) {
+            if ((float) $existing->price !== (float) $priceData['price']) {
                 PriceHistory::create([
-                    'organisation_id' => $orgId,
+                    'organisation_id' => $organisationId,
                     'hardware_price_id' => $existing->id,
                     'price' => $existing->price,
                     'currency' => $existing->currency,
                     'supplier' => $existing->supplier,
                     'location' => $existing->location,
                     'source_url' => $existing->source_url,
-                    'recorded_at' => $existing->fetched_at,
+                    'recorded_at' => $existing->fetched_at ?? now(),
                 ]);
-
-                $existing->update(array_merge($priceData, ['organisation_id' => $orgId]));
-            } else {
-                $existing->update(['fetched_at' => $priceData['fetched_at'], 'ai_metadata' => $priceData['ai_metadata']]);
             }
+
+            $existing->update(array_merge($priceData, [
+                'organisation_id' => $organisationId,
+                'fetched_at' => now(),
+                'is_active' => true,
+            ]));
+
             return 'updated';
-        } else {
-            HardwarePrice::create(array_merge($priceData, ['organisation_id' => $orgId]));
-            return 'created';
         }
+
+        HardwarePrice::create(array_merge($priceData, [
+            'organisation_id' => $organisationId,
+            'fetched_at' => now(),
+            'is_active' => true,
+        ]));
+
+        return 'created';
     }
 
-    public function getCategories(): array
+    private function nullableString(mixed $value): ?string
     {
-        return array_keys(self::UGANDA_HARDWARE_CATEGORIES);
-    }
+        if ($value === null) {
+            return null;
+        }
 
-    public function getItemsByCategory(string $category): array
-    {
-        return self::UGANDA_HARDWARE_CATEGORIES[$category] ?? [];
-    }
+        $value = trim((string) $value);
 
-    public function getSuppliers(): array
-    {
-        return self::UGANDA_SUPPLIERS;
-    }
-
-    public function getLocations(): array
-    {
-        return self::UGANDA_LOCATIONS;
+        return $value === '' ? null : $value;
     }
 }
