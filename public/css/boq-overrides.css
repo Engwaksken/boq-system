@@ -1,63 +1,318 @@
 :root {
     --boq-primary: #05645b;
+    --boq-primary-dark: #044f48;
+    --boq-primary-soft: #ecfdf5;
+
     --boq-accent: #d7df21;
+
+    --boq-border: #e2e8f0;
+    --boq-border-dark: #cbd5e1;
+
+    --boq-text: #0f172a;
+    --boq-text-muted: #64748b;
+    --boq-text-soft: #94a3b8;
+
+    --boq-bg: #ffffff;
+    --boq-bg-soft: #f8fafc;
+
+    --boq-danger: #dc2626;
+    --boq-danger-dark: #b91c1c;
+
+    --boq-success: #059669;
+    --boq-warning: #d97706;
+    --boq-info: #2563eb;
+    --boq-purple: #7c3aed;
+
+    --boq-radius-sm: .5rem;
+    --boq-radius: .625rem;
+    --boq-radius-lg: .85rem;
+
+    --boq-shadow:
+        0 1px 2px rgba(15, 23, 42, .04);
+
+    --boq-shadow-modal:
+        0 24px 60px rgba(15, 23, 42, .22);
+
+    --boq-field-height: 40px;
 }
+
+/* =========================================================
+   BASE
+========================================================= */
+
+.boq-panel {
+    border: 1px solid var(--boq-border);
+    border-radius: var(--boq-radius-lg);
+    background: var(--boq-bg);
+    box-shadow: var(--boq-shadow);
+}
+
+.boq-muted {
+    color: var(--boq-text-muted);
+}
+
+.boq-divider {
+    border-top: 1px solid #f1f5f9;
+}
+
+/* =========================================================
+   FORM LABELS
+========================================================= */
 
 .boq-field-label {
     display: block;
-    margin-bottom: .3rem;
+    margin-bottom: .32rem;
     color: #475569;
     font-size: .75rem;
     font-weight: 700;
+    line-height: 1rem;
 }
+
+/* =========================================================
+   FORM CONTROLS
+========================================================= */
 
 .boq-field {
     width: 100%;
-    height: 40px;
-    min-height: 40px;
-    border: 1px solid #cbd5e1;
-    border-radius: .625rem;
+    height: var(--boq-field-height);
+    min-height: var(--boq-field-height);
+
+    border: 1px solid var(--boq-border-dark);
+    border-radius: var(--boq-radius);
+
     background: #fff;
+
     padding: 0 .75rem;
-    color: #0f172a;
+
+    color: var(--boq-text);
+
     font-size: .875rem;
     line-height: 1.25rem;
+
     outline: none;
+
     transition:
         border-color .15s ease,
-        box-shadow .15s ease;
+        box-shadow .15s ease,
+        background-color .15s ease;
 }
 
-select.boq-field {
-    padding-right: 2.25rem;
-}
-
-textarea.boq-field {
-    height: auto;
-    min-height: 88px;
-    padding-top: .6rem;
-    padding-bottom: .6rem;
-}
-
-.boq-field::placeholder {
-    color: #94a3b8;
-    opacity: 1;
+.boq-field:hover {
+    border-color: #94a3b8;
 }
 
 .boq-field:focus {
     border-color: var(--boq-primary);
 
     box-shadow:
-        0 0 0 3px
-        rgba(5, 100, 91, .10);
+        0 0 0 3px rgba(5, 100, 91, .10);
 }
+
+.boq-field:disabled {
+    cursor: not-allowed;
+    background: #f8fafc;
+    color: #94a3b8;
+}
+
+.boq-field::placeholder {
+    color: var(--boq-text-soft);
+    opacity: 1;
+}
+
+/* Select */
+
+select.boq-field {
+    appearance: auto;
+    padding-right: 2.25rem;
+}
+
+/* Textarea */
+
+textarea.boq-field,
+.boq-textarea {
+    height: auto;
+    min-height: 88px;
+
+    padding-top: .6rem;
+    padding-bottom: .6rem;
+
+    resize: vertical;
+}
+
+/* Field errors */
+
+.boq-field-error {
+    margin-top: .3rem;
+
+    color: var(--boq-danger);
+
+    font-size: .75rem;
+    font-weight: 600;
+    line-height: 1rem;
+}
+
+/* =========================================================
+   INPUT ICONS
+========================================================= */
+
+.boq-input-icon-wrap {
+    position: relative;
+}
+
+.boq-input-icon {
+    position: absolute;
+
+    top: 50%;
+    left: .8rem;
+
+    transform: translateY(-50%);
+
+    color: var(--boq-text-soft);
+
+    font-size: .8rem;
+
+    pointer-events: none;
+}
+
+.boq-field-with-icon {
+    padding-left: 2.25rem;
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.boq-btn-primary,
+.boq-btn-secondary,
+.boq-btn-danger {
+    display: inline-flex;
+
+    height: var(--boq-field-height);
+    min-height: var(--boq-field-height);
+
+    align-items: center;
+    justify-content: center;
+
+    gap: .5rem;
+
+    border-radius: var(--boq-radius);
+
+    padding: 0 .9rem;
+
+    font-size: .82rem;
+    font-weight: 700;
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        background-color .15s ease,
+        border-color .15s ease,
+        color .15s ease,
+        opacity .15s ease,
+        transform .15s ease;
+}
+
+.boq-btn-primary {
+    border: 1px solid var(--boq-primary);
+
+    background: var(--boq-primary);
+
+    color: #fff;
+}
+
+.boq-btn-primary:hover {
+    border-color: var(--boq-primary-dark);
+
+    background: var(--boq-primary-dark);
+}
+
+.boq-btn-secondary {
+    border: 1px solid var(--boq-border-dark);
+
+    background: #fff;
+
+    color: #475569;
+}
+
+.boq-btn-secondary:hover {
+    border-color: #94a3b8;
+
+    background: var(--boq-bg-soft);
+
+    color: var(--boq-text);
+}
+
+.boq-btn-danger {
+    border: 1px solid var(--boq-danger);
+
+    background: var(--boq-danger);
+
+    color: #fff;
+}
+
+.boq-btn-danger:hover {
+    border-color: var(--boq-danger-dark);
+
+    background: var(--boq-danger-dark);
+}
+
+.boq-btn-primary:disabled,
+.boq-btn-secondary:disabled,
+.boq-btn-danger:disabled {
+    cursor: not-allowed;
+
+    opacity: .55;
+}
+
+/* =========================================================
+   ICON BUTTONS
+========================================================= */
+
+.boq-icon-btn {
+    display: inline-flex;
+
+    width: 2rem;
+    height: 2rem;
+
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid var(--boq-border);
+    border-radius: var(--boq-radius-sm);
+
+    background: #fff;
+
+    color: #475569;
+
+    font-size: .75rem;
+
+    transition:
+        background-color .15s ease,
+        border-color .15s ease,
+        color .15s ease;
+}
+
+.boq-icon-btn:hover {
+    border-color: var(--boq-border-dark);
+
+    background: var(--boq-bg-soft);
+
+    color: var(--boq-text);
+}
+
+/* =========================================================
+   STATISTICS CARDS
+========================================================= */
 
 .boq-stat-card {
     position: relative;
+
     min-height: 82px;
+
     overflow: hidden;
 
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--boq-border);
     border-left-width: 4px;
     border-radius: .8rem;
 
@@ -69,27 +324,41 @@ textarea.boq-field {
         .85rem
         1rem;
 
+    box-shadow: var(--boq-shadow);
+
+    transition:
+        box-shadow .15s ease,
+        transform .15s ease;
+}
+
+.boq-stat-card:hover {
+    transform: translateY(-1px);
+
     box-shadow:
-        0 1px 2px
-        rgba(15, 23, 42, .04);
+        0 4px 10px rgba(15, 23, 42, .06);
 }
 
 .boq-stat-label {
-    color: #64748b;
+    color: var(--boq-text-muted);
+
     font-size: .72rem;
     font-weight: 700;
+    line-height: 1rem;
 }
 
 .boq-stat-value {
     margin-top: .2rem;
-    color: #0f172a;
+
+    color: var(--boq-text);
 
     font-size: 1.45rem;
     font-weight: 800;
+    line-height: 1.7rem;
 }
 
 .boq-stat-icon {
     position: absolute;
+
     top: .8rem;
     right: .9rem;
 
@@ -106,48 +375,73 @@ textarea.boq-field {
     font-size: .9rem;
 }
 
+/* Green */
+
 .boq-stat-green {
-    border-left-color: #05645b;
+    border-left-color: var(--boq-primary);
 }
 
 .boq-stat-green .boq-stat-icon {
     background: #ecfdf5;
-    color: #05645b;
+    color: var(--boq-primary);
 }
 
+/* Blue */
+
 .boq-stat-blue {
-    border-left-color: #2563eb;
+    border-left-color: var(--boq-info);
 }
 
 .boq-stat-blue .boq-stat-icon {
     background: #eff6ff;
-    color: #2563eb;
+    color: var(--boq-info);
 }
 
+/* Amber */
+
 .boq-stat-amber {
-    border-left-color: #d97706;
+    border-left-color: var(--boq-warning);
 }
 
 .boq-stat-amber .boq-stat-icon {
     background: #fffbeb;
-    color: #d97706;
+    color: var(--boq-warning);
 }
 
+/* Purple */
+
 .boq-stat-purple {
-    border-left-color: #7c3aed;
+    border-left-color: var(--boq-purple);
 }
 
 .boq-stat-purple .boq-stat-icon {
     background: #f5f3ff;
-    color: #7c3aed;
+    color: var(--boq-purple);
 }
+
+/* Red */
+
+.boq-stat-red {
+    border-left-color: var(--boq-danger);
+}
+
+.boq-stat-red .boq-stat-icon {
+    background: #fef2f2;
+    color: var(--boq-danger);
+}
+
+/* =========================================================
+   TABS
+========================================================= */
 
 .boq-tabs {
     display: flex;
+
     overflow-x: auto;
 
-    border-bottom:
-        1px solid #e2e8f0;
+    border-bottom: 1px solid var(--boq-border);
+
+    background: #fff;
 }
 
 .boq-tab {
@@ -156,16 +450,75 @@ textarea.boq-field {
     min-height: 46px;
 
     align-items: center;
+    justify-content: center;
 
     gap: .5rem;
 
-    border-bottom:
-        3px solid transparent;
+    border-bottom: 3px solid transparent;
 
-    padding:
-        0 1rem;
+    padding: 0 1rem;
 
-    color: #64748b;
+    color: var(--boq-text-muted);
+
+    font-size: .82rem;
+    font-weight: 700;
+
+    white-space: nowrap;
+
+    transition:
+        background-color .15s ease,
+        border-color .15s ease,
+        color .15s ease;
+}
+
+.boq-tab:hover {
+    background: var(--boq-bg-soft);
+
+    color: var(--boq-text);
+}
+
+.boq-tab.is-active {
+    border-bottom-color: var(--boq-accent);
+
+    background:
+        rgba(5, 100, 91, .03);
+
+    color: var(--boq-primary);
+}
+
+.boq-tab:disabled {
+    cursor: not-allowed;
+
+    opacity: .55;
+}
+
+/* Backwards compatibility */
+
+.boq-admin-tabs {
+    display: flex;
+
+    overflow-x: auto;
+
+    border-bottom: 1px solid var(--boq-border);
+
+    background: #fff;
+}
+
+.boq-admin-tab {
+    display: inline-flex;
+
+    min-height: 46px;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: .5rem;
+
+    border-bottom: 3px solid transparent;
+
+    padding: 0 1rem;
+
+    color: var(--boq-text-muted);
 
     font-size: .82rem;
     font-weight: 700;
@@ -173,91 +526,491 @@ textarea.boq-field {
     white-space: nowrap;
 }
 
-.boq-tab:hover {
-    background: #f8fafc;
-    color: #0f172a;
+.boq-admin-tab:hover {
+    background: var(--boq-bg-soft);
+
+    color: var(--boq-text);
 }
 
-.boq-tab.is-active {
-    border-bottom-color:
-        var(--boq-accent);
+.boq-admin-tab.is-active {
+    border-bottom-color: var(--boq-accent);
 
     background:
         rgba(5, 100, 91, .03);
 
-    color:
-        var(--boq-primary);
+    color: var(--boq-primary);
 }
 
-.boq-panel {
-    border:
-        1px solid #e2e8f0;
+/* =========================================================
+   TABLES
+========================================================= */
 
-    border-radius:
-        .85rem;
+.boq-table {
+    width: 100%;
 
-    background:
-        #fff;
+    border-collapse: collapse;
 
-    box-shadow:
-        0 1px 2px
-        rgba(15, 23, 42, .04);
+    background: #fff;
 }
 
-.boq-btn-primary,
-.boq-btn-secondary,
-.boq-btn-danger {
+.boq-table th {
+    background: var(--boq-bg-soft);
+
+    padding: .68rem 1rem;
+
+    color: var(--boq-text-muted);
+
+    font-size: .68rem;
+    font-weight: 800;
+
+    text-align: left;
+    text-transform: uppercase;
+
+    letter-spacing: .055em;
+
+    white-space: nowrap;
+}
+
+.boq-table td {
+    padding: .72rem 1rem;
+
+    border-top: 1px solid #f1f5f9;
+
+    color: #475569;
+
+    font-size: .82rem;
+
+    vertical-align: middle;
+}
+
+.boq-table tbody tr {
+    transition:
+        background-color .15s ease;
+}
+
+.boq-table tbody tr:hover {
+    background: var(--boq-bg-soft);
+}
+
+.boq-table th.text-right,
+.boq-table td.text-right {
+    text-align: right;
+}
+
+.boq-table th.text-center,
+.boq-table td.text-center {
+    text-align: center;
+}
+
+/* =========================================================
+   BADGES
+========================================================= */
+
+.boq-badge {
     display: inline-flex;
 
-    height: 40px;
-    min-height: 40px;
+    align-items: center;
+
+    gap: .25rem;
+
+    border-radius: 9999px;
+
+    background: #f1f5f9;
+
+    padding: .24rem .55rem;
+
+    color: #475569;
+
+    font-size: .7rem;
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+.boq-badge-success {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.boq-badge-warning {
+    background: #fffbeb;
+    color: #b45309;
+}
+
+.boq-badge-danger {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.boq-badge-info {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+/* =========================================================
+   FLASH / ALERTS
+========================================================= */
+
+.boq-flash {
+    border: 1px solid #a7f3d0;
+    border-radius: .7rem;
+
+    background: #ecfdf5;
+
+    padding: .7rem .9rem;
+
+    color: #065f46;
+
+    font-size: .82rem;
+    font-weight: 600;
+}
+
+.boq-flash-error {
+    border-color: #fecaca;
+
+    background: #fef2f2;
+
+    color: #991b1b;
+}
+
+.boq-flash-warning {
+    border-color: #fde68a;
+
+    background: #fffbeb;
+
+    color: #92400e;
+}
+
+/* =========================================================
+   PLAN LIMITS
+========================================================= */
+
+.boq-plan-limits {
+    overflow: hidden;
+
+    border: 1px solid var(--boq-border);
+    border-radius: .75rem;
+
+    background: var(--boq-bg-soft);
+}
+
+.boq-plan-limits-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+}
+
+.boq-plan-limit {
+    padding: .75rem .5rem;
+
+    text-align: center;
+}
+
+.boq-plan-limit + .boq-plan-limit {
+    border-left: 1px solid var(--boq-border);
+}
+
+.boq-plan-limit-label {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: .25rem;
+
+    color: var(--boq-text-soft);
+
+    font-size: .625rem;
+    font-weight: 700;
+
+    text-transform: uppercase;
+
+    letter-spacing: .04em;
+}
+
+.boq-plan-limit-value {
+    margin-top: .25rem;
+
+    color: var(--boq-text);
+
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+/* =========================================================
+   MODALS
+========================================================= */
+
+.boq-modal-backdrop {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 100;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    overflow-y: auto;
+
+    background:
+        rgba(15, 23, 42, .58);
+
+    padding: 1rem;
+
+    backdrop-filter: blur(2px);
+}
+
+.boq-modal-backdrop-top {
+    z-index: 120;
+}
+
+.boq-modal {
+    width: 100%;
+
+    max-height:
+        calc(100vh - 2rem);
+
+    overflow: hidden;
+
+    border-radius: .9rem;
+
+    background: #fff;
+
+    box-shadow:
+        var(--boq-shadow-modal);
+}
+
+.boq-modal-lg {
+    max-width: 850px;
+}
+
+.boq-modal-xl {
+    max-width: 1100px;
+}
+
+.boq-modal-head {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 1rem;
+
+    border-bottom:
+        1px solid var(--boq-border);
+
+    padding: .9rem 1rem;
+}
+
+.boq-modal-body {
+    max-height:
+        calc(100vh - 11rem);
+
+    overflow-y: auto;
+
+    padding: 1rem;
+}
+
+.boq-modal-foot {
+    display: flex;
+
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: .75rem;
+
+    border-top:
+        1px solid var(--boq-border);
+
+    background:
+        var(--boq-bg-soft);
+
+    padding: .9rem 1rem;
+}
+
+.boq-modal-close {
+    display: inline-flex;
+
+    width: 2rem;
+    height: 2rem;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius:
+        var(--boq-radius-sm);
+
+    color: var(--boq-text-muted);
+
+    transition:
+        background-color .15s ease,
+        color .15s ease;
+}
+
+.boq-modal-close:hover {
+    background: #f1f5f9;
+
+    color: var(--boq-text);
+}
+
+/* =========================================================
+   EMPTY STATES
+========================================================= */
+
+.boq-empty-state {
+    padding: 3rem 1rem;
+
+    text-align: center;
+}
+
+.boq-empty-icon {
+    display: flex;
+
+    width: 3rem;
+    height: 3rem;
+
+    margin: 0 auto;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 9999px;
+
+    background: #f1f5f9;
+
+    color: #94a3b8;
+}
+
+/* =========================================================
+   LIVEWIRE LOADING
+========================================================= */
+
+[wire\:loading] {
+    pointer-events: none;
+}
+
+.boq-loading {
+    display: inline-flex;
 
     align-items: center;
 
     gap: .5rem;
 
-    border-radius:
-        .625rem;
+    color: var(--boq-text-muted);
 
-    padding:
-        0 .9rem;
-
-    font-size:
-        .82rem;
-
-    font-weight:
-        700;
+    font-size: .75rem;
+    font-weight: 600;
 }
 
-.boq-btn-primary {
-    border:
-        1px solid #05645b;
+/* =========================================================
+   PAGINATION AREA
+========================================================= */
 
-    background:
-        #05645b;
+.boq-pagination {
+    border-top:
+        1px solid var(--boq-border);
 
-    color:
-        white;
+    padding: 1rem;
 }
 
-.boq-btn-secondary {
-    border:
-        1px solid #cbd5e1;
+/* =========================================================
+   RESPONSIVE
+========================================================= */
 
-    background:
-        white;
-
-    color:
-        #475569;
+@media (max-width: 1279px) {
+    .boq-stat-card {
+        min-height: 80px;
+    }
 }
 
-.boq-btn-danger {
-    border:
-        1px solid #dc2626;
+@media (max-width: 768px) {
+    .boq-field,
+    .boq-btn-primary,
+    .boq-btn-secondary,
+    .boq-btn-danger {
+        min-height: 42px;
+        height: 42px;
+    }
 
-    background:
-        #dc2626;
+    .boq-stat-card {
+        min-height: 78px;
 
-    color:
-        white;
+        padding:
+            .8rem
+            3.4rem
+            .8rem
+            .9rem;
+    }
+
+    .boq-stat-value {
+        font-size: 1.3rem;
+    }
+
+    .boq-tab,
+    .boq-admin-tab {
+        min-height: 44px;
+
+        padding:
+            0 .85rem;
+    }
+
+    .boq-table th,
+    .boq-table td {
+        padding:
+            .65rem
+            .8rem;
+    }
+
+    .boq-plan-limit {
+        padding:
+            .7rem
+            .35rem;
+    }
+
+    .boq-plan-limit-label {
+        font-size: .58rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .boq-modal-backdrop {
+        align-items: flex-end;
+
+        padding: .5rem;
+    }
+
+    .boq-modal {
+        max-height:
+            calc(100vh - 1rem);
+
+        border-radius:
+            .9rem
+            .9rem
+            .4rem
+            .4rem;
+    }
+
+    .boq-modal-body {
+        max-height:
+            calc(100vh - 10rem);
+    }
+
+    .boq-modal-foot {
+        flex-wrap: wrap;
+    }
+
+    .boq-modal-foot .boq-btn-primary,
+    .boq-modal-foot .boq-btn-secondary,
+    .boq-modal-foot .boq-btn-danger {
+        flex: 1 1 auto;
+    }
+
+    .boq-plan-limits-grid {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
 }
