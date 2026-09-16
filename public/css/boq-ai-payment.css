@@ -1,0 +1,68 @@
+/* BOQ AI providers + payment aggregator admin additions */
+
+.boq-ai-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) 220px 160px 90px;
+    align-items: end;
+    gap: .75rem;
+    padding: 1rem;
+}
+
+.boq-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .9rem;
+}
+
+.boq-form-span-2 {
+    grid-column: 1 / -1;
+}
+
+.boq-check-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+}
+
+.boq-check-row label {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    color: #475569;
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+.boq-config-section {
+    margin-top: 1rem;
+    border-top: 1px solid var(--boq-border);
+    padding-top: 1rem;
+}
+
+.boq-config-section h3 {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin: 0 0 .8rem;
+    color: var(--boq-text);
+    font-size: .9rem;
+    font-weight: 800;
+}
+
+@media (max-width: 900px) {
+    .boq-ai-filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .boq-ai-filter-grid,
+    .boq-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .boq-form-span-2 {
+        grid-column: auto;
+    }
+}

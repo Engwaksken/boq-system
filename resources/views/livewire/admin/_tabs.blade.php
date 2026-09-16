@@ -1,20 +1,22 @@
-
 @php
     $adminTabs = [
-        ['label'=>'Overview','url'=>route('admin.index'),'active'=>request()->routeIs('admin.index')],
-        ['label'=>'Plans','url'=>route('admin.plans'),'active'=>request()->routeIs('admin.plans')],
-        ['label'=>'Subscriptions','url'=>route('admin.subscriptions'),'active'=>request()->routeIs('admin.subscriptions')],
-        ['label'=>'Payment Gateways','url'=>route('admin.payment-gateways'),'active'=>request()->routeIs('admin.payment-gateways')],
-        ['label'=>'Users','url'=>route('admin.users'),'active'=>request()->routeIs('admin.users')],
-        ['label'=>'Roles & Permissions','url'=>route('admin.roles-permissions'),'active'=>request()->routeIs('admin.roles-permissions')],
-        ['label'=>'Hardware Scanner','url'=>route('admin.hardware-scanner'),'active'=>request()->routeIs('admin.hardware-scanner')],
-        ['label'=>'Settings','url'=>route('admin.settings'),'active'=>request()->routeIs('admin.settings')],
+        ['icon'=>'fa-gauge','label'=>'Overview','url'=>route('admin.index'),'active'=>request()->routeIs('admin.index')],
+        ['icon'=>'fa-layer-group','label'=>'Plans','url'=>route('admin.plans'),'active'=>request()->routeIs('admin.plans')],
+        ['icon'=>'fa-receipt','label'=>'Subscriptions','url'=>route('admin.subscriptions'),'active'=>request()->routeIs('admin.subscriptions')],
+        ['icon'=>'fa-robot','label'=>'AI API Settings','url'=>route('admin.ai-providers'),'active'=>request()->routeIs('admin.ai-providers')],
+        ['icon'=>'fa-credit-card','label'=>'Payment Gateways','url'=>route('admin.payment-gateways'),'active'=>request()->routeIs('admin.payment-gateways')],
+        ['icon'=>'fa-users','label'=>'Users','url'=>route('admin.users'),'active'=>request()->routeIs('admin.users')],
+        ['icon'=>'fa-user-shield','label'=>'Roles & Permissions','url'=>route('admin.roles-permissions'),'active'=>request()->routeIs('admin.roles-permissions')],
+        ['icon'=>'fa-magnifying-glass-dollar','label'=>'Hardware Scanner','url'=>route('admin.hardware-scanner'),'active'=>request()->routeIs('admin.hardware-scanner')],
+        ['icon'=>'fa-gear','label'=>'Settings','url'=>route('admin.settings'),'active'=>request()->routeIs('admin.settings')],
     ];
 @endphp
-<div class="boq-panel mb-5 overflow-hidden">
+
+<div class="boq-panel" style="margin-bottom:1.25rem;overflow:hidden">
     <div class="boq-admin-tabs" role="tablist" aria-label="Administration">
         @foreach($adminTabs as $tab)
             <a href="{{ $tab['url'] }}" class="boq-admin-tab {{ $tab['active'] ? 'is-active' : '' }}">
+                <i class="fas {{ $tab['icon'] }}"></i>
                 {{ $tab['label'] }}
             </a>
         @endforeach

@@ -1,0 +1,20 @@
+{
+  "files": [
+    "PATCHES.md",
+    "app/Livewire/Admin/AiProviders.php",
+    "app/Livewire/Admin/PaymentGateways.php",
+    "app/Models/AiProvider.php",
+    "app/Models/AiProviderUsage.php",
+    "app/Models/PaymentGateway.php",
+    "app/Services/AiProviderService.php",
+    "app/Services/GeminiPricingService.php",
+    "database/migrations/2026_09_16_180000_create_ai_providers_table.php",
+    "database/migrations/2026_09_16_180001_create_ai_provider_usages_table.php",
+    "database/migrations/2026_09_16_180002_add_is_default_to_payment_gateways_table.php",
+    "public/css/boq-ai-payment.css",
+    "resources/views/livewire/admin/_tabs.blade.php",
+    "resources/views/livewire/admin/ai-providers.blade.php",
+    "resources/views/livewire/admin/payment-gateways.blade.php"
+  ],
+  "basic_brace_issues": []
+}
