@@ -1,130 +1,413 @@
 <div>
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+    {{-- Page Header --}}
+    <div class="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h1 class="text-3xl font-bold text-slate-900">Plans & Pricing</h1>
-            <p class="mt-1 text-slate-500">Choose the plan that fits your BOQ workflow</p>
+            <h1 class="flex items-center gap-3 text-3xl font-bold text-slate-900">
+                <i class="fas fa-layer-group text-[#05645b]"></i>
+                <span>Plans & Pricing</span>
+            </h1>
+
+            <p class="mt-1 text-slate-500">
+                Choose the plan that fits your BOQ workflow.
+            </p>
+        </div>
+
+        <a
+            href="{{ route('subscriptions.index') }}"
+            class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#05645b] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#044f48]"
+        >
+            <i class="fas fa-credit-card"></i>
+            <span>My Subscription</span>
+        </a>
+    </div>
+
+    {{-- Statistics --}}
+    <div class="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="rounded-2xl border border-slate-200 border-l-4 border-l-[#05645b] bg-white p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-sm font-medium text-slate-500">
+                        Available Plans
+                    </p>
+
+                    <p class="mt-1 text-3xl font-bold text-slate-900">
+                        {{ $stats['available_plans'] ?? 0 }}
+                    </p>
+                </div>
+
+                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-[#05645b]">
+                    <i class="fas fa-layer-group text-lg"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 border-l-4 border-l-blue-500 bg-white p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-sm font-medium text-slate-500">
+                        Monthly Plans
+                    </p>
+
+                    <p class="mt-1 text-3xl font-bold text-slate-900">
+                        {{ $stats['monthly_plans'] ?? 0 }}
+                    </p>
+                </div>
+
+                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                    <i class="fas fa-calendar-alt text-lg"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 border-l-4 border-l-amber-500 bg-white p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-sm font-medium text-slate-500">
+                        Annual Plans
+                    </p>
+
+                    <p class="mt-1 text-3xl font-bold text-slate-900">
+                        {{ $stats['annual_plans'] ?? 0 }}
+                    </p>
+                </div>
+
+                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                    <i class="fas fa-calendar-check text-lg"></i>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div class="stat-card bg-white rounded-2xl shadow-sm border border-slate-200 p-6 border-l-4 border-indigo-500">
-            <p class="text-sm font-medium text-slate-500">Total Plans</p>
-            <p class="mt-1 text-3xl font-bold text-slate-900">{{ $stats['total_plans'] }}</p>
-            <div class="mt-4 flex items-center justify-between">
-                <svg class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2h14a2 2 0 012 2z" /><path stroke-linecap="round" stroke-linejoin="round" d="M7 11l5-5 5 5M7 11v10a2 2 0 002 2h10" /></svg>
-            </div>
-        </div>
-        <div class="stat-card bg-white rounded-2xl shadow-sm border border-slate-200 p-6 border-l-4 border-emerald-500">
-            <p class="text-sm font-medium text-slate-500">Active Plans</p>
-            <p class="mt-1 text-3xl font-bold text-emerald-600">{{ $stats['active_plans'] }}</p>
-            <div class="mt-4 flex items-center justify-between">
-                <svg class="h-6 w-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            </div>
-        </div>
-        <div class="stat-card bg-white rounded-2xl shadow-sm border border-slate-200 p-6 border-l-4 border-amber-500">
-            <p class="text-sm font-medium text-slate-500">Archived Plans</p>
-            <p class="mt-1 text-3xl font-bold text-amber-600">{{ $stats['archived_plans'] }}</p>
-            <div class="mt-4 flex items-center justify-between">
-                <svg class="h-6 w-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h14a2 2 0 002-2V8z" /></svg>
-            </div>
-        </div>
-        <div class="stat-card bg-white rounded-2xl shadow-sm border border-slate-200 p-6 border-l-4 border-indigo-500">
-            <p class="text-sm font-medium text-slate-500">Total Subscriptions</p>
-            <p class="mt-1 text-3xl font-bold text-indigo-600">{{ $stats['total_subscriptions'] }}</p>
-            <div class="mt-4 flex items-center justify-between">
-                <svg class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            </div>
-        </div>
-    </div>
+    {{-- Search / Filters --}}
+    <div class="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div class="relative w-full lg:max-w-md">
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <i class="fas fa-search text-sm text-slate-400"></i>
+                </div>
 
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <input
+                    type="search"
+                    wire:model.live.debounce.300ms="search"
+                    placeholder="Search plans by name, code, type or currency..."
+                    class="boq-field pl-10"
+                >
             </div>
-            <input type="search" wire:model.live.debounce.300ms="search" placeholder="Search plans..."
-                   class="w-full pl-10 rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-        </div>
 
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-full sm:w-auto">
-            <select wire:model="perPage" class="rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-4 py-2 text-sm">
-                @foreach($perPageOptions as $option)
-                    <option value="{{ $option }}">{{ $option }} per page</option>
-                @endforeach
-            </select>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div class="relative">
+                    <select
+                        wire:model.live="perPage"
+                        class="boq-field min-w-[150px] pr-10"
+                    >
+                        @foreach($perPageOptions as $option)
+                            <option value="{{ $option }}">
+                                {{ $option }} per page
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
 
-            <div class="flex gap-2">
-                @foreach(['name' => 'Name', 'price' => 'Price', 'duration_days' => 'Duration', 'is_active' => 'Status', 'display_order' => 'Order'] as $field => $label)
-                    <button wire:click="sortBy('{{ $field }}')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors {{ $sortBy === $field ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }} whitespace-nowrap">
-                        {{ $label }} {{ $sortBy === $field ? ($sortDir === 'asc' ? '↑' : '↓') : '' }}
+                <div class="flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        wire:click="sortBy('name')"
+                        class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition
+                            {{ $sortBy === 'name'
+                                ? 'bg-[#05645b] text-white'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}"
+                    >
+                        <i class="fas fa-font"></i>
+                        <span>Name</span>
+
+                        @if($sortBy === 'name')
+                            <i class="fas {{ $sortDir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down' }}"></i>
+                        @endif
                     </button>
-                @endforeach
+
+                    <button
+                        type="button"
+                        wire:click="sortBy('price')"
+                        class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition
+                            {{ $sortBy === 'price'
+                                ? 'bg-[#05645b] text-white'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}"
+                    >
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Price</span>
+
+                        @if($sortBy === 'price')
+                            <i class="fas {{ $sortDir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down' }}"></i>
+                        @endif
+                    </button>
+
+                    <button
+                        type="button"
+                        wire:click="sortBy('duration_days')"
+                        class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition
+                            {{ $sortBy === 'duration_days'
+                                ? 'bg-[#05645b] text-white'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}"
+                    >
+                        <i class="fas fa-clock"></i>
+                        <span>Duration</span>
+
+                        @if($sortBy === 'duration_days')
+                            <i class="fas {{ $sortDir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down' }}"></i>
+                        @endif
+                    </button>
+
+                    <button
+                        type="button"
+                        wire:click="sortBy('display_order')"
+                        class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition
+                            {{ $sortBy === 'display_order'
+                                ? 'bg-[#05645b] text-white'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}"
+                    >
+                        <i class="fas fa-sort-numeric-down"></i>
+                        <span>Order</span>
+
+                        @if($sortBy === 'display_order')
+                            <i class="fas {{ $sortDir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down' }}"></i>
+                        @endif
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        @if(isset($plans) && $plans->isNotEmpty())
-            <table class="min-w-full divide-y divide-slate-200">
-                <thead class="bg-slate-50">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700" wire:click="sortBy('name')" style="user-select: none;">
-                            Name {{ $sortBy === 'name' ? ($sortDir === 'asc' ? '↑' : '↓') : '' }}
-                        </th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700" wire:click="sortBy('price')" style="user-select: none;">
-                            Price {{ $sortBy === 'price' ? ($sortDir === 'asc' ? '↑' : '↓') : '' }}
-                        </th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700" wire:click="sortBy('duration_days')" style="user-select: none;">
-                            Duration {{ $sortBy === 'duration_days' ? ($sortDir === 'asc' ? '↑' : '↓') : '' }}
-                        </th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700" wire:click="sortBy('is_active')" style="user-select: none;">
-                            Status {{ $sortBy === 'is_active' ? ($sortDir === 'asc' ? '↑' : '↓') : '' }}
-                        </th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700" wire:click="sortBy('display_order')" style="user-select: none;">
-                            Order {{ $sortBy === 'display_order' ? ($sortDir === 'asc' ? '↑' : '↓') : '' }}
-                        </th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 bg-white">
-                    @foreach($plans as $plan)
-                        <tr class="hover:bg-slate-50">
-                            <td class="px-4 py-3 text-sm font-medium text-slate-900">{{ $plan->name }}</td>
-                            <td class="px-4 py-3 text-sm text-slate-700">{{ $plan->currency }} {{ number_format((float) $plan->price, 2) }}</td>
-                            <td class="px-4 py-3 text-sm text-slate-500">{{ $plan->duration_days ? $plan->duration_days . ' days' : 'Lifetime' }}</td>
-                            <td class="px-4 py-3">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $plan->is_active && !$plan->is_archived ? 'bg-emerald-100 text-emerald-800' : ($plan->is_archived ? 'bg-slate-100 text-slate-800' : 'bg-red-100 text-red-800') }}">
-                                    {{ $plan->is_active && !$plan->is_archived ? 'Active' : ($plan->is_archived ? 'Archived' : 'Inactive') }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-sm text-slate-500">{{ $plan->display_order }}</td>
-                            <td class="px-4 py-3 text-sm">
-                                <button class="text-sm font-medium text-indigo-600 hover:text-indigo-800 mr-3">View</button>
-                                <button class="text-sm font-medium text-slate-600 hover:text-slate-800">Edit</button>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+    {{-- Plans --}}
+    @if($plans->isNotEmpty())
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+            @foreach($plans as $plan)
+                <div
+                    wire:key="plan-{{ $plan->id }}"
+                    class="relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                >
+                    <div class="h-1 bg-[#05645b]"></div>
 
-            @if($plans->hasPages())
-                <div class="px-4 py-3 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div class="flex-1">
-                        <select wire:model="perPage" class="rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 text-sm">
-                            @foreach($perPageOptions as $option)
-                                <option value="{{ $option }}">{{ $option }} per page</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="flex-1 sm:ml-auto">
-                        {{ $plans->links() }}
+                    <div class="flex flex-1 flex-col p-6">
+                        {{-- Plan Header --}}
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="min-w-0">
+                                <div class="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-[#05645b]">
+                                    @switch($plan->type)
+                                        @case('monthly')
+                                            <i class="fas fa-calendar-alt"></i>
+                                            @break
+
+                                        @case('annual')
+                                            <i class="fas fa-calendar-check"></i>
+                                            @break
+
+                                        @case('lifetime')
+                                            <i class="fas fa-infinity"></i>
+                                            @break
+
+                                        @default
+                                            <i class="fas fa-box-open"></i>
+                                    @endswitch
+                                </div>
+
+                                <h2 class="text-xl font-bold text-slate-900">
+                                    {{ $plan->name }}
+                                </h2>
+
+                                @if($plan->description)
+                                    <p class="mt-2 text-sm leading-6 text-slate-500">
+                                        {{ $plan->description }}
+                                    </p>
+                                @endif
+                            </div>
+
+                            @if($plan->type)
+                                <span class="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                                    <i class="fas fa-tag mr-1"></i>
+                                    {{ ucfirst(str_replace('_', ' ', $plan->type)) }}
+                                </span>
+                            @endif
+                        </div>
+
+                        {{-- Price --}}
+                        <div class="mt-6 rounded-xl bg-slate-50 p-4">
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-sm font-semibold text-slate-500">
+                                    {{ $plan->currency }}
+                                </span>
+
+                                <span class="text-3xl font-bold text-slate-900">
+                                    {{ number_format((float) $plan->price, 0) }}
+                                </span>
+                            </div>
+
+                            <div class="mt-1 flex items-center gap-2 text-sm text-slate-500">
+                                <i class="fas fa-clock text-xs"></i>
+
+                                @if($plan->duration_days)
+                                    <span>
+                                        Valid for {{ $plan->duration_days }} days
+                                    </span>
+                                @else
+                                    <span>Lifetime access</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- Features --}}
+                        @if($plan->features && $plan->features->isNotEmpty())
+                            <div class="mt-6 border-t border-slate-100 pt-5">
+                                <p class="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400">
+                                    <i class="fas fa-list-check"></i>
+                                    <span>Features</span>
+                                </p>
+
+                                <div class="space-y-3">
+                                    @foreach($plan->features->take(6) as $feature)
+                                        <div class="flex items-start gap-3 text-sm text-slate-600">
+                                            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-[#05645b]">
+                                                <i class="fas fa-check text-[10px]"></i>
+                                            </span>
+
+                                            <span>
+                                                {{ $feature->name }}
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                @if($plan->features->count() > 6)
+                                    <p class="mt-3 text-xs font-medium text-[#05645b]">
+                                        <i class="fas fa-plus-circle mr-1"></i>
+                                        {{ $plan->features->count() - 6 }} more features
+                                    </p>
+                                @endif
+                            </div>
+                        @endif
+
+                        {{-- Limits --}}
+                        <div class="mt-6 grid grid-cols-2 gap-3 border-t border-slate-100 pt-5">
+                            @if(! is_null($plan->max_projects))
+                                <div class="rounded-xl bg-slate-50 p-3">
+                                    <p class="text-xs text-slate-400">
+                                        <i class="fas fa-folder-open mr-1"></i>
+                                        Projects
+                                    </p>
+
+                                    <p class="mt-1 font-bold text-slate-800">
+                                        {{ $plan->max_projects }}
+                                    </p>
+                                </div>
+                            @endif
+
+                            @if(! is_null($plan->max_boqs))
+                                <div class="rounded-xl bg-slate-50 p-3">
+                                    <p class="text-xs text-slate-400">
+                                        <i class="fas fa-file-invoice-dollar mr-1"></i>
+                                        BOQs
+                                    </p>
+
+                                    <p class="mt-1 font-bold text-slate-800">
+                                        {{ $plan->max_boqs }}
+                                    </p>
+                                </div>
+                            @endif
+
+                            @if(! is_null($plan->max_ai_credits))
+                                <div class="rounded-xl bg-slate-50 p-3">
+                                    <p class="text-xs text-slate-400">
+                                        <i class="fas fa-robot mr-1"></i>
+                                        AI Credits
+                                    </p>
+
+                                    <p class="mt-1 font-bold text-slate-800">
+                                        {{ $plan->max_ai_credits }}
+                                    </p>
+                                </div>
+                            @endif
+
+                            @if(! is_null($plan->max_ocr_pages))
+                                <div class="rounded-xl bg-slate-50 p-3">
+                                    <p class="text-xs text-slate-400">
+                                        <i class="fas fa-file-image mr-1"></i>
+                                        OCR Pages
+                                    </p>
+
+                                    <p class="mt-1 font-bold text-slate-800">
+                                        {{ $plan->max_ocr_pages }}
+                                    </p>
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Trial --}}
+                        @if($plan->has_trial && $plan->trial_days > 0)
+                            <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                                <i class="fas fa-gift mr-2"></i>
+                                Includes {{ $plan->trial_days }}-day free trial
+                            </div>
+                        @endif
+
+                        {{-- CTA --}}
+                        <div class="mt-auto pt-6">
+                            <a
+                                href="{{ route('subscriptions.index') }}"
+                                class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#05645b] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#044f48]"
+                            >
+                                <i class="fas fa-check-circle"></i>
+                                <span>Choose Plan</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
-            @endif
-        @else
-            <div class="text-center py-12">
-                <p class="text-slate-500">No plans available yet.</p>
+            @endforeach
+        </div>
+
+        {{-- Pagination --}}
+        @if($plans->hasPages())
+            <div class="mt-6 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                <div class="mb-3 flex items-center gap-2 text-sm text-slate-500">
+                    <i class="fas fa-list"></i>
+
+                    <span>
+                        Showing {{ $plans->firstItem() }}
+                        to {{ $plans->lastItem() }}
+                        of {{ $plans->total() }} plans
+                    </span>
+                </div>
+
+                {{ $plans->links() }}
             </div>
         @endif
-    </div>
+    @else
+        {{-- Empty State --}}
+        <div class="rounded-2xl border border-slate-200 bg-white py-14 text-center shadow-sm">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                <i class="fas fa-layer-group text-xl"></i>
+            </div>
+
+            <h3 class="mt-4 text-base font-semibold text-slate-900">
+                No plans found
+            </h3>
+
+            <p class="mt-1 text-sm text-slate-500">
+                @if($search !== '')
+                    No available plans match "{{ $search }}".
+                @else
+                    There are currently no available subscription plans.
+                @endif
+            </p>
+
+            @if($search !== '')
+                <button
+                    type="button"
+                    wire:click="$set('search', '')"
+                    class="mt-4 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                    <i class="fas fa-times"></i>
+                    <span>Clear Search</span>
+                </button>
+            @endif
+        </div>
+    @endif
 </div>

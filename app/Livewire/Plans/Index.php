@@ -14,35 +14,21 @@ class Index extends Component
 
     public string $search = '';
     public int $perPage = 10;
-
     public string $sortBy = 'display_order';
     public string $sortDir = 'asc';
 
-    public array $perPageOptions = [
-        10,
-        20,
-        50,
-    ];
+    public array $perPageOptions = [10, 20, 50];
 
-    /**
-     * Reset pagination when the search value changes.
-     */
     public function updatedSearch(): void
     {
         $this->resetPage();
     }
 
-    /**
-     * Reset pagination when the number of rows changes.
-     */
     public function updatedPerPage(): void
     {
         $this->resetPage();
     }
 
-    /**
-     * Change table sorting.
-     */
     public function sortBy(string $field): void
     {
         $allowedFields = [
@@ -69,9 +55,6 @@ class Index extends Component
         $this->resetPage();
     }
 
-    /**
-     * Render customer-facing subscription plans.
-     */
     public function render()
     {
         $search = trim($this->search);
