@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             PlansAndFeaturesSeeder::class,
             ProductVersionsSeeder::class,
             PaymentGatewaysSeeder::class,
+            SiteSettingsSeeder::class,
             AdminUserSeeder::class,
         ]);
     }

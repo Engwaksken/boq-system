@@ -21,6 +21,11 @@ use App\Livewire\System\McpActivity;
 use App\Livewire\Admin\Index as AdminIndex;
 use App\Livewire\Admin\HardwareScanner as HardwareScanner;
 use App\Livewire\Admin\SubscriptionsManager as SubscriptionsManager;
+use App\Livewire\Admin\SiteSettings;
+use App\Livewire\Admin\PaymentGateways;
+use App\Livewire\Admin\PlansManager;
+use App\Livewire\Admin\UsersManager;
+use App\Livewire\Admin\RolesManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -92,6 +97,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/', AdminIndex::class)->name('index');
         Route::get('/hardware-scanner', HardwareScanner::class)->name('hardware-scanner');
         Route::get('/subscriptions', SubscriptionsManager::class)->name('subscriptions');
+        Route::get('/settings', SiteSettings::class)->name('settings');
+        Route::get('/payment-gateways', PaymentGateways::class)->name('payment-gateways');
+        Route::get('/plans', PlansManager::class)->name('plans');
+        Route::get('/users', UsersManager::class)->name('users');
+        Route::get('/roles-permissions', RolesManager::class)->name('roles-permissions');
     });
 });
 

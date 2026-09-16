@@ -49,7 +49,7 @@ class MobileMoneyGateway implements PaymentGatewayInterface
             'success' => true,
             'gateway' => 'mobile_money',
             'gateway_transaction_id' => $gatewayTransactionId,
-            'status' => 'successful',
+            'status' => (($this->config['mode'] ?? 'test') === 'test' && ($this->config['allow_test_auto_success'] ?? false)) ? 'successful' : 'pending',
         ];
     }
 
@@ -62,7 +62,7 @@ class MobileMoneyGateway implements PaymentGatewayInterface
             'success' => true,
             'gateway' => 'mobile_money',
             'gateway_transaction_id' => $gatewayTransactionId,
-            'status' => 'successful',
+            'status' => (($this->config['mode'] ?? 'test') === 'test' && ($this->config['allow_test_auto_success'] ?? false)) ? 'successful' : 'pending',
         ];
     }
 

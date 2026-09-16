@@ -48,7 +48,7 @@ class StripeGateway implements PaymentGatewayInterface
             'success' => true,
             'gateway' => 'stripe',
             'gateway_transaction_id' => $gatewayTransactionId,
-            'status' => 'successful',
+            'status' => (($this->config['mode'] ?? 'test') === 'test' && ($this->config['allow_test_auto_success'] ?? false)) ? 'successful' : 'pending',
         ];
     }
 
@@ -61,7 +61,7 @@ class StripeGateway implements PaymentGatewayInterface
             'success' => true,
             'gateway' => 'stripe',
             'gateway_transaction_id' => $gatewayTransactionId,
-            'status' => 'successful',
+            'status' => (($this->config['mode'] ?? 'test') === 'test' && ($this->config['allow_test_auto_success'] ?? false)) ? 'successful' : 'pending',
         ];
     }
 

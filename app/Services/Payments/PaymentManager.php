@@ -26,12 +26,22 @@ class PaymentManager
      */
     public function resolve(PaymentGateway $gateway): PaymentGatewayInterface
     {
-        $config = $gateway->config ?? [];
+        $config = array_merge($gateway->config ?? [], [
+            '_gateway_code' => $gateway->code,
+            '_webhook_url' => $gateway->webhook_url,
+            '_is_test_mode' => $gateway->is_test_mode,
+        ]);
 
         return match ($gateway->driver) {
             'stripe' => new StripeGateway($config),
             'bank_transfer' => new BankTransferGateway($config),
             'mobile_money' => new MobileMoneyGateway($config),
+            'mtn_momo' => new MtnMomoGateway($config),
+            'airtel_money' => new AirtelMoneyGateway($config),
+            'flutterwave' => new FlutterwaveGateway($config),
+            'pesapal' => new PesapalGateway($config),
+            'iotec_pay' => new IoTecPayGateway($config),
+            'generic_aggregator' => new GenericAggregatorGateway($config),
             default => throw new InvalidArgumentException("Unsupported payment gateway driver [{$gateway->driver}]."),
         };
     }

@@ -18,6 +18,7 @@ class Transaction extends Model
      */
     protected $fillable = [
         'reference',
+        'idempotency_key',
         'user_id',
         'organisation_id',
         'plan_id',

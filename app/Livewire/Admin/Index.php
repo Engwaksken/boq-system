@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Models\Transaction;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -57,7 +58,7 @@ class Index extends Component
         $stats = [
             'total_users' => User::count(),
             'active_subscriptions' => Subscription::where('status', 'active')->count(),
-            'total_revenue' => Subscription::where('status', 'active')->sum('amount'),
+            'total_revenue' => Transaction::where('status', 'successful')->sum('amount'),
             'plans_count' => Plan::where('is_active', true)->count(),
         ];
 

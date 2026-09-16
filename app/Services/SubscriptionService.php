@@ -7,6 +7,7 @@ use App\Models\Feature;
 use App\Models\Organisation;
 use App\Models\Plan;
 use App\Models\Subscription;
+use App\Models\SiteSetting;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -17,6 +18,10 @@ class SubscriptionService
      */
     public function activate(Subscription $subscription): Subscription
     {
+        if ($subscription->status === 'active' && $subscription->payment_status === 'paid') {
+            return $subscription->fresh();
+        }
+
         $plan = $subscription->plan;
 
         $subscription->status = 'active';
@@ -126,6 +131,9 @@ class SubscriptionService
                 }
             })
             ->whereIn('status', ['active', 'trial', 'grace_period'])
+            ->where(function ($q) {
+                $q->whereNull('end_date')->orWhere('end_date', '>=', now());
+            })
             ->latest()
             ->first();
     }
@@ -163,24 +171,25 @@ class SubscriptionService
      */
     public function grantTrial(User $user, ?Organisation $organisation = null): Subscription
     {
+        $trialDays = max(1, (int) SiteSetting::get('trial_duration', 7));
         $trialPlan = Plan::where('code', 'free-trial')->first() ?? Plan::where('has_trial', true)->first();
         if (! $trialPlan) {
             $trialPlan = Plan::create([
                 'name' => 'Free Trial',
                 'code' => 'free-trial',
-                'description' => '7-day trial access',
+                'description' => $trialDays.'-day trial access',
                 'type' => 'monthly',
-                'duration_days' => 7,
+                'duration_days' => $trialDays,
                 'price' => 0,
                 'currency' => 'UGX',
                 'has_trial' => true,
-                'trial_days' => 7,
+                'trial_days' => $trialDays,
                 'is_active' => true,
             ]);
         }
 
         $startDate = now();
-        $endDate = $startDate->copy()->addDays(7);
+        $endDate = $startDate->copy()->addDays($trialDays);
 
         $subscription = Subscription::create([
             'user_id' => $user->id,

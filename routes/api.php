@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\HardwarePriceController;
 use App\Http\Controllers\Api\Mcp\McpToolController;
 use App\Http\Controllers\Api\PlanController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\SubscriptionController;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,9 @@ Route::prefix('v1')->group(function () {
 
     // Public plans listing
     Route::get('plans', [PlanController::class, 'index'])->middleware('throttle:60,1');
+
+    // Provider callbacks are never trusted as payment proof; the controller re-queries the configured provider.
+    Route::post('payment-webhooks/{gatewayCode}', [PaymentController::class, 'webhook'])->middleware('throttle:120,1');
 
     // Authenticated routes
     Route::middleware('auth:sanctum')->group(function () {
@@ -88,6 +92,13 @@ Route::prefix('v1')->group(function () {
 
         // Plans
         Route::get('plans/{plan}', [PlanController::class, 'show']);
+
+        // Payments
+        Route::get('payment-gateways', [PaymentController::class, 'gateways']);
+        Route::post('subscriptions/{subscription}/payments', [PaymentController::class, 'initiate'])->middleware('throttle:10,1');
+        Route::post('transactions/{transaction}/verify', [PaymentController::class, 'verify'])->middleware('throttle:20,1');
+        Route::get('transactions/{transaction}', [PaymentController::class, 'show']);
+        Route::get('transactions/{transaction}/receipt', [PaymentController::class, 'receipt']);
 
         // Subscriptions
         Route::get('subscriptions', [SubscriptionController::class, 'index']);

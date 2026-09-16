@@ -5,6 +5,14 @@
                 <h1 class="text-3xl font-bold text-slate-900">Admin Panel</h1>
                 <p class="mt-2 text-slate-600">Super administrator controls and overview.</p>
             </div>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('admin.settings') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition shadow-sm">Site Settings</a>
+                <a href="{{ route('admin.payment-gateways') }}" class="inline-flex items-center px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-lg transition shadow-sm">Payment Gateways</a>
+                <a href="{{ route('admin.plans') }}" class="inline-flex items-center px-4 py-2 bg-white border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg">Plans</a>
+                <a href="{{ route('admin.users') }}" class="inline-flex items-center px-4 py-2 bg-white border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg">Users</a>
+                <a href="{{ route('admin.roles-permissions') }}" class="inline-flex items-center px-4 py-2 bg-white border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg">Roles</a>
+                <a href="{{ route('admin.hardware-scanner') }}" class="inline-flex items-center px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-lg transition">Hardware Scanner</a>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -99,8 +107,8 @@
                                                 {{ ucfirst($sub->status) }}
                                             </span>
                                         </td>
-                                        <td class="px-4 py-3 text-sm text-right font-medium text-slate-900">{{ $sub->currency }} {{ number_format($sub->amount, 2) }}</td>
-                                        <td class="px-4 py-3 text-sm text-slate-500">{{ $sub->starts_at->format('M j, Y') }} - {{ $sub->ends_at?->format('M j, Y') ?? 'Ongoing' }}</td>
+                                        <td class="px-4 py-3 text-sm text-right font-medium text-slate-900">{{ $sub->plan?->currency }} {{ number_format((float)($sub->plan?->price ?? 0), 2) }}</td>
+                                        <td class="px-4 py-3 text-sm text-slate-500">{{ $sub->start_date?->format('M j, Y') ?? 'Not started' }} - {{ $sub->end_date?->format('M j, Y') ?? 'Ongoing' }}</td>
                                         <td class="px-4 py-3 text-right">
                                             <button class="text-sm font-medium text-indigo-600 hover:text-indigo-800">View</button>
                                         </td>
@@ -142,7 +150,7 @@
                                     <tr class="hover:bg-slate-50">
                                         <td class="px-4 py-3 text-sm font-medium text-slate-900">{{ $plan->name }}</td>
                                         <td class="px-4 py-3 text-sm text-slate-700">{{ $plan->currency }} {{ number_format($plan->price, 2) }}</td>
-                                        <td class="px-4 py-3 text-sm text-slate-500">{{ ucfirst($plan->interval) }}</td>
+                                        <td class="px-4 py-3 text-sm text-slate-500">{{ ucwords(str_replace('_', ' ', $plan->type)) }}</td>
                                         <td class="px-4 py-3">
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $plan->is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800' }}">
                                                 {{ $plan->is_active ? 'Active' : 'Inactive' }}
