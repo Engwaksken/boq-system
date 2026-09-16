@@ -229,3 +229,13 @@ body { background: var(--boq-bg); color: #0f172a; }
 @media (max-width: 1023px) {
     .boq-sidebar { width: 17rem !important; }
 }
+
+/* Append this block to resources/css/app.css */
+.boq-field-label{display:block;margin-bottom:.35rem;color:#475569;font-size:.75rem;font-weight:700}
+.boq-field,.boq-modal input[type=text],.boq-modal input[type=email],.boq-modal input[type=number],.boq-modal input[type=url],.boq-modal input[type=password],.boq-modal select,.boq-modal textarea{width:100%;min-height:42px;border:1px solid #cbd5e1;border-radius:.65rem;background:#fff;padding:.58rem .72rem;color:#0f172a;font-size:.875rem;line-height:1.25rem;outline:none;transition:border-color .15s ease,box-shadow .15s ease}
+.boq-modal textarea{min-height:84px;resize:vertical}
+.boq-field::placeholder,.boq-modal input::placeholder,.boq-modal textarea::placeholder{color:#94a3b8;opacity:1}
+.boq-field:focus,.boq-modal input:focus,.boq-modal select:focus,.boq-modal textarea:focus{border-color:#05645b;box-shadow:0 0 0 3px rgba(5,100,91,.12)}
+.boq-modal label{color:#334155;font-size:.8rem;font-weight:700}
+.boq-modal input[type=checkbox]{width:1rem;height:1rem;min-height:1rem;padding:0;accent-color:#05645b}
+@media(max-width:640px){.boq-modal-backdrop{align-items:flex-end;padding:0}.boq-modal{max-height:92vh;border-radius:1rem 1rem 0 0}}

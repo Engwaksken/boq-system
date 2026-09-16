@@ -1,82 +1,98 @@
-<div>
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">Subscription</h1>
-        <p class="mt-1 text-sm text-gray-500">Manage your BOQ System subscription</p>
-    </div>
-
-    {{-- Current Subscription --}}
-    @if(isset($subscription) && $subscription)
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
-            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-gray-900">Current Subscription</h2>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $subscription->status === 'active' ? 'bg-green-100 text-green-800' : ($subscription->status === 'trial' ? 'bg-blue-100 text-blue-800' : ($subscription->status === 'grace_period' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800')) }}">
-                    {{ $subscription->status }}
-                </span>
-            </div>
-            <div class="p-6">
-                <p class="text-xl font-semibold text-gray-900">{{ $subscription->plan?->name ?? '?' }}</p>
-                <dl class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Start Date</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $subscription->start_date?->format('M d, Y') ?? '?' }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">End Date</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $subscription->end_date?->format('M d, Y') ?? '?' }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Renewal Date</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $subscription->renewal_date?->format('M d, Y') ?? '?' }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Auto Renewal</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $subscription->auto_renewal ? 'Yes' : 'No' }}</dd>
-                    </div>
-                </dl>
-                <div class="mt-6 pt-6 border-t border-gray-200">
-                    <button type="button" wire:click="cancel" wire:confirm="Are you sure you want to cancel your subscription?"
-                            class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold rounded-lg transition">Cancel Subscription</button>
-                </div>
-            </div>
+<div class="space-y-5">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900">Subscriptions</h1>
+            <p class="mt-1 text-sm text-slate-500">Manage subscription history and choose an available plan.</p>
         </div>
-    @else
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
-            <div class="text-center py-12">
-                <p class="text-gray-500">You don't have an active subscription.</p>
-                <a href="{{ url('/plans') }}" class="inline-flex items-center px-4 py-2 mt-4 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition">
-                    Browse Plans
-                </a>
-            </div>
-        </div>
-    @endif
-
-    {{-- Available Plans --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900">Available Plans</h2>
-        </div>
-
-        @if(isset($plans) && $plans->isNotEmpty())
-            <div class="divide-y divide-gray-200">
-                @foreach($plans as $plan)
-                    <div class="px-6 py-4 flex items-center justify-between gap-4">
-                        <div>
-                            <p class="text-sm font-semibold text-gray-900">{{ $plan->name }}</p>
-                            <p class="text-sm text-gray-500">{{ number_format((float) $plan->price, 2) }} {{ $plan->currency }} / {{ $plan->duration_days ? $plan->duration_days . ' days' : $plan->type }}</p>
-                        </div>
-                        @if(isset($subscription) && $subscription && $subscription->plan_id === $plan->id)
-                            <span class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-500 text-sm font-semibold rounded-lg cursor-not-allowed">Current Plan</span>
-                        @else
-                            <button type="button" wire:click="subscribe({{ $plan->id }})"
-                                    class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition">Subscribe</button>
-                        @endif
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <div class="text-center py-12">
-                <p class="text-gray-500">No plans available yet.</p>
+        @if($subscription)
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2">
+                <div class="text-xs font-semibold uppercase text-emerald-700">Current subscription</div>
+                <div class="font-bold text-emerald-950">{{ $subscription->plan?->name ?? 'Plan' }}</div>
             </div>
         @endif
     </div>
+
+    @if(session('message'))<div class="boq-flash">{{ session('message') }}</div>@endif
+
+    <div class="boq-panel overflow-hidden">
+        <div class="boq-admin-tabs">
+            <button wire:click="setTab('subscriptions')" class="boq-admin-tab {{ $activeTab === 'subscriptions' ? 'is-active' : '' }}">Subscriptions</button>
+            <button wire:click="setTab('plans')" class="boq-admin-tab {{ $activeTab === 'plans' ? 'is-active' : '' }}">Available Plans</button>
+        </div>
+
+        @if($activeTab === 'subscriptions')
+            <div class="border-b border-slate-200 p-4">
+                <div class="grid gap-3 lg:grid-cols-[minmax(240px,1fr)_180px_180px_130px]">
+                    <div><label class="boq-field-label">Search</label><input wire:model.live.debounce.300ms="search" class="boq-field" placeholder="Search plan, status or payment status"></div>
+                    <div><label class="boq-field-label">Status</label><select wire:model.live="statusFilter" class="boq-field"><option value="all">All statuses</option>@foreach(['pending','trial','active','past_due','grace_period','suspended','expired','cancelled'] as $status)<option value="{{ $status }}">{{ ucwords(str_replace('_', ' ', $status)) }}</option>@endforeach</select></div>
+                    <div><label class="boq-field-label">Period</label><select wire:model.live="periodFilter" class="boq-field"><option value="all">All periods</option><option value="current">Current</option><option value="ending_30">Ending in 30 days</option><option value="expired">Expired</option><option value="this_year">Created this year</option></select></div>
+                    <div><label class="boq-field-label">Rows</label><select wire:model.live="perPage" class="boq-field">@foreach([10,25,50,100] as $size)<option value="{{ $size }}">{{ $size }}</option>@endforeach</select></div>
+                </div>
+
+                @if(count($selectedSubscriptions))
+                    <div class="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                        <span class="text-sm font-semibold text-amber-900">{{ count($selectedSubscriptions) }} selected</span>
+                        <button wire:click="confirmBulkCancel" class="text-sm font-bold text-red-700">Cancel selected</button>
+                        <button wire:click="clearSelection" class="text-sm font-semibold text-slate-600">Clear selection</button>
+                    </div>
+                @endif
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="boq-table min-w-full divide-y divide-slate-200">
+                    <thead><tr><th class="w-10 px-4 py-3 text-left"><input type="checkbox" wire:model.live="selectPage" aria-label="Select page"></th><th class="px-4 py-3 text-left">Plan</th><th class="px-4 py-3 text-left">Status</th><th class="px-4 py-3 text-left">Payment</th><th class="px-4 py-3 text-left">Period</th><th class="px-4 py-3 text-right">Price</th><th class="px-4 py-3 text-right">Actions</th></tr></thead>
+                    <tbody class="divide-y divide-slate-100">
+                    @forelse($subscriptions as $item)
+                        <tr>
+                            <td class="px-4 py-3"><input type="checkbox" wire:model.live="selectedSubscriptions" value="{{ $item->id }}" aria-label="Select subscription"></td>
+                            <td class="px-4 py-3"><div class="font-semibold text-slate-900">{{ $item->plan?->name ?? 'Unknown plan' }}</div><div class="text-xs text-slate-500">{{ $item->plan?->code }}</div></td>
+                            <td class="px-4 py-3"><span class="rounded-full px-2 py-1 text-xs font-semibold {{ in_array($item->status,['active','trial','grace_period']) ? 'bg-emerald-100 text-emerald-700' : ($item->status === 'pending' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700') }}">{{ ucwords(str_replace('_',' ',$item->status)) }}</span></td>
+                            <td class="px-4 py-3 text-sm text-slate-600">{{ ucwords(str_replace('_',' ',$item->payment_status ?? 'pending')) }}</td>
+                            <td class="px-4 py-3 text-sm text-slate-600">{{ $item->start_date?->format('d M Y') ?? 'Not started' }} <span class="text-slate-400">–</span> {{ $item->end_date?->format('d M Y') ?? 'Ongoing' }}</td>
+                            <td class="px-4 py-3 text-right text-sm font-semibold">{{ $item->plan?->currency ?? 'UGX' }} {{ number_format((float)($item->plan?->price ?? 0), 0) }}</td>
+                            <td class="px-4 py-3 text-right">@unless(in_array($item->status, ['cancelled','expired']))<button wire:click="confirmCancel({{ $item->id }})" class="text-sm font-semibold text-red-600 hover:text-red-800">Cancel</button>@else<span class="text-xs text-slate-400">No action</span>@endunless</td>
+                        </tr>
+                    @empty<tr><td colspan="7" class="p-10 text-center text-sm text-slate-500">No subscriptions match your filters.</td></tr>@endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="border-t border-slate-200 p-4">{{ $subscriptions->links() }}</div>
+        @else
+            <div class="border-b border-slate-200 p-4">
+                <div class="grid gap-3 md:grid-cols-[minmax(260px,1fr)_210px_130px]">
+                    <div><label class="boq-field-label">Search plans</label><input wire:model.live.debounce.300ms="planSearch" class="boq-field" placeholder="Search plan name, code or description"></div>
+                    <div><label class="boq-field-label">Billing period</label><select wire:model.live="planPeriodFilter" class="boq-field"><option value="all">All periods</option><option value="monthly">Monthly</option><option value="quarterly">3 months</option><option value="six_month">6 months</option><option value="annual">Annual</option><option value="lifetime">Lifetime</option></select></div>
+                    <div><label class="boq-field-label">Rows</label><select wire:model.live="planPerPage" class="boq-field">@foreach([10,25,50,100] as $size)<option value="{{ $size }}">{{ $size }}</option>@endforeach</select></div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="boq-table min-w-full divide-y divide-slate-200">
+                    <thead><tr><th class="px-4 py-3 text-left">Plan</th><th class="px-4 py-3 text-left">Period</th><th class="px-4 py-3 text-left">Limits</th><th class="px-4 py-3 text-right">Price</th><th class="px-4 py-3 text-right">Action</th></tr></thead>
+                    <tbody class="divide-y divide-slate-100">
+                    @forelse($plans as $plan)
+                        <tr>
+                            <td class="px-4 py-3"><div class="font-semibold text-slate-900">{{ $plan->name }}</div><div class="mt-1 max-w-xl text-xs text-slate-500">{{ $plan->description ?: 'BOQ subscription plan' }}</div></td>
+                            <td class="px-4 py-3 text-sm">{{ $plan->duration_days ? $plan->duration_days.' days' : ucwords(str_replace('_',' ',$plan->type)) }}</td>
+                            <td class="px-4 py-3 text-sm text-slate-600">{{ $plan->max_projects ?? '∞' }} projects · {{ $plan->max_boqs ?? '∞' }} BOQs · {{ $plan->max_ai_credits ?? '∞' }} AI</td>
+                            <td class="px-4 py-3 text-right font-bold">{{ $plan->currency }} {{ number_format((float)$plan->price, 0) }}</td>
+                            <td class="px-4 py-3 text-right">@if($subscription && $subscription->plan_id === $plan->id)<span class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-500">Current Plan</span>@else<button wire:click="confirmSubscribe({{ $plan->id }})" class="boq-btn-primary">Choose Plan</button>@endif</td>
+                        </tr>
+                    @empty<tr><td colspan="5" class="p-10 text-center text-sm text-slate-500">No available plans match your search.</td></tr>@endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="border-t border-slate-200 p-4">{{ $plans->links() }}</div>
+        @endif
+    </div>
+
+    @if($showActionModal)
+        <div class="boq-modal-backdrop" wire:key="subscription-action-modal">
+            <div class="boq-modal max-w-md">
+                <div class="boq-modal-head"><h2 class="text-lg font-bold text-slate-900">{{ $actionTitle }}</h2><button type="button" wire:click="closeActionModal" class="text-2xl leading-none text-slate-400 hover:text-slate-700">&times;</button></div>
+                <div class="boq-modal-body"><p class="text-sm leading-6 text-slate-600">{{ $actionMessage }}</p></div>
+                <div class="boq-modal-foot"><button type="button" wire:click="closeActionModal" class="boq-btn-secondary">Back</button><button type="button" wire:click="performAction" class="{{ in_array($actionType,['cancel','bulk_cancel']) ? 'boq-btn-danger' : 'boq-btn-primary' }}">Confirm</button></div>
+            </div>
+        </div>
+    @endif
 </div>
