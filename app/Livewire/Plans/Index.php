@@ -3,7 +3,6 @@
 namespace App\Livewire\Plans;
 
 use App\Models\Plan;
-use App\Models\Subscription;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -14,51 +13,107 @@ class Index extends Component
     use WithPagination;
 
     public string $search = '';
-    public string $statusFilter = 'active';
     public int $perPage = 10;
+
     public string $sortBy = 'display_order';
     public string $sortDir = 'asc';
-    public array $perPageOptions = [10, 20, 50];
 
+    public array $perPageOptions = [
+        10,
+        20,
+        50,
+    ];
+
+    /**
+     * Reset pagination when the search value changes.
+     */
     public function updatedSearch(): void
     {
         $this->resetPage();
     }
 
-    public function updatedStatusFilter(): void
-    {
-        $this->resetPage();
-    }
-
+    /**
+     * Reset pagination when the number of rows changes.
+     */
     public function updatedPerPage(): void
     {
         $this->resetPage();
     }
 
+    /**
+     * Change table sorting.
+     */
     public function sortBy(string $field): void
     {
+        $allowedFields = [
+            'display_order',
+            'name',
+            'price',
+            'type',
+            'duration_days',
+        ];
+
+        if (! in_array($field, $allowedFields, true)) {
+            return;
+        }
+
         if ($this->sortBy === $field) {
-            $this->sortDir = $this->sortDir === 'asc' ? 'desc' : 'asc';
+            $this->sortDir = $this->sortDir === 'asc'
+                ? 'desc'
+                : 'asc';
         } else {
             $this->sortBy = $field;
             $this->sortDir = 'asc';
         }
+
+        $this->resetPage();
     }
 
+    /**
+     * Render customer-facing subscription plans.
+     */
     public function render()
     {
+        $search = trim($this->search);
+
         $plans = Plan::query()
-            ->when($this->search !== '', fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
-            ->when($this->statusFilter !== 'all', fn ($q) => $q->where('is_active', $this->statusFilter === 'active')->where('is_archived', $this->statusFilter === 'archived'))
+            ->where('is_active', true)
+            ->where('is_archived', false)
+            ->when(
+                $search !== '',
+                function ($query) use ($search) {
+                    $query->where(function ($subQuery) use ($search) {
+                        $subQuery
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('code', 'like', "%{$search}%")
+                            ->orWhere('description', 'like', "%{$search}%")
+                            ->orWhere('currency', 'like', "%{$search}%")
+                            ->orWhere('type', 'like', "%{$search}%");
+                    });
+                }
+            )
             ->with('features')
             ->orderBy($this->sortBy, $this->sortDir)
+            ->orderBy('id')
             ->paginate($this->perPage);
 
         $stats = [
-            'total_plans' => Plan::count(),
-            'active_plans' => Plan::where('is_active', true)->where('is_archived', false)->count(),
-            'archived_plans' => Plan::where('is_archived', true)->count(),
-            'total_subscriptions' => Subscription::whereHas('plan')->count(),
+            'available_plans' => Plan::query()
+                ->where('is_active', true)
+                ->where('is_archived', false)
+                ->count(),
+
+            'monthly_plans' => Plan::query()
+                ->where('is_active', true)
+                ->where('is_archived', false)
+                ->where('type', 'monthly')
+                ->count(),
+
+            'annual_plans' => Plan::query()
+                ->where('is_active', true)
+                ->where('is_archived', false)
+                ->where('type', 'annual')
+                ->count(),
         ];
 
         return view('livewire.plans.index', [
