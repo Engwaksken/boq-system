@@ -1,19 +1,19 @@
-<div class="space-y-5">
+<div class="boq-page-stack">
 
-    {{-- Header --}}
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    {{-- =====================================================
+         HEADER
+    ====================================================== --}}
+    <div class="boq-page-header">
 
         <div>
-
-            <h1 class="flex items-center gap-2 text-2xl font-bold text-slate-900">
-                <i class="fas fa-folder-open text-[#05645b]"></i>
+            <h1 class="boq-page-title">
+                <i class="fas fa-folder-open"></i>
                 Projects
             </h1>
 
-            <p class="mt-1 text-sm text-slate-500">
+            <p class="boq-page-subtitle">
                 Manage your construction projects.
             </p>
-
         </div>
 
         <a
@@ -26,9 +26,14 @@
 
     </div>
 
-    {{-- Statistics --}}
-    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
 
+    {{-- =====================================================
+         STATISTICS
+         SAME DISPLAY AS PLANS & PRICING
+    ====================================================== --}}
+    <div class="boq-stats-grid">
+
+        {{-- Total Projects --}}
         <div class="boq-stat-card boq-stat-green">
 
             <div>
@@ -47,6 +52,8 @@
 
         </div>
 
+
+        {{-- Active Projects --}}
         <div class="boq-stat-card boq-stat-blue">
 
             <div>
@@ -60,11 +67,13 @@
             </div>
 
             <span class="boq-stat-icon">
-                <i class="fas fa-circle-check"></i>
+                <i class="fas fa-diagram-project"></i>
             </span>
 
         </div>
 
+
+        {{-- Total BOQs --}}
         <div class="boq-stat-card boq-stat-amber">
 
             <div>
@@ -83,6 +92,8 @@
 
         </div>
 
+
+        {{-- Total Value --}}
         <div class="boq-stat-card boq-stat-purple">
 
             <div>
@@ -91,12 +102,45 @@
                 </p>
 
                 <p class="boq-stat-value">
-                    UGX
-                    {{ number_format(
-                        ($stats['total_value'] ?? 0)
-                        / 1000000,
-                        1
-                    ) }}M
+
+                    @php
+                        $totalValue = (float) ($stats['total_value'] ?? 0);
+                    @endphp
+
+                    @if($totalValue >= 1000000000)
+
+                        UGX
+                        {{ number_format(
+                            $totalValue / 1000000000,
+                            1
+                        ) }}B
+
+                    @elseif($totalValue >= 1000000)
+
+                        UGX
+                        {{ number_format(
+                            $totalValue / 1000000,
+                            1
+                        ) }}M
+
+                    @elseif($totalValue >= 1000)
+
+                        UGX
+                        {{ number_format(
+                            $totalValue / 1000,
+                            1
+                        ) }}K
+
+                    @else
+
+                        UGX
+                        {{ number_format(
+                            $totalValue,
+                            0
+                        ) }}
+
+                    @endif
+
                 </p>
             </div>
 
@@ -108,11 +152,24 @@
 
     </div>
 
-    {{-- Filters --}}
-    <div class="boq-panel p-4">
 
-        <div class="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(280px,1fr)_130px_auto] xl:items-end">
+    {{-- =====================================================
+         SEARCH / ROWS / SORT
+    ====================================================== --}}
+    <div class="boq-panel">
 
+        <div
+            style="
+                display:grid;
+                grid-template-columns:minmax(280px,1fr) 120px minmax(300px,auto);
+                gap:.75rem;
+                align-items:end;
+                padding:1rem;
+            "
+            class="project-filter-grid"
+        >
+
+            {{-- Search --}}
             <div>
 
                 <label class="boq-field-label">
@@ -134,6 +191,8 @@
 
             </div>
 
+
+            {{-- Rows --}}
             <div>
 
                 <label class="boq-field-label">
@@ -157,32 +216,84 @@
 
             </div>
 
+
+            {{-- Sort --}}
             <div>
 
                 <label class="boq-field-label">
-                    Sort
+                    Sort By
                 </label>
 
-                <div class="flex flex-wrap gap-2">
+                <div
+                    style="
+                        display:flex;
+                        flex-wrap:wrap;
+                        gap:.4rem;
+                    "
+                >
 
                     @foreach([
-                        'name' => 'Name',
-                        'client' => 'Client',
-                        'contract_value' => 'Value',
-                        'status' => 'Status'
-                    ] as $field => $label)
+                        'name' => [
+                            'label' => 'Name',
+                            'icon' => 'fa-font'
+                        ],
+
+                        'code' => [
+                            'label' => 'Code',
+                            'icon' => 'fa-hashtag'
+                        ],
+
+                        'client' => [
+                            'label' => 'Client',
+                            'icon' => 'fa-user-tie'
+                        ],
+
+                        'location' => [
+                            'label' => 'Location',
+                            'icon' => 'fa-location-dot'
+                        ],
+
+                        'contract_value' => [
+                            'label' => 'Value',
+                            'icon' => 'fa-money-bill-wave'
+                        ],
+
+                        'status' => [
+                            'label' => 'Status',
+                            'icon' => 'fa-circle-check'
+                        ],
+
+                        'created_at' => [
+                            'label' => 'Created',
+                            'icon' => 'fa-calendar'
+                        ],
+
+                    ] as $field => $sortOption)
 
                         <button
                             type="button"
                             wire:click="sortBy('{{ $field }}')"
-                            class="inline-flex h-10 items-center rounded-lg px-3 text-xs font-semibold
-                                {{ $sortBy === $field
-                                    ? 'bg-[#05645b] text-white'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                }}"
+
+                            style="
+                                display:inline-flex;
+                                height:40px;
+                                align-items:center;
+                                justify-content:center;
+                                gap:.35rem;
+                                border-radius:.625rem;
+                                padding:0 .7rem;
+                                font-size:.72rem;
+                                font-weight:700;
+                                border:1px solid {{ $sortBy === $field ? '#05645b' : '#e2e8f0' }};
+                                background:{{ $sortBy === $field ? '#05645b' : '#f8fafc' }};
+                                color:{{ $sortBy === $field ? '#ffffff' : '#475569' }};
+                                cursor:pointer;
+                            "
                         >
 
-                            {{ $label }}
+                            <i class="fas {{ $sortOption['icon'] }}"></i>
+
+                            {{ $sortOption['label'] }}
 
                             @if($sortBy === $field)
 
@@ -190,7 +301,7 @@
                                     $sortDir === 'asc'
                                         ? 'fa-arrow-up'
                                         : 'fa-arrow-down'
-                                }} ml-2"></i>
+                                }}"></i>
 
                             @endif
 
@@ -206,66 +317,125 @@
 
     </div>
 
-    {{-- Table --}}
-    <div class="boq-panel overflow-hidden">
 
-        <div class="overflow-x-auto">
+    {{-- =====================================================
+         PROJECTS TABLE
+    ====================================================== --}}
+    <div class="boq-panel">
 
-            <table class="boq-table min-w-full">
+        <div class="boq-table-wrapper">
+
+            <table class="boq-table">
 
                 <thead>
 
                     <tr>
 
+                        {{-- Name --}}
                         <th
                             wire:click="sortBy('name')"
-                            class="cursor-pointer"
+                            style="cursor:pointer;"
                         >
-                            Name
+
+                            <span
+                                style="
+                                    display:inline-flex;
+                                    align-items:center;
+                                    gap:.3rem;
+                                "
+                            >
+                                Name
+
+                                @if($sortBy === 'name')
+
+                                    <i class="fas {{
+                                        $sortDir === 'asc'
+                                            ? 'fa-arrow-up'
+                                            : 'fa-arrow-down'
+                                    }}"></i>
+
+                                @endif
+                            </span>
+
                         </th>
 
+
+                        {{-- Code --}}
                         <th
                             wire:click="sortBy('code')"
-                            class="cursor-pointer"
+                            style="cursor:pointer;"
                         >
-                            Code
+
+                            <span
+                                style="
+                                    display:inline-flex;
+                                    align-items:center;
+                                    gap:.3rem;
+                                "
+                            >
+                                Code
+
+                                @if($sortBy === 'code')
+
+                                    <i class="fas {{
+                                        $sortDir === 'asc'
+                                            ? 'fa-arrow-up'
+                                            : 'fa-arrow-down'
+                                    }}"></i>
+
+                                @endif
+
+                            </span>
+
                         </th>
 
+
+                        {{-- Client --}}
                         <th
                             wire:click="sortBy('client')"
-                            class="cursor-pointer"
+                            style="cursor:pointer;"
                         >
                             Client
                         </th>
 
+
+                        {{-- Location --}}
                         <th
                             wire:click="sortBy('location')"
-                            class="cursor-pointer"
+                            style="cursor:pointer;"
                         >
                             Location
                         </th>
 
+
+                        {{-- Contract Value --}}
                         <th
                             wire:click="sortBy('contract_value')"
-                            class="cursor-pointer"
+                            style="cursor:pointer;"
                         >
                             Contract Value
                         </th>
 
+
+                        {{-- Status --}}
                         <th
                             wire:click="sortBy('status')"
-                            class="cursor-pointer"
+                            style="cursor:pointer;"
                         >
                             Status
                         </th>
 
+
+                        {{-- Start Date --}}
                         <th
                             wire:click="sortBy('start_date')"
-                            class="cursor-pointer"
+                            style="cursor:pointer;"
                         >
                             Start Date
                         </th>
 
+
+                        {{-- Actions --}}
                         <th class="text-right">
                             Actions
                         </th>
@@ -274,55 +444,201 @@
 
                 </thead>
 
+
                 <tbody>
 
                     @forelse($projects as $project)
 
                         <tr wire:key="project-{{ $project->id }}">
 
+                            {{-- Project --}}
                             <td>
 
                                 <a
                                     href="{{ url('/projects/'.$project->id) }}"
-                                    class="font-semibold text-[#05645b] hover:underline"
+                                    style="
+                                        color:#05645b;
+                                        font-weight:700;
+                                        text-decoration:none;
+                                    "
                                 >
                                     {{ $project->name }}
                                 </a>
 
                             </td>
 
+
+                            {{-- Code --}}
                             <td>
-                                {{ $project->code }}
+
+                                @if($project->code)
+
+                                    <span
+                                        style="
+                                            display:inline-flex;
+                                            border-radius:.4rem;
+                                            background:#f1f5f9;
+                                            padding:.2rem .45rem;
+                                            color:#475569;
+                                            font-size:.7rem;
+                                            font-weight:700;
+                                        "
+                                    >
+                                        {{ $project->code }}
+                                    </span>
+
+                                @else
+
+                                    <span style="color:#94a3b8;">
+                                        —
+                                    </span>
+
+                                @endif
+
                             </td>
 
+
+                            {{-- Client --}}
                             <td>
-                                {{ $project->client }}
+
+                                @if($project->client)
+
+                                    <span
+                                        style="
+                                            display:inline-flex;
+                                            align-items:center;
+                                            gap:.35rem;
+                                        "
+                                    >
+                                        <i
+                                            class="fas fa-user-tie"
+                                            style="
+                                                color:#94a3b8;
+                                                font-size:.7rem;
+                                            "
+                                        ></i>
+
+                                        {{ $project->client }}
+
+                                    </span>
+
+                                @else
+
+                                    <span style="color:#94a3b8;">
+                                        —
+                                    </span>
+
+                                @endif
+
                             </td>
 
+
+                            {{-- Location --}}
                             <td>
-                                {{ $project->location }}
+
+                                @if($project->location)
+
+                                    <span
+                                        style="
+                                            display:inline-flex;
+                                            align-items:center;
+                                            gap:.35rem;
+                                        "
+                                    >
+
+                                        <i
+                                            class="fas fa-location-dot"
+                                            style="
+                                                color:#94a3b8;
+                                                font-size:.7rem;
+                                            "
+                                        ></i>
+
+                                        {{ $project->location }}
+
+                                    </span>
+
+                                @else
+
+                                    <span style="color:#94a3b8;">
+                                        —
+                                    </span>
+
+                                @endif
+
                             </td>
 
+
+                            {{-- Contract Value --}}
                             <td>
 
-                                {{ $project->currency }}
+                                <strong style="color:#0f172a;">
 
-                                {{ number_format(
-                                    (float) $project->contract_value,
-                                    2
-                                ) }}
+                                    {{ $project->currency ?? 'UGX' }}
+
+                                    {{ number_format(
+                                        (float) ($project->contract_value ?? 0),
+                                        0
+                                    ) }}
+
+                                </strong>
 
                             </td>
 
+
+                            {{-- Status --}}
                             <td>
 
-                                <span class="boq-badge">
+                                @php
+                                    $statusClass = match($project->status) {
+
+                                        'active'
+                                            => 'boq-badge-success',
+
+                                        'completed'
+                                            => 'boq-badge-info',
+
+                                        'archived'
+                                            => '',
+
+                                        'on_hold'
+                                            => 'boq-badge-warning',
+
+                                        default
+                                            => ''
+                                    };
+                                @endphp
+
+                                <span class="boq-badge {{ $statusClass }}">
+
+                                    @switch($project->status)
+
+                                        @case('active')
+                                            <i class="fas fa-circle-check"></i>
+                                            @break
+
+                                        @case('completed')
+                                            <i class="fas fa-check-double"></i>
+                                            @break
+
+                                        @case('on_hold')
+                                            <i class="fas fa-pause"></i>
+                                            @break
+
+                                        @case('archived')
+                                            <i class="fas fa-box-archive"></i>
+                                            @break
+
+                                        @default
+                                            <i class="fas fa-circle"></i>
+
+                                    @endswitch
 
                                     {{ ucwords(
                                         str_replace(
                                             '_',
                                             ' ',
-                                            $project->status
+                                            $project->status ?? 'unknown'
                                         )
                                     ) }}
 
@@ -330,38 +646,81 @@
 
                             </td>
 
+
+                            {{-- Start date --}}
                             <td>
-                                {{ $project->start_date?->format('d M Y')
-                                    ?? '—'
-                                }}
+
+                                @if($project->start_date)
+
+                                    <span
+                                        style="
+                                            display:inline-flex;
+                                            align-items:center;
+                                            gap:.35rem;
+                                        "
+                                    >
+
+                                        <i
+                                            class="fas fa-calendar-day"
+                                            style="
+                                                color:#94a3b8;
+                                                font-size:.7rem;
+                                            "
+                                        ></i>
+
+                                        {{ $project->start_date->format('d M Y') }}
+
+                                    </span>
+
+                                @else
+
+                                    <span style="color:#94a3b8;">
+                                        —
+                                    </span>
+
+                                @endif
+
                             </td>
 
+
+                            {{-- Actions --}}
                             <td class="text-right">
 
-                                <div class="inline-flex items-center gap-2">
+                                <div
+                                    style="
+                                        display:inline-flex;
+                                        align-items:center;
+                                        gap:.35rem;
+                                    "
+                                >
 
+                                    {{-- View --}}
                                     <a
                                         href="{{ url('/projects/'.$project->id) }}"
                                         class="boq-icon-btn"
-                                        title="View"
+                                        title="View Project"
                                     >
                                         <i class="fas fa-eye"></i>
                                     </a>
 
+
+                                    {{-- Edit --}}
                                     <a
                                         href="{{ url('/projects/'.$project->id.'/edit') }}"
                                         class="boq-icon-btn"
-                                        title="Edit"
+                                        title="Edit Project"
                                     >
                                         <i class="fas fa-pen"></i>
                                     </a>
 
+
+                                    {{-- Delete --}}
                                     <button
                                         type="button"
                                         wire:click="delete({{ $project->id }})"
                                         wire:confirm="Are you sure you want to delete this project?"
-                                        class="boq-icon-btn text-red-600"
-                                        title="Delete"
+                                        class="boq-icon-btn boq-icon-danger"
+                                        title="Delete Project"
                                     >
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -372,20 +731,23 @@
 
                         </tr>
 
+
                     @empty
 
                         <tr>
 
                             <td
                                 colspan="8"
-                                class="p-10 text-center text-sm text-slate-500"
+                                class="boq-empty-table"
                             >
 
-                                <i class="fas fa-folder-open mb-2 block text-2xl text-slate-300"></i>
+                                <i class="fas fa-folder-open"></i>
 
-                                No projects found.
+                                <span>
+                                    No projects found.
+                                </span>
 
-                                <div class="mt-4">
+                                <div style="margin-top:1rem;">
 
                                     <a
                                         href="{{ url('/projects/create') }}"
@@ -409,10 +771,16 @@
 
         </div>
 
+
+        {{-- =================================================
+             PAGINATION
+        ================================================== --}}
         @if($projects->hasPages())
 
-            <div class="border-t border-slate-200 p-4">
+            <div class="boq-pagination">
+
                 {{ $projects->links() }}
+
             </div>
 
         @endif
@@ -420,3 +788,41 @@
     </div>
 
 </div>
+
+
+{{-- =========================================================
+     RESPONSIVE FILTER LAYOUT
+========================================================= --}}
+<style>
+
+    @media (max-width: 1100px) {
+
+        .project-filter-grid {
+            grid-template-columns:
+                minmax(250px, 1fr)
+                110px !important;
+        }
+
+        .project-filter-grid > div:last-child {
+            grid-column:
+                1 / -1;
+        }
+
+    }
+
+
+    @media (max-width: 700px) {
+
+        .project-filter-grid {
+            grid-template-columns:
+                1fr !important;
+        }
+
+        .project-filter-grid > div:last-child {
+            grid-column:
+                auto;
+        }
+
+    }
+
+</style>

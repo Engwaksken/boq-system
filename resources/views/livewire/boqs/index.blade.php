@@ -1,16 +1,18 @@
-<div class="space-y-5">
+<div class="boq-page-stack">
 
-    {{-- Header --}}
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    {{-- =====================================================
+         HEADER
+    ====================================================== --}}
+    <div class="boq-page-header">
 
         <div>
 
-            <h1 class="flex items-center gap-2 text-2xl font-bold text-slate-900">
-                <i class="fas fa-file-invoice-dollar text-[#05645b]"></i>
+            <h1 class="boq-page-title">
+                <i class="fas fa-file-invoice-dollar"></i>
                 BOQs
             </h1>
 
-            <p class="mt-1 text-sm text-slate-500">
+            <p class="boq-page-subtitle">
                 Bill of Quantities for your projects.
             </p>
 
@@ -26,12 +28,18 @@
 
     </div>
 
-    {{-- Statistics --}}
-    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
 
+    {{-- =====================================================
+         STATISTICS
+         SAME DISPLAY AS PLANS & PRICING
+    ====================================================== --}}
+    <div class="boq-stats-grid">
+
+        {{-- Total BOQs --}}
         <div class="boq-stat-card boq-stat-green">
 
             <div>
+
                 <p class="boq-stat-label">
                     Total BOQs
                 </p>
@@ -39,6 +47,7 @@
                 <p class="boq-stat-value">
                     {{ $stats['total_boqs'] ?? 0 }}
                 </p>
+
             </div>
 
             <span class="boq-stat-icon">
@@ -47,9 +56,12 @@
 
         </div>
 
+
+        {{-- Uploaded --}}
         <div class="boq-stat-card boq-stat-blue">
 
             <div>
+
                 <p class="boq-stat-label">
                     Uploaded
                 </p>
@@ -57,6 +69,7 @@
                 <p class="boq-stat-value">
                     {{ $stats['uploaded'] ?? 0 }}
                 </p>
+
             </div>
 
             <span class="boq-stat-icon">
@@ -65,9 +78,12 @@
 
         </div>
 
+
+        {{-- Under Review --}}
         <div class="boq-stat-card boq-stat-amber">
 
             <div>
+
                 <p class="boq-stat-label">
                     Under Review
                 </p>
@@ -75,6 +91,7 @@
                 <p class="boq-stat-value">
                     {{ $stats['under_review'] ?? 0 }}
                 </p>
+
             </div>
 
             <span class="boq-stat-icon">
@@ -83,9 +100,12 @@
 
         </div>
 
+
+        {{-- Approved --}}
         <div class="boq-stat-card boq-stat-purple">
 
             <div>
+
                 <p class="boq-stat-label">
                     Approved
                 </p>
@@ -93,6 +113,7 @@
                 <p class="boq-stat-value">
                     {{ $stats['approved'] ?? 0 }}
                 </p>
+
             </div>
 
             <span class="boq-stat-icon">
@@ -103,11 +124,17 @@
 
     </div>
 
-    {{-- Filters --}}
-    <div class="boq-panel p-4">
 
-        <div class="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(280px,1fr)_130px_auto] xl:items-end">
+    {{-- =====================================================
+         SEARCH / ROWS / SORT
+    ====================================================== --}}
+    <div class="boq-panel">
 
+        <div
+            class="boq-index-filter-grid boq-index-filter-grid-boqs"
+        >
+
+            {{-- Search --}}
             <div>
 
                 <label class="boq-field-label">
@@ -129,6 +156,8 @@
 
             </div>
 
+
+            {{-- Rows --}}
             <div>
 
                 <label class="boq-field-label">
@@ -152,32 +181,44 @@
 
             </div>
 
+
+            {{-- Sort --}}
             <div>
 
                 <label class="boq-field-label">
-                    Sort
+                    Sort By
                 </label>
 
-                <div class="flex flex-wrap gap-2">
+                <div class="boq-sort-buttons">
 
                     @foreach([
-                        'name' => 'Name',
-                        'status' => 'Status',
-                        'currency' => 'Currency',
-                        'created_at' => 'Created',
-                    ] as $field => $label)
+                        'name' => [
+                            'label' => 'Name',
+                            'icon' => 'fa-font',
+                        ],
+                        'status' => [
+                            'label' => 'Status',
+                            'icon' => 'fa-circle-check',
+                        ],
+                        'currency' => [
+                            'label' => 'Currency',
+                            'icon' => 'fa-coins',
+                        ],
+                        'created_at' => [
+                            'label' => 'Created',
+                            'icon' => 'fa-calendar',
+                        ],
+                    ] as $field => $sortOption)
 
                         <button
                             type="button"
                             wire:click="sortBy('{{ $field }}')"
-                            class="inline-flex h-10 items-center rounded-lg px-3 text-xs font-semibold
-                                {{ $sortBy === $field
-                                    ? 'bg-[#05645b] text-white'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                }}"
+                            class="boq-sort-button {{ $sortBy === $field ? 'is-active' : '' }}"
                         >
 
-                            {{ $label }}
+                            <i class="fas {{ $sortOption['icon'] }}"></i>
+
+                            {{ $sortOption['label'] }}
 
                             @if($sortBy === $field)
 
@@ -185,7 +226,7 @@
                                     $sortDir === 'asc'
                                         ? 'fa-arrow-up'
                                         : 'fa-arrow-down'
-                                }} ml-2"></i>
+                                }}"></i>
 
                             @endif
 
@@ -201,66 +242,131 @@
 
     </div>
 
-    {{-- Table --}}
-    <div class="boq-panel overflow-hidden">
 
-        <div class="overflow-x-auto">
+    {{-- =====================================================
+         BOQ TABLE
+    ====================================================== --}}
+    <div class="boq-panel">
 
-            <table class="boq-table min-w-full">
+        <div class="boq-table-wrapper">
+
+            <table class="boq-table">
 
                 <thead>
 
                     <tr>
 
+                        {{-- Name --}}
                         <th
                             wire:click="sortBy('name')"
-                            class="cursor-pointer"
+                            class="boq-sortable-header"
                         >
-                            Name
+
+                            <span>
+                                Name
+
+                                @if($sortBy === 'name')
+
+                                    <i class="fas {{
+                                        $sortDir === 'asc'
+                                            ? 'fa-arrow-up'
+                                            : 'fa-arrow-down'
+                                    }}"></i>
+
+                                @endif
+                            </span>
+
                         </th>
 
-                        <th
-                            wire:click="sortBy('project.name')"
-                            class="cursor-pointer"
-                        >
+
+                        {{-- Project --}}
+                        <th>
                             Project
                         </th>
 
+
+                        {{-- Status --}}
                         <th
                             wire:click="sortBy('status')"
-                            class="cursor-pointer"
+                            class="boq-sortable-header"
                         >
-                            Status
+
+                            <span>
+                                Status
+
+                                @if($sortBy === 'status')
+
+                                    <i class="fas {{
+                                        $sortDir === 'asc'
+                                            ? 'fa-arrow-up'
+                                            : 'fa-arrow-down'
+                                    }}"></i>
+
+                                @endif
+                            </span>
+
                         </th>
 
+
+                        {{-- Currency --}}
                         <th
                             wire:click="sortBy('currency')"
-                            class="cursor-pointer"
+                            class="boq-sortable-header"
                         >
-                            Currency
+
+                            <span>
+                                Currency
+
+                                @if($sortBy === 'currency')
+
+                                    <i class="fas {{
+                                        $sortDir === 'asc'
+                                            ? 'fa-arrow-up'
+                                            : 'fa-arrow-down'
+                                    }}"></i>
+
+                                @endif
+                            </span>
+
                         </th>
 
-                        <th
-                            wire:click="sortBy('version')"
-                            class="cursor-pointer"
-                        >
+
+                        {{-- Version --}}
+                        <th>
                             Version
                         </th>
 
-                        <th
-                            wire:click="sortBy('items_count')"
-                            class="cursor-pointer"
-                        >
+
+                        {{-- Items --}}
+                        <th>
                             Items
                         </th>
 
+
+                        {{-- Created --}}
                         <th
                             wire:click="sortBy('created_at')"
-                            class="cursor-pointer"
+                            class="boq-sortable-header"
                         >
-                            Created
+
+                            <span>
+                                Created
+
+                                @if($sortBy === 'created_at')
+
+                                    <i class="fas {{
+                                        $sortDir === 'asc'
+                                            ? 'fa-arrow-up'
+                                            : 'fa-arrow-down'
+                                    }}"></i>
+
+                                @endif
+                            </span>
+
                         </th>
 
+
+                        {{-- Actions --}}
                         <th class="text-right">
                             Actions
                         </th>
@@ -269,36 +375,105 @@
 
                 </thead>
 
+
                 <tbody>
 
                     @forelse($boqs as $boq)
 
                         <tr wire:key="boq-{{ $boq->id }}">
 
+                            {{-- BOQ --}}
                             <td>
 
                                 <a
                                     href="{{ url('/boqs/'.$boq->id) }}"
-                                    class="font-semibold text-[#05645b] hover:underline"
+                                    class="boq-table-link"
                                 >
                                     {{ $boq->name }}
                                 </a>
 
                             </td>
 
+
+                            {{-- Project --}}
                             <td>
-                                {{ $boq->project?->name ?? '—' }}
+
+                                @if($boq->project)
+
+                                    <span class="boq-cell-with-icon">
+
+                                        <i class="fas fa-folder-open"></i>
+
+                                        {{ $boq->project->name }}
+
+                                    </span>
+
+                                @else
+
+                                    <span class="boq-table-empty">
+                                        —
+                                    </span>
+
+                                @endif
+
                             </td>
 
+
+                            {{-- Status --}}
                             <td>
 
-                                <span class="boq-badge">
+                                @php
+
+                                    $statusClass = match($boq->status) {
+
+                                        'approved'
+                                            => 'boq-badge-success',
+
+                                        'uploaded'
+                                            => 'boq-badge-info',
+
+                                        'under_review'
+                                            => 'boq-badge-warning',
+
+                                        'rejected'
+                                            => 'boq-badge-danger',
+
+                                        default
+                                            => ''
+                                    };
+
+                                @endphp
+
+                                <span class="boq-badge {{ $statusClass }}">
+
+                                    @switch($boq->status)
+
+                                        @case('approved')
+                                            <i class="fas fa-circle-check"></i>
+                                            @break
+
+                                        @case('uploaded')
+                                            <i class="fas fa-cloud-arrow-up"></i>
+                                            @break
+
+                                        @case('under_review')
+                                            <i class="fas fa-magnifying-glass-chart"></i>
+                                            @break
+
+                                        @case('rejected')
+                                            <i class="fas fa-circle-xmark"></i>
+                                            @break
+
+                                        @default
+                                            <i class="fas fa-circle"></i>
+
+                                    @endswitch
 
                                     {{ ucwords(
                                         str_replace(
                                             '_',
                                             ' ',
-                                            $boq->status
+                                            $boq->status ?? 'unknown'
                                         )
                                     ) }}
 
@@ -306,39 +481,101 @@
 
                             </td>
 
+
+                            {{-- Currency --}}
                             <td>
-                                {{ $boq->currency }}
+
+                                @if($boq->currency)
+
+                                    <span class="boq-currency-badge">
+                                        {{ $boq->currency }}
+                                    </span>
+
+                                @else
+
+                                    <span class="boq-table-empty">
+                                        —
+                                    </span>
+
+                                @endif
+
                             </td>
 
+
+                            {{-- Version --}}
                             <td>
-                                {{ $boq->version }}
+
+                                <span class="boq-version-badge">
+
+                                    <i class="fas fa-code-branch"></i>
+
+                                    v{{ $boq->version ?? 1 }}
+
+                                </span>
+
                             </td>
 
+
+                            {{-- Items --}}
                             <td>
-                                {{ $boq->items_count
-                                    ?? $boq->items->count()
-                                }}
+
+                                <span class="boq-item-count">
+
+                                    <i class="fas fa-list-ul"></i>
+
+                                    {{ $boq->items_count
+                                        ?? $boq->items->count()
+                                    }}
+
+                                </span>
+
                             </td>
 
+
+                            {{-- Created --}}
                             <td>
-                                {{ $boq->created_at?->format('d M Y')
-                                    ?? '—'
-                                }}
+
+                                @if($boq->created_at)
+
+                                    <span class="boq-cell-with-icon">
+
+                                        <i class="fas fa-calendar-day"></i>
+
+                                        {{ $boq->created_at->format('d M Y') }}
+
+                                    </span>
+
+                                @else
+
+                                    <span class="boq-table-empty">
+                                        —
+                                    </span>
+
+                                @endif
+
                             </td>
 
+
+                            {{-- Actions --}}
                             <td class="text-right">
 
-                                <a
-                                    href="{{ url('/boqs/'.$boq->id) }}"
-                                    class="boq-icon-btn"
-                                    title="View"
-                                >
-                                    <i class="fas fa-eye"></i>
-                                </a>
+                                <div class="boq-table-actions">
+
+                                    {{-- View --}}
+                                    <a
+                                        href="{{ url('/boqs/'.$boq->id) }}"
+                                        class="boq-icon-btn"
+                                        title="View BOQ"
+                                    >
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+
+                                </div>
 
                             </td>
 
                         </tr>
+
 
                     @empty
 
@@ -346,14 +583,16 @@
 
                             <td
                                 colspan="8"
-                                class="p-10 text-center text-sm text-slate-500"
+                                class="boq-empty-table"
                             >
 
-                                <i class="fas fa-file-invoice-dollar mb-2 block text-2xl text-slate-300"></i>
+                                <i class="fas fa-file-invoice-dollar"></i>
 
-                                No BOQs found.
+                                <span>
+                                    No BOQs found.
+                                </span>
 
-                                <div class="mt-4">
+                                <div class="boq-empty-action">
 
                                     <a
                                         href="{{ url('/boqs/create') }}"
@@ -377,10 +616,16 @@
 
         </div>
 
+
+        {{-- =================================================
+             PAGINATION
+        ================================================== --}}
         @if($boqs->hasPages())
 
-            <div class="border-t border-slate-200 p-4">
+            <div class="boq-pagination">
+
                 {{ $boqs->links() }}
+
             </div>
 
         @endif
