@@ -13,6 +13,7 @@ class HardwarePrice extends Model
 
     protected $fillable = [
         'organisation_id',
+        'hardware_category_id',
         'item_name',
         'brand',
         'category',
@@ -41,6 +42,13 @@ class HardwarePrice extends Model
         return $this->belongsTo(Organisation::class);
     }
 
+    public function hardwareCategory(): BelongsTo
+    {
+        return $this->belongsTo(
+            HardwareCategory::class
+        );
+    }
+
     public function priceHistories(): HasMany
     {
         return $this->hasMany(PriceHistory::class);
@@ -53,7 +61,8 @@ class HardwarePrice extends Model
 
     public function latestHistory(): HasMany
     {
-        return $this->hasMany(PriceHistory::class)->latest('recorded_at');
+        return $this->hasMany(PriceHistory::class)
+            ->latest('recorded_at');
     }
 
     public function scopeActive($query)
@@ -61,71 +70,106 @@ class HardwarePrice extends Model
         return $query->where('is_active', true);
     }
 
-    public function scopeByCategory($query, string $category)
-    {
+    public function scopeByCategory(
+        $query,
+        string|int $category
+    ) {
+        if (is_numeric($category)) {
+            return $query->where(
+                'hardware_category_id',
+                (int) $category
+            );
+        }
+
         return $query->where('category', $category);
     }
 
-    public function scopeBySupplier($query, string $supplier)
-    {
-        return $query->where('supplier', $supplier);
+    public function scopeBySupplier(
+        $query,
+        string $supplier
+    ) {
+        return $query->where(
+            'supplier',
+            $supplier
+        );
     }
 
-    public function scopeByLocation($query, string $location)
-    {
-        return $query->where('location', $location);
+    public function scopeByLocation(
+        $query,
+        string $location
+    ) {
+        return $query->where(
+            'location',
+            $location
+        );
     }
 
-    public function scopeSearch($query, string $term)
-    {
-        return $query->where(function ($q) use ($term) {
-            $q->where('item_name', 'like', "%{$term}%")
-                ->orWhere('brand', 'like', "%{$term}%")
-                ->orWhere('specification', 'like', "%{$term}%")
-                ->orWhere('category', 'like', "%{$term}%")
-                ->orWhere('supplier', 'like', "%{$term}%");
-        });
-    }
-
-    public function getPriceChangeAttribute(): ?float
-    {
-        $histories = $this->priceHistories()->orderBy('recorded_at')->get();
-        if ($histories->count() < 2) {
-            return null;
-        }
-        $first = $histories->first()->price;
-        $last = $histories->last()->price;
-
-        return $last - $first;
-    }
-
-    public function getPriceChangePercentAttribute(): ?float
-    {
-        $histories = $this->priceHistories()->orderBy('recorded_at')->get();
-        if ($histories->count() < 2) {
-            return null;
-        }
-        $first = $histories->first()->price;
-        $last = $histories->last()->price;
-        if ($first == 0) {
-            return null;
-        }
-
-        return round((($last - $first) / $first) * 100, 2);
+    public function scopeSearch(
+        $query,
+        string $term
+    ) {
+        return $query->where(
+            function ($query) use ($term) {
+                $query
+                    ->where(
+                        'item_name',
+                        'like',
+                        "%{$term}%"
+                    )
+                    ->orWhere(
+                        'brand',
+                        'like',
+                        "%{$term}%"
+                    )
+                    ->orWhere(
+                        'specification',
+                        'like',
+                        "%{$term}%"
+                    )
+                    ->orWhere(
+                        'category',
+                        'like',
+                        "%{$term}%"
+                    )
+                    ->orWhere(
+                        'supplier',
+                        'like',
+                        "%{$term}%"
+                    )
+                    ->orWhereHas(
+                        'hardwareCategory',
+                        fn ($category) =>
+                            $category->where(
+                                'name',
+                                'like',
+                                "%{$term}%"
+                            )
+                    );
+            }
+        );
     }
 
     public function getLowestPriceAttribute(): float
     {
-        return $this->priceHistories()->min('price') ?? $this->price;
+        return (float) (
+            $this->priceHistories()->min('price')
+            ?? $this->price
+        );
     }
 
     public function getHighestPriceAttribute(): float
     {
-        return $this->priceHistories()->max('price') ?? $this->price;
+        return (float) (
+            $this->priceHistories()->max('price')
+            ?? $this->price
+        );
     }
 
     public function getAveragePriceAttribute(): float
     {
-        return $this->priceHistories()->avg('price') ?? $this->price;
+        return (float) (
+            $this->priceHistories()->avg('price')
+            ?? $this->price
+        );
     }
 }
