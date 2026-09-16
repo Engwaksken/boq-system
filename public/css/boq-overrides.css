@@ -1,52 +1,63 @@
+
 :root {
     --boq-primary: #05645b;
     --boq-primary-dark: #044f48;
     --boq-primary-soft: #ecfdf5;
     --boq-accent: #d7df21;
 
-    --boq-border: #e2e8f0;
+    --boq-bg: #ffffff;
+    --boq-bg-soft: #f8fafc;
+    --boq-page-bg: #f1f5f9;
+
+    --boq-border: #dbe3ec;
     --boq-border-dark: #cbd5e1;
 
     --boq-text: #0f172a;
     --boq-text-muted: #64748b;
     --boq-text-soft: #94a3b8;
 
-    --boq-bg: #ffffff;
-    --boq-bg-soft: #f8fafc;
-
+    --boq-success: #059669;
+    --boq-info: #2563eb;
+    --boq-warning: #d97706;
     --boq-danger: #dc2626;
     --boq-danger-dark: #b91c1c;
-    --boq-success: #059669;
-    --boq-warning: #d97706;
-    --boq-info: #2563eb;
     --boq-purple: #7c3aed;
 
-    --boq-radius-sm: .5rem;
+    --boq-radius-sm: .45rem;
     --boq-radius: .625rem;
     --boq-radius-lg: .85rem;
 
-    --boq-shadow:
-        0 1px 2px rgba(15, 23, 42, .04);
+    --boq-shadow: 0 1px 2px rgba(15, 23, 42, .06);
+    --boq-shadow-hover: 0 6px 18px rgba(15, 23, 42, .08);
+    --boq-shadow-modal: 0 24px 60px rgba(15, 23, 42, .24);
 
-    --boq-shadow-hover:
-        0 5px 14px rgba(15, 23, 42, .07);
-
-    --boq-shadow-modal:
-        0 24px 60px rgba(15, 23, 42, .22);
-
-    --boq-field-height: 40px;
+    --boq-field-height: 42px;
+    --boq-field-font-size: .84rem;
 }
 
+/* ==========================================================================
+   RESET / CONSISTENCY
+   ========================================================================== */
 
-/* =========================================================
-   BASE
-========================================================= */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
 
-.boq-panel {
-    border: 1px solid var(--boq-border);
-    border-radius: var(--boq-radius-lg);
-    background: var(--boq-bg);
-    box-shadow: var(--boq-shadow);
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+button {
+    -webkit-tap-highlight-color: transparent;
+}
+
+[x-cloak] {
+    display: none !important;
 }
 
 .boq-muted {
@@ -57,17 +68,200 @@
     border-top: 1px solid #f1f5f9;
 }
 
-.boq-subscriptions-page,
-.boq-page-stack {
+.boq-page-stack,
+.boq-subscriptions-page {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1.15rem;
+    min-width: 0;
 }
 
+/* ==========================================================================
+   GLOBAL FORM CONTROL NORMALISATION
+   Fixes inconsistent heights such as the Quantity Surveyor field.
+   ========================================================================== */
 
-/* =========================================================
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]),
+select {
+    width: 100%;
+    height: var(--boq-field-height) !important;
+    min-height: var(--boq-field-height) !important;
+    border: 1px solid var(--boq-border-dark) !important;
+    border-radius: var(--boq-radius) !important;
+    background: #fff !important;
+    padding: 0 .8rem !important;
+    color: var(--boq-text) !important;
+    font-size: var(--boq-field-font-size) !important;
+    line-height: calc(var(--boq-field-height) - 2px) !important;
+    outline: none !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04) !important;
+    transition:
+        border-color .15s ease,
+        box-shadow .15s ease,
+        background-color .15s ease !important;
+}
+
+textarea {
+    width: 100%;
+    min-height: 96px;
+    border: 1px solid var(--boq-border-dark) !important;
+    border-radius: var(--boq-radius) !important;
+    background: #fff !important;
+    padding: .7rem .8rem !important;
+    color: var(--boq-text) !important;
+    font-size: var(--boq-field-font-size) !important;
+    line-height: 1.45rem !important;
+    outline: none !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04) !important;
+    resize: vertical;
+    transition:
+        border-color .15s ease,
+        box-shadow .15s ease,
+        background-color .15s ease !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):hover,
+select:hover,
+textarea:hover {
+    border-color: #94a3b8 !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):focus,
+select:focus,
+textarea:focus {
+    border-color: var(--boq-primary) !important;
+    box-shadow: 0 0 0 3px rgba(5, 100, 91, .10) !important;
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+    cursor: not-allowed;
+    background: #f8fafc !important;
+    color: #94a3b8 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #94a3b8 !important;
+    opacity: 1 !important;
+    font-size: .8rem !important;
+    font-weight: 400 !important;
+}
+
+input::-webkit-input-placeholder,
+textarea::-webkit-input-placeholder {
+    color: #94a3b8 !important;
+    opacity: 1 !important;
+}
+
+input::-moz-placeholder,
+textarea::-moz-placeholder {
+    color: #94a3b8 !important;
+    opacity: 1 !important;
+}
+
+/* Prevent browser number controls from changing height */
+input[type="number"] {
+    min-height: var(--boq-field-height) !important;
+}
+
+/* Checkbox/radio styling stays compact */
+input[type="checkbox"],
+input[type="radio"] {
+    width: 1rem;
+    height: 1rem;
+    min-height: 1rem;
+    accent-color: var(--boq-primary);
+}
+
+/* File input */
+input[type="file"] {
+    width: 100%;
+    min-height: var(--boq-field-height);
+    border: 1px solid var(--boq-border-dark);
+    border-radius: var(--boq-radius);
+    background: #fff;
+    padding: .35rem .5rem;
+    color: var(--boq-text-muted);
+    font-size: .8rem;
+}
+
+/* Shared BOQ field class */
+.boq-field {
+    width: 100% !important;
+    height: var(--boq-field-height) !important;
+    min-height: var(--boq-field-height) !important;
+    border: 1px solid var(--boq-border-dark) !important;
+    border-radius: var(--boq-radius) !important;
+    background: #fff !important;
+    padding: 0 .8rem !important;
+    color: var(--boq-text) !important;
+    font-size: var(--boq-field-font-size) !important;
+    line-height: calc(var(--boq-field-height) - 2px) !important;
+}
+
+textarea.boq-field,
+.boq-textarea {
+    height: auto !important;
+    min-height: 96px !important;
+    padding: .7rem .8rem !important;
+    line-height: 1.45rem !important;
+}
+
+select.boq-field {
+    padding-right: 2.2rem !important;
+}
+
+.boq-field-label,
+label.boq-field-label {
+    display: block;
+    margin-bottom: .32rem;
+    color: #334155;
+    font-size: .72rem;
+    font-weight: 700;
+    line-height: 1rem;
+}
+
+.boq-field-error {
+    margin-top: .3rem;
+    color: var(--boq-danger);
+    font-size: .72rem;
+    font-weight: 600;
+}
+
+.boq-required {
+    color: var(--boq-danger);
+}
+
+/* ==========================================================================
+   INPUT ICONS
+   ========================================================================== */
+
+.boq-input-icon-wrap {
+    position: relative;
+    min-width: 0;
+}
+
+.boq-input-icon {
+    position: absolute;
+    top: 50%;
+    left: .8rem;
+    z-index: 2;
+    transform: translateY(-50%);
+    color: var(--boq-text-soft);
+    font-size: .76rem;
+    pointer-events: none;
+}
+
+.boq-field-with-icon,
+input.boq-field-with-icon {
+    padding-left: 2.3rem !important;
+}
+
+/* ==========================================================================
    PAGE HEADER
-========================================================= */
+   ========================================================================== */
 
 .boq-page-header {
     display: flex;
@@ -80,14 +274,11 @@
     display: flex;
     align-items: center;
     gap: .55rem;
-
     margin: 0;
-
     color: var(--boq-text);
-
-    font-size: 1.5rem;
+    font-size: 1.45rem;
     font-weight: 800;
-    line-height: 1.8rem;
+    line-height: 1.75rem;
 }
 
 .boq-page-title i {
@@ -95,258 +286,105 @@
 }
 
 .boq-page-subtitle {
-    margin-top: .3rem;
-
+    margin: .25rem 0 0;
     color: var(--boq-text-muted);
-
-    font-size: .82rem;
+    font-size: .8rem;
 }
 
 .boq-current-subscription {
     min-width: 180px;
-
     border: 1px solid #a7f3d0;
     border-radius: .75rem;
-
     background: #ecfdf5;
-
     padding: .6rem .85rem;
 }
 
 .boq-current-subscription-label {
     color: #047857;
-
-    font-size: .62rem;
+    font-size: .6rem;
     font-weight: 800;
-
     text-transform: uppercase;
-
     letter-spacing: .04em;
 }
 
 .boq-current-subscription-name {
     margin-top: .15rem;
-
     color: #064e3b;
-
-    font-size: .85rem;
+    font-size: .82rem;
     font-weight: 800;
 }
 
+/* ==========================================================================
+   PANELS
+   ========================================================================== */
 
-/* =========================================================
-   FORM LABELS
-========================================================= */
-
-.boq-field-label {
-    display: block;
-
-    margin-bottom: .32rem;
-
-    color: #475569;
-
-    font-size: .75rem;
-    font-weight: 700;
-    line-height: 1rem;
+.boq-panel {
+    min-width: 0;
+    border: 1px solid var(--boq-border);
+    border-radius: var(--boq-radius-lg);
+    background: var(--boq-bg);
+    box-shadow: var(--boq-shadow);
 }
 
-
-/* =========================================================
-   FORM CONTROLS
-========================================================= */
-
-.boq-field {
-    width: 100%;
-
-    height: var(--boq-field-height);
-    min-height: var(--boq-field-height);
-
-    box-sizing: border-box;
-
-    border: 1px solid var(--boq-border-dark);
-    border-radius: var(--boq-radius);
-
-    background: #fff;
-
-    padding: 0 .75rem;
-
-    color: var(--boq-text);
-
-    font-size: .875rem;
-    line-height: 1.25rem;
-
-    outline: none;
-
-    transition:
-        border-color .15s ease,
-        box-shadow .15s ease,
-        background-color .15s ease;
-}
-
-.boq-field:hover {
-    border-color: #94a3b8;
-}
-
-.boq-field:focus {
-    border-color: var(--boq-primary);
-
-    box-shadow:
-        0 0 0 3px rgba(5, 100, 91, .10);
-}
-
-.boq-field:disabled {
-    cursor: not-allowed;
-
-    background: #f8fafc;
-
-    color: #94a3b8;
-}
-
-.boq-field::placeholder {
-    color: var(--boq-text-soft);
-
-    opacity: 1;
-}
-
-select.boq-field {
-    appearance: auto;
-
-    padding-right: 2.25rem;
-}
-
-textarea.boq-field,
-.boq-textarea {
-    height: auto;
-
-    min-height: 88px;
-
-    padding-top: .6rem;
-    padding-bottom: .6rem;
-
-    resize: vertical;
-}
-
-.boq-field-error {
-    margin-top: .3rem;
-
-    color: var(--boq-danger);
-
-    font-size: .75rem;
-    font-weight: 600;
-    line-height: 1rem;
-}
-
-
-/* =========================================================
-   INPUT ICONS
-========================================================= */
-
-.boq-input-icon-wrap {
-    position: relative;
-}
-
-.boq-input-icon {
-    position: absolute;
-
-    top: 50%;
-    left: .8rem;
-
-    z-index: 1;
-
-    transform: translateY(-50%);
-
-    color: var(--boq-text-soft);
-
-    font-size: .8rem;
-
-    pointer-events: none;
-}
-
-.boq-field-with-icon {
-    padding-left: 2.25rem;
-}
-
-
-/* =========================================================
+/* ==========================================================================
    BUTTONS
-========================================================= */
+   ========================================================================== */
 
 .boq-btn-primary,
 .boq-btn-secondary,
 .boq-btn-danger {
     display: inline-flex;
-
     height: var(--boq-field-height);
     min-height: var(--boq-field-height);
-
-    box-sizing: border-box;
-
     align-items: center;
     justify-content: center;
-
-    gap: .5rem;
-
+    gap: .45rem;
     border-radius: var(--boq-radius);
-
     padding: 0 .9rem;
-
-    font-size: .82rem;
+    font-size: .8rem;
     font-weight: 700;
     line-height: 1;
-
     text-decoration: none;
-
+    white-space: nowrap;
     cursor: pointer;
-
     transition:
         background-color .15s ease,
         border-color .15s ease,
         color .15s ease,
-        opacity .15s ease,
-        transform .15s ease;
+        opacity .15s ease;
 }
 
 .boq-btn-primary {
     border: 1px solid var(--boq-primary);
-
     background: var(--boq-primary);
-
     color: #fff;
 }
 
 .boq-btn-primary:hover {
     border-color: var(--boq-primary-dark);
-
     background: var(--boq-primary-dark);
 }
 
 .boq-btn-secondary {
     border: 1px solid var(--boq-border-dark);
-
     background: #fff;
-
     color: #475569;
 }
 
 .boq-btn-secondary:hover {
     border-color: #94a3b8;
-
     background: var(--boq-bg-soft);
-
     color: var(--boq-text);
 }
 
 .boq-btn-danger {
     border: 1px solid var(--boq-danger);
-
     background: var(--boq-danger);
-
     color: #fff;
 }
 
 .boq-btn-danger:hover {
     border-color: var(--boq-danger-dark);
-
     background: var(--boq-danger-dark);
 }
 
@@ -354,46 +392,31 @@ textarea.boq-field,
 .boq-btn-secondary:disabled,
 .boq-btn-danger:disabled {
     cursor: not-allowed;
-
     opacity: .55;
 }
 
-
-/* =========================================================
-   ICON BUTTONS
-========================================================= */
-
 .boq-icon-btn {
     display: inline-flex;
-
     width: 2rem;
     height: 2rem;
-
     align-items: center;
     justify-content: center;
-
     border: 1px solid var(--boq-border);
     border-radius: var(--boq-radius-sm);
-
     background: #fff;
-
     color: #475569;
-
-    font-size: .75rem;
-
+    font-size: .72rem;
     text-decoration: none;
-
+    cursor: pointer;
     transition:
-        background-color .15s ease,
         border-color .15s ease,
+        background-color .15s ease,
         color .15s ease;
 }
 
 .boq-icon-btn:hover {
     border-color: var(--boq-border-dark);
-
     background: var(--boq-bg-soft);
-
     color: var(--boq-text);
 }
 
@@ -401,1674 +424,661 @@ textarea.boq-field,
     color: var(--boq-danger);
 }
 
-
-/* =========================================================
-   STATISTICS
-========================================================= */
+/* ==========================================================================
+   STATISTICS — DESKTOP ROW
+   ========================================================================== */
 
 .boq-stats-grid {
-    display: grid;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: .75rem !important;
+}
 
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr));
-
-    gap: .75rem;
+.boq-plans-stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: .75rem !important;
 }
 
 .boq-stat-card {
     position: relative;
-
+    min-width: 0;
     min-height: 82px;
-
     overflow: hidden;
-
     border: 1px solid var(--boq-border);
     border-left-width: 4px;
     border-radius: .8rem;
-
     background: #fff;
-
-    padding:
-        .85rem
-        3.6rem
-        .85rem
-        1rem;
-
+    padding: .85rem 3.6rem .85rem 1rem;
     box-shadow: var(--boq-shadow);
-
     transition:
-        box-shadow .15s ease,
-        transform .15s ease;
+        transform .15s ease,
+        box-shadow .15s ease;
 }
 
 .boq-stat-card:hover {
     transform: translateY(-1px);
-
-    box-shadow:
-        0 4px 10px rgba(15, 23, 42, .06);
+    box-shadow: var(--boq-shadow-hover);
 }
 
 .boq-stat-label {
+    margin: 0;
     color: var(--boq-text-muted);
-
-    font-size: .72rem;
+    font-size: .7rem;
     font-weight: 700;
     line-height: 1rem;
 }
 
 .boq-stat-value {
-    margin-top: .2rem;
-
+    margin: .2rem 0 0;
     color: var(--boq-text);
-
-    font-size: 1.45rem;
+    font-size: 1.4rem;
     font-weight: 800;
-    line-height: 1.7rem;
+    line-height: 1.65rem;
 }
 
 .boq-stat-icon {
     position: absolute;
-
     top: .8rem;
     right: .9rem;
-
     display: flex;
-
     width: 2.15rem;
     height: 2.15rem;
-
     align-items: center;
     justify-content: center;
-
     border-radius: .6rem;
-
-    font-size: .9rem;
+    font-size: .88rem;
 }
 
-.boq-stat-green {
-    border-left-color: var(--boq-primary);
+.boq-stat-green { border-left-color: var(--boq-primary); }
+.boq-stat-blue { border-left-color: var(--boq-info); }
+.boq-stat-amber { border-left-color: var(--boq-warning); }
+.boq-stat-purple { border-left-color: var(--boq-purple); }
+.boq-stat-red { border-left-color: var(--boq-danger); }
+
+.boq-stat-green .boq-stat-icon { background: #ecfdf5; color: var(--boq-primary); }
+.boq-stat-blue .boq-stat-icon { background: #eff6ff; color: var(--boq-info); }
+.boq-stat-amber .boq-stat-icon { background: #fffbeb; color: var(--boq-warning); }
+.boq-stat-purple .boq-stat-icon { background: #f5f3ff; color: var(--boq-purple); }
+.boq-stat-red .boq-stat-icon { background: #fef2f2; color: var(--boq-danger); }
+
+/*
+   Compatibility with existing Tailwind-based plan statistics markup.
+   This forces 3 plan stat cards into one row even when compiled Tailwind
+   does not contain xl:grid-cols-3.
+*/
+.boq-page-stack > div[class*="grid"][class*="xl:grid-cols-3"],
+.space-y-5 > div[class*="grid"][class*="xl:grid-cols-3"] {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: .75rem !important;
 }
 
-.boq-stat-green .boq-stat-icon {
-    background: #ecfdf5;
-
-    color: var(--boq-primary);
-}
-
-.boq-stat-blue {
-    border-left-color: var(--boq-info);
-}
-
-.boq-stat-blue .boq-stat-icon {
-    background: #eff6ff;
-
-    color: var(--boq-info);
-}
-
-.boq-stat-amber {
-    border-left-color: var(--boq-warning);
-}
-
-.boq-stat-amber .boq-stat-icon {
-    background: #fffbeb;
-
-    color: var(--boq-warning);
-}
-
-.boq-stat-purple {
-    border-left-color: var(--boq-purple);
-}
-
-.boq-stat-purple .boq-stat-icon {
-    background: #f5f3ff;
-
-    color: var(--boq-purple);
-}
-
-.boq-stat-red {
-    border-left-color: var(--boq-danger);
-}
-
-.boq-stat-red .boq-stat-icon {
-    background: #fef2f2;
-
-    color: var(--boq-danger);
-}
-
-
-/* =========================================================
+/* ==========================================================================
    TABS
-========================================================= */
+   ========================================================================== */
 
 .boq-tabs,
 .boq-admin-tabs {
     display: flex;
-
+    width: 100%;
     overflow-x: auto;
-
-    border-bottom:
-        1px solid var(--boq-border);
-
+    border-bottom: 1px solid var(--boq-border);
     background: #fff;
 }
 
 .boq-tab,
 .boq-admin-tab {
     display: inline-flex;
-
-    min-height: 46px;
-
+    min-height: 44px;
     align-items: center;
     justify-content: center;
-
-    gap: .5rem;
-
+    gap: .45rem;
+    flex: 0 0 auto;
     border: 0;
-
-    border-bottom:
-        3px solid transparent;
-
+    border-bottom: 3px solid transparent;
     background: transparent;
-
-    padding:
-        0 1rem;
-
-    color:
-        var(--boq-text-muted);
-
-    font-size:
-        .82rem;
-
-    font-weight:
-        700;
-
-    white-space:
-        nowrap;
-
-    cursor:
-        pointer;
-
-    transition:
-        background-color .15s ease,
-        border-color .15s ease,
-        color .15s ease;
+    padding: 0 .95rem;
+    color: var(--boq-text-muted);
+    font-size: .78rem;
+    font-weight: 700;
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
 }
 
 .boq-tab:hover,
 .boq-admin-tab:hover {
-    background:
-        var(--boq-bg-soft);
-
-    color:
-        var(--boq-text);
+    background: var(--boq-bg-soft);
+    color: var(--boq-text);
 }
 
 .boq-tab.is-active,
 .boq-admin-tab.is-active {
-    border-bottom-color:
-        var(--boq-accent);
-
-    background:
-        rgba(5, 100, 91, .03);
-
-    color:
-        var(--boq-primary);
-}
-
-.boq-tab:disabled,
-.boq-admin-tab:disabled {
-    cursor: not-allowed;
-
-    opacity: .55;
+    border-bottom-color: var(--boq-accent);
+    background: rgba(5, 100, 91, .03);
+    color: var(--boq-primary);
 }
 
 .boq-tab-loading {
     display: flex;
-
     align-items: center;
-
-    gap: .45rem;
-
-    border-bottom:
-        1px solid var(--boq-border);
-
-    background:
-        var(--boq-bg-soft);
-
-    padding:
-        .45rem
-        1rem;
-
-    color:
-        var(--boq-text-muted);
-
-    font-size:
-        .72rem;
-
-    font-weight:
-        700;
+    gap: .4rem;
+    border-bottom: 1px solid var(--boq-border);
+    background: var(--boq-bg-soft);
+    padding: .45rem 1rem;
+    color: var(--boq-text-muted);
+    font-size: .7rem;
+    font-weight: 700;
 }
 
-
-/* =========================================================
-   FILTERS
-========================================================= */
+/* ==========================================================================
+   FILTERS — ONE ROW ON DESKTOP
+   ========================================================================== */
 
 .boq-filter-section {
-    border-bottom:
-        1px solid var(--boq-border);
-
-    padding:
-        1rem;
+    border-bottom: 1px solid var(--boq-border);
+    padding: 1rem;
 }
 
-
-/* Subscription filters: one desktop row */
-
-.boq-subscription-filter-grid {
-    display: grid;
-
+/* Projects / BOQs generic filter row */
+.boq-index-filter-grid {
+    display: grid !important;
     grid-template-columns:
-        minmax(280px, 1fr)
-        180px
-        190px
-        100px;
-
-    align-items:
-        end;
-
-    gap:
-        .75rem;
+        minmax(260px, 1fr)
+        105px
+        minmax(340px, auto) !important;
+    align-items: end !important;
+    gap: .7rem !important;
+    padding: 1rem !important;
 }
 
+/* Plans search + rows + sort */
+.boq-plans-index-filter {
+    display: grid !important;
+    grid-template-columns:
+        minmax(300px, 1fr)
+        105px
+        minmax(360px, auto) !important;
+    align-items: end !important;
+    gap: .7rem !important;
+    padding: 1rem !important;
+}
 
-/* Available plan filters: one desktop row */
+/* Subscription history search + status + period + rows */
+.boq-subscription-filter-grid {
+    display: grid !important;
+    grid-template-columns:
+        minmax(260px, 1fr)
+        160px
+        180px
+        90px !important;
+    align-items: end !important;
+    gap: .7rem !important;
+}
 
+/* Available plans search + billing period + rows */
 .boq-plan-filter-grid {
-    display: grid;
-
+    display: grid !important;
     grid-template-columns:
         minmax(320px, 1fr)
-        220px
-        100px;
-
-    align-items:
-        end;
-
-    gap:
-        .75rem;
+        190px
+        90px !important;
+    align-items: end !important;
+    gap: .7rem !important;
 }
 
+/* AI providers */
+.boq-ai-filter-grid {
+    display: grid !important;
+    grid-template-columns:
+        minmax(280px, 1fr)
+        210px
+        150px
+        90px !important;
+    align-items: end !important;
+    gap: .7rem !important;
+    padding: 1rem !important;
+}
 
-/* =========================================================
-   BULK ACTIONS
-========================================================= */
+/* Hardware prices: supports search + category + supplier + location + status */
+.boq-hardware-filter-grid {
+    display: grid !important;
+    grid-template-columns:
+        minmax(230px, 1fr)
+        160px
+        160px
+        160px
+        130px !important;
+    align-items: end !important;
+    gap: .7rem !important;
+}
 
-.boq-bulk-actions {
+/*
+   Compatibility override for pages that still use Tailwind arbitrary grid
+   classes instead of the shared .boq-* filter classes.
+*/
+.boq-panel > div[class*="xl:grid-cols-"],
+.boq-panel > div[class*="lg:grid-cols-"] {
+    display: grid !important;
+    grid-template-columns:
+        minmax(280px, 1fr)
+        110px
+        minmax(340px, auto) !important;
+    align-items: end !important;
+    gap: .7rem !important;
+}
+
+/* Old Plans markup specifically: Search | Rows | Sort */
+.boq-panel.p-4 > div[class*="grid-cols-1"][class*="xl:grid-cols-"],
+.space-y-5 .boq-panel > div[class*="grid-cols-1"][class*="xl:grid-cols-"] {
+    display: grid !important;
+    grid-template-columns:
+        minmax(300px, 1fr)
+        105px
+        minmax(360px, auto) !important;
+    align-items: end !important;
+    gap: .7rem !important;
+}
+
+/* Sort controls */
+.boq-sort-buttons {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: .38rem !important;
+    min-height: var(--boq-field-height);
+}
+
+.boq-sort-button {
+    display: inline-flex !important;
+    height: var(--boq-field-height) !important;
+    min-height: var(--boq-field-height) !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: .32rem !important;
+    flex: 0 0 auto !important;
+    border: 1px solid var(--boq-border) !important;
+    border-radius: var(--boq-radius) !important;
+    background: #f1f5f9 !important;
+    padding: 0 .7rem !important;
+    color: #475569 !important;
+    font-size: .7rem !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+}
+
+.boq-sort-button:hover {
+    background: #e2e8f0 !important;
+}
+
+.boq-sort-button.is-active {
+    border-color: var(--boq-primary) !important;
+    background: var(--boq-primary) !important;
+    color: #fff !important;
+}
+
+/* Compatibility: old Tailwind sort-button wrappers */
+.boq-panel div[class*="flex"][class*="gap-2"] > button[class*="inline-flex"][class*="h-10"] {
+    height: var(--boq-field-height) !important;
+    min-height: var(--boq-field-height) !important;
+    flex-shrink: 0 !important;
+}
+
+/* ==========================================================================
+   PLAN CARDS — THREE IN ONE DESKTOP ROW
+   ========================================================================== */
+
+.boq-plan-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: .85rem !important;
+    padding: 1rem !important;
+    align-items: stretch;
+}
+
+/* Compatibility with old Tailwind plan-card wrapper */
+.boq-page-stack > div[class*="md:grid-cols-2"][class*="xl:grid-cols-3"],
+.space-y-5 > div[class*="md:grid-cols-2"][class*="xl:grid-cols-3"] {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: .85rem !important;
+    align-items: stretch !important;
+}
+
+.boq-plan-card {
     display: flex;
-
-    flex-wrap: wrap;
-
-    align-items: center;
-
-    gap: .8rem;
-
-    margin-top: .75rem;
-
-    border: 1px solid #fde68a;
-    border-radius: .6rem;
-
-    background: #fffbeb;
-
-    padding:
-        .55rem
-        .75rem;
-
-    color: #92400e;
-
-    font-size:
-        .78rem;
-
-    font-weight:
-        700;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 100%;
+    border: 1px solid var(--boq-border);
+    border-left: 3px solid var(--boq-primary);
+    border-radius: .75rem;
+    background: #fff;
+    padding: .9rem;
+    box-shadow: var(--boq-shadow);
+    transition:
+        transform .15s ease,
+        border-color .15s ease,
+        box-shadow .15s ease;
 }
 
-.boq-bulk-danger {
-    display: inline-flex;
+.boq-plan-card:hover {
+    transform: translateY(-1px);
+    border-color: #cbd5e1;
+    box-shadow: var(--boq-shadow-hover);
+}
 
+.boq-plan-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .7rem;
+}
+
+.boq-plan-heading-copy {
+    min-width: 0;
+}
+
+.boq-plan-main-icon {
+    display: flex;
+    width: 2.35rem;
+    height: 2.35rem;
+    margin-bottom: .6rem;
     align-items: center;
+    justify-content: center;
+    border-radius: .55rem;
+    background: var(--boq-primary-soft);
+    color: var(--boq-primary);
+    font-size: .85rem;
+}
 
-    gap: .3rem;
-
-    color: #b91c1c;
-
+.boq-plan-name {
+    margin: 0;
+    color: var(--boq-text);
+    font-size: .88rem;
     font-weight: 800;
+    line-height: 1.2rem;
 }
 
-.boq-bulk-clear {
-    color:
-        var(--boq-text-muted);
-
-    font-weight:
-        700;
+.boq-plan-description {
+    margin: .25rem 0 0;
+    color: var(--boq-text-muted);
+    font-size: .64rem;
+    line-height: .95rem;
 }
 
+.boq-plan-type {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: #f1f5f9;
+    padding: .25rem .5rem;
+    color: #475569;
+    font-size: .56rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
 
-/* =========================================================
+.boq-plan-price {
+    display: flex;
+    align-items: baseline;
+    gap: .3rem;
+    margin-top: .75rem;
+}
+
+.boq-plan-currency {
+    color: var(--boq-text-muted);
+    font-size: .62rem;
+    font-weight: 700;
+}
+
+.boq-plan-price-value {
+    color: var(--boq-text);
+    font-size: 1.15rem;
+    font-weight: 900;
+}
+
+.boq-plan-duration {
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    margin-top: .2rem;
+    color: var(--boq-text-muted);
+    font-size: .62rem;
+}
+
+/* ==========================================================================
+   PROJECTS / BOQs / AI LIMITS — ALWAYS HORIZONTAL
+   ========================================================================== */
+
+.boq-plan-limits {
+    display: block !important;
+    width: 100% !important;
+    margin-top: .8rem !important;
+    overflow: hidden !important;
+    border: 1px solid var(--boq-border) !important;
+    border-radius: .65rem !important;
+    background: var(--boq-bg-soft) !important;
+}
+
+.boq-plan-limits-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-auto-flow: column !important;
+    width: 100% !important;
+}
+
+.boq-plan-limit {
+    display: block !important;
+    min-width: 0 !important;
+    padding: .65rem .25rem !important;
+    text-align: center !important;
+}
+
+.boq-plan-limit + .boq-plan-limit {
+    border-top: 0 !important;
+    border-left: 1px solid var(--boq-border) !important;
+}
+
+.boq-plan-limit-label {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: .2rem !important;
+    color: var(--boq-text-soft) !important;
+    font-size: .5rem !important;
+    font-weight: 800 !important;
+    line-height: .8rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: .025em !important;
+    white-space: nowrap !important;
+}
+
+.boq-plan-limit-label i {
+    color: #94a3b8;
+    font-size: .52rem;
+}
+
+.boq-plan-limit-value {
+    margin-top: .2rem !important;
+    color: var(--boq-text) !important;
+    font-size: .85rem !important;
+    font-weight: 900 !important;
+}
+
+/*
+   Compatibility with old Tailwind limits markup:
+   <div class="grid grid-cols-3 divide-x ...">
+*/
+.boq-plan-card div[class*="grid-cols-3"],
+.boq-page-stack article div[class*="grid-cols-3"],
+.space-y-5 article div[class*="grid-cols-3"] {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+/* ==========================================================================
+   PLAN FEATURES / ACTION
+   ========================================================================== */
+
+.boq-plan-features {
+    margin-top: .9rem;
+    border-top: 1px solid #f1f5f9;
+    padding-top: .8rem;
+}
+
+.boq-plan-features-title {
+    margin: 0 0 .5rem;
+    color: var(--boq-text-soft);
+    font-size: .62rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.boq-plan-feature-list {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+}
+
+.boq-plan-feature {
+    display: flex;
+    align-items: flex-start;
+    gap: .4rem;
+    color: var(--boq-text-muted);
+    font-size: .74rem;
+}
+
+.boq-plan-feature-check {
+    display: flex;
+    width: 1.15rem;
+    height: 1.15rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--boq-primary-soft);
+    color: var(--boq-primary);
+    font-size: .48rem;
+}
+
+.boq-plan-more-features {
+    margin: .55rem 0 0;
+    color: var(--boq-primary);
+    font-size: .68rem;
+    font-weight: 700;
+}
+
+.boq-plan-trial {
+    margin-top: .8rem;
+    border: 1px solid #fde68a;
+    border-radius: .5rem;
+    background: #fffbeb;
+    padding: .5rem .65rem;
+    color: #92400e;
+    font-size: .68rem;
+    font-weight: 600;
+}
+
+.boq-plan-action {
+    margin-top: auto;
+    padding-top: .75rem;
+}
+
+.boq-plan-choose-button,
+.boq-current-plan-button {
+    display: inline-flex;
+    width: 100%;
+    min-height: 38px;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    border-radius: .5rem;
+    font-size: .7rem;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.boq-plan-choose-button {
+    border: 1px solid var(--boq-primary);
+    background: var(--boq-primary);
+    color: #fff;
+    cursor: pointer;
+}
+
+.boq-plan-choose-button:hover {
+    background: var(--boq-primary-dark);
+}
+
+.boq-current-plan-button {
+    background: #f1f5f9;
+    color: var(--boq-text-muted);
+}
+
+/* ==========================================================================
    TABLES
-========================================================= */
+   ========================================================================== */
 
 .boq-table-wrapper {
     width: 100%;
-
     overflow-x: auto;
 }
 
 .boq-table {
     width: 100%;
-
-    border-collapse:
-        collapse;
-
-    background:
-        #fff;
+    border-collapse: collapse;
+    background: #fff;
 }
 
 .boq-table th {
-    background:
-        var(--boq-bg-soft);
-
-    padding:
-        .68rem
-        1rem;
-
-    color:
-        var(--boq-text-muted);
-
-    font-size:
-        .68rem;
-
-    font-weight:
-        800;
-
-    text-align:
-        left;
-
-    text-transform:
-        uppercase;
-
-    letter-spacing:
-        .055em;
-
-    white-space:
-        nowrap;
+    background: var(--boq-bg-soft);
+    padding: .68rem .9rem;
+    color: var(--boq-text-muted);
+    font-size: .66rem;
+    font-weight: 800;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    white-space: nowrap;
 }
 
 .boq-table td {
-    padding:
-        .72rem
-        1rem;
-
-    border-top:
-        1px solid #f1f5f9;
-
-    color:
-        #475569;
-
-    font-size:
-        .82rem;
-
-    vertical-align:
-        middle;
-}
-
-.boq-table tbody tr {
-    transition:
-        background-color .15s ease;
+    border-top: 1px solid #f1f5f9;
+    padding: .7rem .9rem;
+    color: #475569;
+    font-size: .78rem;
+    vertical-align: middle;
 }
 
 .boq-table tbody tr:hover {
-    background:
-        var(--boq-bg-soft);
+    background: #fbfdff;
 }
 
 .boq-table th.text-right,
 .boq-table td.text-right {
-    text-align:
-        right;
+    text-align: right;
 }
 
 .boq-table th.text-center,
 .boq-table td.text-center {
-    text-align:
-        center;
-}
-
-.boq-checkbox-column {
-    width:
-        42px;
+    text-align: center;
 }
 
 .boq-table-title {
-    color:
-        var(--boq-text);
-
-    font-weight:
-        700;
+    color: var(--boq-text);
+    font-weight: 700;
 }
 
 .boq-table-subtitle {
-    margin-top:
-        .1rem;
-
-    color:
-        var(--boq-text-soft);
-
-    font-size:
-        .68rem;
-}
-
-.boq-date-separator {
-    margin:
-        0 .2rem;
-
-    color:
-        var(--boq-border-dark);
-}
-
-.boq-no-action {
-    color:
-        var(--boq-text-soft);
-
-    font-size:
-        .7rem;
-}
-
-.boq-empty-table {
-    padding:
-        2.5rem
-        1rem !important;
-
-    text-align:
-        center;
-}
-
-.boq-empty-table i {
-    display:
-        block;
-
-    margin-bottom:
-        .5rem;
-
-    color:
-        var(--boq-border-dark);
-
-    font-size:
-        1.5rem;
-}
-
-.boq-empty-table span {
-    color:
-        var(--boq-text-muted);
-
-    font-size:
-        .8rem;
-}
-
-
-/* =========================================================
-   BADGES
-========================================================= */
-
-.boq-badge {
-    display:
-        inline-flex;
-
-    align-items:
-        center;
-
-    gap:
-        .25rem;
-
-    border-radius:
-        9999px;
-
-    background:
-        #f1f5f9;
-
-    padding:
-        .24rem
-        .55rem;
-
-    color:
-        #475569;
-
-    font-size:
-        .7rem;
-
-    font-weight:
-        700;
-
-    white-space:
-        nowrap;
-}
-
-.boq-badge-success {
-    background:
-        #ecfdf5;
-
-    color:
-        #047857;
-}
-
-.boq-badge-warning {
-    background:
-        #fffbeb;
-
-    color:
-        #b45309;
-}
-
-.boq-badge-danger {
-    background:
-        #fef2f2;
-
-    color:
-        #b91c1c;
-}
-
-.boq-badge-info {
-    background:
-        #eff6ff;
-
-    color:
-        #1d4ed8;
-}
-
-
-/* =========================================================
-   FLASH / ALERTS
-========================================================= */
-
-.boq-flash {
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    gap:
-        .45rem;
-
-    border:
-        1px solid #a7f3d0;
-
-    border-radius:
-        .7rem;
-
-    background:
-        #ecfdf5;
-
-    padding:
-        .7rem
-        .9rem;
-
-    color:
-        #065f46;
-
-    font-size:
-        .82rem;
-
-    font-weight:
-        600;
-}
-
-.boq-flash-error {
-    border-color:
-        #fecaca;
-
-    background:
-        #fef2f2;
-
-    color:
-        #991b1b;
-}
-
-.boq-flash-warning {
-    border-color:
-        #fde68a;
-
-    background:
-        #fffbeb;
-
-    color:
-        #92400e;
-}
-
-
-/* =========================================================
-   PLAN GRID
-========================================================= */
-
-.boq-plan-grid {
-    display:
-        grid;
-
-    grid-template-columns:
-        repeat(3, minmax(0, 1fr));
-
-    gap:
-        .75rem;
-
-    padding:
-        1rem;
-}
-
-
-/* =========================================================
-   PLAN CARD
-========================================================= */
-
-.boq-plan-card {
-    display:
-        flex;
-
-    flex-direction:
-        column;
-
-    min-width:
-        0;
-
-    min-height:
-        100%;
-
-    border:
-        1px solid #dbe3ec;
-
-    border-left:
-        3px solid var(--boq-primary);
-
-    border-radius:
-        .72rem;
-
-    background:
-        #fff;
-
-    padding:
-        .9rem;
-
-    box-shadow:
-        var(--boq-shadow);
-
-    transition:
-        border-color .15s ease,
-        box-shadow .15s ease,
-        transform .15s ease;
-}
-
-.boq-plan-card:hover {
-    transform:
-        translateY(-1px);
-
-    border-color:
-        #cbd5e1;
-
-    box-shadow:
-        var(--boq-shadow-hover);
-}
-
-
-/* =========================================================
-   PLAN HEADER
-========================================================= */
-
-.boq-plan-header {
-    display:
-        flex;
-
-    align-items:
-        flex-start;
-
-    justify-content:
-        space-between;
-
-    gap:
-        .75rem;
-}
-
-.boq-plan-heading-copy {
-    min-width:
-        0;
-}
-
-.boq-plan-name {
-    margin:
-        0;
-
-    color:
-        var(--boq-text);
-
-    font-size:
-        .9rem;
-
-    font-weight:
-        800;
-
-    line-height:
-        1.2rem;
-}
-
-.boq-plan-description {
-    margin-top:
-        .35rem;
-
-    color:
-        var(--boq-text-muted);
-
-    font-size:
-        .66rem;
-
-    line-height:
-        1rem;
-}
-
-.boq-plan-type {
-    flex-shrink:
-        0;
-
-    border-radius:
-        9999px;
-
-    background:
-        #f1f5f9;
-
-    padding:
-        .24rem
-        .5rem;
-
-    color:
-        #475569;
-
-    font-size:
-        .58rem;
-
-    font-weight:
-        800;
-
-    white-space:
-        nowrap;
-}
-
-
-/* =========================================================
-   PLAN PRICE
-========================================================= */
-
-.boq-plan-price {
-    display:
-        flex;
-
-    align-items:
-        baseline;
-
-    gap:
-        .3rem;
-
-    margin-top:
-        .8rem;
-}
-
-.boq-plan-currency {
-    color:
-        var(--boq-text-muted);
-
-    font-size:
-        .65rem;
-
-    font-weight:
-        700;
-}
-
-.boq-plan-price-value {
-    color:
-        var(--boq-text);
-
-    font-size:
-        1.15rem;
-
-    font-weight:
-        900;
-}
-
-.boq-plan-duration {
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    gap:
-        .35rem;
-
-    margin-top:
-        .25rem;
-
-    color:
-        var(--boq-text-muted);
-
-    font-size:
-        .65rem;
-}
-
-.boq-plan-duration i {
-    font-size:
-        .6rem;
-}
-
-
-/* =========================================================
-   PROJECTS / BOQs / AI
-   ALWAYS ONE HORIZONTAL CARD
-========================================================= */
-
-.boq-plan-limits {
-    width:
-        100%;
-
-    margin-top:
-        .8rem;
-
-    overflow:
-        hidden;
-
-    border:
-        1px solid var(--boq-border);
-
-    border-radius:
-        .6rem;
-
-    background:
-        var(--boq-bg-soft);
-}
-
-.boq-plan-limits-grid {
-    display:
-        grid !important;
-
-    grid-template-columns:
-        repeat(3, minmax(0, 1fr)) !important;
-
-    width:
-        100% !important;
-}
-
-.boq-plan-limit {
-    min-width:
-        0;
-
-    padding:
-        .6rem
-        .3rem;
-
-    text-align:
-        center;
-}
-
-.boq-plan-limit + .boq-plan-limit {
-    border-left:
-        1px solid var(--boq-border);
-}
-
-.boq-plan-limit-label {
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    gap:
-        .22rem;
-
-    color:
-        var(--boq-text-soft);
-
-    font-size:
-        .52rem;
-
-    font-weight:
-        800;
-
-    text-transform:
-        uppercase;
-
-    letter-spacing:
-        .03em;
-
-    white-space:
-        nowrap;
-}
-
-.boq-plan-limit-label i {
-    color:
-        var(--boq-text-muted);
-
-    font-size:
-        .55rem;
-}
-
-.boq-plan-limit-value {
-    margin-top:
-        .2rem;
-
-    color:
-        var(--boq-text);
-
-    font-size:
-        .86rem;
-
-    font-weight:
-        900;
-}
-
-
-/* =========================================================
-   PLAN ACTION
-========================================================= */
-
-.boq-plan-action {
-    margin-top:
-        auto;
-
-    padding-top:
-        .8rem;
-}
-
-.boq-plan-choose-button,
-.boq-current-plan-button {
-    display:
-        inline-flex;
-
-    width:
-        100%;
-
-    height:
-        38px;
-
-    box-sizing:
-        border-box;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    gap:
-        .4rem;
-
-    border-radius:
-        .52rem;
-
-    font-size:
-        .72rem;
-
-    font-weight:
-        800;
-}
-
-.boq-plan-choose-button {
-    border:
-        1px solid var(--boq-primary);
-
-    background:
-        var(--boq-primary);
-
-    color:
-        #fff;
-
-    cursor:
-        pointer;
-}
-
-.boq-plan-choose-button:hover {
-    background:
-        var(--boq-primary-dark);
-}
-
-.boq-plan-choose-button:disabled {
-    cursor:
-        not-allowed;
-
-    opacity:
-        .6;
-}
-
-.boq-current-plan-button {
-    background:
-        #f1f5f9;
-
-    color:
-        var(--boq-text-muted);
-}
-
-
-/* =========================================================
-   EMPTY AVAILABLE PLANS
-========================================================= */
-
-.boq-plans-empty {
-    grid-column:
-        1 / -1;
-
-    padding:
-        2.5rem
-        1rem;
-
-    text-align:
-        center;
-
-    color:
-        var(--boq-text-muted);
-}
-
-.boq-plans-empty i {
-    display:
-        block;
-
-    margin-bottom:
-        .5rem;
-
-    color:
-        var(--boq-border-dark);
-
-    font-size:
-        1.7rem;
-}
-
-.boq-plans-empty p {
-    font-size:
-        .8rem;
-}
-
-
-/* =========================================================
-   MODALS
-========================================================= */
-
-.boq-modal-backdrop {
-    position:
-        fixed;
-
-    inset:
-        0;
-
-    z-index:
-        100;
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    overflow-y:
-        auto;
-
-    background:
-        rgba(15, 23, 42, .58);
-
-    padding:
-        1rem;
-
-    backdrop-filter:
-        blur(2px);
-}
-
-.boq-modal-backdrop-top {
-    z-index:
-        120;
-}
-
-.boq-modal {
-    width:
-        100%;
-
-    max-height:
-        calc(100vh - 2rem);
-
-    overflow:
-        hidden;
-
-    border-radius:
-        .9rem;
-
-    background:
-        #fff;
-
-    box-shadow:
-        var(--boq-shadow-modal);
-}
-
-.boq-modal-sm {
-    max-width:
-        430px;
-}
-
-.boq-modal-lg {
-    max-width:
-        850px;
-}
-
-.boq-modal-xl {
-    max-width:
-        1100px;
-}
-
-.boq-modal-head {
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        space-between;
-
-    gap:
-        1rem;
-
-    border-bottom:
-        1px solid var(--boq-border);
-
-    padding:
-        .9rem
-        1rem;
-}
-
-.boq-modal-head h2 {
-    margin:
-        0;
-
-    color:
-        var(--boq-text);
-
-    font-size:
-        1rem;
-
-    font-weight:
-        800;
-}
-
-.boq-modal-body {
-    max-height:
-        calc(100vh - 11rem);
-
-    overflow-y:
-        auto;
-
-    padding:
-        1rem;
-}
-
-.boq-modal-foot {
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        flex-end;
-
-    gap:
-        .75rem;
-
-    border-top:
-        1px solid var(--boq-border);
-
-    background:
-        var(--boq-bg-soft);
-
-    padding:
-        .9rem
-        1rem;
-}
-
-.boq-modal-close {
-    display:
-        inline-flex;
-
-    width:
-        2rem;
-
-    height:
-        2rem;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    border:
-        0;
-
-    border-radius:
-        var(--boq-radius-sm);
-
-    background:
-        transparent;
-
-    color:
-        var(--boq-text-muted);
-
-    cursor:
-        pointer;
-
-    transition:
-        background-color .15s ease,
-        color .15s ease;
-}
-
-.boq-modal-close:hover {
-    background:
-        #f1f5f9;
-
-    color:
-        var(--boq-text);
-}
-
-.boq-modal-message {
-    margin:
-        0;
-
-    color:
-        var(--boq-text-muted);
-
-    font-size:
-        .82rem;
-
-    line-height:
-        1.4rem;
-}
-
-
-/* =========================================================
-   EMPTY STATES
-========================================================= */
-
-.boq-empty-state {
-    padding:
-        3rem
-        1rem;
-
-    text-align:
-        center;
-}
-
-.boq-empty-icon {
-    display:
-        flex;
-
-    width:
-        3rem;
-
-    height:
-        3rem;
-
-    margin:
-        0 auto;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    border-radius:
-        9999px;
-
-    background:
-        #f1f5f9;
-
-    color:
-        var(--boq-text-soft);
-}
-
-
-/* =========================================================
-   LIVEWIRE LOADING
-========================================================= */
-
-[wire\:loading] {
-    pointer-events:
-        none;
-}
-
-.boq-loading {
-    display:
-        inline-flex;
-
-    align-items:
-        center;
-
-    gap:
-        .5rem;
-
-    color:
-        var(--boq-text-muted);
-
-    font-size:
-        .75rem;
-
-    font-weight:
-        600;
-}
-
-
-/* =========================================================
-   PAGINATION
-========================================================= */
-
-.boq-pagination {
-    border-top:
-        1px solid var(--boq-border);
-
-    padding:
-        1rem;
-}
-
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media (max-width: 1279px) {
-
-    .boq-stat-card {
-        min-height:
-            80px;
-    }
-
-}
-
-
-@media (max-width: 1100px) {
-
-    .boq-plan-grid {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-    }
-
-    .boq-subscription-filter-grid {
-        grid-template-columns:
-            minmax(250px, 1fr)
-            160px
-            170px
-            90px;
-    }
-
-}
-
-
-@media (max-width: 900px) {
-
-    .boq-stats-grid {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-    }
-
-    .boq-subscription-filter-grid,
-    .boq-plan-filter-grid {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-    }
-
-}
-
-
-@media (max-width: 768px) {
-
-    .boq-field,
-    .boq-btn-primary,
-    .boq-btn-secondary,
-    .boq-btn-danger {
-        height:
-            42px;
-
-        min-height:
-            42px;
-    }
-
-    .boq-stat-card {
-        min-height:
-            78px;
-
-        padding:
-            .8rem
-            3.4rem
-            .8rem
-            .9rem;
-    }
-
-    .boq-stat-value {
-        font-size:
-            1.3rem;
-    }
-
-    .boq-tab,
-    .boq-admin-tab {
-        min-height:
-            44px;
-
-        padding:
-            0 .85rem;
-    }
-
-    .boq-table th,
-    .boq-table td {
-        padding:
-            .65rem
-            .8rem;
-    }
-
-    .boq-plan-limit {
-        padding:
-            .7rem
-            .35rem;
-    }
-
-    .boq-plan-limit-label {
-        font-size:
-            .58rem;
-    }
-
-}
-
-
-@media (max-width: 700px) {
-
-    .boq-page-header {
-        align-items:
-            flex-start;
-
-        flex-direction:
-            column;
-    }
-
-    .boq-current-subscription {
-        width:
-            100%;
-
-        box-sizing:
-            border-box;
-    }
-
-    .boq-plan-grid {
-        grid-template-columns:
-            1fr;
-    }
-
-    .boq-subscription-filter-grid,
-    .boq-plan-filter-grid {
-        grid-template-columns:
-            1fr;
-    }
-
-}
-
-
-@media (max-width: 640px) {
-
-    .boq-modal-backdrop {
-        align-items:
-            flex-end;
-
-        padding:
-            .5rem;
-    }
-
-    .boq-modal {
-        max-height:
-            calc(100vh - 1rem);
-
-        border-radius:
-            .9rem
-            .9rem
-            .4rem
-            .4rem;
-    }
-
-    .boq-modal-body {
-        max-height:
-            calc(100vh - 10rem);
-    }
-
-    .boq-modal-foot {
-        flex-wrap:
-            wrap;
-    }
-
-    .boq-modal-foot .boq-btn-primary,
-    .boq-modal-foot .boq-btn-secondary,
-    .boq-modal-foot .boq-btn-danger {
-        flex:
-            1 1 auto;
-    }
-
-}
-
-
-@media (max-width: 480px) {
-
-    .boq-stats-grid {
-        grid-template-columns:
-            1fr;
-    }
-
-    /*
-     * Projects / BOQs / AI remain horizontal
-     * even on small screens.
-     */
-    .boq-plan-limits-grid {
-        display:
-            grid !important;
-
-        grid-template-columns:
-            repeat(3, minmax(0, 1fr)) !important;
-    }
-
-    .boq-plan-limit {
-        padding:
-            .55rem
-            .2rem;
-    }
-
-    .boq-plan-limit-label {
-        font-size:
-            .47rem;
-    }
-
-}
-
-/* =========================================================
-   INDEX PAGE FILTERS
-========================================================= */
-
-.boq-index-filter-grid {
-    display: grid;
-    grid-template-columns:
-        minmax(280px, 1fr)
-        120px
-        minmax(280px, auto);
-    align-items: end;
-    gap: .75rem;
-    padding: 1rem;
-}
-
-.boq-sort-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .4rem;
-}
-
-.boq-sort-button {
-    display: inline-flex;
-    height: 40px;
-    align-items: center;
-    justify-content: center;
-    gap: .35rem;
-
-    border: 1px solid #e2e8f0;
-    border-radius: .625rem;
-
-    background: #f8fafc;
-
-    padding: 0 .7rem;
-
-    color: #475569;
-
-    font-size: .72rem;
-    font-weight: 700;
-
-    cursor: pointer;
-
-    transition:
-        background-color .15s ease,
-        border-color .15s ease,
-        color .15s ease;
-}
-
-.boq-sort-button:hover {
-    border-color: #cbd5e1;
-    background: #f1f5f9;
-}
-
-.boq-sort-button.is-active {
-    border-color: var(--boq-primary);
-    background: var(--boq-primary);
-    color: #fff;
-}
-
-
-/* =========================================================
-   TABLE HELPERS
-========================================================= */
-
-.boq-sortable-header {
-    cursor: pointer;
-}
-
-.boq-sortable-header > span {
-    display: inline-flex;
-    align-items: center;
-    gap: .3rem;
+    margin-top: .1rem;
+    color: var(--boq-text-soft);
+    font-size: .65rem;
 }
 
 .boq-table-link {
@@ -2081,83 +1091,491 @@ textarea.boq-field,
     text-decoration: underline;
 }
 
+.boq-table-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+}
+
 .boq-cell-with-icon {
     display: inline-flex;
     align-items: center;
-    gap: .35rem;
+    gap: .3rem;
 }
 
 .boq-cell-with-icon i {
     color: #94a3b8;
-    font-size: .7rem;
+    font-size: .65rem;
 }
 
-.boq-table-empty {
-    color: #94a3b8;
+.boq-table-empty,
+.boq-no-action {
+    color: var(--boq-text-soft);
 }
 
+.boq-empty-table {
+    padding: 2.5rem 1rem !important;
+    text-align: center;
+}
+
+.boq-empty-table i {
+    display: block;
+    margin-bottom: .5rem;
+    color: var(--boq-border-dark);
+    font-size: 1.5rem;
+}
+
+.boq-empty-table span {
+    color: var(--boq-text-muted);
+    font-size: .78rem;
+}
+
+/* ==========================================================================
+   BADGES
+   ========================================================================== */
+
+.boq-badge,
 .boq-currency-badge,
 .boq-version-badge,
 .boq-item-count {
     display: inline-flex;
     align-items: center;
-    gap: .3rem;
-
-    border-radius: .4rem;
-
+    gap: .25rem;
+    border-radius: 999px;
     background: #f1f5f9;
-
-    padding: .22rem .45rem;
-
+    padding: .22rem .5rem;
     color: #475569;
+    font-size: .66rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
 
-    font-size: .7rem;
+.boq-currency-badge,
+.boq-version-badge,
+.boq-item-count {
+    border-radius: .4rem;
+}
+
+.boq-badge-success { background: #ecfdf5; color: #047857; }
+.boq-badge-warning { background: #fffbeb; color: #b45309; }
+.boq-badge-danger { background: #fef2f2; color: #b91c1c; }
+.boq-badge-info { background: #eff6ff; color: #1d4ed8; }
+
+/* ==========================================================================
+   FLASH / ALERTS
+   ========================================================================== */
+
+.boq-flash {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    border: 1px solid #a7f3d0;
+    border-radius: .65rem;
+    background: #ecfdf5;
+    padding: .65rem .85rem;
+    color: #065f46;
+    font-size: .78rem;
+    font-weight: 600;
+}
+
+.boq-flash-error {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.boq-flash-warning {
+    border-color: #fde68a;
+    background: #fffbeb;
+    color: #92400e;
+}
+
+/* ==========================================================================
+   ADMIN / AI / PAYMENT FORMS
+   ========================================================================== */
+
+.boq-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .85rem;
+}
+
+.boq-form-span-2 {
+    grid-column: 1 / -1;
+}
+
+.boq-check-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+}
+
+.boq-check-row label {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    color: #475569;
+    font-size: .76rem;
     font-weight: 700;
 }
 
-.boq-version-badge i,
-.boq-item-count i {
-    color: #94a3b8;
-    font-size: .65rem;
+.boq-config-section {
+    margin-top: 1rem;
+    border-top: 1px solid var(--boq-border);
+    padding-top: 1rem;
 }
 
-.boq-table-actions {
+.boq-config-section h3 {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin: 0 0 .75rem;
+    color: var(--boq-text);
+    font-size: .86rem;
+    font-weight: 800;
+}
+
+/* ==========================================================================
+   BULK ACTIONS
+   ========================================================================== */
+
+.boq-bulk-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem;
+    margin-top: .7rem;
+    border: 1px solid #fde68a;
+    border-radius: .6rem;
+    background: #fffbeb;
+    padding: .5rem .7rem;
+    color: #92400e;
+    font-size: .74rem;
+    font-weight: 700;
+}
+
+.boq-bulk-danger {
     display: inline-flex;
     align-items: center;
-    gap: .35rem;
+    gap: .3rem;
+    color: #b91c1c;
+    font-weight: 800;
 }
 
-.boq-empty-action {
-    margin-top: 1rem;
+.boq-bulk-clear {
+    color: var(--boq-text-muted);
+    font-weight: 700;
 }
 
+/* ==========================================================================
+   MODALS
+   ========================================================================== */
 
-/* =========================================================
-   RESPONSIVE INDEX FILTERS
-========================================================= */
+.boq-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    background: rgba(15, 23, 42, .58);
+    padding: 1rem;
+    backdrop-filter: blur(2px);
+}
 
-@media (max-width: 1100px) {
+.boq-modal-backdrop-top {
+    z-index: 120;
+}
 
-    .boq-index-filter-grid {
+.boq-modal {
+    width: 100%;
+    max-height: calc(100vh - 2rem);
+    overflow: hidden;
+    border-radius: .9rem;
+    background: #fff;
+    box-shadow: var(--boq-shadow-modal);
+}
+
+.boq-modal-sm { max-width: 430px; }
+.boq-modal-lg { max-width: 850px; }
+.boq-modal-xl { max-width: 1100px; }
+
+.boq-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid var(--boq-border);
+    padding: .85rem 1rem;
+}
+
+.boq-modal-head h2 {
+    margin: 0;
+    color: var(--boq-text);
+    font-size: .95rem;
+    font-weight: 800;
+}
+
+.boq-modal-body {
+    max-height: calc(100vh - 11rem);
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.boq-modal-foot {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .7rem;
+    border-top: 1px solid var(--boq-border);
+    background: var(--boq-bg-soft);
+    padding: .85rem 1rem;
+}
+
+.boq-modal-close {
+    display: inline-flex;
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: var(--boq-radius-sm);
+    background: transparent;
+    color: var(--boq-text-muted);
+    cursor: pointer;
+}
+
+.boq-modal-close:hover {
+    background: #f1f5f9;
+    color: var(--boq-text);
+}
+
+.boq-modal-message {
+    margin: 0;
+    color: var(--boq-text-muted);
+    font-size: .8rem;
+    line-height: 1.4rem;
+}
+
+/* ==========================================================================
+   EMPTY STATES / PAGINATION / LOADING
+   ========================================================================== */
+
+.boq-empty-state {
+    padding: 2.75rem 1rem;
+    text-align: center;
+}
+
+.boq-empty-icon {
+    display: flex;
+    width: 3rem;
+    height: 3rem;
+    margin: 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: var(--boq-text-soft);
+}
+
+.boq-empty-title {
+    margin: .7rem 0 0;
+    color: var(--boq-text);
+    font-size: .9rem;
+    font-weight: 800;
+}
+
+.boq-empty-description {
+    margin: .2rem 0 0;
+    color: var(--boq-text-muted);
+    font-size: .76rem;
+}
+
+.boq-pagination {
+    border-top: 1px solid var(--boq-border);
+    padding: .9rem 1rem;
+}
+
+[wire\:loading] {
+    pointer-events: none;
+}
+
+.boq-loading {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    color: var(--boq-text-muted);
+    font-size: .72rem;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   Desktop row remains active down to 800px.
+   ========================================================================== */
+
+@media (max-width: 1180px) {
+    .boq-index-filter-grid,
+    .boq-plans-index-filter {
         grid-template-columns:
-            minmax(250px, 1fr)
-            110px;
+            minmax(240px, 1fr)
+            95px
+            minmax(315px, auto) !important;
     }
 
-    .boq-index-filter-grid > div:last-child {
-        grid-column: 1 / -1;
+    .boq-subscription-filter-grid {
+        grid-template-columns:
+            minmax(230px, 1fr)
+            145px
+            160px
+            85px !important;
     }
 
+    .boq-ai-filter-grid {
+        grid-template-columns:
+            minmax(220px, 1fr)
+            175px
+            135px
+            85px !important;
+    }
+
+    .boq-hardware-filter-grid {
+        grid-template-columns:
+            minmax(200px, 1fr)
+            140px
+            140px
+            140px
+            115px !important;
+    }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 900px) {
+    .boq-plan-grid,
+    .boq-page-stack > div[class*="md:grid-cols-2"][class*="xl:grid-cols-3"],
+    .space-y-5 > div[class*="md:grid-cols-2"][class*="xl:grid-cols-3"] {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
 
-    .boq-index-filter-grid {
+    .boq-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    .boq-plans-stats-grid,
+    .boq-page-stack > div[class*="grid"][class*="xl:grid-cols-3"],
+    .space-y-5 > div[class*="grid"][class*="xl:grid-cols-3"] {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+}
+
+/*
+   At widths below 800px filters can wrap because forcing all controls
+   into one row would make them unusably narrow.
+*/
+@media (max-width: 799px) {
+    .boq-index-filter-grid,
+    .boq-plans-index-filter,
+    .boq-subscription-filter-grid,
+    .boq-plan-filter-grid,
+    .boq-ai-filter-grid,
+    .boq-hardware-filter-grid,
+    .boq-panel > div[class*="xl:grid-cols-"],
+    .boq-panel > div[class*="lg:grid-cols-"],
+    .boq-panel.p-4 > div[class*="grid-cols-1"][class*="xl:grid-cols-"],
+    .space-y-5 .boq-panel > div[class*="grid-cols-1"][class*="xl:grid-cols-"] {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    .boq-sort-buttons {
+        flex-wrap: wrap !important;
+    }
+
+    .boq-page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .boq-current-subscription {
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .boq-index-filter-grid,
+    .boq-plans-index-filter,
+    .boq-subscription-filter-grid,
+    .boq-plan-filter-grid,
+    .boq-ai-filter-grid,
+    .boq-hardware-filter-grid,
+    .boq-panel > div[class*="xl:grid-cols-"],
+    .boq-panel > div[class*="lg:grid-cols-"],
+    .boq-panel.p-4 > div[class*="grid-cols-1"][class*="xl:grid-cols-"],
+    .space-y-5 .boq-panel > div[class*="grid-cols-1"][class*="xl:grid-cols-"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    .boq-plan-grid,
+    .boq-page-stack > div[class*="md:grid-cols-2"][class*="xl:grid-cols-3"],
+    .space-y-5 > div[class*="md:grid-cols-2"][class*="xl:grid-cols-3"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    .boq-stats-grid,
+    .boq-plans-stats-grid,
+    .boq-page-stack > div[class*="grid"][class*="xl:grid-cols-3"],
+    .space-y-5 > div[class*="grid"][class*="xl:grid-cols-3"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    .boq-form-grid {
         grid-template-columns: 1fr;
     }
 
-    .boq-index-filter-grid > div:last-child {
+    .boq-form-span-2 {
         grid-column: auto;
     }
 
+    .boq-modal-backdrop {
+        align-items: flex-end;
+        padding: .5rem;
+    }
+
+    .boq-modal {
+        max-height: calc(100vh - 1rem);
+        border-radius: .9rem .9rem .4rem .4rem;
+    }
+
+    .boq-modal-body {
+        max-height: calc(100vh - 10rem);
+    }
+
+    .boq-modal-foot {
+        flex-wrap: wrap;
+    }
+
+    .boq-modal-foot .boq-btn-primary,
+    .boq-modal-foot .boq-btn-secondary,
+    .boq-modal-foot .boq-btn-danger {
+        flex: 1 1 auto;
+    }
+}
+
+/* Projects / BOQs / AI remain horizontal even on mobile */
+@media (max-width: 480px) {
+    .boq-plan-limits-grid,
+    .boq-plan-card div[class*="grid-cols-3"],
+    .boq-page-stack article div[class*="grid-cols-3"],
+    .space-y-5 article div[class*="grid-cols-3"] {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+
+    .boq-plan-limit {
+        padding: .55rem .15rem !important;
+    }
+
+    .boq-plan-limit-label {
+        font-size: .44rem !important;
+    }
 }
