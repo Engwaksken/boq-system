@@ -83,6 +83,54 @@
         </a>
     </div>
 
+    @if(Auth::user()?->isSuperAdmin())
+        {{-- Super Admin Management --}}
+        <section class="boq-admin-hero mb-8 rounded-2xl p-5 sm:p-6">
+            <div class="relative z-10 mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <div class="mb-2 inline-flex items-center gap-2 rounded-full bg-[#05645b]/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#05645b]">
+                        <span class="h-2 w-2 rounded-full bg-[#d7df21]"></span>
+                        Super Admin
+                    </div>
+                    <h2 class="text-xl font-bold text-slate-900">Administration & System Control</h2>
+                    <p class="mt-1 text-sm text-slate-600">Manage subscriptions, payments, users, access control, pricing automation and system settings.</p>
+                </div>
+                <a href="{{ url('/admin') }}" class="boq-primary-button inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition">
+                    Open Admin Console
+                    <svg class="ml-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
+                </a>
+            </div>
+
+            <div class="relative z-10 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                @php
+                    $adminCards = [
+                        ['title' => 'Plans', 'description' => 'Create and manage subscription plans.', 'url' => url('/admin/plans'), 'icon' => 'M4 5h16v14H4zM8 9h8M8 13h5'],
+                        ['title' => 'Subscriptions', 'description' => 'Trials, active plans, expiry and extensions.', 'url' => url('/admin/subscriptions'), 'icon' => 'M3 10h18M7 15h2m4 0h2M6 5h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z'],
+                        ['title' => 'Payment Gateways', 'description' => 'Direct providers, ioTec and aggregators.', 'url' => url('/admin/payment-gateways'), 'icon' => 'M3 9h18M7 15h3m5 0h2M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z'],
+                        ['title' => 'Users', 'description' => 'Accounts, access status and subscription links.', 'url' => url('/admin/users'), 'icon' => 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87'],
+                        ['title' => 'Roles & Permissions', 'description' => 'Control access across all modules.', 'url' => url('/admin/roles-permissions'), 'icon' => 'M12 3 5 6v5c0 4.4 2.9 7.7 7 9 4.1-1.3 7-4.6 7-9V6l-7-3ZM9 11h6M12 8v6'],
+                        ['title' => 'Hardware Scanner', 'description' => 'Run and monitor AI hardware price fetching.', 'url' => url('/admin/hardware-scanner'), 'icon' => 'M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2M8 8h8v8H8z'],
+                        ['title' => 'System Settings', 'description' => 'Branding, trial duration, AI and defaults.', 'url' => url('/admin/settings'), 'icon' => 'M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4'],
+                        ['title' => 'Admin Overview', 'description' => 'Revenue, users, subscriptions and plans.', 'url' => url('/admin'), 'icon' => 'M3 13h8V3H3v10Zm10 8h8V11h-8v10ZM3 21h8v-6H3v6Zm10-12h8V3h-8v6Z'],
+                    ];
+                @endphp
+
+                @foreach($adminCards as $card)
+                    <a href="{{ $card['url'] }}" class="boq-admin-card group rounded-xl p-4">
+                        <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#05645b]/10 text-[#05645b] transition group-hover:bg-[#05645b] group-hover:text-white">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $card['icon'] }}" /></svg>
+                        </div>
+                        <div class="flex items-center justify-between gap-2">
+                            <h3 class="text-sm font-bold text-slate-900">{{ $card['title'] }}</h3>
+                            <svg class="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-[#05645b]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
+                        </div>
+                        <p class="mt-1.5 text-xs leading-5 text-slate-500">{{ $card['description'] }}</p>
+                    </a>
+                @endforeach
+            </div>
+        </section>
+    @endif
+
     {{-- Recent Projects --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
