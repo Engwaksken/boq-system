@@ -211,14 +211,16 @@ class BoqPricingJob extends Model
     public function markBatchComplete(int $batchNumber, int $processed, int $failed): void
     {
         DB::transaction(function () use ($processed, $failed) {
-            $this->lockForUpdate();
-            $this->increment('processed_items', $processed);
-            $this->increment('failed_items', $failed);
-            $this->increment('current_batch');
-            $this->refresh();
+            $locked = static::lockForUpdate()->find($this->id);
+            if ($locked) {
+                $locked->increment('processed_items', $processed);
+                $locked->increment('failed_items', $failed);
+                $locked->increment('current_batch');
+                $locked->refresh();
 
-            if ($this->processed_items + $this->failed_items >= $this->total_items) {
-                $this->complete();
+                if ($locked->processed_items + $locked->failed_items >= $locked->total_items) {
+                    $locked->complete();
+                }
             }
         });
     }

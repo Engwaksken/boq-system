@@ -7,8 +7,13 @@
 
         <div>
             <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username"
-                   class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+            <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus placeholder="Enter your email"
+                   class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-2 pr-12">
+            <div class="absolute right-3 top-1/2 -translate-y-1/2">
+                @if (Auth::check() || session()->has('show_password'))
+                    <a href="javascript:void(0)" onclick="togglePassword('password')" class="text-indigo-500 text-sm hover:text-indigo-600">Show password</a>
+                @endif
+            </div>
             @error('email')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
@@ -17,7 +22,15 @@
         <div>
             <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <input id="password" type="password" name="password" required autocomplete="current-password"
-                   class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                   class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-2 pr-12"
+                   id="password-field">
+            <div class="absolute right-3 top-1/2 -translate-y-1/2">
+                @if (session()->has('show_password'))
+                    <a href="javascript:void(0)" onclick="togglePassword('password')" class="text-indigo-500 text-sm hover:text-indigo-600">Hide password</a>
+                @else
+                    <a href="javascript:void(0)" onclick="togglePassword('password')" class="text-indigo-500 text-sm hover:text-indigo-600">Show password</a>
+                @endif
+            </div>
             @error('password')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
@@ -47,4 +60,17 @@
         Don't have an account?
         <a href="{{ route('register') }}" class="font-medium text-indigo-600 hover:text-indigo-500">Register</a>
     </p>
+
+    <script>
+        function togglePassword(fieldId) {
+            var input = document.getElementById(fieldId);
+            if (input.attr('type') === 'password') {
+                input.attr('type', 'text');
+                sessionStorage.setItem('show_password', '1');
+            } else {
+                input.attr('type', 'password');
+                sessionStorage.removeItem('show_password');
+            }
+        }
+    </script>
 </x-layouts.guest>

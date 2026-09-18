@@ -195,8 +195,10 @@ class BoqItem extends Model
      */
     public function scopeUnpriced($query)
     {
-        return $query->whereNull('pricing_status')
-            ->orWhere('pricing_status', 'pending');
+        return $query->where(function ($q) {
+            $q->whereNull('pricing_status')
+              ->orWhere('pricing_status', 'pending');
+        });
     }
 
     /**
