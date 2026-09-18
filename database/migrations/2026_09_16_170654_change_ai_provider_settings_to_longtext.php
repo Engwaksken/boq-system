@@ -17,14 +17,8 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (
-            Schema::hasTable('ai_providers')
-            && Schema::hasColumn('ai_providers', 'settings')
-        ) {
-            /*
-             * Do not automatically convert encrypted ciphertext
-             * back to JSON because encrypted data is not valid JSON.
-             */
-        }
+        /*
+         * Do not convert encrypted ciphertext back to JSON.
+         */
     }
 };

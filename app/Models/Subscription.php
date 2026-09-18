@@ -33,6 +33,8 @@ class Subscription extends Model
         'auto_renewal',
         'product_version',
         'metadata',
+        'payer_id',
+        'beneficiary_id',
     ];
 
     /**
@@ -50,15 +52,38 @@ class Subscription extends Model
             'cancellation_date' => 'datetime',
             'auto_renewal' => 'boolean',
             'metadata' => 'array',
+            'payer_id' => 'integer',
+            'beneficiary_id' => 'integer',
         ];
     }
 
     /**
-     * The user who owns this subscription.
+     * The beneficiary user for this subscription (backward compatibility: user_id).
+     * For self-subscriptions, this is the same as the payer.
+     * For proxy subscriptions, this is the user receiving the subscription benefits.
      */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * The user who paid for this subscription (payer).
+     * Null for self-subscriptions where the beneficiary pays for themselves.
+     */
+    public function payer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'payer_id');
+    }
+
+    /**
+     * The user who benefits from this subscription.
+     * For self-subscriptions, this equals user_id.
+     * For proxy subscriptions, this is the target user receiving the subscription.
+     */
+    public function beneficiary(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'beneficiary_id');
     }
 
     /**
@@ -123,5 +148,52 @@ class Subscription extends Model
     public function isExpired(): bool
     {
         return $this->end_date !== null && $this->end_date->isPast() && ! $this->isActive();
+    }
+
+    /**
+     * Scope to filter subscriptions for a specific beneficiary.
+     */
+    public function scopeForBeneficiary($query, int $userId)
+    {
+        return $query->where(function ($q) use ($userId) {
+            $q->where('beneficiary_id', $userId)
+              ->orWhere(function ($q2) use ($userId) {
+                  $q2->whereNull('beneficiary_id')->where('user_id', $userId);
+              });
+        });
+    }
+
+    /**
+     * Scope to filter subscriptions paid by a specific payer.
+     */
+    public function scopeForPayer($query, int $userId)
+    {
+        return $query->where('payer_id', $userId);
+    }
+
+    /**
+     * Scope to filter proxy subscriptions (where payer !== beneficiary).
+     */
+    public function scopeProxySubscriptions($query)
+    {
+        return $query->whereNotNull('payer_id')
+            ->whereRaw('payer_id != COALESCE(beneficiary_id, user_id)');
+    }
+
+    /**
+     * Check if this is a proxy subscription (paid by someone else for a beneficiary).
+     */
+    public function isProxy(): bool
+    {
+        $beneficiaryId = $this->beneficiary_id ?? $this->user_id;
+        return $this->payer_id !== null && $this->payer_id !== $beneficiaryId;
+    }
+
+    /**
+     * Get the beneficiary user (falls back to user relationship for backward compatibility).
+     */
+    public function getBeneficiary(): ?User
+    {
+        return $this->beneficiary ?? $this->user;
     }
 }

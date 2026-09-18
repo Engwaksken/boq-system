@@ -30,6 +30,113 @@ class BoqController extends Controller
         return $boq->organisation_id === null && $boq->project->organisation_id === null && $boq->project->user_id === $userId;
     }
 
+    /**
+     * List BOQs with pagination, search, and filtering.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $query = Boq::query()
+            ->where(function ($q) use ($user) {
+                $q->where('organisation_id', $user->organisation_id)
+                    ->orWhere(function ($q2) use ($user) {
+                        $q2->whereNull('organisation_id')
+                            ->whereHas('project', fn ($q3) => $q3->where('user_id', $user->id));
+                    });
+            })
+            ->with(['project', 'organisation'])
+            ->withCount('items')
+            ->latest();
+
+        // Search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%")
+                    ->orWhereHas('project', fn ($q2) => $q2->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Project filter
+        if ($request->filled('project_id')) {
+            $query->where('project_id', $request->project_id);
+        }
+
+        // Pagination
+        $perPage = min((int) $request->get('per_page', 15), 100);
+        $allowedPerPage = [10, 25, 50, 100];
+        if (!in_array($perPage, $allowedPerPage)) {
+            $perPage = 15;
+        }
+
+        $boqs = $query->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $boqs,
+        ]);
+    }
+
+    /**
+     * List BOQ items with pagination, search, and filtering.
+     */
+    public function items(Request $request, Boq $boq): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($this->canAccess($boq, $user->id, $user->organisation_id), 403);
+        abort_unless($user->hasPermission('boq.view'), 403);
+
+        $query = $boq->items()
+            ->with(['facility', 'bill', 'element', 'subElement', 'translations'])
+            ->orderBy('id');
+
+        // Search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('item_code', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('work_category', 'like', "%{$search}%");
+            });
+        }
+
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Pricing status filter
+        if ($request->filled('pricing_status')) {
+            $query->where('pricing_status', $request->pricing_status);
+        }
+
+        // Facility filter
+        if ($request->filled('facility_id')) {
+            $query->where('facility_id', $request->facility_id);
+        }
+
+        // Pagination
+        $perPage = min((int) $request->get('per_page', 25), 100);
+        $allowedPerPage = [10, 25, 50, 100];
+        if (!in_array($perPage, $allowedPerPage)) {
+            $perPage = 25;
+        }
+
+        $items = $query->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $items,
+        ]);
+    }
+
     public function startPricingBatch(Request $request, Boq $boq): JsonResponse
     {
         $user = $request->user();

@@ -37,6 +37,7 @@ class Transaction extends Model
         'refund_status',
         'failure_reason',
         'metadata',
+        'payer_id',
     ];
 
     /**
@@ -52,15 +53,27 @@ class Transaction extends Model
             'completed_at' => 'datetime',
             'failed_at' => 'datetime',
             'metadata' => 'array',
+            'payer_id' => 'integer',
         ];
     }
 
     /**
-     * The user who initiated this transaction.
+     * The beneficiary user for this transaction (backward compatibility: user_id).
+     * For self-paid transactions, this is the same as the payer.
+     * For proxy-paid transactions, this is the user receiving the product/service.
      */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * The user who paid for this transaction (payer).
+     * Null for self-paid transactions where the beneficiary pays for themselves.
+     */
+    public function payer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'payer_id');
     }
 
     /**
@@ -109,5 +122,13 @@ class Transaction extends Model
     public function isSuccessful(): bool
     {
         return $this->status === 'successful';
+    }
+
+    /**
+     * Scope to filter transactions paid by a specific payer.
+     */
+    public function scopeForPayer($query, int $userId)
+    {
+        return $query->where('payer_id', $userId);
     }
 }

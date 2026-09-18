@@ -133,7 +133,9 @@ class HardwarePriceCsvImporter
     {
         $query = HardwarePrice::query()->where('organisation_id', $organisationId);
 
-        foreach (['item_name', 'brand', 'category', 'unit', 'supplier', 'location'] as $field) {
+        $allowedFields = ['item_name', 'brand', 'category', 'unit', 'supplier', 'location'];
+
+        foreach ($allowedFields as $field) {
             $value = trim((string) ($attributes[$field] ?? ''));
             $value === ''
                 ? $query->whereNull($field)

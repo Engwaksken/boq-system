@@ -1774,3 +1774,41 @@ input.boq-field-with-icon {
         flex-direction: column;
     }
 }
+/* =========================================================
+   BOQ SHOW - ITEM PAGINATION FILTERS
+========================================================= */
+
+.boq-boq-item-filters {
+    display: grid;
+
+    grid-template-columns:
+        minmax(320px, 1fr)
+        180px
+        100px;
+
+    align-items: end;
+
+    gap: .75rem;
+
+    padding: 1rem;
+}
+
+
+@media (max-width: 800px) {
+
+    .boq-boq-item-filters {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .boq-boq-item-filters {
+        grid-template-columns:
+            1fr;
+    }
+
+}

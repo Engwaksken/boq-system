@@ -51,4 +51,50 @@ class SubscriptionFactory extends Factory
             }
         });
     }
+
+    /**
+     * Self-subscription state (user pays for themselves).
+     */
+    public function selfSubscription(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'payer_id' => null,
+            'beneficiary_id' => null,
+        ]);
+    }
+
+    /**
+     * Proxy subscription state (admin pays for another user).
+     */
+    public function proxySubscription(): static
+    {
+        return $this->state(function (array $attributes) {
+            $beneficiary = User::factory()->create();
+            $payer = User::factory()->create();
+
+            return [
+                'user_id' => $beneficiary->id, // backward compatibility
+                'beneficiary_id' => $beneficiary->id,
+                'payer_id' => $payer->id,
+                'organisation_id' => $beneficiary->organisation_id,
+            ];
+        });
+    }
+
+    /**
+     * Proxy subscription where the beneficiary is explicitly set.
+     */
+    public function forBeneficiary(User $beneficiary, ?User $payer = null): static
+    {
+        return $this->state(function (array $attributes) use ($beneficiary, $payer) {
+            $payerUser = $payer ?? User::factory()->create();
+
+            return [
+                'user_id' => $beneficiary->id, // backward compatibility
+                'beneficiary_id' => $beneficiary->id,
+                'payer_id' => $payerUser->id,
+                'organisation_id' => $beneficiary->organisation_id,
+            ];
+        });
+    }
 }

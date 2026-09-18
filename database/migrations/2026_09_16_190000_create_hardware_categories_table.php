@@ -56,13 +56,26 @@ return new class extends Migration
         }
 
         if (Schema::hasTable('hardware_prices')) {
-            DB::statement(
-                'UPDATE hardware_prices hp
-                 INNER JOIN hardware_categories hc
-                    ON LOWER(TRIM(hp.category)) = LOWER(TRIM(hc.name))
-                 SET hp.hardware_category_id = hc.id
-                 WHERE hp.hardware_category_id IS NULL'
-            );
+            // SQLite-compatible: fetch categories and update in PHP loop
+            $categories = DB::table('hardware_categories')
+                ->select('id', 'name')
+                ->get()
+                ->keyBy('name');
+
+            $prices = DB::table('hardware_prices')
+                ->whereNull('hardware_category_id')
+                ->whereNotNull('category')
+                ->where('category', '<>', '')
+                ->get(['id', 'category']);
+
+            foreach ($prices as $price) {
+                $categoryName = trim($price->category);
+                if (isset($categories[$categoryName])) {
+                    DB::table('hardware_prices')
+                        ->where('id', $price->id)
+                        ->update(['hardware_category_id' => $categories[$categoryName]->id]);
+                }
+            }
         }
     }
 

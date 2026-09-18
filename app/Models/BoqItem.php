@@ -63,6 +63,11 @@ class BoqItem extends Model
         'rejected_by',
         'rejected_at',
         'rejection_reason',
+        'pricing_status',
+        'priced_at',
+        'pricing_error',
+        'batch_number',
+        'pricing_job_id',
     ];
 
     /**
@@ -86,6 +91,9 @@ class BoqItem extends Model
             'reviewed_at' => 'datetime',
             'approved_at' => 'datetime',
             'rejected_at' => 'datetime',
+            'pricing_status' => 'string',
+            'priced_at' => 'datetime',
+            'batch_number' => 'integer',
         ];
     }
 
@@ -155,6 +163,14 @@ class BoqItem extends Model
     }
 
     /**
+     * The pricing job this item belongs to.
+     */
+    public function pricingJob(): BelongsTo
+    {
+        return $this->belongsTo(BoqPricingJob::class, 'pricing_job_id');
+    }
+
+    /**
      * Translations for this item.
      */
     public function translations(): HasMany
@@ -172,5 +188,85 @@ class BoqItem extends Model
         }
 
         $this->amount = round($this->quantity * $this->approved_rate, 2);
+    }
+
+    /**
+     * Scope: Items that have not been priced yet.
+     */
+    public function scopeUnpriced($query)
+    {
+        return $query->whereNull('pricing_status')
+            ->orWhere('pricing_status', 'pending');
+    }
+
+    /**
+     * Scope: Items that have been successfully priced.
+     */
+    public function scopePriced($query)
+    {
+        return $query->where('pricing_status', 'priced');
+    }
+
+    /**
+     * Scope: Items that failed pricing.
+     */
+    public function scopeFailed($query)
+    {
+        return $query->where('pricing_status', 'failed');
+    }
+
+    /**
+     * Scope: Items for a specific pricing job.
+     */
+    public function scopeForPricingJob($query, int $jobId)
+    {
+        return $query->where('pricing_job_id', $jobId);
+    }
+
+    /**
+     * Mark item as being processed for pricing.
+     */
+    public function markAsPricing(int $jobId, int $batchNumber): void
+    {
+        $this->update([
+            'pricing_job_id' => $jobId,
+            'batch_number' => $batchNumber,
+            'pricing_status' => 'processing',
+            'pricing_error' => null,
+        ]);
+    }
+
+    /**
+     * Mark item as successfully priced.
+     */
+    public function markAsPriced(): void
+    {
+        $this->update([
+            'pricing_status' => 'priced',
+            'priced_at' => now(),
+            'pricing_error' => null,
+        ]);
+    }
+
+    /**
+     * Mark item as failed pricing.
+     */
+    public function markAsFailed(string $error): void
+    {
+        $this->update([
+            'pricing_status' => 'failed',
+            'pricing_error' => $error,
+        ]);
+    }
+
+    /**
+     * Mark item as skipped (not priced).
+     */
+    public function markAsSkipped(): void
+    {
+        $this->update([
+            'pricing_status' => 'skipped',
+            'pricing_error' => null,
+        ]);
     }
 }

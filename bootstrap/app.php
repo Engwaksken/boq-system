@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\Handler;
 use App\Http\Middleware\CheckEntitlement;
 use App\Http\Middleware\CheckPermission;
 use App\Http\Middleware\CheckRole;
@@ -22,5 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+            return app(Handler::class)->render($request, $e);
+        });
     })->create();
