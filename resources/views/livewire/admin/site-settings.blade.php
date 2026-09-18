@@ -42,13 +42,19 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Trial Duration (Days)</label>
                         <input type="number" wire:model="settings.trial_duration" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="14">
-                        @error('settings.trial_duration') <span class="text-xs text-red-600 mt-1 block>{{ $message }}</span> @enderror
+                        @error('settings.trial_duration') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Logo URL / Path</label>
-                        <input type="text" wire:model="settings.logo" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="/images/logo.png">
-                        @error('settings.logo') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Logo</label>
+                        <div class="mb-2">
+                            @if($logoPath)
+                                <img src="{{ $logoPath }}" alt="Logo" class="w-16 h-16 object-cover rounded-lg mb-2">
+                            @endif
+                            <input type="text" wire:model="settings.logo" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="/images/logo.png">
+                        </div>
+                        <p class="text-xs text-slate-500">Max 2MB. Supported: PNG, JPG, JPEG, SVG</p>
+                        <input type="file" wire:model="logoFile" class="hidden">
                     </div>
 
                     <div class="flex items-center pt-6">

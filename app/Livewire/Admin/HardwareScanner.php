@@ -67,9 +67,9 @@ class HardwareScanner extends Component
         $organisationId = auth()->user()?->organisation_id;
 
         if (! $organisationId) {
-            $this->addError(
-                'scanForm.category',
-                'Your user account is not assigned to an organisation.'
+            session()->flash(
+                'modal_error',
+                'Your user account is not assigned to an organisation. Please contact an administrator to assign one, or upload via CSV import instead.'
             );
 
             return;

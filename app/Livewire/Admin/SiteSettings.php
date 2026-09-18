@@ -3,13 +3,20 @@
 namespace App\Livewire\Admin;
 
 use App\Models\SiteSetting;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('layouts.app')]
 class SiteSettings extends Component
 {
+    use WithFileUploads;
+
     public array $settings = [];
+
+    public ?string $logoPath = null;
 
     public function mount()
     {
@@ -21,9 +28,11 @@ class SiteSettings extends Component
             'maintenance_mode' => SiteSetting::get('maintenance_mode', false),
             'logo' => SiteSetting::get('logo', ''),
         ];
+
+        $this->logoPath = $this->settings['logo'] ? asset('storage/' . $this->settings['logo']) : null;
     }
 
-    public function save()
+    public function save(Request $request): void
     {
         $this->validate([
             'settings.system_name' => 'required|string|max:255',
@@ -32,7 +41,15 @@ class SiteSettings extends Component
             'settings.trial_duration' => 'required|integer|min:0',
             'settings.maintenance_mode' => 'boolean',
             'settings.logo' => 'nullable|string',
+            'logoFile' => 'nullable|image|max:2048',
         ]);
+
+        if ($request->hasFile('logoFile')) {
+            $file = $request->file('logoFile');
+            $filename = 'logo-' . Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('storage'), $filename);
+            $this->settings['logo'] = $filename;
+        }
 
         foreach ($this->settings as $key => $value) {
             $type = is_bool($value) ? 'boolean' : (is_int($value) ? 'integer' : 'string');
