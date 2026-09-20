@@ -216,13 +216,27 @@ class BoqController extends Controller
         return response()->json(['success' => true, 'data' => ['item' => $boqItem->fresh(), 'explanation' => $result['explanation'] ?? null]]);
     }
 
-    public function show(Request $request, Boq $boq): JsonResponse
+public function show(Request $request, Boq $boq): JsonResponse
     {
         $this->authorize('view', $boq);
 
         return (new BoqResource($this->loadPhaseFourRelations($boq)))
             ->additional(['success' => true])
             ->response();
+    }
+
+    public function item(Request $request, BoqItem $boqItem): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($this->canAccess($boqItem->boq, $user->id, $user->organisation_id), 403);
+        abort_unless($user->hasPermission('boq.view'), 403);
+
+        $boqItem->load(['facility', 'bill', 'element', 'subElement', 'translations']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $boqItem,
+        ]);
     }
 
     public function process(ProcessBoqRequest $request, Boq $boq, BoqSpreadsheetImporter $importer): JsonResponse

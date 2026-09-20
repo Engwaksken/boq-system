@@ -64,6 +64,8 @@ Route::prefix('v1')->group(function () {
             Route::get('boqs/{boq}/pdf', [BoqController::class, 'pdf'])
                 ->middleware('throttle:10,1')
                 ->name('api.v1.boqs.pdf');
+            Route::get('boq-items/{boqItem}', [BoqController::class, 'item'])
+                ->name('api.v1.boq-items.show');
         });
 
         Route::middleware(['permission:boq.edit', 'entitlement:boq.management', 'entitlement:boq.import.excel,boq_imports'])

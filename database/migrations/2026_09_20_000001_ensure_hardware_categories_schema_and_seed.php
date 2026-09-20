@@ -8,29 +8,32 @@ use Illuminate\Support\Str;
 
 return new class extends Migration
 {
+    /**
+     * Reconcile the hardware_categories table for databases where the
+     * canonical schema/seed was skipped because an earlier migration
+     * (2026_09_16_091906) had already created the table.
+     */
     public function up(): void
     {
         if (! Schema::hasTable('hardware_categories')) {
             Schema::create('hardware_categories', function (Blueprint $table) {
                 $table->id();
-                $table->string('name')->unique();
-                $table->text('description')->nullable();
-                $table->json('default_items')->nullable();
+                $table->foreignId('organisation_id')->nullable()->constrained()->nullOnDelete();
+                $table->string('name', 120);
+                $table->string('slug', 140)->nullable();
+                $table->string('description', 500)->nullable();
+                $table->text('default_items')->nullable();
+                $table->string('icon', 80)->default('fas fa-boxes-stacked');
                 $table->boolean('is_active')->default(true)->index();
                 $table->unsignedInteger('sort_order')->default(100)->index();
                 $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
                 $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
                 $table->timestamps();
             });
-
-            $this->seedDefaultCategories();
         } else {
-            // The table may have been created earlier by migration
-            // 2026_09_16_091906 which omits the columns the scanner and
-            // model rely on. Add them when missing.
             if (! Schema::hasColumn('hardware_categories', 'default_items')) {
                 Schema::table('hardware_categories', function (Blueprint $table) {
-                    $table->json('default_items')->nullable();
+                    $table->text('default_items')->nullable();
                 });
             }
             if (! Schema::hasColumn('hardware_categories', 'sort_order')) {
@@ -43,48 +46,10 @@ return new class extends Migration
                     $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
                 });
             }
-
-            // Seed the canonical categories when the table is empty so the
-            // scanner has data to work with.
-            if (DB::table('hardware_categories')->count() === 0) {
-                $this->seedDefaultCategories();
-            }
         }
 
-        if (
-            Schema::hasTable('hardware_prices')
-            && ! Schema::hasColumn('hardware_prices', 'hardware_category_id')
-        ) {
-            Schema::table('hardware_prices', function (Blueprint $table) {
-                $table->foreignId('hardware_category_id')
-                    ->nullable()
-                    ->after('organisation_id')
-                    ->constrained('hardware_categories')
-                    ->nullOnDelete();
-            });
-        }
-
-        if (Schema::hasTable('hardware_prices')) {
-            // SQLite-compatible: fetch categories and update in PHP loop
-            $categories = DB::table('hardware_categories')
-                ->select('id', 'name')
-                ->get()
-                ->keyBy('name');
-
-            $prices = DB::table('hardware_prices')
-                ->whereNull('hardware_category_id')
-                ->whereNotNull('category')
-                ->where('category', '<>', '')
-                ->get(['id', 'category']);
-
-            foreach ($prices as $price) {
-                $categoryName = trim($price->category);
-                if (isset($categories[$categoryName])) {
-                    DB::table('hardware_prices')
-                        ->where('id', $price->id)
-                        ->update(['hardware_category_id' => $categories[$categoryName]->id]);
-                }
-            }
+        if (DB::table('hardware_categories')->count() === 0) {
+            $this->seedDefaultCategories();
         }
     }
 
@@ -120,8 +85,6 @@ return new class extends Migration
                 'updated_at' => $now,
             ];
 
-            // The earlier 091906 schema keeps slug NOT NULL with no default;
-            // fill it in when the column is present.
             if (Schema::hasColumn('hardware_categories', 'slug')) {
                 $row['slug'] = Str::slug($name);
             }
@@ -132,15 +95,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (
-            Schema::hasTable('hardware_prices')
-            && Schema::hasColumn('hardware_prices', 'hardware_category_id')
-        ) {
-            Schema::table('hardware_prices', function (Blueprint $table) {
-                $table->dropConstrainedForeignId('hardware_category_id');
-            });
-        }
-
-        Schema::dropIfExists('hardware_categories');
+        // Columns are only added when missing; nothing to remove safely.
     }
 };
