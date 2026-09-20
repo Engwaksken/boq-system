@@ -181,7 +181,9 @@ body { background: var(--boq-bg); color: #0f172a; }
     background: #fff;
     box-shadow: 0 28px 70px rgba(2,8,23,.28);
 }
+.boq-modal-sm { width: min(480px, 100%); }
 .boq-modal-lg { width: min(980px, 100%); }
+.boq-modal-xl { width: min(1180px, 100%); }
 .boq-modal-head {
     position: sticky;
     top: 0;

@@ -39,7 +39,7 @@
     </div>
 
     <div x-show="actionModal" x-cloak class="boq-modal-backdrop">
-        <div class="boq-modal max-w-md" @click.stop>
+        <div class="boq-modal boq-modal-sm" @click.stop>
             <div class="boq-modal-head"><h2 class="text-lg font-bold" x-text="actionType==='extend' ? 'Extend subscription' : (actionType.charAt(0).toUpperCase()+actionType.slice(1)+' subscription?')"></h2><button @click="actionModal=false" class="text-2xl text-slate-400">&times;</button></div>
             <div class="boq-modal-body text-sm text-slate-600">
                 <p><span x-text="actionType.charAt(0).toUpperCase()+actionType.slice(1)"></span> the subscription for <strong x-text="actionName"></strong>?</p>

@@ -68,7 +68,7 @@
     @endif
 
     <div x-show="confirmArchive" x-cloak class="boq-modal-backdrop" @keydown.escape.window="confirmArchive=false">
-        <div class="boq-modal max-w-md" @click.stop>
+        <div class="boq-modal boq-modal-sm" @click.stop>
             <div class="boq-modal-head"><h2 class="text-lg font-bold">Archive plan?</h2><button @click="confirmArchive=false" class="text-2xl text-slate-400">&times;</button></div>
             <div class="boq-modal-body text-sm text-slate-600">Archive <strong x-text="archiveName"></strong>? Existing subscriptions will remain and no BOQ data will be deleted.</div>
             <div class="boq-modal-foot"><button @click="confirmArchive=false" class="boq-btn-secondary">Cancel</button><button @click="$wire.archive(archiveId); confirmArchive=false" class="boq-btn-danger">Archive</button></div>

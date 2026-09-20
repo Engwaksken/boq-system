@@ -30,7 +30,7 @@
     </div>
 
     <div x-show="showCreate" x-cloak class="boq-modal-backdrop">
-        <div class="boq-modal max-w-lg" @click.stop>
+        <div class="boq-modal" @click.stop>
             <form wire:submit="createUser">
                 <div class="boq-modal-head"><h2 class="text-lg font-bold">Add user</h2><button type="button" @click="showCreate=false" class="text-2xl text-slate-400">&times;</button></div>
                 <div class="boq-modal-body space-y-4">
@@ -85,14 +85,14 @@
     </div>
 
     <div x-show="confirmStatus" x-cloak class="boq-modal-backdrop">
-        <div class="boq-modal max-w-md" @click.stop>
+        <div class="boq-modal boq-modal-sm" @click.stop>
             <div class="boq-modal-head"><h2 class="text-lg font-bold"><span x-text="statusAction"></span> user?</h2><button @click="confirmStatus=false" class="text-2xl text-slate-400">&times;</button></div>
             <div class="boq-modal-body text-sm text-slate-600"><span x-text="statusAction"></span> access for <strong x-text="statusName"></strong>?</div>
             <div class="boq-modal-foot"><button @click="confirmStatus=false" class="boq-btn-secondary">Cancel</button><button @click="$wire.toggleActive(statusId); confirmStatus=false" class="boq-btn-primary">Confirm</button></div>
         </div>
     </div>
     <div x-show="confirmRole" x-cloak class="boq-modal-backdrop">
-        <div class="boq-modal max-w-md" @click.stop>
+        <div class="boq-modal boq-modal-sm" @click.stop>
             <div class="boq-modal-head"><h2 class="text-lg font-bold">Remove role?</h2><button @click="confirmRole=false" class="text-2xl text-slate-400">&times;</button></div>
             <div class="boq-modal-body text-sm text-slate-600">Remove <strong x-text="roleName"></strong> from <strong x-text="roleUserName"></strong>?</div>
             <div class="boq-modal-foot"><button @click="confirmRole=false" class="boq-btn-secondary">Cancel</button><button @click="$wire.removeRole(roleUserId, roleId); confirmRole=false" class="boq-btn-danger">Remove</button></div>

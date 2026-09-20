@@ -39,7 +39,7 @@
     @endif
 
     <div x-show="confirmDelete" x-cloak class="boq-modal-backdrop">
-        <div class="boq-modal max-w-md" @click.stop>
+        <div class="boq-modal boq-modal-sm" @click.stop>
             <div class="boq-modal-head"><h2 class="text-lg font-bold">Delete role?</h2><button @click="confirmDelete=false" class="text-2xl text-slate-400">&times;</button></div>
             <div class="boq-modal-body text-sm text-slate-600">Delete <strong x-text="deleteName"></strong>? This action cannot be undone.</div>
             <div class="boq-modal-foot"><button @click="confirmDelete=false" class="boq-btn-secondary">Cancel</button><button @click="$wire.delete(deleteId); confirmDelete=false" class="boq-btn-danger">Delete</button></div>
