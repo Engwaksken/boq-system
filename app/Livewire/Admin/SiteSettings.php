@@ -3,8 +3,6 @@
 namespace App\Livewire\Admin;
 
 use App\Models\SiteSetting;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -16,9 +14,15 @@ class SiteSettings extends Component
 
     public array $settings = [];
 
-    public ?string $logoPath = null;
+    public $logoFile = null;
 
-    public function mount()
+    public $faviconFile = null;
+
+    public string $logoUrl = '';
+
+    public string $faviconUrl = '';
+
+    public function mount(): void
     {
         $this->settings = [
             'system_name' => SiteSetting::get('system_name', 'Civil Works AI BOQ Platform'),
@@ -27,12 +31,14 @@ class SiteSettings extends Component
             'trial_duration' => SiteSetting::get('trial_duration', 7),
             'maintenance_mode' => SiteSetting::get('maintenance_mode', false),
             'logo' => SiteSetting::get('logo', ''),
+            'favicon' => SiteSetting::get('favicon', ''),
         ];
 
-        $this->logoPath = $this->settings['logo'] ? asset('storage/' . $this->settings['logo']) : null;
+        $this->logoUrl = $this->settings['logo'] ? asset('storage/'.$this->settings['logo']) : '';
+        $this->faviconUrl = $this->settings['favicon'] ? asset('storage/'.$this->settings['favicon']) : '';
     }
 
-    public function save(Request $request): void
+    public function save(): void
     {
         $this->validate([
             'settings.system_name' => 'required|string|max:255',
@@ -40,15 +46,28 @@ class SiteSettings extends Component
             'settings.language' => 'required|string|max:10',
             'settings.trial_duration' => 'required|integer|min:0',
             'settings.maintenance_mode' => 'boolean',
-            'settings.logo' => 'nullable|string',
-            'logoFile' => 'nullable|image|max:2048',
+            'settings.logo' => 'nullable|string|max:255',
+            'settings.favicon' => 'nullable|string|max:255',
+            'logoFile' => 'nullable|image|mimes:png,jpg,jpeg,webp,svg|max:2048',
+            'faviconFile' => 'nullable|image|mimes:png,jpg,jpeg,webp,svg,ico|max:1024',
         ]);
 
-        if ($request->hasFile('logoFile')) {
-            $file = $request->file('logoFile');
-            $filename = 'logo-' . Str::uuid() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('storage'), $filename);
-            $this->settings['logo'] = $filename;
+        if ($this->logoFile) {
+            $this->settings['logo'] = $this->logoFile->storePubliclyAs(
+                'site',
+                'logo-'.now()->timestamp.'.'.$this->logoFile->getClientOriginalExtension(),
+                'public'
+            );
+            $this->logoUrl = asset('storage/'.$this->settings['logo']);
+        }
+
+        if ($this->faviconFile) {
+            $this->settings['favicon'] = $this->faviconFile->storePubliclyAs(
+                'site',
+                'favicon-'.now()->timestamp.'.'.$this->faviconFile->getClientOriginalExtension(),
+                'public'
+            );
+            $this->faviconUrl = asset('storage/'.$this->settings['favicon']);
         }
 
         foreach ($this->settings as $key => $value) {
@@ -56,7 +75,21 @@ class SiteSettings extends Component
             SiteSetting::set($key, $value, 'general', $type);
         }
 
+        $this->reset('logoFile', 'faviconFile');
+
         session()->flash('message', 'Site settings updated successfully.');
+    }
+
+    public function removeLogo(): void
+    {
+        $this->settings['logo'] = '';
+        $this->logoUrl = '';
+    }
+
+    public function removeFavicon(): void
+    {
+        $this->settings['favicon'] = '';
+        $this->faviconUrl = '';
     }
 
     public function render()

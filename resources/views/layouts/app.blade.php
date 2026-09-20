@@ -4,7 +4,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? 'BOQ System' }}</title>
+    @php
+        $siteName = App\Models\SiteSetting::get('system_name', 'BOQ System');
+        $siteLogo = App\Models\SiteSetting::get('logo', '');
+        $siteFavicon = App\Models\SiteSetting::get('favicon', '');
+    @endphp
+    <title>{{ ($title ?? '') !== '' ? $title.' · ' : '' }}{{ $siteName }}</title>
+    @if($siteFavicon)
+        <link rel="icon" type="image/x-icon" href="{{ asset('storage/'.$siteFavicon) }}">
+    @else
+        <link rel="icon" href="/favicon.ico">
+    @endif
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link
@@ -72,10 +82,14 @@
         <aside x-cloak :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="boq-sidebar fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col text-white transition-transform duration-200 lg:translate-x-0">
             <div class="flex h-20 items-center justify-between border-b border-white/10 px-5">
                 <a href="{{ url('/dashboard') }}" class="flex items-center gap-3 min-w-0">
-                    <span class="boq-brand-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h10M4 18h10" /></svg>
-                    </span>
-                    <span class="min-w-0"><span class="block truncate text-base font-bold tracking-wide">BOQ System</span><span class="block truncate text-xs text-slate-400">AI cost intelligence</span></span>
+                    @if($siteLogo)
+                        <img src="{{ asset('storage/'.$siteLogo) }}" alt="Logo" class="h-11 w-11 shrink-0 rounded-xl bg-white p-1 object-contain">
+                    @else
+                        <span class="boq-brand-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h10M4 18h10" /></svg>
+                        </span>
+                    @endif
+                    <span class="min-w-0"><span class="block truncate text-base font-bold tracking-wide">{{ $siteName }}</span><span class="block truncate text-xs text-slate-400">AI cost intelligence</span></span>
                 </a>
                 <button @click="sidebarOpen = false" class="rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-white lg:hidden" aria-label="Close navigation">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>

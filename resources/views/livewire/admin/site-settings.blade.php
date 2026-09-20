@@ -47,14 +47,58 @@
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Logo</label>
-                        <div class="mb-2">
-                            @if($logoPath)
-                                <img src="{{ $logoPath }}" alt="Logo" class="w-16 h-16 object-cover rounded-lg mb-2">
+                        <div class="flex items-center gap-3 mb-2">
+                            @if($logoUrl)
+                                <img src="{{ $logoUrl }}" alt="Logo" class="w-16 h-16 object-contain p-1 border border-slate-200 rounded-lg bg-white">
+                            @else
+                                <div class="w-16 h-16 flex items-center justify-center rounded-lg bg-slate-100 text-slate-400 text-xs">No logo</div>
                             @endif
-                            <input type="text" wire:model="settings.logo" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="/images/logo.png">
+                            <div class="flex flex-col gap-1.5">
+                                <label class="inline-flex items-center px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-lg cursor-pointer">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.5M3 14l4.5-4.5 4 4L15 10l6 5.5"/></svg>
+                                    Choose logo
+                                    <input type="file" wire:model="logoFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="hidden">
+                                </label>
+                                @if($logoUrl)
+                                    <button type="button" wire:click="removeLogo" class="inline-flex items-center px-3 py-1.5 text-red-600 hover:bg-red-50 text-sm font-semibold rounded-lg">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12M9 7V4h6v3m-8 0 1 13h8l1-13"/></svg>
+                                        Remove
+                                    </button>
+                                @endif
+                            </div>
                         </div>
-                        <p class="text-xs text-slate-500">Max 2MB. Supported: PNG, JPG, JPEG, SVG</p>
-                        <input type="file" wire:model="logoFile" class="hidden">
+                        <div wire:loading wire:target="logoFile" class="text-xs text-indigo-600 mb-1">Uploading logo...</div>
+                        @error('logoFile') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
+                        <input type="hidden" wire:model="settings.logo">
+                        <p class="text-xs text-slate-500">Max 2MB. Supported: PNG, JPG, JPEG, WEBP, SVG</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Favicon</label>
+                        <div class="flex items-center gap-3 mb-2">
+                            @if($faviconUrl)
+                                <img src="{{ $faviconUrl }}" alt="Favicon" class="w-10 h-10 object-contain p-1 border border-slate-200 rounded-lg bg-white">
+                            @else
+                                <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 text-slate-400 text-xs">No icon</div>
+                            @endif
+                            <div class="flex flex-col gap-1.5">
+                                <label class="inline-flex items-center px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-lg cursor-pointer">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.5M3 14l4.5-4.5 4 4L15 10l6 5.5"/></svg>
+                                    Choose favicon
+                                    <input type="file" wire:model="faviconFile" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon" class="hidden">
+                                </label>
+                                @if($faviconUrl)
+                                    <button type="button" wire:click="removeFavicon" class="inline-flex items-center px-3 py-1.5 text-red-600 hover:bg-red-50 text-sm font-semibold rounded-lg">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12M9 7V4h6v3m-8 0 1 13h8l1-13"/></svg>
+                                        Remove
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
+                        <div wire:loading wire:target="faviconFile" class="text-xs text-indigo-600 mb-1">Uploading favicon...</div>
+                        @error('faviconFile') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
+                        <input type="hidden" wire:model="settings.favicon">
+                        <p class="text-xs text-slate-500">Max 1MB. Supported: PNG, JPG, WEBP, SVG, ICO</p>
                     </div>
 
                     <div class="flex items-center pt-6">
