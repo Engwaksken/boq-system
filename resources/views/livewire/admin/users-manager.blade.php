@@ -1,5 +1,5 @@
 
-<div class="space-y-5" x-data="{ confirmStatus:false, statusId:null, statusName:'', statusAction:'', confirmRole:false, roleUserId:null, roleId:null, roleName:'', roleUserName:'' }">
+<div class="space-y-5" x-data="{ showCreate:false, confirmStatus:false, statusId:null, statusName:'', statusAction:'', confirmRole:false, roleUserId:null, roleId:null, roleName:'', roleUserName:'' }">
     <div><h1 class="text-2xl font-bold">Users</h1><p class="text-sm text-slate-500">Manage account access, roles and subscription links.</p></div>
     @include('livewire.admin._tabs')
     @if(session('message'))<div class="boq-flash">{{session('message')}}</div>@endif
@@ -7,6 +7,7 @@
     <div class="flex flex-wrap gap-3">
         <input wire:model.live.debounce.300ms="search" placeholder="Search name or email" class="min-w-64 flex-1 rounded-lg border-slate-300 text-sm">
         <select wire:model.live="status" class="rounded-lg border-slate-300 text-sm"><option value="all">All users</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
+        <button @click="showCreate=true" class="boq-btn-primary">Add user</button>
     </div>
 
     <div class="boq-panel overflow-x-auto">
@@ -26,6 +27,61 @@
             </tbody>
         </table>
         <div class="p-4">{{$users->links()}}</div>
+    </div>
+
+    <div x-show="showCreate" x-cloak class="boq-modal-backdrop">
+        <div class="boq-modal max-w-lg" @click.stop>
+            <form wire:submit="createUser">
+                <div class="boq-modal-head"><h2 class="text-lg font-bold">Add user</h2><button type="button" @click="showCreate=false" class="text-2xl text-slate-400">&times;</button></div>
+                <div class="boq-modal-body space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">Full name</label>
+                        <input wire:model="newName" type="text" class="mt-1 w-full rounded-lg border-slate-300 text-sm" placeholder="e.g. Jane Doe">
+                        @error('newName') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">Email</label>
+                        <input wire:model="newEmail" type="email" class="mt-1 w-full rounded-lg border-slate-300 text-sm" placeholder="name@company.com">
+                        @error('newEmail') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">Temporary password</label>
+                        <input wire:model="newPassword" type="password" class="mt-1 w-full rounded-lg border-slate-300 text-sm" placeholder="min. 8 characters">
+                        @error('newPassword') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">Phone (optional)</label>
+                        <input wire:model="newPhone" type="text" class="mt-1 w-full rounded-lg border-slate-300 text-sm" placeholder="+256...">
+                        @error('newPhone') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700">Organisation</label>
+                            <select wire:model="newOrganisationId" class="mt-1 w-full rounded-lg border-slate-300 text-sm">
+                                <option value="">Select...</option>
+                                @foreach($organisations as $org)<option value="{{$org->id}}">{{$org->name}}</option>@endforeach
+                            </select>
+                            @error('newOrganisationId') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700">Role</label>
+                            <select wire:model="newRoleId" class="mt-1 w-full rounded-lg border-slate-300 text-sm">
+                                <option value="">Select...</option>
+                                @foreach($roles as $role)<option value="{{$role->id}}">{{$role->name}}</option>@endforeach
+                            </select>
+                            @error('newRoleId') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                </div>
+                <div class="boq-modal-foot">
+                    <button type="button" @click="showCreate=false" class="boq-btn-secondary">Cancel</button>
+                    <button type="submit" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="createUser">
+                        <span wire:loading.remove wire:target="createUser">Create user</span>
+                        <span wire:loading wire:target="createUser">Creating...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <div x-show="confirmStatus" x-cloak class="boq-modal-backdrop">

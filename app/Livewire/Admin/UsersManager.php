@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\Organisation;
 use App\Models\Role;
 use App\Models\User;
 use Livewire\Attributes\Layout;
@@ -16,6 +17,56 @@ class UsersManager extends Component
     public string $search='';
     public string $status='all';
     public int $perPage=20;
+
+    public bool $showCreate=false;
+    public bool $creating=false;
+    public string $newName='';
+    public string $newEmail='';
+    public string $newPassword='';
+    public string $newPhone='';
+    public int $newRoleId=0;
+    public int $newOrganisationId=0;
+
+    public function mount(): void
+    {
+        $this->newOrganisationId = auth()->user()->organisation_id
+            ?? Organisation::query()->value('id')
+            ?? 0;
+    }
+
+    public function createUser(): void
+    {
+        $this->validate([
+            'newName' => ['required','string','max:255'],
+            'newEmail' => ['required','email','max:255','unique:users,email'],
+            'newPassword' => ['required','string','min:8'],
+            'newPhone' => ['nullable','string','max:50'],
+            'newRoleId' => ['required','exists:roles,id'],
+            'newOrganisationId' => ['required','exists:organisations,id'],
+        ]);
+
+        $this->creating = true;
+
+        try {
+            $user = User::create([
+                'name' => $this->newName,
+                'email' => $this->newEmail,
+                'password' => $this->newPassword,
+                'phone' => $this->newPhone !== '' ? $this->newPhone : null,
+                'locale' => 'en',
+                'organisation_id' => $this->newOrganisationId,
+                'is_active' => true,
+            ]);
+
+            $user->roles()->attach($this->newRoleId, ['organisation_id' => $this->newOrganisationId]);
+
+            session()->flash('message', "User {$user->name} created successfully.");
+        } finally {
+            $this->creating = false;
+        }
+
+        $this->reset(['showCreate','newName','newEmail','newPassword','newPhone','newRoleId']);
+    }
 
     public function toggleActive(int $id): void
     {
@@ -51,6 +102,10 @@ class UsersManager extends Component
             ->when($this->status !== 'all', fn($q) => $q->where('is_active', $this->status === 'active'))
             ->with(['roles','organisation','subscriptions.plan'])
             ->latest()->paginate($this->perPage);
-        return view('livewire.admin.users-manager', ['users'=>$users,'roles'=>Role::orderBy('name')->get()]);
+        return view('livewire.admin.users-manager', [
+            'users'=>$users,
+            'roles'=>Role::orderBy('name')->get(),
+            'organisations'=>Organisation::orderBy('name')->get(),
+        ]);
     }
 }
