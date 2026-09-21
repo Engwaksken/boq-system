@@ -308,7 +308,7 @@
     <div
         style="
             display:grid;
-            grid-template-columns:repeat(6,minmax(0,1fr));
+            grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
             gap:.65rem;
             margin-bottom:1rem;
         "
@@ -318,6 +318,7 @@
             ['label' => 'Total Items', 'value' => $itemStats['total'], 'icon' => 'fa-list'],
             ['label' => 'Matched', 'value' => $itemStats['matched'], 'icon' => 'fa-link'],
             ['label' => 'Unmatched', 'value' => $itemStats['unmatched'], 'icon' => 'fa-link-slash'],
+            ['label' => 'Pending', 'value' => $itemStats['pending'], 'icon' => 'fa-hourglass-half'],
             ['label' => 'Reviewed', 'value' => $itemStats['reviewed'], 'icon' => 'fa-eye'],
             ['label' => 'Approved', 'value' => $itemStats['approved'], 'icon' => 'fa-circle-check'],
             ['label' => 'Rejected', 'value' => $itemStats['rejected'], 'icon' => 'fa-circle-xmark'],
@@ -432,6 +433,10 @@
 
                     <option value="unmatched">
                         Unmatched
+                    </option>
+
+                    <option value="pending">
+                        Pending
                     </option>
 
                     <option value="reviewed">

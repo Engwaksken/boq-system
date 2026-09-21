@@ -1084,6 +1084,7 @@ class Show extends Component
                     in_array(
                         $this->itemStatus,
                         [
+                            'pending',
                             'reviewed',
                             'approved',
                             'rejected',
@@ -1123,6 +1124,9 @@ class Show extends Component
                     'SUM(CASE WHEN hardware_price_id IS NOT NULL THEN 1 ELSE 0 END) as matched'
                 )
                 ->selectRaw(
+                    "SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending"
+                )
+                ->selectRaw(
                     "SUM(CASE WHEN status = 'reviewed' THEN 1 ELSE 0 END) as reviewed"
                 )
                 ->selectRaw(
@@ -1157,6 +1161,12 @@ class Show extends Component
                         $stats->matched
                         ?? 0
                     )
+                ),
+
+            'pending' =>
+                (int) (
+                    $stats->pending
+                    ?? 0
                 ),
 
             'reviewed' =>
