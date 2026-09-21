@@ -57,6 +57,7 @@ class HardwarePriceFetchingService
         $webSearch = $this->defaultProviderUsesWebSearch();
 
         $results = [];
+        $lastException = null;
 
         foreach ($items as $itemName) {
             try {
@@ -123,6 +124,8 @@ class HardwarePriceFetchingService
                     ],
                 ];
             } catch (Throwable $exception) {
+                $lastException = $exception;
+
                 Log::warning('Hardware price scan item failed', [
                     'category' => $category,
                     'item' => $itemName,
@@ -133,9 +136,13 @@ class HardwarePriceFetchingService
         }
 
         if ($results === []) {
-            throw new RuntimeException(
-                'No hardware prices could be fetched. Check the default AI provider configuration and connection.'
-            );
+            $message = 'No hardware prices could be fetched. Check the default AI provider configuration and connection.';
+
+            if ($lastException !== null) {
+                $message .= ' Last attempt: '.$lastException->getMessage();
+            }
+
+            throw new RuntimeException($message, previous: $lastException);
         }
 
         return $results;

@@ -64,6 +64,34 @@ class AiProviderService
                     []
                 );
 
+                // Gemini live-web-search grounding can be rejected by the
+                // API (e.g. unsupported tool/model combination). Retry the
+                // same provider once without grounding so scans degrade
+                // gracefully to estimates instead of failing entirely.
+                if ($this->supportsGroundingRetry($provider)) {
+                    try {
+                        $result = $this->sendJsonRequest($provider, $prompt, false);
+
+                        $this->recordUsage(
+                            $provider,
+                            $operation,
+                            true,
+                            $started,
+                            $organisationId,
+                            $context,
+                            null,
+                            null,
+                            $result['_usage'] ?? []
+                        );
+
+                        unset($result['_usage']);
+
+                        return $result;
+                    } catch (Throwable) {
+                        // Keep the original failure for the next provider.
+                    }
+                }
+
                 // Invalid credentials/configuration should be visible to admins.
                 // We still allow fallback so customer-facing workflows are not broken.
                 continue;
@@ -143,19 +171,28 @@ class AiProviderService
         })->values();
     }
 
-    private function sendJsonRequest(AiProvider $provider, string $prompt): array
+    private function sendJsonRequest(AiProvider $provider, string $prompt, ?bool $webSearchOverride = null): array
     {
         $type = strtolower($provider->provider_type);
         $settings = $provider->settings ?? [];
         $timeout = max(5, (int) ($settings['timeout'] ?? 45));
 
         return match ($type) {
-            'gemini', 'google_gemini' => $this->gemini($provider, $prompt, $timeout),
+            'gemini', 'google_gemini' => $this->gemini($provider, $prompt, $timeout, $webSearchOverride),
             default => $this->openAiCompatible($provider, $prompt, $timeout),
         };
     }
 
-    private function gemini(AiProvider $provider, string $prompt, int $timeout): array
+    private function supportsGroundingRetry(AiProvider $provider): bool
+    {
+        return in_array(
+            strtolower($provider->provider_type),
+            ['gemini', 'google_gemini'],
+            true
+        ) && (bool) data_get($provider->settings, 'web_search', false);
+    }
+
+    private function gemini(AiProvider $provider, string $prompt, int $timeout, ?bool $webSearchOverride = null): array
     {
         if (blank($provider->api_key)) {
             throw new RuntimeException('Provider API key is missing.');
@@ -171,7 +208,10 @@ class AiProviderService
 
         // Opt-in live web search via Google Search grounding so price scans
         // can return real, cited market results instead of model estimates.
-        if ((bool) data_get($provider->settings, 'web_search', false)) {
+        $webSearch = $webSearchOverride
+            ?? (bool) data_get($provider->settings, 'web_search', false);
+
+        if ($webSearch) {
             $body['tools'] = [['google_search' => new \stdClass()]];
         }
 

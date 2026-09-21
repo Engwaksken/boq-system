@@ -19,40 +19,36 @@ class QuotationsManager extends Component
     public int $perPage = 10;
     public ?int $viewingId = null;
 
-    public function __construct(private readonly QuotationService $quotations)
-    {
-    }
-
-    public function preapproveLine(int $itemId): void
+    public function preapproveLine(int $itemId, QuotationService $quotations): void
     {
         $quotation = Quotation::whereHas('items', fn ($q) => $q->whereKey($itemId))->first();
         if (! $quotation || $this->viewingId !== $quotation->id) {
             return;
         }
         $item = $quotation->items()->findOrFail($itemId);
-        $this->quotations->setLineApproved($item, ! $item->approved);
-        $this->quotations->recalculate($quotation);
+        $quotations->setLineApproved($item, ! $item->approved);
+        $quotations->recalculate($quotation);
     }
 
-    public function review(int $id): void
+    public function review(int $id, QuotationService $quotations): void
     {
         $quotation = Quotation::findOrFail($id);
-        $this->quotations->review($quotation, auth()->user());
+        $quotations->review($quotation, auth()->user());
         session()->flash('message', 'Quotation marked as reviewed.');
     }
 
-    public function accept(int $id): void
+    public function accept(int $id, QuotationService $quotations): void
     {
         $quotation = Quotation::findOrFail($id);
-        $this->quotations->accept($quotation, auth()->user());
+        $quotations->accept($quotation, auth()->user());
         session()->flash('message', 'Quotation accepted. Approved lines were promoted to the rate library.');
         $this->viewingId = null;
     }
 
-    public function reject(int $id): void
+    public function reject(int $id, QuotationService $quotations): void
     {
         $quotation = Quotation::findOrFail($id);
-        $this->quotations->reject($quotation, auth()->user());
+        $quotations->reject($quotation, auth()->user());
         session()->flash('message', 'Quotation rejected.');
         $this->viewingId = null;
     }

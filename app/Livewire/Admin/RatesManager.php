@@ -30,10 +30,6 @@ class RatesManager extends Component
         'effective_from' => '', 'effective_until' => '', 'verification_status' => 'pending',
     ];
 
-    public function __construct(private readonly RateLibraryService $library)
-    {
-    }
-
     public function create(): void { $this->resetForm(); $this->showForm = true; }
 
     public function edit(int $id): void
@@ -87,15 +83,15 @@ class RatesManager extends Component
         $this->cancel();
     }
 
-    public function approve(int $id): void
+    public function approve(int $id, RateLibraryService $library): void
     {
-        $this->library->approve(Rate::findOrFail($id), auth()->user());
+        $library->approve(Rate::findOrFail($id), auth()->user());
         session()->flash('message', 'Rate approved and now effective.');
     }
 
-    public function reject(int $id): void
+    public function reject(int $id, RateLibraryService $library): void
     {
-        $this->library->reject(Rate::findOrFail($id), auth()->user());
+        $library->reject(Rate::findOrFail($id), auth()->user());
         session()->flash('message', 'Rate rejected.');
     }
 
