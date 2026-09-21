@@ -164,14 +164,22 @@ class AiProviderService
         $base = rtrim($provider->api_base_url ?: 'https://generativelanguage.googleapis.com', '/');
         $model = $provider->default_model ?: 'gemini-2.5-flash';
 
+        $body = [
+            'contents' => [['parts' => [['text' => $prompt]]]],
+            'generationConfig' => ['responseMimeType' => 'application/json'],
+        ];
+
+        // Opt-in live web search via Google Search grounding so price scans
+        // can return real, cited market results instead of model estimates.
+        if ((bool) data_get($provider->settings, 'web_search', false)) {
+            $body['tools'] = [['google_search' => new \stdClass()]];
+        }
+
         $response = Http::timeout($timeout)
             ->retry(2, 400, throw: false)
             ->post(
                 "{$base}/v1beta/models/{$model}:generateContent?key=".urlencode($provider->api_key),
-                [
-                    'contents' => [['parts' => [['text' => $prompt]]]],
-                    'generationConfig' => ['responseMimeType' => 'application/json'],
-                ]
+                $body
             );
 
         if (! $response->successful()) {
@@ -186,6 +194,17 @@ class AiProviderService
         if (! is_array($result)) {
             throw new RuntimeException('AI provider returned invalid JSON.');
         }
+
+        $result['_grounding'] = collect(
+            data_get($payload, 'candidates.0.groundingMetadata.groundingChunks', [])
+        )
+            ->map(fn ($chunk): array => [
+                'title' => data_get($chunk, 'web.title'),
+                'uri' => data_get($chunk, 'web.uri'),
+            ])
+            ->filter(fn ($source): bool => filled($source['uri'] ?? null))
+            ->values()
+            ->all();
 
         $result['_usage'] = [
             'input_units' => (int) data_get($payload, 'usageMetadata.promptTokenCount', 0),

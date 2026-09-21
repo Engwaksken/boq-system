@@ -223,7 +223,9 @@
                             <div class="boq-form-span-2 boq-check-row">
                                 <label><input type="checkbox" wire:model="form.is_enabled"> Enabled</label>
                                 <label><input type="checkbox" wire:model="form.is_default"> Default provider</label>
+                                <label><input type="checkbox" wire:model="form.web_search"> Live web search (Google grounding)</label>
                             </div>
+                            <div class="boq-form-span-2 boq-table-subtitle">Enable live web search to fetch real, cited market prices when scanning hardware. Only supported by Google Gemini providers.</div>
                         </div>
 
                         @if($errors->any())

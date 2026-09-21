@@ -184,6 +184,12 @@ class AiProviders extends Component
                 $settings,
                 'max_tokens'
             ),
+
+            'web_search' => (bool) data_get(
+                $settings,
+                'web_search',
+                false
+            ),
         ];
 
         $this->showForm = true;
@@ -331,6 +337,10 @@ class AiProviders extends Component
                     )
                         ? (int) $form['max_tokens']
                         : null,
+
+                    'web_search' => (bool) (
+                        $form['web_search'] ?? false
+                    ),
                 ],
 
                 'updated_by' => auth()->id(),
@@ -682,6 +692,10 @@ class AiProviders extends Component
                 'min:1',
                 'max:1000000',
             ],
+
+            'form.web_search' => [
+                'boolean',
+            ],
         ];
     }
 
@@ -803,6 +817,8 @@ class AiProviders extends Component
             'timeout' => 45,
 
             'max_tokens' => null,
+
+            'web_search' => false,
         ];
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\AiProvider;
 use App\Models\HardwareCategory;
 use App\Models\HardwarePrice;
 use App\Models\PriceHistory;
@@ -53,6 +54,8 @@ class HardwarePriceFetchingService
 
         $items = array_slice($items, 0, $limit);
 
+        $webSearch = $this->defaultProviderUsesWebSearch();
+
         $results = [];
 
         foreach ($items as $itemName) {
@@ -60,7 +63,8 @@ class HardwarePriceFetchingService
                 $prompt = $this->buildPrompt(
                     itemName: $itemName,
                     category: $categoryRecord?->name ?? $category,
-                    location: $location
+                    location: $location,
+                    webSearch: $webSearch
                 );
 
                 $response = $this->ai->json(
@@ -75,11 +79,26 @@ class HardwarePriceFetchingService
                     ]
                 );
 
+                $grounding = $response['_grounding'] ?? [];
+
+                unset($response['_grounding']);
+
                 $price = (float) ($response['price'] ?? 0);
 
                 if ($price <= 0) {
                     throw new RuntimeException('AI provider returned an invalid price.');
                 }
+
+                $sourceUrl = $this->nullableString($response['source_url'] ?? null)
+                    ?? ($grounding[0]['uri'] ?? null);
+
+                $groundedTitle = $grounding[0]['title'] ?? null;
+
+                $sourceReference = $this->nullableString(
+                    $response['source_reference'] ?? null
+                ) ?? ($groundedTitle
+                    ? 'Live web search result: '.$groundedTitle
+                    : 'AI-assisted Uganda market estimate');
 
                 $results[] = [
                     'hardware_category_id' => $categoryRecord?->id,
@@ -92,16 +111,15 @@ class HardwarePriceFetchingService
                     'currency' => strtoupper(trim((string) ($response['currency'] ?? 'UGX'))),
                     'supplier' => trim((string) ($response['supplier'] ?? 'Uganda market estimate')),
                     'location' => trim((string) ($response['location'] ?? $location)),
-                    'source_url' => $this->nullableString($response['source_url'] ?? null),
-                    'source_reference' => $this->nullableString(
-                        $response['source_reference'] ?? 'AI-assisted Uganda market estimate'
-                    ),
+                    'source_url' => $sourceUrl,
+                    'source_reference' => $sourceReference,
                     'fetched_at' => now(),
                     'is_active' => true,
                     'ai_metadata' => [
                         'confidence' => $response['confidence'] ?? null,
                         'notes' => $response['notes'] ?? null,
                         'source' => 'configured_ai_provider',
+                        'grounding_sources' => $grounding,
                     ],
                 ];
             } catch (Throwable $exception) {
@@ -189,13 +207,35 @@ class HardwarePriceFetchingService
         return $results;
     }
 
+    private function defaultProviderUsesWebSearch(): bool
+    {
+        try {
+            $provider = AiProvider::query()
+                ->enabled()
+                ->orderByDesc('is_default')
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->first();
+        } catch (Throwable) {
+            return false;
+        }
+
+        return $provider !== null
+            && (bool) data_get($provider->settings, 'web_search', false);
+    }
+
     private function buildPrompt(
         string $itemName,
         string $category,
-        string $location
+        string $location,
+        bool $webSearch = false
     ): string {
+        $instructions = $webSearch
+            ? 'Search the live web for REAL, current retail construction-material prices in Uganda. Prefer actual supplier listings and market pages. Return the verified market price, not a guess.'
+            : 'Estimate a current retail construction-material price in Uganda from your knowledge.';
+
         return <<<PROMPT
-Estimate a current retail construction-material price in Uganda.
+{$instructions}
 
 Return JSON only in this exact structure:
 {
@@ -221,6 +261,7 @@ Location: {$location}, Uganda
 Rules:
 - price must be numeric and greater than zero;
 - currency must be UGX unless there is a compelling reason otherwise;
+- when web search is available, base the price only on the returned search results and fill source_url and source_reference from the cited sources;
 - do not claim a named supplier if you cannot support it;
 - reflect current Uganda market context;
 - return JSON only.
