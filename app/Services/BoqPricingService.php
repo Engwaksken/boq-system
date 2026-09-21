@@ -16,9 +16,6 @@ class BoqPricingService
      */
     public function processItem(BoqPricingJob $job, BoqItem $item): void
     {
-        // Mark item as being priced
-        $item->markAsPricing($job->id, $job->current_batch);
-
         try {
             $result = $this->pricing->suggest(
                 ['description' => $item->description, 'unit' => $item->unit],

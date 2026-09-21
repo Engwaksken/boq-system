@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\BoqItem;
 use RuntimeException;
+use Throwable;
 
 class GeminiPricingService
 {
@@ -45,5 +47,43 @@ PROMPT;
         }
 
         return $result;
+    }
+
+    /**
+     * Suggest an AI rate for the item and persist it as a pending review.
+     * Returns false (without throwing) when no AI provider is available so
+     * callers can fall back to hardware matches or spreadsheet rates.
+     */
+    public function apply(BoqItem $item, string $location): bool
+    {
+        try {
+            $result = $this->suggest(
+                ['description' => $item->description, 'unit' => $item->unit],
+                $location,
+                (string) $item->currency
+            );
+
+            $item->fill([
+                'ai_suggested_rate' => $result['suggested_rate'],
+                'reviewed_rate' => null,
+                'approved_rate' => null,
+                'location' => $location,
+                'ai_confidence' => $result['confidence'] ?? null,
+                'pricing_source' => config('services.ai_provider'),
+                'pricing_date' => now(),
+                'status' => 'pending',
+                'reviewed_by' => null,
+                'reviewed_at' => null,
+                'approved_by' => null,
+                'approved_at' => null,
+                'rejected_by' => null,
+                'rejected_at' => null,
+                'rejection_reason' => null,
+            ])->save();
+
+            return true;
+        } catch (Throwable) {
+            return false;
+        }
     }
 }

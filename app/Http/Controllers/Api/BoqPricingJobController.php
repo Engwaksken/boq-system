@@ -5,19 +5,19 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreBoqPricingJobRequest;
 use App\Http\Resources\BoqPricingJobResource;
-use App\Jobs\ProcessBoqPricingItem;
 use App\Models\Boq;
-use App\Models\BoqItem;
 use App\Models\BoqPricingJob;
-use Illuminate\Bus\Batch;
+use App\Services\BoqPricingJobService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class BoqPricingJobController extends Controller
 {
+    public function __construct(private BoqPricingJobService $service) {}
+
     /**
      * Create a new pricing job for a BOQ.
      */
@@ -26,10 +26,9 @@ class BoqPricingJobController extends Controller
         $this->authorize('create', BoqPricingJob::class);
 
         $user = $request->user();
-        $validated = $request->validated();
 
         try {
-            return DB::transaction(function () use ($boq, $user, $validated) {
+            return DB::transaction(function () use ($boq, $user, $request) {
                 // Check for existing active job for this BOQ (locking mechanism)
                 $existingJob = BoqPricingJob::forBoq($boq->id)
                     ->active()
@@ -44,43 +43,20 @@ class BoqPricingJobController extends Controller
                     ], 409);
                 }
 
-                // Count unpriced items for this BOQ
-                $totalItems = $boq->items()->unpriced()->count();
+                $validated = $request->validated();
+                $job = $this->service->start($boq, $user, $validated['location'], $validated['batch_size']);
 
-                if ($totalItems === 0) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'No unpriced items found in this BOQ.',
-                        'error_code' => 'NO_UNPRICED_ITEMS',
-                    ], 422);
-                }
-
-                $batchSize = $validated['batch_size'];
-                $totalBatches = (int) ceil($totalItems / $batchSize);
-
-                // Create the pricing job
-                $job = BoqPricingJob::create([
-                    'boq_id' => $boq->id,
-                    'user_id' => $user->id,
-                    'organisation_id' => $user->organisation_id,
-                    'location' => $validated['location'],
-                    'status' => 'queued',
-                    'current_batch' => 0,
-                    'total_batches' => $totalBatches,
-                    'batch_size' => $batchSize,
-                    'total_items' => $totalItems,
-                    'processed_items' => 0,
-                    'failed_items' => 0,
-                ]);
-
-                // Dispatch first batch jobs
-                $this->dispatchBatchJobs($job, 1);
-
-                return (new BoqPricingJobResource($job->fresh()))
+                return (new BoqPricingJobResource($job))
                     ->additional(['success' => true, 'message' => 'Pricing job created and first batch dispatched.'])
                     ->response()
                     ->setStatusCode(201);
             });
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first(),
+                'error_code' => 'NO_UNPRICED_ITEMS',
+            ], 422);
         } catch (\Throwable $e) {
             Log::error('Failed to create pricing job', [
                 'boq_id' => $boq->id,
@@ -132,11 +108,6 @@ class BoqPricingJobController extends Controller
                     'status' => 'processing',
                     'started_at' => now(),
                 ]);
-
-                // Dispatch first batch if not already dispatched
-                if ($job->current_batch === 0) {
-                    $this->dispatchBatchJobs($job, 1);
-                }
 
                 return (new BoqPricingJobResource($job->fresh()))
                     ->additional(['success' => true, 'message' => 'Pricing job started.'])
@@ -194,7 +165,7 @@ class BoqPricingJobController extends Controller
                 $nextBatchNumber = $job->current_batch + 1;
 
                 // Dispatch jobs for the next batch
-                $dispatched = $this->dispatchBatchJobs($job, $nextBatchNumber);
+                $dispatched = BoqPricingJobService::dispatchBatch($job->fresh(), $nextBatchNumber);
 
                 if ($dispatched === 0) {
                     // No items to process, mark batch as complete
@@ -278,7 +249,7 @@ class BoqPricingJobController extends Controller
 
                 // Continue from current batch
                 $nextBatchNumber = $job->current_batch + 1;
-                $dispatched = $this->dispatchBatchJobs($job, $nextBatchNumber);
+                $dispatched = BoqPricingJobService::dispatchBatch($job->fresh(), $nextBatchNumber);
 
                 if ($dispatched === 0 && $job->current_batch < $job->total_batches) {
                     // No items in this batch, try next
@@ -360,14 +331,7 @@ class BoqPricingJobController extends Controller
 
         try {
             return DB::transaction(function () use ($job) {
-                // Reset failed items to unpriced
-                $resetCount = $job->items()
-                    ->where('pricing_status', 'failed')
-                    ->update([
-                        'pricing_status' => 'pending',
-                        'pricing_error' => null,
-                        'batch_number' => null,
-                    ]);
+                $resetCount = BoqPricingJobService::retryFailed($job);
 
                 if ($resetCount === 0) {
                     return response()->json([
@@ -376,12 +340,6 @@ class BoqPricingJobController extends Controller
                         'error_code' => 'NO_FAILED_ITEMS',
                     ], 422);
                 }
-
-                // Update job counters
-                $job->decrement('failed_items', $resetCount);
-
-                // Dispatch retry jobs for failed items
-                $this->dispatchRetryJobs($job);
 
                 return (new BoqPricingJobResource($job->fresh()))
                     ->additional(['success' => true, 'message' => "Retrying {$resetCount} failed items."])
@@ -489,57 +447,5 @@ class BoqPricingJobController extends Controller
                 'completed_at' => $job->completed_at?->toISOString(),
             ],
         ]);
-    }
-
-    /**
-     * Dispatch pricing jobs for a specific batch.
-     */
-    private function dispatchBatchJobs(BoqPricingJob $job, int $batchNumber): int
-    {
-        $items = BoqItem::query()
-            ->where('boq_id', $job->boq_id)
-            ->unpriced()
-            ->orderBy('id')
-            ->skip(($batchNumber - 1) * $job->batch_size)
-            ->take($job->batch_size)
-            ->get();
-
-        if ($items->isEmpty()) {
-            return 0;
-        }
-
-        $jobs = [];
-        foreach ($items as $item) {
-            $item->markAsPricing($job->id, $batchNumber);
-            $jobs[] = new ProcessBoqPricingItem($job->id, $item->id);
-        }
-
-        $batch = Bus::batch($jobs)->dispatch();
-        $job->update(['batch_id' => $batch->id]);
-
-        return $items->count();
-    }
-
-    /**
-     * Dispatch retry jobs for failed items.
-     */
-    private function dispatchRetryJobs(BoqPricingJob $job): void
-    {
-        $items = $job->items()
-            ->where('pricing_status', 'pending')
-            ->get();
-
-        if ($items->isEmpty()) {
-            return;
-        }
-
-        $jobs = [];
-        foreach ($items as $item) {
-            $item->markAsPricing($job->id, $job->current_batch + 1);
-            $jobs[] = new ProcessBoqPricingItem($job->id, $item->id);
-        }
-
-        $batch = Bus::batch($jobs)->dispatch();
-        $job->update(['batch_id' => $batch->id]);
     }
 }

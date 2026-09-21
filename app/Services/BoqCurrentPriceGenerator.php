@@ -12,6 +12,7 @@ class BoqCurrentPriceGenerator
     public function __construct(
         private readonly BoqExtractionService $extractor,
         private readonly PriceMatchingService $matcher,
+        private readonly GeminiPricingService $gemini,
     ) {}
 
     /**
@@ -62,7 +63,9 @@ class BoqCurrentPriceGenerator
                 $match = $this->matcher->findMatches($item, 1, $location)->first();
 
                 if (! $match) {
-                    if (str_starts_with((string) $item->pricing_source, 'hardware_price:')) {
+                    if ($this->gemini->apply($item, $location)) {
+                        $matched++;
+                    } elseif (str_starts_with((string) $item->pricing_source, 'hardware_price:')) {
                         $item->fill([
                             'ai_suggested_rate' => null,
                             'hardware_price_id' => null,

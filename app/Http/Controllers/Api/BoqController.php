@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProcessBoqRequest;
 use App\Http\Requests\StoreBoqRequest;
+use App\Http\Resources\BoqPricingJobResource;
 use App\Http\Resources\BoqResource;
-use App\Jobs\ProcessBoqPricingItem;
 use App\Models\Boq;
 use App\Models\BoqItem;
 use App\Models\BoqItemPriceSuggestion;
-use App\Models\BoqPricingBatch;
+use App\Models\BoqPricingJob;
 use App\Models\Project;
+use App\Services\BoqPricingJobService;
 use App\Services\BoqSpreadsheetImporter;
 use App\Services\GeminiPricingService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -142,34 +143,46 @@ class BoqController extends Controller
         $user = $request->user();
         abort_unless($this->canAccess($boq, $user->id, $user->organisation_id), 403);
         abort_unless($user->hasPermission('boq.edit'), 403);
-        $location = $request->validate(['location' => ['required', 'string', 'max:255']])['location'];
-        $itemIds = $boq->items()->pluck('id');
-        $batch = BoqPricingBatch::create(['boq_id' => $boq->id, 'organisation_id' => $user->organisation_id, 'user_id' => $user->id, 'location' => $location, 'operation' => 'location_pricing', 'provider' => config('services.ai_provider'), 'current_stage' => 'running', 'status' => 'running', 'total_items' => $itemIds->count(), 'started_at' => now()]);
-        foreach ($itemIds as $itemId) {
-            ProcessBoqPricingItem::dispatch($batch->id, $itemId);
-        }
-        if ($itemIds->isEmpty()) {
-            $batch->update(['status' => 'completed']);
+        $validated = $request->validate([
+            'location' => ['required', 'string', 'max:255'],
+            'batch_size' => ['sometimes', 'integer', 'in:10,20,25'],
+        ]);
+
+        // A job already running keeps processing; hand back the same job so
+        // the caller can continue polling it instead of starting a duplicate.
+        $existing = BoqPricingJob::forBoq($boq->id)->active()->first();
+        if ($existing) {
+            return (new BoqPricingJobResource($existing))
+                ->additional(['success' => true, 'message' => 'An active pricing job already exists for this BOQ.'])
+                ->response()
+                ->setStatusCode(202);
         }
 
-        return response()->json(['success' => true, 'data' => $batch], 202);
+        $job = app(BoqPricingJobService::class)->start(
+            $boq,
+            $user,
+            $validated['location'],
+            $validated['batch_size'] ?? 20,
+        );
+
+        return (new BoqPricingJobResource($job))
+            ->additional(['success' => true, 'message' => 'Pricing job created and batch dispatch started.'])
+            ->response()
+            ->setStatusCode(202);
     }
 
-    public function pricingBatch(Request $request, BoqPricingBatch $batch): JsonResponse
+    public function pricingBatch(Request $request, BoqPricingJob $batch): JsonResponse
     {
-        abort_unless($batch->user_id === $request->user()->id, 403);
+        $user = $request->user();
+        abort_unless(
+            $batch->user_id === $user->id
+                || ($batch->organisation_id !== null && $batch->organisation_id === $user->organisation_id),
+            403
+        );
 
-        $pricedItems = BoqItemPriceSuggestion::query()
-            ->whereIn('boq_item_id', $batch->boq->items()->pluck('id'))
-            ->where('location', $batch->location)
-            ->when($batch->started_at, fn ($query) => $query->where('created_at', '>=', $batch->started_at))
-            ->distinct('boq_item_id')
-            ->count('boq_item_id');
-        if ($pricedItems > $batch->processed_items) {
-            $batch->update(['processed_items' => $pricedItems]);
-        }
-
-        return response()->json(['success' => true, 'data' => $batch->fresh()]);
+        return (new BoqPricingJobResource($batch))
+            ->additional(['success' => true])
+            ->response();
     }
 
     public function pdf(Request $request, Boq $boq)

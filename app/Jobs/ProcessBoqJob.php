@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Boq;
 use App\Models\BoqPricingBatch;
 use App\Services\BoqExtractionService;
+use App\Services\GeminiPricingService;
 use App\Services\PriceMatchingService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -22,7 +23,7 @@ class ProcessBoqJob implements ShouldQueue
 
     public function __construct(public int $processingBatchId) {}
 
-    public function handle(BoqExtractionService $extractor, PriceMatchingService $matcher): void
+    public function handle(BoqExtractionService $extractor, PriceMatchingService $matcher, GeminiPricingService $gemini): void
     {
         $batch = BoqPricingBatch::findOrFail($this->processingBatchId);
 
@@ -69,7 +70,9 @@ class ProcessBoqJob implements ShouldQueue
                     } else {
                         $match = $matcher->findMatches($item, 1, $location)->first();
                         if (! $match) {
-                            if ($item->match_type === 'automatic' || str_starts_with((string) $item->pricing_source, 'hardware_price:')) {
+                            if ($gemini->apply($item, $location)) {
+                                $matched++;
+                            } elseif ($item->match_type === 'automatic' || str_starts_with((string) $item->pricing_source, 'hardware_price:')) {
                                 DB::transaction(function () use ($item): void {
                                     $locked = $item->boq->items()->lockForUpdate()->findOrFail($item->id);
                                     $locked->fill([
