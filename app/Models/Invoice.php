@@ -83,4 +83,12 @@ class Invoice extends Model
     {
         return $this->belongsTo(Subscription::class);
     }
+
+    /**
+     * The top-up this invoice relates to.
+     */
+    public function topup(): BelongsTo
+    {
+        return $this->belongsTo(Topup::class, 'product_id');
+    }
 }

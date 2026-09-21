@@ -294,6 +294,7 @@ class PaymentController extends Controller
                 'status' => $invoice->status,
                 'payment_date' => $invoice->payment_date?->toIso8601String(),
                 'plan' => $transaction->plan?->name,
+                'topup' => $transaction->topup?->name,
                 'subscription_id' => $transaction->subscription_id,
             ],
         ]);

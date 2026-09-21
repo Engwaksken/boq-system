@@ -5,12 +5,15 @@ namespace App\Services\Payments;
 use App\Models\Invoice;
 use App\Models\Transaction;
 use App\Services\SubscriptionService;
+use App\Services\TopupService;
 use Illuminate\Support\Facades\DB;
 
 class PaymentSettlementService
 {
-    public function __construct(private readonly SubscriptionService $subscriptions)
-    {
+    public function __construct(
+        private readonly SubscriptionService $subscriptions,
+        private readonly TopupService $topups,
+    ) {
     }
 
     /**
@@ -61,6 +64,11 @@ class PaymentSettlementService
                 )) {
                     $this->subscriptions->activate($locked->subscription);
                 }
+
+                if ($locked->product_type === 'topup') {
+                    $this->topups->activateForTransaction($locked);
+                }
+
                 $this->ensurePaidInvoice($locked->fresh());
             }
 

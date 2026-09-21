@@ -16,6 +16,8 @@ class DatabaseSeeder extends Seeder
             LanguagesSeeder::class,
             PlansAndFeaturesSeeder::class,
             ProductVersionsSeeder::class,
+            TopupsSeeder::class,
+            RatesAndSuppliersSeeder::class,
             PaymentGatewaysSeeder::class,
             SiteSettingsSeeder::class,
             AdminUserSeeder::class,

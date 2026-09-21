@@ -117,6 +117,22 @@ class Transaction extends Model
     }
 
     /**
+     * The top-up purchased in this transaction.
+     */
+    public function topup(): BelongsTo
+    {
+        return $this->belongsTo(Topup::class, 'product_id');
+    }
+
+    /**
+     * The purchase record linked to this transaction.
+     */
+    public function topupPurchase(): HasOne
+    {
+        return $this->hasOne(TopupPurchase::class);
+    }
+
+    /**
      * Check whether this transaction was successful.
      */
     public function isSuccessful(): bool

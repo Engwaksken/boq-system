@@ -12,7 +12,11 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PlanController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ProxySubscriptionController;
+use App\Http\Controllers\Api\QuotationController;
+use App\Http\Controllers\Api\RateController;
 use App\Http\Controllers\Api\SubscriptionController;
+use App\Http\Controllers\Api\SupplierController;
+use App\Http\Controllers\Api\TopupController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -161,12 +165,60 @@ Route::prefix('v1')->group(function () {
         // Plans
         Route::get('plans/{plan}', [PlanController::class, 'show']);
 
+        // Rate Library
+        Route::middleware('permission:rates.view')->group(function () {
+            Route::get('rates', [RateController::class, 'index'])->name('api.v1.rates.index');
+            Route::get('rates/{rate}', [RateController::class, 'show'])->name('api.v1.rates.show');
+            Route::get('boq-items/{boqItem}/rate-suggestions', [RateController::class, 'suggestions'])
+                ->name('api.v1.boq-items.rate-suggestions');
+        });
+
+        Route::middleware('permission:rates.manage')->group(function () {
+            Route::post('rates', [RateController::class, 'store'])->middleware('throttle:10,1')->name('api.v1.rates.store');
+            Route::put('rates/{rate}', [RateController::class, 'update'])->middleware('throttle:10,1')->name('api.v1.rates.update');
+            Route::post('rates/{rate}/approve', [RateController::class, 'approve'])->name('api.v1.rates.approve');
+            Route::post('rates/{rate}/reject', [RateController::class, 'reject'])->name('api.v1.rates.reject');
+        });
+
+        // Suppliers
+        Route::middleware('permission:suppliers.view')->group(function () {
+            Route::get('suppliers', [SupplierController::class, 'index'])->name('api.v1.suppliers.index');
+            Route::get('suppliers/{supplier}', [SupplierController::class, 'show'])->name('api.v1.suppliers.show');
+        });
+
+        Route::middleware('permission:suppliers.manage')->group(function () {
+            Route::post('suppliers', [SupplierController::class, 'store'])->middleware('throttle:10,1')->name('api.v1.suppliers.store');
+            Route::put('suppliers/{supplier}', [SupplierController::class, 'update'])->middleware('throttle:10,1')->name('api.v1.suppliers.update');
+            Route::delete('suppliers/{supplier}', [SupplierController::class, 'destroy'])->name('api.v1.suppliers.destroy');
+        });
+
+        // Quotations
+        Route::middleware('permission:quotations.view')->group(function () {
+            Route::get('quotations', [QuotationController::class, 'index'])->name('api.v1.quotations.index');
+            Route::get('quotations/{quotation}', [QuotationController::class, 'show'])->name('api.v1.quotations.show');
+        });
+
+        Route::middleware('permission:quotations.manage')->group(function () {
+            Route::post('quotations', [QuotationController::class, 'store'])->middleware('throttle:10,1')->name('api.v1.quotations.store');
+            Route::put('quotations/{quotation}', [QuotationController::class, 'store'])->middleware('throttle:10,1')->name('api.v1.quotations.update');
+            Route::post('quotations/{quotation}/review', [QuotationController::class, 'review'])->name('api.v1.quotations.review');
+            Route::post('quotations/{quotation}/items/{item}/approve', [QuotationController::class, 'approveLine'])
+                ->name('api.v1.quotations.items.approve');
+            Route::post('quotations/{quotation}/accept', [QuotationController::class, 'accept'])->name('api.v1.quotations.accept');
+            Route::post('quotations/{quotation}/reject', [QuotationController::class, 'reject'])->name('api.v1.quotations.reject');
+        });
+
         // Payments
         Route::get('payment-gateways', [PaymentController::class, 'gateways']);
         Route::post('subscriptions/{subscription}/payments', [PaymentController::class, 'initiate'])->middleware('throttle:10,1');
         Route::post('transactions/{transaction}/verify', [PaymentController::class, 'verify'])->middleware('throttle:20,1');
         Route::get('transactions/{transaction}', [PaymentController::class, 'show']);
         Route::get('transactions/{transaction}/receipt', [PaymentController::class, 'receipt']);
+
+        // Top-ups
+        Route::get('topups', [TopupController::class, 'index'])->name('api.v1.topups.index');
+        Route::get('topups/{topup}', [TopupController::class, 'show'])->name('api.v1.topups.show');
+        Route::post('topups/{topup}/payments', [TopupController::class, 'initiate'])->middleware('throttle:10,1')->name('api.v1.topups.payments.initiate');
 
         // Subscriptions
         Route::get('subscriptions', [SubscriptionController::class, 'index']);

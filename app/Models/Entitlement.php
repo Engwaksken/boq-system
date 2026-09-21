@@ -21,6 +21,7 @@ class Entitlement extends Model
         'subscription_id',
         'feature_id',
         'plan_id',
+        'topup_purchase_id',
         'source',
         'status',
         'granted_at',
@@ -86,6 +87,14 @@ class Entitlement extends Model
     public function plan(): BelongsTo
     {
         return $this->belongsTo(Plan::class);
+    }
+
+    /**
+     * The top-up purchase that granted this entitlement.
+     */
+    public function topupPurchase(): BelongsTo
+    {
+        return $this->belongsTo(TopupPurchase::class);
     }
 
     /**

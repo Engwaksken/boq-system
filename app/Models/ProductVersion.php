@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProductVersion extends Model
 {
@@ -41,5 +42,13 @@ class ProductVersion extends Model
             'eligible_plans' => 'array',
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Subscriptions currently pinned to this product version.
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class, 'product_version', 'version_number');
     }
 }

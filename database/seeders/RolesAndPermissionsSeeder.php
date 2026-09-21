@@ -46,6 +46,10 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'View Suppliers', 'slug' => 'suppliers.view', 'module' => 'suppliers'],
             ['name' => 'Manage Suppliers', 'slug' => 'suppliers.manage', 'module' => 'suppliers'],
 
+            // Quotations
+            ['name' => 'View Quotations', 'slug' => 'quotations.view', 'module' => 'quotations'],
+            ['name' => 'Manage Quotations', 'slug' => 'quotations.manage', 'module' => 'quotations'],
+
             // Reports
             ['name' => 'View Reports', 'slug' => 'reports.view', 'module' => 'reports'],
             ['name' => 'Export Reports', 'slug' => 'reports.export', 'module' => 'reports'],
@@ -112,6 +116,7 @@ class RolesAndPermissionsSeeder extends Seeder
                     'ai.boq.extraction', 'ai.pricing.analysis', 'ai.translation',
                     'rates.view', 'rates.manage', 'hardware-prices.view', 'hardware-prices.manage',
                     'suppliers.view', 'suppliers.manage',
+                    'quotations.view', 'quotations.manage',
                     'reports.view', 'reports.export',
                     'approvals.view', 'approvals.approve',
                     'subscriptions.view', 'subscriptions.manage',
@@ -150,6 +155,7 @@ class RolesAndPermissionsSeeder extends Seeder
                     'boq.view', 'boq.edit', 'boq.approve',
                     'ai.boq.extraction', 'ai.pricing.analysis', 'ai.translation',
                     'rates.view', 'rates.manage', 'hardware-prices.view', 'hardware-prices.manage',
+                    'suppliers.view', 'quotations.view', 'quotations.manage',
                     'reports.view', 'reports.export',
                     'approvals.view', 'approvals.approve',
                 ],
@@ -190,6 +196,7 @@ class RolesAndPermissionsSeeder extends Seeder
                     'projects.view',
                     'boq.view',
                     'suppliers.view', 'suppliers.manage',
+                    'quotations.view', 'quotations.manage',
                     'rates.view', 'hardware-prices.view',
                     'reports.view',
                 ],

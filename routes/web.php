@@ -10,7 +10,12 @@ use App\Livewire\Admin\PlansManager;
 use App\Livewire\Admin\RolesManager;
 use App\Livewire\Admin\SiteSettings;
 use App\Livewire\Admin\SubscriptionsManager;
+use App\Livewire\Admin\SuppliersManager;
+use App\Livewire\Admin\TopupsManager;
 use App\Livewire\Admin\UsersManager;
+use App\Livewire\Admin\VersionsManager;
+use App\Livewire\Admin\QuotationsManager;
+use App\Livewire\Admin\RatesManager;
 use App\Livewire\Boqs\Create as BoqsCreate;
 use App\Livewire\Boqs\Index as BoqsIndex;
 use App\Livewire\Boqs\Show as BoqsShow;
@@ -27,6 +32,7 @@ use App\Livewire\Projects\Index as ProjectsIndex;
 use App\Livewire\Projects\Show as ProjectsShow;
 use App\Livewire\Subscriptions\Index as SubscriptionsIndex;
 use App\Livewire\System\McpActivity;
+use App\Livewire\Topups\Index as TopupsIndex;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -168,6 +174,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/subscriptions', SubscriptionsIndex::class)
         ->name('subscriptions.index');
 
+    Route::get('/topups', TopupsIndex::class)
+        ->name('topups.index');
+
 
     /*
     |--------------------------------------------------------------------------
@@ -225,6 +234,56 @@ Route::middleware('auth')->group(function () {
 
             Route::get('/plans', PlansManager::class)
                 ->name('plans');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Top-ups & Purchases
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get('/topups', TopupsManager::class)
+                ->name('topups');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Product Versions
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get('/versions', VersionsManager::class)
+                ->name('versions');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Rate Library
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get('/rates', RatesManager::class)
+                ->name('rates');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Suppliers
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get('/suppliers', SuppliersManager::class)
+                ->name('suppliers');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Supplier Quotations
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get('/quotations', QuotationsManager::class)
+                ->name('quotations');
 
 
             /*
