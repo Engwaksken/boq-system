@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Organisation;
 use App\Models\Role;
+use App\Models\SiteSetting;
 use App\Models\User;
+use Database\Seeders\LanguagesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -66,6 +68,51 @@ class AuthControllerTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['name', 'email', 'password']);
+    }
+
+    public function test_register_accepts_country_and_profile_languages(): void
+    {
+        (new LanguagesSeeder)->run();
+        Role::factory()->create(['slug' => 'viewer']);
+
+        $response = $this->postJson('/api/v1/auth/register', [
+            'name' => 'Luganda User',
+            'email' => 'luganda@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'country' => 'Uganda',
+            'original_language' => 'lg',
+            'report_language' => 'en',
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.user.country', 'Uganda')
+            ->assertJsonPath('data.user.original_language', 'lg')
+            ->assertJsonPath('data.user.report_language', 'en');
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'luganda@example.com',
+            'country' => 'Uganda',
+            'original_language' => 'lg',
+            'report_language' => 'en',
+        ]);
+    }
+
+    public function test_register_rejects_unknown_language_codes(): void
+    {
+        (new LanguagesSeeder)->run();
+        Role::factory()->create(['slug' => 'viewer']);
+
+        $response = $this->postJson('/api/v1/auth/register', [
+            'name' => 'Bad Lang',
+            'email' => 'badlang@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'original_language' => 'xx',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors('original_language');
     }
 
     public function test_login_returns_token(): void
@@ -179,5 +226,55 @@ class AuthControllerTest extends TestCase
             ->assertJson(['success' => true]);
 
         $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
+    public function test_forgot_password_returns_confirmation_without_leaking_accounts(): void
+    {
+        $response = $this->postJson('/api/v1/auth/forgot-password', [
+            'email' => 'unknown@example.com',
+        ]);
+
+        $response->assertOk()
+            ->assertJson(['success' => true]);
+    }
+
+    public function test_forgot_password_is_disabled_when_setting_off(): void
+    {
+        SiteSetting::set('allow_forgot_password', false);
+
+        $response = $this->postJson('/api/v1/auth/forgot-password', [
+            'email' => 'someone@example.com',
+        ]);
+
+        $response->assertStatus(403)
+            ->assertJson(['error_code' => 'PASSWORD_RESET_DISABLED']);
+    }
+
+    public function test_mobile_config_returns_managed_defaults(): void
+    {
+        SiteSetting::set('system_name', 'Test Boq');
+        SiteSetting::set('splash_enabled', true);
+        SiteSetting::set('allow_registration', true);
+        SiteSetting::set('privacy_policy', 'Privacy text');
+
+        $response = $this->getJson('/api/v1/mobile-config');
+
+        $response->assertOk()
+            ->assertJsonPath('data.system_name', 'Test Boq')
+            ->assertJsonPath('data.splash_enabled', true)
+            ->assertJsonPath('data.allow_registration', true)
+            ->assertJsonPath('data.privacy_policy', 'Privacy text');
+    }
+
+    public function test_mobile_config_includes_countries_and_languages(): void
+    {
+        (new LanguagesSeeder)->run();
+
+        $response = $this->getJson('/api/v1/mobile-config');
+
+        $response->assertOk()
+            ->assertJsonPath('data.countries.0', 'Uganda')
+            ->assertJsonStructure(['data' => ['countries', 'languages']])
+            ->assertJsonPath('data.languages.0.code', 'en');
     }
 }

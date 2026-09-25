@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\HardwareCategoryController;
 use App\Http\Controllers\Api\HardwarePriceController;
 use App\Http\Controllers\Api\Mcp\McpToolController;
+use App\Http\Controllers\Api\MobileConfigController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PlanController;
 use App\Http\Controllers\Api\ProjectController;
@@ -35,6 +36,10 @@ Route::prefix('v1')->group(function () {
     // Public routes
     Route::post('auth/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
     Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+    Route::post('auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:5,1');
+
+    // Public configuration consumed by the Flutter app (splash, login, legal).
+    Route::get('mobile-config', MobileConfigController::class)->middleware('throttle:60,1');
 
     // Public plans listing
     Route::get('plans', [PlanController::class, 'index'])->middleware('throttle:60,1');
@@ -119,10 +124,11 @@ Route::prefix('v1')->group(function () {
         });
 
         // Hardware Prices
+        // Category filter is available to any authenticated user (mobile client filter dropdown).
+        Route::get('hardware-prices/categories', [HardwarePriceController::class, 'categories']);
         Route::middleware('permission:hardware-prices.view')->group(function () {
             Route::get('hardware-prices', [HardwarePriceController::class, 'index']);
             Route::get('hardware-prices/statistics', [HardwarePriceController::class, 'statistics']);
-            Route::get('hardware-prices/categories', [HardwarePriceController::class, 'categories']);
             Route::get('hardware-prices/recommendations', [HardwarePriceController::class, 'recommendations']);
             Route::post('hardware-prices/compare', [HardwarePriceController::class, 'compare']);
             Route::get('hardware-prices/{hardwarePrice}', [HardwarePriceController::class, 'show']);

@@ -18,6 +18,9 @@ use Throwable;
 
 class PaymentController extends Controller
 {
+    /**
+     * List active payment gateways available for the current user.
+     */
     public function gateways(): JsonResponse
     {
         $gateways = PaymentGateway::query()
@@ -40,6 +43,9 @@ class PaymentController extends Controller
         return response()->json(['success' => true, 'data' => $gateways]);
     }
 
+    /**
+     * Initiate a payment for a subscription.
+     */
     public function initiate(Request $request, Subscription $subscription, PaymentManager $payments): JsonResponse
     {
         $user = $request->user();
@@ -52,7 +58,28 @@ class PaymentController extends Controller
             'gateway_code' => ['required', 'string', 'exists:payment_gateways,code'],
             'payment_method' => ['nullable', 'string', 'max:100'],
             'phone_number' => ['nullable', 'string', 'max:30'],
-            'network' => ['nullable', 'string', 'max:30'],
+            'network' => [
+                'nullable',
+                'string',
+                'max:30',
+                function ($attribute, $value, $fail) {
+                    $normalized = strtolower(trim((string) $value));
+                    if (in_array($normalized, [
+                        'mobile_money',
+                        'card',
+                        'visa',
+                        'mastercard',
+                        'bank_transfer',
+                        'mtn_momo',
+                        'airtel_money',
+                        'stripe',
+                        'flutterwave',
+                        'pesapal',
+                    ], true)) {
+                        $fail('The network field must be a mobile network (e.g. MTN, Airtel), not a payment method.');
+                    }
+                },
+            ],
         ]);
 
         $idempotencyKey = trim((string) ($request->header('Idempotency-Key') ?: $request->input('idempotency_key', '')));
@@ -194,6 +221,9 @@ class PaymentController extends Controller
         }
     }
 
+    /**
+     * Verify a payment and settle the transaction.
+     */
     public function verify(
         Request $request,
         Transaction $transaction,
@@ -241,6 +271,9 @@ class PaymentController extends Controller
         ]);
     }
 
+    /**
+     * Show a single transaction with related data.
+     */
     public function show(Request $request, Transaction $transaction): JsonResponse
     {
         $user = $request->user();
@@ -255,6 +288,9 @@ class PaymentController extends Controller
         ]);
     }
 
+    /**
+     * Get the receipt/invoice for a successful transaction.
+     */
     public function receipt(Request $request, Transaction $transaction): JsonResponse
     {
         $user = $request->user();
@@ -300,6 +336,9 @@ class PaymentController extends Controller
         ]);
     }
 
+    /**
+     * Handle incoming payment gateway webhooks.
+     */
     public function webhook(
         Request $request,
         string $gatewayCode,

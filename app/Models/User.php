@@ -30,6 +30,9 @@ class User extends Authenticatable
         'locale',
         'timezone',
         'phone',
+        'country',
+        'original_language',
+        'report_language',
         'is_active',
         'last_login_at',
     ];

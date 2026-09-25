@@ -32,6 +32,15 @@ class SiteSettings extends Component
             'maintenance_mode' => SiteSetting::get('maintenance_mode', false),
             'logo' => SiteSetting::get('logo', ''),
             'favicon' => SiteSetting::get('favicon', ''),
+            'splash_enabled' => SiteSetting::get('splash_enabled', true),
+            'splash_duration' => SiteSetting::get('splash_duration', 2000),
+            'splash_message' => SiteSetting::get('splash_message', ''),
+            'login_title' => SiteSetting::get('login_title', ''),
+            'login_subtitle' => SiteSetting::get('login_subtitle', ''),
+            'allow_registration' => SiteSetting::get('allow_registration', true),
+            'allow_forgot_password' => SiteSetting::get('allow_forgot_password', true),
+            'privacy_policy' => SiteSetting::get('privacy_policy', ''),
+            'terms_of_use' => SiteSetting::get('terms_of_use', ''),
         ];
 
         $this->logoUrl = $this->settings['logo'] ? asset('storage/'.$this->settings['logo']) : '';
@@ -40,6 +49,11 @@ class SiteSettings extends Component
 
     public function save(): void
     {
+        // Livewire does not send unchecked checkboxes, so normalise them first.
+        foreach (['maintenance_mode', 'splash_enabled', 'allow_registration', 'allow_forgot_password'] as $boolKey) {
+            $this->settings[$boolKey] = (bool) ($this->settings[$boolKey] ?? false);
+        }
+
         $this->validate([
             'settings.system_name' => 'required|string|max:255',
             'settings.currency' => 'required|string|max:10',
@@ -48,6 +62,15 @@ class SiteSettings extends Component
             'settings.maintenance_mode' => 'boolean',
             'settings.logo' => 'nullable|string|max:255',
             'settings.favicon' => 'nullable|string|max:255',
+            'settings.splash_enabled' => 'boolean',
+            'settings.splash_duration' => 'required|integer|min:500|max:10000',
+            'settings.splash_message' => 'nullable|string|max:255',
+            'settings.login_title' => 'nullable|string|max:255',
+            'settings.login_subtitle' => 'nullable|string|max:500',
+            'settings.allow_registration' => 'boolean',
+            'settings.allow_forgot_password' => 'boolean',
+            'settings.privacy_policy' => 'nullable|string',
+            'settings.terms_of_use' => 'nullable|string',
             'logoFile' => 'nullable|image|mimes:png,jpg,jpeg,webp,svg|max:2048',
             'faviconFile' => 'nullable|image|mimes:png,jpg,jpeg,webp,svg,ico|max:1024',
         ]);
@@ -74,6 +97,8 @@ class SiteSettings extends Component
             $type = is_bool($value) ? 'boolean' : (is_int($value) ? 'integer' : 'string');
             SiteSetting::set($key, $value, 'general', $type);
         }
+
+        cache()->forget('mobile_config');
 
         $this->reset('logoFile', 'faviconFile');
 

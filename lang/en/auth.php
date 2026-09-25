@@ -16,5 +16,7 @@ return [
     'email_required' => 'The email field is required.',
     'password_required' => 'The password field is required.',
     'token_invalid' => 'The authentication token is invalid or has expired.',
+    'password_reset_sent' => 'If an account exists for that email, a password reset link has been sent.',
+    'password_reset_disabled' => 'Password reset is currently disabled. Please contact support.',
 
 ];

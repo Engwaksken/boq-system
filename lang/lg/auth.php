@@ -16,5 +16,7 @@ return [
     'email_required' => 'Email yeetaagisa.',
     'password_required' => 'Ekigambo ky\'okukkiriza kyeetaagisa.',
     'token_invalid' => 'Akabonero k\'okukkiriza tekatuufu oba kaggwaawo.',
+    'password_reset_sent' => 'Bwe waba nga waliwo akaawunti eyo, tumyeerezza olukusa lw\'okuddizaawo ekigambo ky\'okukkiriza.',
+    'password_reset_disabled' => 'Okuddizaawo ekigambo ky\'okukkiriza kuggiddwawo kaakano. Kiraama n\'omukwanaganya.',
 
 ];

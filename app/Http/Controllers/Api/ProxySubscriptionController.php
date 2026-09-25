@@ -178,7 +178,28 @@ class ProxySubscriptionController extends Controller
             'gateway_code' => ['required', 'string', 'exists:payment_gateways,code'],
             'payment_method' => ['nullable', 'string', 'max:100'],
             'phone_number' => ['nullable', 'string', 'max:30'],
-            'network' => ['nullable', 'string', 'max:30'],
+            'network' => [
+                'nullable',
+                'string',
+                'max:30',
+                function ($attribute, $value, $fail) {
+                    $normalized = strtolower(trim((string) $value));
+                    if (in_array($normalized, [
+                        'mobile_money',
+                        'card',
+                        'visa',
+                        'mastercard',
+                        'bank_transfer',
+                        'mtn_momo',
+                        'airtel_money',
+                        'stripe',
+                        'flutterwave',
+                        'pesapal',
+                    ], true)) {
+                        $fail('The network field must be a mobile network (e.g. MTN, Airtel), not a payment method.');
+                    }
+                },
+            ],
         ]);
 
         $idempotencyKey = trim((string) ($request->header('Idempotency-Key') ?: $request->input('idempotency_key', '')));
@@ -481,6 +502,9 @@ class ProxySubscriptionController extends Controller
 
     /**
      * Send notification to beneficiary about subscription activation.
+     *
+     * Currently logs the notification event. Will be extended to send
+     * email and in-app notifications when the notification system is ready.
      */
     private function notifyBeneficiary(Subscription $subscription): void
     {
@@ -514,7 +538,10 @@ class ProxySubscriptionController extends Controller
     }
 
     /**
-     * Audit log helper.
+     * Record an audit log entry for proxy subscription actions.
+     *
+     * Automatically sanitises PII (phone numbers, network, passwords, tokens)
+     * from the previous and new values before persisting.
      */
     private function audit(Request $request, string $action, object $entity, ?array $previous, ?array $new, ?string $reference = null): void
     {
@@ -537,7 +564,10 @@ class ProxySubscriptionController extends Controller
     }
 
     /**
-     * Sanitize PII fields from audit log data.
+     * Sanitise personally identifiable information from audit log data.
+     *
+     * Masks phone numbers, mobile networks, passwords, tokens, secrets,
+     * API keys, and access/refresh tokens.
      */
     private function sanitizePii(?array $data): ?array
     {

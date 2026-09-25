@@ -254,11 +254,11 @@ class RolesAndPermissionsSeeder extends Seeder
             [
                 'name' => 'Viewer',
                 'slug' => 'viewer',
-                'description' => 'Read-only access.',
+                'description' => 'Read-only access. Registered users can also create and edit their own projects.',
                 'is_system' => true,
                 'permissions' => [
                     'dashboard.view',
-                    'projects.view',
+                    'projects.view', 'projects.create',
                     'boq.view',
                     'reports.view',
                 ],

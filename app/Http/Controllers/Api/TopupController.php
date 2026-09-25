@@ -98,7 +98,28 @@ class TopupController extends Controller
             'gateway_code' => ['required', 'string', 'exists:payment_gateways,code'],
             'payment_method' => ['nullable', 'string', 'max:100'],
             'phone_number' => ['nullable', 'string', 'max:30'],
-            'network' => ['nullable', 'string', 'max:30'],
+            'network' => [
+                'nullable',
+                'string',
+                'max:30',
+                function ($attribute, $value, $fail) {
+                    $normalized = strtolower(trim((string) $value));
+                    if (in_array($normalized, [
+                        'mobile_money',
+                        'card',
+                        'visa',
+                        'mastercard',
+                        'bank_transfer',
+                        'mtn_momo',
+                        'airtel_money',
+                        'stripe',
+                        'flutterwave',
+                        'pesapal',
+                    ], true)) {
+                        $fail('The network field must be a mobile network (e.g. MTN, Airtel), not a payment method.');
+                    }
+                },
+            ],
             'subscription_id' => ['nullable', 'integer', 'exists:subscriptions,id'],
         ]);
 
@@ -255,6 +276,12 @@ class TopupController extends Controller
 
     /**
      * Present a top-up for the API response.
+     *
+     * Includes ownership state, purchase history (when requested), and
+     * applicability based on the user's current subscription plan.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Subscription|null  $subscription
      */
     protected function present(Topup $topup, $user, ?Subscription $subscription, bool $withHistory = false): array
     {
@@ -300,6 +327,9 @@ class TopupController extends Controller
         return $data;
     }
 
+    /**
+     * Record an audit log entry for top-up actions.
+     */
     private function audit(Request $request, string $action, object $entity, ?array $previous, ?array $new, ?string $reference = null): void
     {
         AuditLog::create([

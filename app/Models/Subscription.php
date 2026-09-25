@@ -7,10 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Subscription extends Model
 {
     use HasFactory, SoftDeletes;
+
+    /**
+     * Accessors included in every JSON serialization of a subscription.
+     *
+     * @var list<string>
+     */
+    protected $appends = ['remaining_days'];
 
     /**
      * The attributes that are mass assignable.
@@ -187,6 +195,20 @@ class Subscription extends Model
     {
         $beneficiaryId = $this->beneficiary_id ?? $this->user_id;
         return $this->payer_id !== null && $this->payer_id !== $beneficiaryId;
+    }
+
+    /**
+     * Whole days remaining until the subscription ends, rounded up. Null for
+     * lifetime plans and 0 once the end date has passed. Included in API
+     * responses so clients can render trial/subscription countdowns.
+     */
+    protected function remainingDays(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->end_date === null
+                ? null
+                : (int) max(0, ceil($this->end_date->diffInSeconds(now()) / 86400)),
+        )->shouldCache();
     }
 
     /**

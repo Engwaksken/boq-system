@@ -109,6 +109,81 @@
                     </div>
                 </div>
 
+                <div class="pt-4 border-t border-slate-200">
+                    <h2 class="text-lg font-bold text-slate-900 mb-1">Mobile App</h2>
+                    <p class="text-sm text-slate-600 mb-5">Controls the splash screen and login screen shown in the Flutter app.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex items-center">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" wire:model="settings.splash_enabled" class="rounded border-slate-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 h-4 w-4">
+                                <span class="ml-2 text-sm font-medium text-slate-700">Show splash screen on launch</span>
+                            </label>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Splash Duration (milliseconds)</label>
+                            <input type="number" wire:model="settings.splash_duration" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="2000">
+                            @error('settings.splash_duration') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Splash Message</label>
+                            <input type="text" wire:model="settings.splash_message" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="e.g. Civil Works Solutions">
+                            @error('settings.splash_message') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Login Title</label>
+                            <input type="text" wire:model="settings.login_title" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="Optional - overrides the app title">
+                            @error('settings.login_title') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Login Subtitle</label>
+                            <input type="text" wire:model="settings.login_subtitle" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="Optional - shown under the login title">
+                            @error('settings.login_subtitle') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-200">
+                    <h2 class="text-lg font-bold text-slate-900 mb-1">Registration &amp; Access</h2>
+                    <p class="text-sm text-slate-600 mb-5">Which options appear on the mobile login screen.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex items-center">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" wire:model="settings.allow_registration" class="rounded border-slate-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 h-4 w-4">
+                                <span class="ml-2 text-sm font-medium text-slate-700">Allow account sign up</span>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" wire:model="settings.allow_forgot_password" class="rounded border-slate-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 h-4 w-4">
+                                <span class="ml-2 text-sm font-medium text-slate-700">Allow forgot password</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-200">
+                    <h2 class="text-lg font-bold text-slate-900 mb-1">Legal</h2>
+                    <p class="text-sm text-slate-600 mb-5">Shown as links on the login screen. Leave blank to hide a link. If the text is a URL, the app opens it in the browser; otherwise plain text is shown in the app.</p>
+                    <div class="grid grid-cols-1 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Privacy Policy</label>
+                            <textarea wire:model="settings.privacy_policy" rows="5" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="Paste the privacy policy text or a full URL"></textarea>
+                            @error('settings.privacy_policy') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Terms of Use</label>
+                            <textarea wire:model="settings.terms_of_use" rows="5" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="Paste the terms of use text or a full URL"></textarea>
+                            @error('settings.terms_of_use') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex justify-end pt-4 border-t border-slate-200">
                     <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg shadow-sm transition text-sm">
                         Save Settings

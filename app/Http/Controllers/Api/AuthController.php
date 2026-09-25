@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Organisation;
 use App\Models\Role;
+use App\Models\SiteSetting;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
@@ -27,6 +29,9 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'locale' => ['sometimes', 'string', 'max:10'],
             'organisation_name' => ['sometimes', 'string', 'max:255'],
+            'country' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'original_language' => ['sometimes', 'nullable', 'string', 'max:10', Rule::exists('languages', 'code')],
+            'report_language' => ['sometimes', 'nullable', 'string', 'max:10', Rule::exists('languages', 'code')],
         ]);
 
         $user = DB::transaction(function () use ($validated) {
@@ -46,6 +51,9 @@ class AuthController extends Controller
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'locale' => $validated['locale'] ?? 'en',
+                'country' => $validated['country'] ?? null,
+                'original_language' => $validated['original_language'] ?? null,
+                'report_language' => $validated['report_language'] ?? null,
             ]);
 
             // These fields are intentionally not mass-assignable; set them explicitly.
@@ -114,6 +122,38 @@ class AuthController extends Controller
                 'user' => $user->load('roles', 'organisation'),
                 'token' => $token,
             ],
+        ]);
+    }
+
+    /**
+     * Send a password reset link to the given email. Returns the same response
+     * for known and unknown addresses to avoid leaking account existence. The
+     * endpoint can be disabled from the admin dashboard.
+     */
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => ['required', 'string', 'email'],
+        ]);
+
+        if (! SiteSetting::get('allow_forgot_password', true)) {
+            return response()->json([
+                'success' => false,
+                'error_code' => 'PASSWORD_RESET_DISABLED',
+                'message' => __('auth.password_reset_disabled'),
+            ], 403);
+        }
+
+        try {
+            Password::sendResetLink($request->only('email'));
+        } catch (\Throwable) {
+            // Never reveal delivery failures on the client; the caller is
+            // told to check their inbox regardless.
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => __('auth.password_reset_sent'),
         ]);
     }
 

@@ -24,6 +24,13 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
-            return app(Handler::class)->render($request, $e);
+            // Only intercept API requests. Delegating web exceptions to the custom
+            // Handler would call parent::render(), which re-invokes this callback
+            // and recurses until memory exhaustion.
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return app(Handler::class)->render($request, $e);
+            }
+
+            return null;
         });
     })->create();
