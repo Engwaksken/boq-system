@@ -7,7 +7,6 @@ use App\Models\Feature;
 use App\Models\Organisation;
 use App\Models\Plan;
 use App\Models\Subscription;
-use App\Models\SiteSetting;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -18,10 +17,6 @@ class SubscriptionService
      */
     public function activate(Subscription $subscription): Subscription
     {
-        if ($subscription->status === 'active' && $subscription->payment_status === 'paid') {
-            return $subscription->fresh();
-        }
-
         $plan = $subscription->plan;
 
         $subscription->status = 'active';
@@ -101,15 +96,18 @@ class SubscriptionService
      */
     public function hasFeature(User $user, string $featureCode): bool
     {
-        if ($user->hasRole('super-admin')) {
+        if ($user->isSuperAdmin()) {
             return true;
         }
 
         return Entitlement::query()
             ->where('status', 'active')
             ->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id)
-                    ->orWhere('organisation_id', $user->organisation_id);
+                $q->where('user_id', $user->id);
+
+                if ($user->organisation_id !== null) {
+                    $q->orWhere('organisation_id', $user->organisation_id);
+                }
             })
             ->whereHas('feature', fn ($q) => $q->where('code', $featureCode))
             ->get()
@@ -131,9 +129,6 @@ class SubscriptionService
                 }
             })
             ->whereIn('status', ['active', 'trial', 'grace_period'])
-            ->where(function ($q) {
-                $q->whereNull('end_date')->orWhere('end_date', '>=', now());
-            })
             ->latest()
             ->first();
     }
@@ -171,25 +166,24 @@ class SubscriptionService
      */
     public function grantTrial(User $user, ?Organisation $organisation = null): Subscription
     {
-        $trialDays = max(1, (int) SiteSetting::get('trial_duration', 7));
         $trialPlan = Plan::where('code', 'free-trial')->first() ?? Plan::where('has_trial', true)->first();
         if (! $trialPlan) {
             $trialPlan = Plan::create([
                 'name' => 'Free Trial',
                 'code' => 'free-trial',
-                'description' => $trialDays.'-day trial access',
+                'description' => '7-day trial access',
                 'type' => 'monthly',
-                'duration_days' => $trialDays,
+                'duration_days' => 7,
                 'price' => 0,
                 'currency' => 'UGX',
                 'has_trial' => true,
-                'trial_days' => $trialDays,
+                'trial_days' => 7,
                 'is_active' => true,
             ]);
         }
 
         $startDate = now();
-        $endDate = $startDate->copy()->addDays($trialDays);
+        $endDate = $startDate->copy()->addDays(7);
 
         $subscription = Subscription::create([
             'user_id' => $user->id,

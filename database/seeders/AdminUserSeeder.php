@@ -11,15 +11,32 @@ use Illuminate\Support\Facades\Hash;
 class AdminUserSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Seed an initial administrator only when explicit credentials are
+     * supplied. Production must never create a predictable default account.
      */
     public function run(): void
     {
+        $email = trim((string) env('ADMIN_SEED_EMAIL', ''));
+        $password = (string) env('ADMIN_SEED_PASSWORD', '');
+        $name = trim((string) env('ADMIN_SEED_NAME', 'System Administrator'));
+
+        if ($email === '' || $password === '') {
+            $this->command?->warn(
+                'AdminUserSeeder skipped: set ADMIN_SEED_EMAIL and ADMIN_SEED_PASSWORD to create the initial administrator.'
+            );
+
+            return;
+        }
+
+        if (strlen($password) < 12) {
+            throw new \RuntimeException('ADMIN_SEED_PASSWORD must contain at least 12 characters.');
+        }
+
         $organisation = Organisation::firstOrCreate(
             ['code' => 'DEFAULT'],
             [
-                'name' => 'Default Organisation',
-                'email' => 'admin@example.com',
+                'name' => env('ADMIN_SEED_ORGANISATION', 'Default Organisation'),
+                'email' => $email,
                 'default_locale' => 'en',
                 'default_currency' => 'UGX',
                 'is_active' => true,
@@ -27,21 +44,23 @@ class AdminUserSeeder extends Seeder
         );
 
         $admin = User::firstOrCreate(
-            ['email' => 'admin@example.com'],
+            ['email' => $email],
             [
-                'name' => 'System Administrator',
-                'password' => Hash::make('password'),
+                'name' => $name !== '' ? $name : 'System Administrator',
+                'password' => Hash::make($password),
                 'locale' => 'en',
             ]
         );
 
-        // organisation_id and is_active are intentionally not mass-assignable; set them explicitly.
         $admin->forceFill([
             'organisation_id' => $organisation->id,
             'is_active' => true,
         ])->save();
 
-        $superAdminRole = Role::where('slug', 'super-admin')->first();
+        $superAdminRole = Role::query()
+            ->whereIn('slug', ['super-admin', 'super_admin'])
+            ->first();
+
         if ($superAdminRole) {
             $admin->roles()->syncWithoutDetaching([$superAdminRole->id]);
         }

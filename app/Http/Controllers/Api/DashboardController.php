@@ -22,14 +22,20 @@ class DashboardController extends Controller
 
         $projectQuery = Project::query()
             ->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id)
-                    ->orWhere('organisation_id', $user->organisation_id);
+                $q->where('user_id', $user->id);
+
+                if ($user->organisation_id !== null) {
+                    $q->orWhere('organisation_id', $user->organisation_id);
+                }
             });
 
         $boqQuery = Boq::query()
             ->where(function ($q) use ($user) {
-                $q->whereHas('project', fn ($p) => $p->where('user_id', $user->id))
-                    ->orWhere('organisation_id', $user->organisation_id);
+                $q->whereHas('project', fn ($p) => $p->where('user_id', $user->id));
+
+                if ($user->organisation_id !== null) {
+                    $q->orWhere('organisation_id', $user->organisation_id);
+                }
             });
 
         $currentSubscription = cache()->remember('dashboard_subscription_' . $user->id, 30, function () use ($subscriptionService, $user) {

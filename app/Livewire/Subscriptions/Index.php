@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Subscriptions;
 
 use App\Models\Plan;
@@ -7,6 +9,7 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Services\SubscriptionService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -62,7 +65,7 @@ class Index extends Component
 
     /*
     |--------------------------------------------------------------------------
-    | Action Modal
+    | Confirmation Modal
     |--------------------------------------------------------------------------
     */
 
@@ -88,6 +91,38 @@ class Index extends Component
 
     /*
     |--------------------------------------------------------------------------
+    | Allowed Values
+    |--------------------------------------------------------------------------
+    */
+
+    private const PER_PAGE_OPTIONS = [
+        10,
+        25,
+        50,
+        100,
+    ];
+
+    private const SUBSCRIPTION_STATUSES = [
+        'pending',
+        'trial',
+        'active',
+        'past_due',
+        'grace_period',
+        'suspended',
+        'expired',
+        'cancelled',
+    ];
+
+    private const PLAN_PERIODS = [
+        'monthly',
+        'quarterly',
+        'six_month',
+        'annual',
+        'lifetime',
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
     | Lifecycle
     |--------------------------------------------------------------------------
     */
@@ -108,6 +143,10 @@ class Index extends Component
         $this->activeTab = 'subscriptions';
 
         $this->resetValidation();
+
+        $this->resetPage(
+            'subscriptionsPage'
+        );
     }
 
     public function showPlans(): void
@@ -115,11 +154,15 @@ class Index extends Component
         $this->activeTab = 'plans';
 
         $this->resetValidation();
+
+        $this->resetPage(
+            'plansPage'
+        );
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Filter Updates
+    | Subscription Filter Updates
     |--------------------------------------------------------------------------
     */
 
@@ -128,34 +171,117 @@ class Index extends Component
         $this->resetSubscriptionPage();
     }
 
-    public function updatedStatusFilter(): void
-    {
+    public function updatedStatusFilter(
+        string $value
+    ): void {
+        if (
+            $value !== 'all'
+            && ! in_array(
+                $value,
+                self::SUBSCRIPTION_STATUSES,
+                true
+            )
+        ) {
+            $this->statusFilter = 'all';
+        }
+
         $this->resetSubscriptionPage();
     }
 
-    public function updatedPeriodFilter(): void
-    {
+    public function updatedPeriodFilter(
+        string $value
+    ): void {
+        $allowed = [
+            'all',
+            'current',
+            'ending_30',
+            'expired',
+            'this_year',
+        ];
+
+        if (
+            ! in_array(
+                $value,
+                $allowed,
+                true
+            )
+        ) {
+            $this->periodFilter = 'all';
+        }
+
         $this->resetSubscriptionPage();
     }
 
-    public function updatedPerPage(): void
-    {
+    public function updatedPerPage(
+        mixed $value
+    ): void {
+        $value = (int) $value;
+
+        $this->perPage =
+            in_array(
+                $value,
+                self::PER_PAGE_OPTIONS,
+                true
+            )
+                ? $value
+                : 10;
+
         $this->resetSubscriptionPage();
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Plan Filter Updates
+    |--------------------------------------------------------------------------
+    */
 
     public function updatedPlanSearch(): void
     {
-        $this->resetPage('plansPage');
+        $this->resetPage(
+            'plansPage'
+        );
     }
 
-    public function updatedPlanPeriodFilter(): void
-    {
-        $this->resetPage('plansPage');
+    public function updatedPlanPeriodFilter(
+        string $value
+    ): void {
+        $allowed = array_merge(
+            ['all'],
+            self::PLAN_PERIODS
+        );
+
+        if (
+            ! in_array(
+                $value,
+                $allowed,
+                true
+            )
+        ) {
+            $this->planPeriodFilter = 'all';
+        }
+
+        $this->resetPage(
+            'plansPage'
+        );
     }
 
-    public function updatedPlanPerPage(): void
-    {
-        $this->resetPage('plansPage');
+    public function updatedPlanPerPage(
+        mixed $value
+    ): void {
+        $value = (int) $value;
+
+        $this->planPerPage =
+            in_array(
+                $value,
+                self::PER_PAGE_OPTIONS,
+                true
+            )
+                ? $value
+                : 10;
+
+        $this->resetPage(
+            'plansPage'
+        );
     }
 
     /*
@@ -166,7 +292,9 @@ class Index extends Component
 
     private function resetSubscriptionPage(): void
     {
-        $this->resetPage('subscriptionsPage');
+        $this->resetPage(
+            'subscriptionsPage'
+        );
 
         $this->clearSelection();
     }
@@ -178,59 +306,90 @@ class Index extends Component
         $this->selectPage = false;
     }
 
-    public function updatedSelectPage(bool $value): void
-    {
+    public function updatedSelectPage(
+        bool $value
+    ): void {
         if (! $value) {
             $this->selectedSubscriptions = [];
 
             return;
         }
 
-        $currentPage = $this->getPage('subscriptionsPage');
+        /*
+         * Select only records visible on the current page.
+         */
+        $currentPage =
+            $this->getPage(
+                'subscriptionsPage'
+            );
 
-        $this->selectedSubscriptions = $this
-            ->subscriptionsQuery()
-            ->forPage(
-                $currentPage,
-                $this->perPage
-            )
-            ->pluck('id')
-            ->map(
-                fn ($id) => (string) $id
-            )
-            ->values()
-            ->all();
+        $this->selectedSubscriptions =
+            $this
+                ->subscriptionsQuery()
+                ->forPage(
+                    $currentPage,
+                    $this->perPage
+                )
+                ->pluck('subscriptions.id')
+                ->map(
+                    fn ($id) =>
+                        (string) $id
+                )
+                ->values()
+                ->all();
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Subscription Confirmation Actions
+    | Confirm Subscription
     |--------------------------------------------------------------------------
     */
 
-    public function confirmSubscribe(int $planId): void
-    {
-        $plan = Plan::query()
-            ->whereKey($planId)
-            ->where('is_active', true)
-            ->where('is_archived', false)
-            ->firstOrFail();
+    public function confirmSubscribe(
+        int $planId
+    ): void {
+        $plan =
+            Plan::query()
+                ->whereKey(
+                    $planId
+                )
+                ->where(
+                    'is_active',
+                    true
+                )
+                ->where(
+                    'is_archived',
+                    false
+                )
+                ->firstOrFail();
 
-        $this->actionType = 'subscribe';
+        $this->actionType =
+            'subscribe';
 
-        $this->actionPlanId = $plan->id;
+        $this->actionPlanId =
+            $plan->id;
 
-        $this->actionSubscriptionId = null;
+        $this->actionSubscriptionId =
+            null;
 
         $this->actionTitle =
-            'Choose '.$plan->name.'?';
+            'Choose '
+            .$plan->name
+            .'?';
 
         $this->actionMessage =
             'A pending subscription will be created. '
             .'Complete payment to activate access.';
 
-        $this->showActionModal = true;
+        $this->showActionModal =
+            true;
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Confirm Cancellation
+    |--------------------------------------------------------------------------
+    */
 
     public function confirmCancel(
         int $subscriptionId
@@ -240,23 +399,30 @@ class Index extends Component
                 $subscriptionId
             );
 
-        $this->actionType = 'cancel';
+        $this->actionType =
+            'cancel';
 
         $this->actionSubscriptionId =
             $subscription->id;
 
-        $this->actionPlanId = null;
+        $this->actionPlanId =
+            null;
 
         $this->actionTitle =
             'Cancel subscription?';
 
         $this->actionMessage =
             'Cancel '
-            .($subscription->plan?->name
-                ?? 'this subscription')
+            .(
+                $subscription
+                    ->plan
+                    ?->name
+                ?? 'this subscription'
+            )
             .'? Your projects and BOQ data will be preserved.';
 
-        $this->showActionModal = true;
+        $this->showActionModal =
+            true;
     }
 
     public function confirmBulkCancel(): void
@@ -269,11 +435,14 @@ class Index extends Component
             return;
         }
 
-        $this->actionType = 'bulk_cancel';
+        $this->actionType =
+            'bulk_cancel';
 
-        $this->actionPlanId = null;
+        $this->actionPlanId =
+            null;
 
-        $this->actionSubscriptionId = null;
+        $this->actionSubscriptionId =
+            null;
 
         $this->actionTitle =
             'Cancel selected subscriptions?';
@@ -285,48 +454,67 @@ class Index extends Component
             .' selected subscription(s) will be cancelled. '
             .'Project and BOQ data will remain available.';
 
-        $this->showActionModal = true;
-    }
-
-    public function closeActionModal(): void
-    {
-        $this->showActionModal = false;
-
-        $this->actionType = '';
-
-        $this->actionSubscriptionId = null;
-
-        $this->actionPlanId = null;
-
-        $this->actionTitle = '';
-
-        $this->actionMessage = '';
+        $this->showActionModal =
+            true;
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Execute Actions
+    | Close Modal
+    |--------------------------------------------------------------------------
+    */
+
+    public function closeActionModal(): void
+    {
+        $this->showActionModal =
+            false;
+
+        $this->actionType =
+            '';
+
+        $this->actionSubscriptionId =
+            null;
+
+        $this->actionPlanId =
+            null;
+
+        $this->actionTitle =
+            '';
+
+        $this->actionMessage =
+            '';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Perform Confirmed Action
     |--------------------------------------------------------------------------
     */
 
     public function performAction(): void
     {
-        match ($this->actionType) {
-            'subscribe' =>
-                $this->subscribeToPlan(),
+        $action =
+            $this->actionType;
 
-            'cancel' =>
-                $this->cancelSubscription(),
+        try {
+            match ($action) {
+                'subscribe' =>
+                    $this->subscribeToPlan(),
 
-            'bulk_cancel' =>
-                $this->bulkCancel(),
+                'cancel' =>
+                    $this->cancelSubscription(),
 
-            default => null,
-        };
+                'bulk_cancel' =>
+                    $this->bulkCancel(),
 
-        $this->closeActionModal();
+                default =>
+                    null,
+            };
+        } finally {
+            $this->closeActionModal();
 
-        $this->refreshCurrentSubscription();
+            $this->refreshCurrentSubscription();
+        }
     }
 
     /*
@@ -337,21 +525,35 @@ class Index extends Component
 
     private function subscribeToPlan(): void
     {
-        if (! $this->actionPlanId) {
+        if (
+            ! $this->actionPlanId
+        ) {
             return;
         }
 
-        $plan = Plan::query()
-            ->whereKey(
-                $this->actionPlanId
-            )
-            ->where('is_active', true)
-            ->where('is_archived', false)
-            ->firstOrFail();
+        $plan =
+            Plan::query()
+                ->whereKey(
+                    $this->actionPlanId
+                )
+                ->where(
+                    'is_active',
+                    true
+                )
+                ->where(
+                    'is_archived',
+                    false
+                )
+                ->firstOrFail();
 
         /** @var User $user */
-        $user = auth()->user();
+        $user =
+            auth()->user();
 
+        /*
+         * Avoid creating multiple pending subscriptions
+         * for the same user/organisation and same plan.
+         */
         $existingPending =
             Subscription::query()
                 ->where(
@@ -363,16 +565,21 @@ class Index extends Component
                     'pending'
                 )
                 ->where(
-                    fn (Builder $query) =>
-                        $this->applyOwnershipScope(
-                            $query,
-                            $user
-                        )
+                    fn (
+                        Builder $query
+                    ) =>
+                        $this
+                            ->applyOwnershipScope(
+                                $query,
+                                $user
+                            )
                 )
                 ->latest()
                 ->first();
 
-        if ($existingPending) {
+        if (
+            $existingPending
+        ) {
             session()->flash(
                 'message',
                 'You already have a pending '
@@ -385,31 +592,38 @@ class Index extends Component
             return;
         }
 
-        $subscription =
-            new Subscription();
+        DB::transaction(
+            function () use (
+                $user,
+                $plan
+            ): void {
+                $subscription =
+                    new Subscription();
 
-        $subscription->user_id =
-            $user->id;
+                $subscription->user_id =
+                    $user->id;
 
-        $subscription->organisation_id =
-            $user->organisation_id;
+                $subscription->organisation_id =
+                    $user->organisation_id;
 
-        $subscription->plan_id =
-            $plan->id;
+                $subscription->plan_id =
+                    $plan->id;
 
-        $subscription->status =
-            'pending';
+                $subscription->status =
+                    'pending';
 
-        $subscription->payment_status =
-            'pending';
+                $subscription->payment_status =
+                    'pending';
 
-        $subscription->access_type =
-            $plan->type;
+                $subscription->access_type =
+                    $plan->type;
 
-        $subscription->auto_renewal =
-            (bool) $plan->auto_renewal;
+                $subscription->auto_renewal =
+                    (bool) $plan->auto_renewal;
 
-        $subscription->save();
+                $subscription->save();
+            }
+        );
 
         $this->showSubscriptions();
 
@@ -426,7 +640,7 @@ class Index extends Component
 
     /*
     |--------------------------------------------------------------------------
-    | Cancel One Subscription
+    | Cancel Single Subscription
     |--------------------------------------------------------------------------
     */
 
@@ -440,7 +654,8 @@ class Index extends Component
 
         $subscription =
             $this->ownedSubscription(
-                $this->actionSubscriptionId
+                $this
+                    ->actionSubscriptionId
             );
 
         if (
@@ -456,33 +671,40 @@ class Index extends Component
             return;
         }
 
-        $subscription->update([
-            'status' =>
-                'cancelled',
+        DB::transaction(
+            function () use (
+                $subscription
+            ): void {
+                $subscription->update([
+                    'status' =>
+                        'cancelled',
 
-            'cancellation_date' =>
-                now(),
+                    'cancellation_date' =>
+                        now(),
 
-            'auto_renewal' =>
-                false,
-        ]);
+                    'auto_renewal' =>
+                        false,
+                ]);
 
-        $subscription
-            ->entitlements()
-            ->update([
-                'status' => 'revoked',
-            ]);
+                $subscription
+                    ->entitlements()
+                    ->update([
+                        'status' =>
+                            'revoked',
+                    ]);
+            }
+        );
 
         session()->flash(
             'message',
-            'Subscription cancelled. '
+            'Subscription cancelled successfully. '
             .'Your projects and BOQ data were preserved.'
         );
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Bulk Cancel
+    | Bulk Cancellation
     |--------------------------------------------------------------------------
     */
 
@@ -497,18 +719,33 @@ class Index extends Component
         }
 
         /** @var User $user */
-        $user = auth()->user();
+        $user =
+            auth()->user();
 
-        $ids = collect(
-            $this->selectedSubscriptions
-        )
-            ->map(
-                fn ($id) => (int) $id
+        $ids =
+            collect(
+                $this
+                    ->selectedSubscriptions
             )
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
+                ->map(
+                    fn ($id) =>
+                        (int) $id
+                )
+                ->filter(
+                    fn ($id) =>
+                        $id > 0
+                )
+                ->unique()
+                ->values()
+                ->all();
+
+        if (
+            empty($ids)
+        ) {
+            $this->clearSelection();
+
+            return;
+        }
 
         $subscriptions =
             Subscription::query()
@@ -517,11 +754,14 @@ class Index extends Component
                     $ids
                 )
                 ->where(
-                    fn (Builder $query) =>
-                        $this->applyOwnershipScope(
-                            $query,
-                            $user
-                        )
+                    fn (
+                        Builder $query
+                    ) =>
+                        $this
+                            ->applyOwnershipScope(
+                                $query,
+                                $user
+                            )
                 )
                 ->whereNotIn(
                     'status',
@@ -532,33 +772,42 @@ class Index extends Component
                 )
                 ->get();
 
-        foreach (
-            $subscriptions
-            as $subscription
-        ) {
-            $subscription->update([
-                'status' =>
-                    'cancelled',
+        DB::transaction(
+            function () use (
+                $subscriptions
+            ): void {
+                foreach (
+                    $subscriptions
+                    as $subscription
+                ) {
+                    $subscription->update([
+                        'status' =>
+                            'cancelled',
 
-                'cancellation_date' =>
-                    now(),
+                        'cancellation_date' =>
+                            now(),
 
-                'auto_renewal' =>
-                    false,
-            ]);
+                        'auto_renewal' =>
+                            false,
+                    ]);
 
-            $subscription
-                ->entitlements()
-                ->update([
-                    'status' =>
-                        'revoked',
-                ]);
-        }
+                    $subscription
+                        ->entitlements()
+                        ->update([
+                            'status' =>
+                                'revoked',
+                        ]);
+                }
+            }
+        );
 
         $count =
-            $subscriptions->count();
+            $subscriptions
+                ->count();
 
         $this->clearSelection();
+
+        $this->refreshCurrentSubscription();
 
         session()->flash(
             'message',
@@ -569,30 +818,42 @@ class Index extends Component
 
     /*
     |--------------------------------------------------------------------------
-    | Subscriptions Query
+    | Subscription Query
     |--------------------------------------------------------------------------
     */
 
     private function subscriptionsQuery(): Builder
     {
         /** @var User $user */
-        $user = auth()->user();
+        $user =
+            auth()->user();
 
         return Subscription::query()
+
+            /*
+             * Ownership / organisation isolation.
+             */
             ->where(
-                fn (Builder $query) =>
-                    $this->applyOwnershipScope(
-                        $query,
-                        $user
-                    )
+                fn (
+                    Builder $query
+                ) =>
+                    $this
+                        ->applyOwnershipScope(
+                            $query,
+                            $user
+                        )
             )
 
             /*
-             * Search
+             * Search.
              */
             ->when(
-                trim($this->search) !== '',
-                function (Builder $query) {
+                trim(
+                    $this->search
+                ) !== '',
+                function (
+                    Builder $query
+                ): void {
                     $term =
                         '%'
                         .trim(
@@ -603,7 +864,9 @@ class Index extends Component
                     $query->where(
                         function (
                             Builder $inner
-                        ) use ($term) {
+                        ) use (
+                            $term
+                        ): void {
                             $inner
                                 ->where(
                                     'status',
@@ -620,11 +883,17 @@ class Index extends Component
                                     fn (
                                         Builder $plan
                                     ) =>
-                                        $plan->where(
-                                            'name',
-                                            'like',
-                                            $term
-                                        )
+                                        $plan
+                                            ->where(
+                                                'name',
+                                                'like',
+                                                $term
+                                            )
+                                            ->orWhere(
+                                                'code',
+                                                'like',
+                                                $term
+                                            )
                                 );
                         }
                     );
@@ -632,27 +901,30 @@ class Index extends Component
             )
 
             /*
-             * Status
+             * Status.
              */
             ->when(
                 $this->statusFilter
                     !== 'all',
-                fn (Builder $query) =>
+                fn (
+                    Builder $query
+                ) =>
                     $query->where(
                         'status',
-                        $this->statusFilter
+                        $this
+                            ->statusFilter
                     )
             )
 
             /*
-             * Period
+             * Period.
              */
             ->when(
                 $this->periodFilter
                     !== 'all',
                 function (
                     Builder $query
-                ) {
+                ): void {
                     match (
                         $this->periodFilter
                     ) {
@@ -668,9 +940,9 @@ class Index extends Component
                                 )
                                 ->where(
                                     function (
-                                        Builder $date
-                                    ) {
-                                        $date
+                                        Builder $dates
+                                    ): void {
+                                        $dates
                                             ->whereNull(
                                                 'end_date'
                                             )
@@ -701,7 +973,7 @@ class Index extends Component
                             $query->where(
                                 function (
                                     Builder $expired
-                                ) {
+                                ): void {
                                     $expired
                                         ->where(
                                             'status',
@@ -709,9 +981,9 @@ class Index extends Component
                                         )
                                         ->orWhere(
                                             function (
-                                                Builder $date
-                                            ) {
-                                                $date
+                                                Builder $dates
+                                            ): void {
+                                                $dates
                                                     ->whereNotNull(
                                                         'end_date'
                                                     )
@@ -737,9 +1009,13 @@ class Index extends Component
                 }
             )
 
-            ->with('plan')
+            ->with([
+                'plan',
+            ])
 
-            ->latest();
+            ->latest(
+                'subscriptions.created_at'
+            );
     }
 
     /*
@@ -760,24 +1036,37 @@ class Index extends Component
                 false
             )
 
+            /*
+             * Blade displays plan features, so eager-load them.
+             */
+            ->with([
+                'features',
+            ])
+
+            /*
+             * Search.
+             */
             ->when(
                 trim(
                     $this->planSearch
                 ) !== '',
                 function (
                     Builder $query
-                ) {
+                ): void {
                     $term =
                         '%'
                         .trim(
-                            $this->planSearch
+                            $this
+                                ->planSearch
                         )
                         .'%';
 
                     $query->where(
                         function (
                             Builder $inner
-                        ) use ($term) {
+                        ) use (
+                            $term
+                        ): void {
                             $inner
                                 ->where(
                                     'name',
@@ -799,63 +1088,65 @@ class Index extends Component
                 }
             )
 
+            /*
+             * Billing period.
+             */
             ->when(
-                $this->planPeriodFilter
+                $this
+                    ->planPeriodFilter
                     !== 'all',
                 function (
                     Builder $query
-                ) {
-                    match (
-                        $this->planPeriodFilter
+                ): void {
+                    $type =
+                        match (
+                            $this
+                                ->planPeriodFilter
+                        ) {
+                            'monthly' =>
+                                'monthly',
+
+                            'quarterly' =>
+                                'three_month',
+
+                            'six_month' =>
+                                'six_month',
+
+                            'annual' =>
+                                'annual',
+
+                            'lifetime' =>
+                                'lifetime',
+
+                            default =>
+                                null,
+                        };
+
+                    if (
+                        $type !== null
                     ) {
-                        'monthly' =>
-                            $query->where(
-                                'type',
-                                'monthly'
-                            ),
-
-                        'quarterly' =>
-                            $query->where(
-                                'type',
-                                'three_month'
-                            ),
-
-                        'six_month' =>
-                            $query->where(
-                                'type',
-                                'six_month'
-                            ),
-
-                        'annual' =>
-                            $query->where(
-                                'type',
-                                'annual'
-                            ),
-
-                        'lifetime' =>
-                            $query->where(
-                                'type',
-                                'lifetime'
-                            ),
-
-                        default =>
-                            null,
-                    };
+                        $query->where(
+                            'type',
+                            $type
+                        );
+                    }
                 }
             )
 
             ->orderBy(
                 'display_order'
             )
-
             ->orderBy(
                 'price'
+            )
+            ->orderBy(
+                'id'
             );
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Subscription Ownership
+    | Ownership
     |--------------------------------------------------------------------------
     */
 
@@ -863,45 +1154,58 @@ class Index extends Component
         int $subscriptionId
     ): Subscription {
         /** @var User $user */
-        $user = auth()->user();
+        $user =
+            auth()->user();
 
         return Subscription::query()
             ->whereKey(
                 $subscriptionId
             )
             ->where(
-                fn (Builder $query) =>
-                    $this->applyOwnershipScope(
-                        $query,
-                        $user
-                    )
+                fn (
+                    Builder $query
+                ) =>
+                    $this
+                        ->applyOwnershipScope(
+                            $query,
+                            $user
+                        )
             )
-            ->with('plan')
+            ->with([
+                'plan',
+            ])
             ->firstOrFail();
     }
 
+    /**
+     * Apply subscription ownership safely.
+     *
+     * Important:
+     * Never use:
+     *
+     *     orWhere('organisation_id', null)
+     *
+     * because that could expose subscriptions belonging to other
+     * personal users who also have a null organisation_id.
+     */
     private function applyOwnershipScope(
         Builder $query,
         User $user
     ): Builder {
-        /*
-         * Individual subscription ownership.
-         */
         $query->where(
             'user_id',
             $user->id
         );
 
-        /*
-         * If subscriptions are shared at organisation level,
-         * allow organisation-owned subscriptions too.
-         */
         if (
-            $user->organisation_id
+            $user
+                ->organisation_id
+            !== null
         ) {
             $query->orWhere(
                 'organisation_id',
-                $user->organisation_id
+                $user
+                    ->organisation_id
             );
         }
 
@@ -917,46 +1221,59 @@ class Index extends Component
     private function refreshCurrentSubscription(): void
     {
         /** @var User $user */
-        $user = auth()->user();
+        $user =
+            auth()->user();
 
         $this->currentSubscription =
             app(
                 SubscriptionService::class
             )->currentSubscription(
                 $user,
-                $user->organisation_id
+                $user
+                    ->organisation_id
             );
+
+        if (
+            $this->currentSubscription
+        ) {
+            $this
+                ->currentSubscription
+                ->loadMissing(
+                    'plan'
+                );
+        }
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Stats
+    | Statistics
     |--------------------------------------------------------------------------
     */
 
     private function subscriptionStats(
         User $user
     ): array {
-        $query =
-            fn () =>
+        $ownedQuery =
+            fn (): Builder =>
                 Subscription::query()
                     ->where(
                         fn (
-                            Builder $owner
+                            Builder $query
                         ) =>
                             $this
                                 ->applyOwnershipScope(
-                                    $owner,
+                                    $query,
                                     $user
                                 )
                     );
 
         return [
             'total' =>
-                $query()->count(),
+                $ownedQuery()
+                    ->count(),
 
             'active' =>
-                $query()
+                $ownedQuery()
                     ->whereIn(
                         'status',
                         [
@@ -965,10 +1282,25 @@ class Index extends Component
                             'grace_period',
                         ]
                     )
+                    ->where(
+                        function (
+                            Builder $query
+                        ): void {
+                            $query
+                                ->whereNull(
+                                    'end_date'
+                                )
+                                ->orWhere(
+                                    'end_date',
+                                    '>=',
+                                    now()
+                                );
+                        }
+                    )
                     ->count(),
 
             'pending' =>
-                $query()
+                $ownedQuery()
                     ->where(
                         'status',
                         'pending'
@@ -998,32 +1330,59 @@ class Index extends Component
     public function render()
     {
         /** @var User $user */
-        $user = auth()->user();
+        $user =
+            auth()->user();
+
+        /*
+         * Refreshing here ensures the header/current-plan indicator
+         * is correct after external payment/subscription changes.
+         */
+        $this->refreshCurrentSubscription();
+
+        $subscriptions =
+            $this
+                ->subscriptionsQuery()
+                ->paginate(
+                    $this->perPage,
+                    ['*'],
+                    'subscriptionsPage'
+                );
+
+        $plans =
+            $this
+                ->plansQuery()
+                ->paginate(
+                    $this->planPerPage,
+                    ['*'],
+                    'plansPage'
+                );
 
         return view(
             'livewire.subscriptions.index',
             [
+                /*
+                 * Paginated subscription history.
+                 */
                 'subscriptions' =>
-                    $this
-                        ->subscriptionsQuery()
-                        ->paginate(
-                            $this->perPage,
-                            ['*'],
-                            'subscriptionsPage'
-                        ),
+                    $subscriptions,
 
+                /*
+                 * Available plans.
+                 */
                 'plans' =>
-                    $this
-                        ->plansQuery()
-                        ->paginate(
-                            $this->planPerPage,
-                            ['*'],
-                            'plansPage'
-                        ),
+                    $plans,
 
+                /*
+                 * Keep this alias because the existing Blade uses
+                 * $subscription in its header and Current Plan logic.
+                 */
                 'subscription' =>
-                    $this->currentSubscription,
+                    $this
+                        ->currentSubscription,
 
+                /*
+                 * Statistics cards.
+                 */
                 'stats' =>
                     $this
                         ->subscriptionStats(

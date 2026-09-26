@@ -18,8 +18,11 @@ class ProjectController extends Controller
 
         $projects = Project::query()
             ->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id)
-                    ->orWhere('organisation_id', $user->organisation_id);
+                $q->where('user_id', $user->id);
+
+                if ($user->organisation_id !== null) {
+                    $q->orWhere('organisation_id', $user->organisation_id);
+                }
             })
             ->withCount('boqs')
             ->latest()
@@ -53,10 +56,10 @@ class ProjectController extends Controller
             'location' => ['sometimes', 'nullable', 'string', 'max:255'],
             'project_type' => ['sometimes', 'nullable', 'string', 'max:255'],
             'start_date' => ['sometimes', 'nullable', 'date'],
-            'expected_completion_date' => ['sometimes', 'nullable', 'date'],
-            'contract_value' => ['sometimes', 'nullable', 'numeric'],
-            'currency' => ['sometimes', 'string', 'max:10'],
-            'description' => ['sometimes', 'nullable', 'string'],
+            'expected_completion_date' => ['sometimes', 'nullable', 'date', 'after_or_equal:start_date'],
+            'contract_value' => ['sometimes', 'nullable', 'numeric', 'min:0'],
+            'currency' => ['sometimes', 'string', 'size:3'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:5000'],
             'original_language' => ['sometimes', 'string', 'max:10'],
             'report_language' => ['sometimes', 'string', 'max:10'],
             'status' => ['sometimes', 'string', 'in:draft,active,completed,archived'],
@@ -65,7 +68,7 @@ class ProjectController extends Controller
         $project = Project::create(array_merge($validated, [
             'user_id' => $user->id,
             'organisation_id' => $user->organisation_id,
-            'status' => $validated['status'] ?? 'draft',
+            'status' => 'draft',
         ]));
 
         return response()->json([
@@ -110,10 +113,10 @@ class ProjectController extends Controller
             'location' => ['sometimes', 'nullable', 'string', 'max:255'],
             'project_type' => ['sometimes', 'nullable', 'string', 'max:255'],
             'start_date' => ['sometimes', 'nullable', 'date'],
-            'expected_completion_date' => ['sometimes', 'nullable', 'date'],
-            'contract_value' => ['sometimes', 'nullable', 'numeric'],
-            'currency' => ['sometimes', 'string', 'max:10'],
-            'description' => ['sometimes', 'nullable', 'string'],
+            'expected_completion_date' => ['sometimes', 'nullable', 'date', 'after_or_equal:start_date'],
+            'contract_value' => ['sometimes', 'nullable', 'numeric', 'min:0'],
+            'currency' => ['sometimes', 'string', 'size:3'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:5000'],
             'original_language' => ['sometimes', 'string', 'max:10'],
             'report_language' => ['sometimes', 'string', 'max:10'],
             'status' => ['sometimes', 'string', 'in:draft,active,completed,archived'],
@@ -150,7 +153,11 @@ class ProjectController extends Controller
     {
         $user = $request->user();
 
-        if ($project->user_id !== $user->id && $project->organisation_id !== $user->organisation_id) {
+        $personalAccess = $project->user_id === $user->id;
+        $organisationAccess = $user->organisation_id !== null
+            && $project->organisation_id === $user->organisation_id;
+
+        if (! $personalAccess && ! $organisationAccess) {
             abort(response()->json([
                 'success' => false,
                 'error_code' => 'FORBIDDEN',

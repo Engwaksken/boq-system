@@ -1,25 +1,115 @@
-<x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
+<x-layouts.guest title="Forgot password">
+
+    <div class="text-center">
+
+        <div
+            class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#05645b]/10 text-[#05645b]"
+        >
+            <i class="fas fa-key text-lg"></i>
+        </div>
+
+        <h1
+            class="text-2xl font-extrabold tracking-tight text-slate-900"
+        >
+            Forgot your password?
+        </h1>
+
+        <p class="mt-2 text-sm leading-6 text-slate-500">
+            Enter the email address linked to your account.
+            We will send you a secure password reset link.
+        </p>
+
     </div>
 
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <form method="POST" action="{{ route('password.email') }}">
+    @if(session('status'))
+
+        <div class="auth-status mt-6">
+
+            <i class="fas fa-circle-check mr-1"></i>
+
+            {{ session('status') }}
+
+        </div>
+
+    @endif
+
+
+    <form
+        method="POST"
+        action="{{ route('password.email') }}"
+        class="mt-7 space-y-5"
+    >
         @csrf
 
-        <!-- Email Address -->
+
+        {{-- Email --}}
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+
+            <label
+                for="email"
+                class="mb-1.5 block text-sm font-semibold text-slate-700"
+            >
+                Email address
+            </label>
+
+            <div class="auth-input-wrap">
+
+                <i
+                    class="fas fa-envelope auth-input-icon"
+                ></i>
+
+                <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    value="{{ old('email') }}"
+                    required
+                    autofocus
+                    autocomplete="email"
+                    placeholder="e.g. name@example.com"
+                    class="auth-field {{ $errors->has('email') ? 'has-error' : '' }}"
+                >
+
+            </div>
+
+            @error('email')
+                <p class="auth-error">
+
+                    <i class="fas fa-circle-exclamation mr-1"></i>
+
+                    {{ $message }}
+
+                </p>
+            @enderror
+
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Email Password Reset Link') }}
-            </x-primary-button>
-        </div>
+
+        {{-- Submit --}}
+        <button
+            type="submit"
+            class="auth-primary"
+        >
+            <i class="fas fa-paper-plane"></i>
+            Send password reset link
+        </button>
+
     </form>
-</x-guest-layout>
+
+
+    <div
+        class="mt-7 border-t border-slate-200 pt-5 text-center"
+    >
+
+        <a
+            href="{{ route('login') }}"
+            class="auth-link inline-flex items-center gap-2 text-sm"
+        >
+            <i class="fas fa-arrow-left"></i>
+            Back to sign in
+        </a>
+
+    </div>
+
+</x-layouts.guest>

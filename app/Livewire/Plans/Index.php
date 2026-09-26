@@ -3,6 +3,7 @@
 namespace App\Livewire\Plans;
 
 use App\Models\Plan;
+use App\Models\Subscription;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -13,13 +14,20 @@ class Index extends Component
     use WithPagination;
 
     public string $search = '';
+    public string $statusFilter = 'active';
     public int $perPage = 10;
     public string $sortBy = 'display_order';
     public string $sortDir = 'asc';
-
     public array $perPageOptions = [10, 20, 50];
 
+    private const SORTABLE = ['name', 'price', 'duration_days', 'is_active', 'display_order'];
+
     public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedStatusFilter(): void
     {
         $this->resetPage();
     }
@@ -31,22 +39,12 @@ class Index extends Component
 
     public function sortBy(string $field): void
     {
-        $allowedFields = [
-            'display_order',
-            'name',
-            'price',
-            'type',
-            'duration_days',
-        ];
-
-        if (! in_array($field, $allowedFields, true)) {
+        if (! in_array($field, self::SORTABLE, true)) {
             return;
         }
 
         if ($this->sortBy === $field) {
-            $this->sortDir = $this->sortDir === 'asc'
-                ? 'desc'
-                : 'asc';
+            $this->sortDir = $this->sortDir === 'asc' ? 'desc' : 'asc';
         } else {
             $this->sortBy = $field;
             $this->sortDir = 'asc';
@@ -57,46 +55,20 @@ class Index extends Component
 
     public function render()
     {
-        $search = trim($this->search);
-
         $plans = Plan::query()
-            ->where('is_active', true)
-            ->where('is_archived', false)
-            ->when(
-                $search !== '',
-                function ($query) use ($search) {
-                    $query->where(function ($subQuery) use ($search) {
-                        $subQuery
-                            ->where('name', 'like', "%{$search}%")
-                            ->orWhere('code', 'like', "%{$search}%")
-                            ->orWhere('description', 'like', "%{$search}%")
-                            ->orWhere('currency', 'like', "%{$search}%")
-                            ->orWhere('type', 'like', "%{$search}%");
-                    });
-                }
-            )
+            ->when($this->search !== '', fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
+            ->when($this->statusFilter === 'active', fn ($q) => $q->where('is_active', true)->where('is_archived', false))
+            ->when($this->statusFilter === 'inactive', fn ($q) => $q->where('is_active', false)->where('is_archived', false))
+            ->when($this->statusFilter === 'archived', fn ($q) => $q->where('is_archived', true))
             ->with('features')
             ->orderBy($this->sortBy, $this->sortDir)
-            ->orderBy('id')
             ->paginate($this->perPage);
 
         $stats = [
-            'available_plans' => Plan::query()
-                ->where('is_active', true)
-                ->where('is_archived', false)
-                ->count(),
-
-            'monthly_plans' => Plan::query()
-                ->where('is_active', true)
-                ->where('is_archived', false)
-                ->where('type', 'monthly')
-                ->count(),
-
-            'annual_plans' => Plan::query()
-                ->where('is_active', true)
-                ->where('is_archived', false)
-                ->where('type', 'annual')
-                ->count(),
+            'total_plans' => Plan::count(),
+            'active_plans' => Plan::where('is_active', true)->where('is_archived', false)->count(),
+            'archived_plans' => Plan::where('is_archived', true)->count(),
+            'total_subscriptions' => Subscription::whereHas('plan')->count(),
         ];
 
         return view('livewire.plans.index', [

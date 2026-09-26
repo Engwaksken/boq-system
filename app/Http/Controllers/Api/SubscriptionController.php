@@ -20,8 +20,11 @@ class SubscriptionController extends Controller
 
         $subscriptions = Subscription::query()
             ->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id)
-                    ->orWhere('organisation_id', $user->organisation_id);
+                $q->where('user_id', $user->id);
+
+                if ($user->organisation_id !== null) {
+                    $q->orWhere('organisation_id', $user->organisation_id);
+                }
             })
             ->with('plan')
             ->latest()
@@ -106,7 +109,11 @@ class SubscriptionController extends Controller
     {
         $user = $request->user();
 
-        if ($subscription->user_id !== $user->id && $subscription->organisation_id !== $user->organisation_id) {
+        $personalAccess = $subscription->user_id === $user->id;
+        $organisationAccess = $user->organisation_id !== null
+            && $subscription->organisation_id === $user->organisation_id;
+
+        if (! $personalAccess && ! $organisationAccess) {
             return response()->json([
                 'success' => false,
                 'error_code' => 'FORBIDDEN',

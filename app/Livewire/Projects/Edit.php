@@ -97,11 +97,11 @@ class Edit extends Component
             'location' => ['nullable', 'string', 'max:255'],
             'projectType' => ['nullable', 'string', 'max:255'],
             'startDate' => ['nullable', 'date'],
-            'expectedCompletionDate' => ['nullable', 'date'],
-            'contractValue' => ['nullable', 'numeric'],
-            'currency' => ['required', 'string', 'max:10'],
+            'expectedCompletionDate' => ['nullable', 'date', 'after_or_equal:startDate'],
+            'contractValue' => ['nullable', 'numeric', 'min:0'],
+            'currency' => ['required', 'string', 'size:3'],
             'status' => ['required', 'string', 'in:draft,active,completed,archived'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:5000'],
         ]);
 
         $this->project->update([

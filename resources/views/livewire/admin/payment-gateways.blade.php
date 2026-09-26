@@ -1,179 +1,131 @@
-<div class="boq-page-stack">
-
-    <div class="boq-page-header">
-        <div>
-            <h1 class="boq-page-title"><i class="fas fa-credit-card"></i> Payment Gateways</h1>
-            <p class="boq-page-subtitle">Configure direct providers, ioTec Pay and other aggregators without editing JSON.</p>
+<div class="min-h-screen bg-slate-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900">Payment Gateways Management</h1>
+                <p class="mt-2 text-slate-600">Configure payment drivers, keys, and webhook settings.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('admin.index') }}" class="inline-flex items-center px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold rounded-lg transition">
+                    &larr; Back to Admin Panel
+                </a>
+                <button wire:click="create" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition shadow-sm">
+                    + Add Gateway
+                </button>
+            </div>
         </div>
-        <button wire:click="create" class="boq-btn-primary"><i class="fas fa-plus"></i> Add Gateway</button>
-    </div>
 
-    @include('livewire.admin._tabs')
+        @if (session()->has('message'))
+            <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm font-medium">
+                {{ session('message') }}
+            </div>
+        @endif
 
-    @if(session()->has('message'))
-        <div class="boq-flash"><i class="fas fa-circle-check"></i> {{ session('message') }}</div>
-    @endif
-
-    <div class="boq-stats-grid">
-        <div class="boq-stat-card boq-stat-green"><div><p class="boq-stat-label">Gateways</p><p class="boq-stat-value">{{ $stats['gateways'] }}</p></div><span class="boq-stat-icon"><i class="fas fa-credit-card"></i></span></div>
-        <div class="boq-stat-card boq-stat-blue"><div><p class="boq-stat-label">Active</p><p class="boq-stat-value">{{ $stats['active'] }}</p></div><span class="boq-stat-icon"><i class="fas fa-circle-check"></i></span></div>
-        <div class="boq-stat-card boq-stat-amber"><div><p class="boq-stat-label">Aggregators</p><p class="boq-stat-value">{{ $stats['aggregators'] }}</p></div><span class="boq-stat-icon"><i class="fas fa-diagram-project"></i></span></div>
-        <div class="boq-stat-card boq-stat-purple"><div><p class="boq-stat-label">Default Gateway</p><p class="boq-stat-value" style="font-size:1rem">{{ $stats['default'] }}</p></div><span class="boq-stat-icon"><i class="fas fa-star"></i></span></div>
-    </div>
-
-    <div class="boq-panel">
-        <div class="boq-table-wrapper">
-            <table class="boq-table">
-                <thead><tr><th>Name</th><th>Code</th><th>Driver</th><th>Status</th><th>Mode</th><th>Default</th><th class="text-right">Actions</th></tr></thead>
-                <tbody>
-                @forelse($gateways as $gateway)
-                    <tr wire:key="gateway-{{ $gateway->id }}">
-                        <td><div class="boq-table-title">{{ $gateway->name }}</div></td>
-                        <td><span class="boq-currency-badge">{{ $gateway->code }}</span></td>
-                        <td>{{ $driverOptions[$gateway->driver] ?? $gateway->driver }}</td>
-                        <td><span class="boq-badge {{ $gateway->is_active ? 'boq-badge-success' : '' }}">{{ $gateway->is_active ? 'Active' : 'Inactive' }}</span></td>
-                        <td><span class="boq-badge {{ $gateway->is_test_mode ? 'boq-badge-warning' : 'boq-badge-info' }}">{{ $gateway->is_test_mode ? 'Test' : 'Live' }}</span></td>
-                        <td>
-                            @if($gateway->is_default)
-                                <span class="boq-badge boq-badge-warning"><i class="fas fa-star"></i> Default</span>
-                            @else
-                                <button wire:click="setDefault({{ $gateway->id }})" class="boq-icon-btn" title="Set Default"><i class="far fa-star"></i></button>
-                            @endif
-                        </td>
-                        <td class="text-right">
-                            <div class="boq-table-actions">
-                                <button wire:click="edit({{ $gateway->id }})" class="boq-icon-btn" title="Edit"><i class="fas fa-pen"></i></button>
-                                <button wire:click="toggleActive({{ $gateway->id }})" class="boq-icon-btn" title="{{ $gateway->is_active ? 'Deactivate' : 'Activate' }}">
-                                    <i class="fas {{ $gateway->is_active ? 'fa-toggle-on' : 'fa-toggle-off' }}"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr><td colspan="7" class="boq-empty-table"><i class="fas fa-credit-card"></i><span>No payment gateways configured.</span></td></tr>
-                @endforelse
-                </tbody>
-            </table>
-        </div>
-        @if($gateways->hasPages())<div class="boq-pagination">{{ $gateways->links() }}</div>@endif
-    </div>
-
-    @if($showForm)
-        <div class="boq-modal-backdrop" wire:key="gateway-form-modal">
-            <div class="boq-modal boq-modal-xl">
-                <div class="boq-modal-head">
-                    <div>
-                        <h2>{{ $editingId ? 'Edit Payment Gateway' : 'Add Payment Gateway' }}</h2>
-                        <p class="boq-table-subtitle">Credentials remain encrypted and masked after saving.</p>
-                    </div>
-                    <button wire:click="cancel" class="boq-modal-close"><i class="fas fa-xmark"></i></button>
-                </div>
-
-                <form wire:submit.prevent="save">
-                    <div class="boq-modal-body">
-                        <div class="boq-form-grid">
-                            <div><label class="boq-field-label">Gateway Name</label><input wire:model="form.name" class="boq-field"></div>
-                            <div><label class="boq-field-label">Gateway Code</label><input wire:model="form.code" class="boq-field"></div>
-                            <div>
-                                <label class="boq-field-label">Provider / Driver</label>
-                                <select wire:model.live="form.driver" class="boq-field">
-                                    @foreach($driverOptions as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach
-                                </select>
-                            </div>
-                            <div><label class="boq-field-label">Timeout (seconds)</label><input type="number" wire:model="form.payment_timeout_seconds" class="boq-field"></div>
-                            <div class="boq-form-span-2"><label class="boq-field-label">Description</label><textarea wire:model="form.description" class="boq-field boq-textarea"></textarea></div>
-                            <div class="boq-form-span-2"><label class="boq-field-label">Webhook URL</label><input wire:model="form.webhook_url" class="boq-field"></div>
-                            <div><label class="boq-field-label">Currencies</label><input wire:model="supportedCurrenciesCsv" class="boq-field"></div>
-                            <div><label class="boq-field-label">Countries</label><input wire:model="supportedCountriesCsv" class="boq-field"></div>
-                            <div class="boq-form-span-2"><label class="boq-field-label">Payment Methods</label><input wire:model="supportedMethodsCsv" class="boq-field"></div>
+        @if($showForm)
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+                <h2 class="text-xl font-bold text-slate-900 mb-4">{{ $editingId ? 'Edit Payment Gateway' : 'New Payment Gateway' }}</h2>
+                <form wire:submit.prevent="save" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                            <input type="text" wire:model="form.name" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="e.g. Flutterwave">
+                            @error('form.name') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
                         </div>
 
-                        @if(in_array($form['driver'], ['iotec_pay', 'generic_aggregator'], true))
-                            <div class="boq-config-section">
-                                <h3><i class="fas fa-network-wired"></i> Aggregator Configuration</h3>
-
-                                <div class="boq-form-grid">
-                                    <div><label class="boq-field-label">Provider Name</label><input wire:model="config.provider_name" class="boq-field"></div>
-                                    <div><label class="boq-field-label">Base URL</label><input wire:model="config.base_url" class="boq-field"></div>
-                                    <div><label class="boq-field-label">Token / Auth URL</label><input wire:model="config.token_url" class="boq-field"></div>
-                                    <div><label class="boq-field-label">Collect URL</label><input wire:model="config.collect_url" class="boq-field"></div>
-                                    <div><label class="boq-field-label">Status URL</label><input wire:model="config.status_url" class="boq-field"></div>
-
-                                    @if($form['driver'] === 'generic_aggregator')
-                                        <div><label class="boq-field-label">Status by Reference URL</label><input wire:model="config.status_by_reference_url" class="boq-field"></div>
-                                        <div>
-                                            <label class="boq-field-label">Authentication Type</label>
-                                            <select wire:model="config.auth_type" class="boq-field">
-                                                <option value="oauth2_client_credentials">OAuth2 Client Credentials</option>
-                                                <option value="bearer">Bearer Token</option>
-                                                <option value="api_key">API Key</option>
-                                                <option value="basic">Basic Auth</option>
-                                                <option value="none">None</option>
-                                            </select>
-                                        </div>
-                                    @endif
-
-                                    <div><label class="boq-field-label">Client ID</label><input wire:model="config.client_id" class="boq-field"></div>
-                                    <div><label class="boq-field-label">Client Secret</label><input type="password" wire:model="config.client_secret" class="boq-field"></div>
-
-                                    @if($form['driver'] === 'iotec_pay')
-                                        <div><label class="boq-field-label">Wallet GUID / ID</label><input wire:model="config.wallet_guid" class="boq-field"></div>
-                                        <div><label class="boq-field-label">Channel</label><input wire:model="config.channel" class="boq-field"></div>
-                                        <div><label class="boq-field-label">Transaction Charges Category</label><input wire:model="config.transaction_charges_category" class="boq-field"></div>
-                                    @else
-                                        <div><label class="boq-field-label">API Key</label><input type="password" wire:model="config.api_key" class="boq-field"></div>
-                                        <div><label class="boq-field-label">Bearer Token</label><input type="password" wire:model="config.bearer_token" class="boq-field"></div>
-                                    @endif
-
-                                    <div><label class="boq-field-label">Callback URL</label><input wire:model="config.callback_url" class="boq-field"></div>
-                                    <div><label class="boq-field-label">Return URL</label><input wire:model="config.return_url" class="boq-field"></div>
-                                    <div><label class="boq-field-label">Currency</label><input wire:model="config.currency" class="boq-field"></div>
-
-                                    <div class="boq-form-span-2 boq-check-row">
-                                        <label><input type="checkbox" wire:model="config.supports_collection"> Collection</label>
-                                        <label><input type="checkbox" wire:model="config.supports_disbursement"> Disbursement</label>
-                                        <label><input type="checkbox" wire:model="config.supports_mtn"> MTN</label>
-                                        <label><input type="checkbox" wire:model="config.supports_airtel"> Airtel</label>
-                                    </div>
-                                </div>
-                            </div>
-                        @else
-                            <div class="boq-config-section">
-                                <h3><i class="fas fa-sliders"></i> Provider Configuration</h3>
-                                <div class="boq-form-grid">
-                                    @foreach($config as $key => $value)
-                                        @if(!is_array($value))
-                                            <div>
-                                                <label class="boq-field-label">{{ ucwords(str_replace('_', ' ', $key)) }}</label>
-                                                <input
-                                                    @if(str_contains(strtolower($key), 'secret') || str_contains(strtolower($key), 'key') || str_contains(strtolower($key), 'token')) type="password" @endif
-                                                    wire:model="config.{{ $key }}"
-                                                    class="boq-field"
-                                                >
-                                            </div>
-                                        @endif
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
-
-                        <div class="boq-check-row" style="margin-top:1rem">
-                            <label><input type="checkbox" wire:model="form.is_active"> Active</label>
-                            <label><input type="checkbox" wire:model="form.is_default"> Default Gateway</label>
-                            <label><input type="checkbox" wire:model="form.is_test_mode"> Sandbox / Test Mode</label>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Code (Unique)</label>
+                            <input type="text" wire:model="form.code" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="e.g. flutterwave">
+                            @error('form.code') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
                         </div>
 
-                        @if($errors->any())
-                            <div class="boq-flash boq-flash-error" style="margin-top:1rem">{{ $errors->first() }}</div>
-                        @endif
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Driver</label>
+                            <input type="text" wire:model="form.driver" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="e.g. stripe">
+                            @error('form.driver') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Timeout (Seconds)</label>
+                            <input type="number" wire:model="form.payment_timeout_seconds" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="900">
+                            @error('form.payment_timeout_seconds') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                            <textarea wire:model="form.description" rows="2" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="Description of the payment gateway"></textarea>
+                            @error('form.description') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Webhook URL</label>
+                            <input type="text" wire:model="form.webhook_url" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="https://boq.kemmytech.com/api/v1/payments/webhook">
+                            @error('form.webhook_url') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="flex items-center gap-6 pt-2">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" wire:model="form.is_active" class="rounded border-slate-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 h-4 w-4">
+                                <span class="ml-2 text-sm font-medium text-slate-700">Active</span>
+                            </label>
+
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" wire:model="form.is_test_mode" class="rounded border-slate-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 h-4 w-4">
+                                <span class="ml-2 text-sm font-medium text-slate-700">Test Mode</span>
+                            </label>
+                        </div>
                     </div>
 
-                    <div class="boq-modal-foot">
-                        <button type="button" wire:click="cancel" class="boq-btn-secondary">Cancel</button>
-                        <button class="boq-btn-primary"><i class="fas fa-save"></i> Save Gateway</button>
+                    <div class="flex justify-end gap-3 pt-4 border-t border-slate-200">
+                        <button type="button" wire:click="cancel" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg text-sm transition">Cancel</button>
+                        <button type="submit" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg shadow-sm transition text-sm">Save Gateway</button>
                     </div>
                 </form>
             </div>
+        @endif
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Code</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Driver</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Mode</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                    @forelse($gateways as $gateway)
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-4 py-3 text-sm font-medium text-slate-900">{{ $gateway->name }}</td>
+                            <td class="px-4 py-3 text-sm text-slate-600 font-mono">{{ $gateway->code }}</td>
+                            <td class="px-4 py-3 text-sm text-slate-600">{{ $gateway->driver }}</td>
+                            <td class="px-4 py-3 text-sm">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $gateway->is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800' }}">
+                                    {{ $gateway->is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $gateway->is_test_mode ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800' }}">
+                                    {{ $gateway->is_test_mode ? 'Test' : 'Live' }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-right space-x-2">
+                                <button wire:click="edit({{ $gateway->id }})" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Edit</button>
+                                <button wire:click="toggleActive({{ $gateway->id }})" class="text-sm font-medium text-slate-600 hover:text-slate-800">{{ $gateway->is_active ? 'Deactivate' : 'Activate' }}</button>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-4 py-8 text-center text-slate-500">No payment gateways configured.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+            <div class="p-4 border-t border-slate-200">
+                {{ $gateways->links() }}
+            </div>
         </div>
-    @endif
+    </div>
 </div>

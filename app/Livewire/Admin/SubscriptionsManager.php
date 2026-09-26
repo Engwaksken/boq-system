@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Transaction;
+use App\Models\User;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -22,6 +23,16 @@ class SubscriptionsManager extends Component
 
     public array $perPageOptions = [10, 20, 50, 100];
 
+    private const SORTABLE = [
+        'user.name',
+        'plan.name',
+        'status',
+        'amount',
+        'start_date',
+        'end_date',
+        'created_at',
+    ];
+
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -34,72 +45,76 @@ class SubscriptionsManager extends Component
 
     public function updatedPerPage(): void
     {
+        if (! in_array($this->perPage, $this->perPageOptions, true)) {
+            $this->perPage = 20;
+        }
+
         $this->resetPage();
     }
 
     public function sortBy(string $field): void
     {
-        abort_unless(in_array($field, ['created_at', 'status', 'start_date', 'end_date', 'payment_status'], true), 422);
+        if (! in_array($field, self::SORTABLE, true)) {
+            return;
+        }
+
         if ($this->sortBy === $field) {
             $this->sortDir = $this->sortDir === 'asc' ? 'desc' : 'asc';
         } else {
             $this->sortBy = $field;
             $this->sortDir = 'asc';
         }
-    }
 
-
-    public function suspend(int $id): void
-    {
-        $subscription = Subscription::findOrFail($id);
-        $subscription->update(['status' => 'suspended']);
-        $subscription->entitlements()->update(['status' => 'suspended']);
-        session()->flash('message', 'Subscription suspended.');
-    }
-
-    public function reactivate(int $id): void
-    {
-        $subscription = Subscription::findOrFail($id);
-        $subscription->update(['status' => 'active']);
-        $subscription->entitlements()->update(['status' => 'active']);
-        session()->flash('message', 'Subscription reactivated.');
-    }
-
-    public function cancelSubscription(int $id): void
-    {
-        $subscription = Subscription::findOrFail($id);
-        $subscription->update(['status' => 'cancelled', 'cancellation_date' => now(), 'auto_renewal' => false]);
-        $subscription->entitlements()->update(['status' => 'revoked']);
-        session()->flash('message', 'Subscription cancelled. User data was preserved.');
-    }
-
-    public function extend(int $id, int $days = 30): void
-    {
-        abort_unless(in_array($days, [7, 30, 90, 365], true), 422);
-        $subscription = Subscription::findOrFail($id);
-        $base = $subscription->end_date && $subscription->end_date->isFuture() ? $subscription->end_date->copy() : now();
-        $subscription->end_date = $base->addDays($days);
-        $subscription->renewal_date = $subscription->end_date->copy();
-        $subscription->save();
-        $subscription->entitlements()->update(['expires_at' => $subscription->end_date]);
-        session()->flash('message', "Subscription extended by {$days} days.");
+        $this->resetPage();
     }
 
     public function render()
     {
-        $subscriptions = Subscription::query()
-            ->when($this->search, fn ($q) => $q->whereHas('user', fn ($q) => $q->where('name', 'like', "%{$this->search}%")->orWhere('email', 'like', "%{$this->search}%")))
-            ->when($this->statusFilter !== 'all', fn ($q) => $q->where('status', $this->statusFilter))
-            ->with(['user', 'plan'])
-            ->orderBy($this->sortBy, $this->sortDir)
-            ->paginate($this->perPage);
+        $query = Subscription::query()
+            ->when($this->search !== '', function ($query): void {
+                $search = '%' . trim($this->search) . '%';
+
+                $query->where(function ($inner) use ($search): void {
+                    $inner
+                        ->whereHas('user', fn ($user) => $user
+                            ->where('name', 'like', $search)
+                            ->orWhere('email', 'like', $search))
+                        ->orWhereHas('plan', fn ($plan) => $plan->where('name', 'like', $search));
+                });
+            })
+            ->when(
+                $this->statusFilter !== 'all',
+                fn ($query) => $query->where('status', $this->statusFilter)
+            )
+            ->with(['user', 'plan']);
+
+        match ($this->sortBy) {
+            'user.name' => $query->orderBy(
+                User::select('name')->whereColumn('users.id', 'subscriptions.user_id'),
+                $this->sortDir
+            ),
+            'plan.name' => $query->orderBy(
+                Plan::select('name')->whereColumn('plans.id', 'subscriptions.plan_id'),
+                $this->sortDir
+            ),
+            'amount' => $query->orderBy(
+                Plan::select('price')->whereColumn('plans.id', 'subscriptions.plan_id'),
+                $this->sortDir
+            ),
+            default => $query->orderBy($this->sortBy, $this->sortDir),
+        };
+
+        $subscriptions = $query->paginate($this->perPage);
 
         $stats = [
-            'total' => Subscription::count(),
-            'active' => Subscription::where('status', 'active')->count(),
-            'expired' => Subscription::where('status', 'expired')->count(),
-            'cancelled' => Subscription::where('status', 'cancelled')->count(),
-            'revenue' => Transaction::where('status', 'successful')->sum('amount'),
+            'total' => Subscription::query()->count(),
+            'active' => Subscription::query()->where('status', 'active')->count(),
+            'expired' => Subscription::query()->where('status', 'expired')->count(),
+            'cancelled' => Subscription::query()->where('status', 'cancelled')->count(),
+            'revenue' => Transaction::query()
+                ->where('status', 'successful')
+                ->whereBetween('completed_at', [now()->startOfMonth(), now()->endOfMonth()])
+                ->sum('amount'),
         ];
 
         return view('livewire.admin.subscriptions-manager', [

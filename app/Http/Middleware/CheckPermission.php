@@ -18,42 +18,31 @@ class CheckPermission
         $user = $request->user();
 
         if (! $user) {
-            if ($request->expectsJson() || $request->is('api/*')) {
-                return response()->json([
-                    'success' => false,
-                    'error_code' => 'UNAUTHENTICATED',
-                    'message' => __('auth.unauthenticated'),
-                ], 401);
-            }
-
-            abort(401, __('auth.unauthenticated'));
+            return $this->deny($request, 401, 'UNAUTHENTICATED', __('auth.unauthenticated'));
         }
 
-        /*
-         * Super Admin bypass.
-         *
-         * Super Admin should not depend on every individual permission
-         * being manually attached.
-         */
-        if ($user->hasRole('super_admin')) {
+        // One canonical Super Admin check supports both legacy slugs.
+        if ($user->isSuperAdmin()) {
             return $next($request);
         }
 
-        /*
-         * Normal permission enforcement.
-         */
         if (! $user->hasAllPermissions($permissions)) {
-            if ($request->expectsJson() || $request->is('api/*')) {
-                return response()->json([
-                    'success' => false,
-                    'error_code' => 'FORBIDDEN',
-                    'message' => __('auth.forbidden'),
-                ], 403);
-            }
-
-            abort(403, __('auth.forbidden'));
+            return $this->deny($request, 403, 'FORBIDDEN', __('auth.forbidden'));
         }
 
         return $next($request);
+    }
+
+    private function deny(Request $request, int $status, string $code, string $message): Response
+    {
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => false,
+                'error_code' => $code,
+                'message' => $message,
+            ], $status);
+        }
+
+        abort($status, $message);
     }
 }

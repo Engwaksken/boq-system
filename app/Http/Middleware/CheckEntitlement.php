@@ -31,7 +31,7 @@ class CheckEntitlement
         }
 
         // Super admin bypasses entitlement checks.
-        if ($user->hasRole('super-admin')) {
+        if ($user->isSuperAdmin()) {
             return $next($request);
         }
 
