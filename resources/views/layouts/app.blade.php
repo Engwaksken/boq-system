@@ -74,13 +74,13 @@
             'show' => $authUser->hasPermission('boq.view'),
             'icon' => 'fa-file-invoice-dollar',
         ],
-        [
-            'label' => 'Hardware Prices',
-            'url' => url('/hardware-prices'),
-            'active' => request()->is('hardware-prices*'),
-            'show' => $authUser->hasPermission('hardware-prices.view'),
-            'icon' => 'fa-tags',
-        ],
+      [
+    'label' => 'Hardware & Factory Prices',
+    'url' => url('/hardware-prices'),
+    'active' => request()->is('hardware-prices*'),
+    'show' => $authUser->hasPermission('hardware-prices.view'),
+    'icon' => 'fa-tags',
+],
         [
             'label' => 'Plans',
             'url' => url('/plans'),
