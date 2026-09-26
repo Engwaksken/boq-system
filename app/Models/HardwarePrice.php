@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,12 +13,17 @@ class HardwarePrice extends Model
 {
     use HasFactory;
 
+    public const TYPE_HARDWARE = 'hardware';
+
+    public const TYPE_FACTORY = 'factory';
+
     protected $fillable = [
         'organisation_id',
         'hardware_category_id',
         'item_name',
         'brand',
         'category',
+        'price_type',
         'specification',
         'unit',
         'price',
@@ -39,7 +46,9 @@ class HardwarePrice extends Model
 
     public function organisation(): BelongsTo
     {
-        return $this->belongsTo(Organisation::class);
+        return $this->belongsTo(
+            Organisation::class
+        );
     }
 
     public function hardwareCategory(): BelongsTo
@@ -51,23 +60,45 @@ class HardwarePrice extends Model
 
     public function priceHistories(): HasMany
     {
-        return $this->hasMany(PriceHistory::class);
+        return $this->hasMany(
+            PriceHistory::class
+        );
     }
 
     public function boqItems(): HasMany
     {
-        return $this->hasMany(BoqItem::class);
+        return $this->hasMany(
+            BoqItem::class
+        );
     }
 
     public function latestHistory(): HasMany
     {
-        return $this->hasMany(PriceHistory::class)
-            ->latest('recorded_at');
+        return $this
+            ->hasMany(
+                PriceHistory::class
+            )
+            ->latest(
+                'recorded_at'
+            );
     }
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where(
+            'is_active',
+            true
+        );
+    }
+
+    public function scopeByPriceType(
+        $query,
+        string $priceType
+    ) {
+        return $query->where(
+            'price_type',
+            $priceType
+        );
     }
 
     public function scopeByCategory(
@@ -81,7 +112,10 @@ class HardwarePrice extends Model
             );
         }
 
-        return $query->where('category', $category);
+        return $query->where(
+            'category',
+            $category
+        );
     }
 
     public function scopeBySupplier(
@@ -149,10 +183,25 @@ class HardwarePrice extends Model
         );
     }
 
+    public function getPriceTypeLabelAttribute(): string
+    {
+        return match (
+            $this->price_type
+        ) {
+            self::TYPE_FACTORY =>
+                'Factory Price',
+
+            default =>
+                'Hardware Price',
+        };
+    }
+
     public function getLowestPriceAttribute(): float
     {
         return (float) (
-            $this->priceHistories()->min('price')
+            $this
+                ->priceHistories()
+                ->min('price')
             ?? $this->price
         );
     }
@@ -160,7 +209,9 @@ class HardwarePrice extends Model
     public function getHighestPriceAttribute(): float
     {
         return (float) (
-            $this->priceHistories()->max('price')
+            $this
+                ->priceHistories()
+                ->max('price')
             ?? $this->price
         );
     }
@@ -168,7 +219,9 @@ class HardwarePrice extends Model
     public function getAveragePriceAttribute(): float
     {
         return (float) (
-            $this->priceHistories()->avg('price')
+            $this
+                ->priceHistories()
+                ->avg('price')
             ?? $this->price
         );
     }

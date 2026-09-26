@@ -1,112 +1,354 @@
 @import "tailwindcss";
 
+/* ============================================================
+   BOQ SYSTEM
+   Dashboard / Admin styles only
+   All custom dashboard styling is scoped under .boq-app-shell
+   so authentication/public pages are not affected.
+   ============================================================ */
+
 :root {
     --boq-primary: #05645b;
     --boq-primary-dark: #044f48;
+    --boq-primary-soft: #e9f5f2;
+    --boq-primary-lighter: #f3faf8;
+
     --boq-accent: #d7df21;
+
+    --boq-bg: #f3f6f9;
     --boq-surface: #ffffff;
-    --boq-bg: #f8fafc;
+    --boq-surface-soft: #f8fafc;
+
     --boq-border: #dbe3ea;
+    --boq-border-dark: #cbd5e1;
+
     --boq-text: #0f172a;
-    --boq-muted: #64748b;
-    --boq-danger: #dc2626;
-    --boq-warning: #d97706;
+    --boq-text-muted: #64748b;
+    --boq-text-soft: #94a3b8;
+
     --boq-success: #059669;
-    --boq-field-height: 42px;
+    --boq-info: #2563eb;
+    --boq-warning: #d97706;
+    --boq-danger: #dc2626;
+    --boq-purple: #7c3aed;
+
+    --boq-radius-sm: 8px;
     --boq-radius: 10px;
+    --boq-radius-lg: 14px;
+
+    --boq-shadow:
+        0 1px 2px rgba(15, 23, 42, .05),
+        0 1px 3px rgba(15, 23, 42, .04);
+
+    --boq-shadow-hover:
+        0 10px 28px rgba(15, 23, 42, .08);
+
+    --boq-field-height: 42px;
 }
 
 [x-cloak] {
     display: none !important;
 }
 
-html {
-    background: var(--boq-bg);
-    color: var(--boq-text);
-    scroll-behavior: smooth;
-}
+/* ============================================================
+   APPLICATION SHELL
+   ============================================================ */
 
-body {
+.boq-app-shell {
     min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
     background: var(--boq-bg);
     color: var(--boq-text);
 }
 
-/* Consistent production form controls */
-input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
-select {
-    min-height: var(--boq-field-height);
-    border-radius: var(--boq-radius);
-    border-color: #cbd5e1;
-    background-color: #fff;
+.boq-app-shell *,
+.boq-app-shell *::before,
+.boq-app-shell *::after {
+    box-sizing: border-box;
+}
+
+.boq-app-shell button,
+.boq-app-shell input,
+.boq-app-shell select,
+.boq-app-shell textarea {
+    font: inherit;
+}
+
+/* ============================================================
+   PAGE STRUCTURE
+   ============================================================ */
+
+.boq-app-shell .boq-page-stack,
+.boq-app-shell .boq-subscriptions-page {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.boq-app-shell .boq-page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.boq-app-shell .boq-page-title {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.45rem;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.boq-app-shell .boq-page-title i {
+    color: var(--boq-primary);
+}
+
+.boq-app-shell .boq-page-subtitle {
+    margin-top: .25rem;
+    color: var(--boq-text-muted);
     font-size: .875rem;
-    color: var(--boq-text);
+    line-height: 1.45;
 }
 
-textarea {
-    min-height: 96px;
-    border-radius: var(--boq-radius);
-    border-color: #cbd5e1;
-    background-color: #fff;
-    font-size: .875rem;
-    color: var(--boq-text);
-    resize: vertical;
+.boq-app-shell .boq-muted {
+    color: var(--boq-text-muted);
 }
 
-input::placeholder,
-textarea::placeholder {
-    color: #94a3b8;
-    opacity: 1;
-}
+/* ============================================================
+   PANELS
+   ============================================================ */
 
-input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
-select:focus,
-textarea:focus {
-    border-color: var(--boq-primary) !important;
-    box-shadow: 0 0 0 3px rgb(5 100 91 / 12%) !important;
-    outline: none !important;
-}
-
-input:disabled,
-select:disabled,
-textarea:disabled {
-    cursor: not-allowed;
-    background: #f1f5f9;
-    color: #64748b;
-}
-
-/* Shared application components */
-.boq-panel {
+.boq-app-shell .boq-panel {
     border: 1px solid var(--boq-border);
-    border-radius: 14px;
+    border-radius: var(--boq-radius-lg);
     background: var(--boq-surface);
-    box-shadow: 0 1px 2px rgb(15 23 42 / 5%);
+    box-shadow: var(--boq-shadow);
 }
 
-.boq-field-label {
+.boq-app-shell .boq-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--boq-border);
+}
+
+.boq-app-shell .boq-panel-body {
+    padding: 1rem;
+}
+
+/* ============================================================
+   STATISTICS
+   ============================================================ */
+
+.boq-app-shell .boq-stats-grid,
+.boq-app-shell .boq-plans-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .8rem;
+}
+
+.boq-app-shell .boq-plans-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.boq-app-shell .boq-stat-card {
+    position: relative;
+    display: flex;
+    min-height: 88px;
+    align-items: center;
+    justify-content: space-between;
+    overflow: hidden;
+    border: 1px solid var(--boq-border);
+    border-left-width: 4px;
+    border-radius: 14px;
+    background: #fff;
+    padding: .9rem 1rem;
+    box-shadow: var(--boq-shadow);
+}
+
+.boq-app-shell .boq-stat-green {
+    border-left-color: var(--boq-success);
+}
+
+.boq-app-shell .boq-stat-blue {
+    border-left-color: var(--boq-info);
+}
+
+.boq-app-shell .boq-stat-amber {
+    border-left-color: var(--boq-warning);
+}
+
+.boq-app-shell .boq-stat-purple {
+    border-left-color: var(--boq-purple);
+}
+
+.boq-app-shell .boq-stat-red {
+    border-left-color: var(--boq-danger);
+}
+
+.boq-app-shell .boq-stat-label {
+    margin: 0;
+    color: var(--boq-text-muted);
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .035em;
+    text-transform: uppercase;
+}
+
+.boq-app-shell .boq-stat-value {
+    margin-top: .28rem;
+    color: #0f172a;
+    font-size: 1.45rem;
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+.boq-app-shell .boq-stat-icon {
+    display: inline-flex;
+    width: 38px;
+    height: 38px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: var(--boq-primary);
+    font-size: 1rem;
+}
+
+/* ============================================================
+   FORMS
+   ============================================================ */
+
+.boq-app-shell .boq-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .9rem;
+}
+
+.boq-app-shell .boq-form-span-2 {
+    grid-column: span 2;
+}
+
+.boq-app-shell .boq-field-label {
     display: block;
     margin-bottom: .35rem;
     color: #334155;
-    font-size: .8rem;
+    font-size: .75rem;
     font-weight: 700;
 }
 
-.boq-field-help {
-    margin-top: .3rem;
-    color: var(--boq-muted);
-    font-size: .75rem;
+.boq-app-shell .boq-field {
+    width: 100%;
+    height: var(--boq-field-height);
+    min-height: var(--boq-field-height);
+    border: 1px solid var(--boq-border-dark);
+    border-radius: var(--boq-radius);
+    background: #fff;
+    padding: 0 .8rem;
+    color: var(--boq-text);
+    font-size: .84rem;
+    outline: none;
+    transition:
+        border-color .15s ease,
+        box-shadow .15s ease,
+        background .15s ease;
 }
 
-.boq-field-error {
+.boq-app-shell textarea.boq-field,
+.boq-app-shell .boq-textarea {
+    height: auto;
+    min-height: 96px;
+    padding: .7rem .8rem;
+    line-height: 1.45;
+    resize: vertical;
+}
+
+.boq-app-shell select.boq-field {
+    padding-right: 2rem;
+}
+
+.boq-app-shell .boq-field::placeholder {
+    color: var(--boq-text-soft);
+    opacity: 1;
+}
+
+.boq-app-shell .boq-field:focus {
+    border-color: var(--boq-primary);
+    box-shadow: 0 0 0 3px rgba(5, 100, 91, .12);
+}
+
+.boq-app-shell .boq-field:disabled {
+    cursor: not-allowed;
+    background: #f1f5f9;
+    color: #94a3b8;
+}
+
+.boq-app-shell .boq-field-error {
     margin-top: .3rem;
     color: var(--boq-danger);
-    font-size: .78rem;
+    font-size: .72rem;
     font-weight: 600;
 }
 
-.boq-btn-primary,
-.boq-btn-secondary,
-.boq-btn-danger {
+.boq-app-shell .boq-field-help,
+.boq-app-shell .hardware-help {
+    margin-top: .35rem;
+    color: var(--boq-text-muted);
+    font-size: .72rem;
+    line-height: 1.45;
+}
+
+.boq-app-shell .boq-input-icon-wrap {
+    position: relative;
+}
+
+.boq-app-shell .boq-input-icon {
+    position: absolute;
+    top: 50%;
+    left: .8rem;
+    z-index: 2;
+    transform: translateY(-50%);
+    color: var(--boq-text-soft);
+    font-size: .75rem;
+    pointer-events: none;
+}
+
+.boq-app-shell .boq-field-with-icon {
+    padding-left: 2.25rem;
+}
+
+.boq-app-shell input[type="checkbox"],
+.boq-app-shell input[type="radio"] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--boq-primary);
+}
+
+.boq-app-shell input[type="file"] {
+    width: 100%;
+    border: 1px solid var(--boq-border-dark);
+    border-radius: 10px;
+    background: #fff;
+    padding: .55rem;
+    color: #475569;
+    font-size: .8rem;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.boq-app-shell .boq-btn-primary,
+.boq-app-shell .boq-btn-secondary,
+.boq-app-shell .boq-btn-danger {
     display: inline-flex;
     min-height: 40px;
     align-items: center;
@@ -117,124 +359,857 @@ textarea:disabled {
     font-size: .82rem;
     font-weight: 700;
     line-height: 1;
-    transition: background-color .15s ease, border-color .15s ease, opacity .15s ease;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        background .15s ease,
+        border-color .15s ease,
+        color .15s ease,
+        transform .15s ease;
 }
 
-.boq-btn-primary {
+.boq-app-shell .boq-btn-primary {
     border: 1px solid var(--boq-primary);
     background: var(--boq-primary);
     color: #fff;
 }
 
-.boq-btn-primary:hover {
+.boq-app-shell .boq-btn-primary:hover {
+    border-color: var(--boq-primary-dark);
     background: var(--boq-primary-dark);
 }
 
-.boq-btn-secondary {
-    border: 1px solid #cbd5e1;
+.boq-app-shell .boq-btn-secondary {
+    border: 1px solid var(--boq-border-dark);
     background: #fff;
     color: #334155;
 }
 
-.boq-btn-secondary:hover {
+.boq-app-shell .boq-btn-secondary:hover {
+    border-color: #94a3b8;
     background: #f8fafc;
 }
 
-.boq-btn-danger {
+.boq-app-shell .boq-btn-danger {
     border: 1px solid var(--boq-danger);
     background: var(--boq-danger);
     color: #fff;
 }
 
-.boq-btn-primary:disabled,
-.boq-btn-secondary:disabled,
-.boq-btn-danger:disabled {
+.boq-app-shell .boq-btn-primary:disabled,
+.boq-app-shell .boq-btn-secondary:disabled,
+.boq-app-shell .boq-btn-danger:disabled {
     cursor: wait;
     opacity: .55;
 }
 
-.boq-table-wrapper {
+/* ============================================================
+   FILTERS / SORTING
+   ============================================================ */
+
+.boq-app-shell .boq-plans-index-filter {
+    display: grid;
+    grid-template-columns:
+        minmax(260px, 1.5fr)
+        120px
+        minmax(280px, 1fr);
+    gap: .9rem;
+    align-items: end;
+    padding: 1rem;
+}
+
+.boq-app-shell .boq-sort-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+}
+
+.boq-app-shell .boq-sort-button {
+    display: inline-flex;
+    min-height: 40px;
+    align-items: center;
+    gap: .35rem;
+    border: 1px solid var(--boq-border-dark);
+    border-radius: 8px;
+    background: #fff;
+    padding: 0 .7rem;
+    color: #475569;
+    font-size: .75rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.boq-app-shell .boq-sort-button:hover,
+.boq-app-shell .boq-sort-button.is-active {
+    border-color: var(--boq-primary);
+    background: var(--boq-primary-soft);
+    color: var(--boq-primary);
+}
+
+/* ============================================================
+   PLAN CARDS
+   ============================================================ */
+
+.boq-app-shell .boq-plan-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.boq-app-shell .boq-plan-card {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--boq-border);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: var(--boq-shadow);
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        border-color .18s ease;
+}
+
+.boq-app-shell .boq-plan-card:hover {
+    transform: translateY(-2px);
+    border-color: #b9cdc8;
+    box-shadow: var(--boq-shadow-hover);
+}
+
+.boq-app-shell .boq-plan-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .8rem;
+    padding: 1rem 1rem .65rem;
+}
+
+.boq-app-shell .boq-plan-heading-copy {
+    min-width: 0;
+}
+
+.boq-app-shell .boq-plan-main-icon {
+    display: inline-flex;
+    width: 38px;
+    height: 38px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: .65rem;
+    border-radius: 10px;
+    background: var(--boq-primary-soft);
+    color: var(--boq-primary);
+}
+
+.boq-app-shell .boq-plan-name {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.boq-app-shell .boq-plan-description {
+    margin-top: .3rem;
+    color: var(--boq-text-muted);
+    font-size: .78rem;
+    line-height: 1.45;
+}
+
+.boq-app-shell .boq-plan-type {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: .3rem;
+    border-radius: 999px;
+    background: #f1f5f9;
+    padding: .35rem .55rem;
+    color: #475569;
+    font-size: .68rem;
+    font-weight: 700;
+}
+
+.boq-app-shell .boq-plan-price {
+    display: flex;
+    align-items: baseline;
+    gap: .35rem;
+    padding: .25rem 1rem;
+}
+
+.boq-app-shell .boq-plan-currency {
+    color: var(--boq-text-muted);
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.boq-app-shell .boq-plan-price-value {
+    color: var(--boq-primary);
+    font-size: 1.65rem;
+    font-weight: 800;
+}
+
+.boq-app-shell .boq-plan-duration {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .35rem 1rem .8rem;
+    color: var(--boq-text-muted);
+    font-size: .76rem;
+}
+
+.boq-app-shell .boq-plan-limits {
+    margin: 0 1rem;
+    border: 1px solid #e7edf2;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.boq-app-shell .boq-plan-limits-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.boq-app-shell .boq-plan-limit {
+    padding: .75rem .55rem;
+    text-align: center;
+}
+
+.boq-app-shell .boq-plan-limit + .boq-plan-limit {
+    border-left: 1px solid #e2e8f0;
+}
+
+.boq-app-shell .boq-plan-limit-label {
+    color: var(--boq-text-muted);
+    font-size: .68rem;
+    font-weight: 700;
+}
+
+.boq-app-shell .boq-plan-limit-value {
+    margin-top: .25rem;
+    color: #0f172a;
+    font-size: .95rem;
+    font-weight: 800;
+}
+
+.boq-app-shell .boq-plan-features {
+    padding: 1rem;
+}
+
+.boq-app-shell .boq-plan-features-title {
+    margin-bottom: .55rem;
+    color: #334155;
+    font-size: .75rem;
+    font-weight: 800;
+}
+
+.boq-app-shell .boq-plan-feature-list {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+}
+
+.boq-app-shell .boq-plan-feature {
+    display: flex;
+    align-items: flex-start;
+    gap: .5rem;
+    color: #475569;
+    font-size: .76rem;
+}
+
+.boq-app-shell .boq-plan-feature-check {
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: .6rem;
+}
+
+.boq-app-shell .boq-plan-more-features {
+    margin-top: .6rem;
+    color: var(--boq-primary);
+    font-size: .72rem;
+    font-weight: 700;
+}
+
+.boq-app-shell .boq-plan-trial {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin: 0 1rem .8rem;
+    border-radius: 8px;
+    background: #fffbeb;
+    padding: .6rem .7rem;
+    color: #92400e;
+    font-size: .74rem;
+    font-weight: 700;
+}
+
+.boq-app-shell .boq-plan-action {
+    margin-top: auto;
+    padding: .8rem 1rem 1rem;
+}
+
+.boq-app-shell .boq-plan-choose-button {
+    display: flex;
+    width: 100%;
+    min-height: 40px;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    border-radius: 9px;
+    background: var(--boq-primary);
+    color: #fff;
+    font-size: .8rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.boq-app-shell .boq-plan-choose-button:hover {
+    background: var(--boq-primary-dark);
+}
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+
+.boq-app-shell .boq-table-wrapper {
     width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 }
 
-.boq-table {
+.boq-app-shell .boq-table {
     width: 100%;
-    min-width: 780px;
+    min-width: 760px;
     border-collapse: collapse;
 }
 
-.boq-table th {
+.boq-app-shell .boq-table th {
     border-bottom: 1px solid var(--boq-border);
     background: #f8fafc;
     padding: .7rem .8rem;
     color: #475569;
-    font-size: .7rem;
+    font-size: .68rem;
     font-weight: 800;
-    letter-spacing: .035em;
+    letter-spacing: .04em;
     text-align: left;
     text-transform: uppercase;
     white-space: nowrap;
 }
 
-.boq-table td {
+.boq-app-shell .boq-table td {
     border-bottom: 1px solid #edf2f7;
     padding: .72rem .8rem;
     color: #334155;
-    font-size: .82rem;
-    vertical-align: top;
+    font-size: .8rem;
+    vertical-align: middle;
 }
 
-.boq-table tbody tr:hover {
-    background: #fbfdfd;
+.boq-app-shell .boq-table tbody tr:hover {
+    background: #fafdfc;
 }
 
-.boq-pagination {
-    border-top: 1px solid var(--boq-border);
-    padding: .9rem 1rem;
+.boq-app-shell .boq-table-title {
+    color: #0f172a;
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+.boq-app-shell .boq-table-subtitle {
+    margin-top: .15rem;
+    color: var(--boq-text-muted);
+    font-size: .7rem;
+}
+
+.boq-app-shell .boq-table-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+}
+
+.boq-app-shell .boq-empty-table {
+    padding: 2.5rem !important;
+    text-align: center;
+    color: var(--boq-text-muted) !important;
+}
+
+.boq-app-shell .boq-empty-table i {
+    display: block;
+    margin-bottom: .5rem;
+    font-size: 1.5rem;
+    color: #cbd5e1;
+}
+
+/* ============================================================
+   BADGES
+   ============================================================ */
+
+.boq-app-shell .boq-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    border-radius: 999px;
+    background: #f1f5f9;
+    padding: .3rem .55rem;
+    color: #475569;
+    font-size: .68rem;
+    font-weight: 700;
+}
+
+.boq-app-shell .boq-badge-success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.boq-app-shell .boq-badge-info {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.boq-app-shell .boq-badge-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.boq-app-shell .boq-badge-factory {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+/* ============================================================
+   ICON BUTTONS
+   ============================================================ */
+
+.boq-app-shell .boq-icon-btn {
+    display: inline-flex;
+    width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--boq-border);
+    border-radius: 8px;
     background: #fff;
+    color: #475569;
+    cursor: pointer;
 }
 
-.boq-flash {
+.boq-app-shell .boq-icon-btn:hover {
+    border-color: var(--boq-primary);
+    color: var(--boq-primary);
+}
+
+.boq-app-shell .boq-icon-danger {
+    color: var(--boq-danger);
+}
+
+/* ============================================================
+   FLASH
+   ============================================================ */
+
+.boq-app-shell .boq-flash {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
     border: 1px solid #a7f3d0;
     border-radius: 10px;
     background: #ecfdf5;
     padding: .75rem 1rem;
     color: #065f46;
-    font-size: .85rem;
+    font-size: .82rem;
 }
 
-.boq-flash-error {
+.boq-app-shell .boq-flash-error {
     border-color: #fecaca;
     background: #fef2f2;
     color: #991b1b;
 }
 
-.boq-flash-warning {
-    border-color: #fde68a;
-    background: #fffbeb;
-    color: #92400e;
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+
+.boq-app-shell .boq-empty-state {
+    padding: 2.5rem 1rem;
+    text-align: center;
 }
 
-/* Prevent long references/API messages from breaking layouts */
-.break-anywhere {
-    overflow-wrap: anywhere;
-    word-break: break-word;
+.boq-app-shell .boq-empty-icon {
+    display: inline-flex;
+    width: 46px;
+    height: 46px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: .7rem;
+    border-radius: 12px;
+    background: var(--boq-primary-soft);
+    color: var(--boq-primary);
 }
 
-/* Accessible keyboard focus */
-a:focus-visible,
-button:focus-visible,
-[role="button"]:focus-visible {
-    outline: 3px solid rgb(5 100 91 / 25%);
+.boq-app-shell .boq-empty-title {
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.boq-app-shell .boq-empty-description {
+    margin-top: .25rem;
+    color: var(--boq-text-muted);
+    font-size: .8rem;
+}
+
+/* ============================================================
+   MODALS
+   ============================================================ */
+
+.boq-app-shell .boq-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, .65);
+    backdrop-filter: blur(3px);
+}
+
+.boq-app-shell .boq-modal {
+    width: min(680px, 100%);
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, .3);
+}
+
+.boq-app-shell .boq-modal-sm {
+    width: min(460px, 100%);
+}
+
+.boq-app-shell .boq-modal-lg {
+    width: min(900px, 100%);
+}
+
+.boq-app-shell .boq-modal-xl {
+    width: min(1100px, 100%);
+}
+
+.boq-app-shell .boq-modal-head {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid var(--boq-border);
+    background: #fff;
+    padding: 1rem 1.1rem;
+}
+
+.boq-app-shell .boq-modal-head h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.boq-app-shell .boq-modal-body {
+    padding: 1.1rem;
+}
+
+.boq-app-shell .boq-modal-foot {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    display: flex;
+    justify-content: flex-end;
+    gap: .6rem;
+    border-top: 1px solid var(--boq-border);
+    background: #fff;
+    padding: .85rem 1.1rem;
+}
+
+.boq-app-shell .boq-modal-close {
+    display: inline-flex;
+    width: 34px;
+    height: 34px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--boq-border);
+    border-radius: 8px;
+    background: #fff;
+    color: #64748b;
+    cursor: pointer;
+}
+
+.boq-app-shell .boq-modal-message {
+    color: #475569;
+    font-size: .84rem;
+    line-height: 1.5;
+}
+
+/* ============================================================
+   HARDWARE / FACTORY PRICES
+   ============================================================ */
+
+.boq-app-shell .hardware-price-filters {
+    display: grid;
+    grid-template-columns:
+        minmax(240px, 1.5fr)
+        repeat(4, minmax(150px, 1fr));
+    gap: .8rem;
+    align-items: end;
+}
+
+.boq-app-shell .hardware-admin-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.boq-app-shell .hardware-admin-card {
+    padding: 1rem;
+}
+
+.boq-app-shell .hardware-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .8rem;
+    margin-bottom: 1rem;
+}
+
+.boq-app-shell .hardware-card-head h2,
+.boq-app-shell .hardware-category-header h2 {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin: 0;
+    color: #0f172a;
+    font-size: .95rem;
+    font-weight: 800;
+}
+
+.boq-app-shell .hardware-card-head h2 i,
+.boq-app-shell .hardware-category-header h2 i {
+    color: var(--boq-primary);
+}
+
+.boq-app-shell .hardware-card-head p,
+.boq-app-shell .hardware-category-header p {
+    margin-top: .25rem;
+    color: var(--boq-text-muted);
+    font-size: .72rem;
+    line-height: 1.45;
+}
+
+.boq-app-shell .hardware-card-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+.boq-app-shell .hardware-result-block {
+    margin-top: 1rem;
+    border-top: 1px solid var(--boq-border);
+    padding-top: 1rem;
+}
+
+.boq-app-shell .hardware-result-block h3 {
+    margin-bottom: .6rem;
+    color: #334155;
+    font-size: .8rem;
+    font-weight: 800;
+}
+
+.boq-app-shell .hardware-mini-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .5rem;
+    margin-top: 1rem;
+}
+
+.boq-app-shell .hardware-mini-stats > div {
+    border: 1px solid var(--boq-border);
+    border-radius: 9px;
+    background: #f8fafc;
+    padding: .65rem;
+    text-align: center;
+}
+
+.boq-app-shell .hardware-mini-stats strong {
+    display: block;
+    color: #0f172a;
+    font-size: 1rem;
+}
+
+.boq-app-shell .hardware-mini-stats span {
+    display: block;
+    margin-top: .15rem;
+    color: var(--boq-text-muted);
+    font-size: .67rem;
+}
+
+.boq-app-shell .hardware-command-output {
+    margin-top: 1rem;
+}
+
+.boq-app-shell .hardware-command-output pre {
+    max-height: 220px;
+    overflow: auto;
+    border-radius: 9px;
+    background: #0f172a;
+    padding: .8rem;
+    color: #e2e8f0;
+    font-size: .7rem;
+    white-space: pre-wrap;
+}
+
+.boq-app-shell .hardware-category-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--boq-border);
+}
+
+.boq-app-shell .boq-check-row label {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    color: #475569;
+    font-size: .8rem;
+    font-weight: 600;
+}
+
+/* ============================================================
+   PRICE TYPE SELECTOR
+   ============================================================ */
+
+.boq-app-shell .boq-price-type-tabs {
+    display: inline-flex;
+    gap: .3rem;
+    padding: .25rem;
+    border: 1px solid var(--boq-border);
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.boq-app-shell .boq-price-type-tab {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    border-radius: 8px;
+    padding: .4rem .75rem;
+    color: #64748b;
+    font-size: .75rem;
+    font-weight: 700;
+}
+
+.boq-app-shell .boq-price-type-tab.is-active {
+    background: var(--boq-primary);
+    color: #fff;
+}
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+
+.boq-app-shell .boq-pagination {
+    border-top: 1px solid var(--boq-border);
+    padding: .8rem 1rem;
+}
+
+/* ============================================================
+   ACCESSIBILITY
+   ============================================================ */
+
+.boq-app-shell a:focus-visible,
+.boq-app-shell button:focus-visible,
+.boq-app-shell input:focus-visible,
+.boq-app-shell select:focus-visible,
+.boq-app-shell textarea:focus-visible {
+    outline: 3px solid rgba(5, 100, 91, .2);
     outline-offset: 2px;
 }
 
-@media (max-width: 640px) {
-    .boq-btn-primary,
-    .boq-btn-secondary,
-    .boq-btn-danger {
-        min-height: 42px;
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 1180px) {
+    .boq-app-shell .boq-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .boq-app-shell .hardware-admin-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .boq-app-shell .hardware-price-filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .boq-app-shell .hardware-price-filters > :first-child {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 1100px) {
+    .boq-app-shell .boq-plan-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .boq-app-shell .boq-plans-index-filter {
+        grid-template-columns: 1fr 120px;
+    }
+
+    .boq-app-shell .boq-plans-index-filter > :last-child {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .boq-app-shell .boq-page-header {
+        flex-direction: column;
+    }
+
+    .boq-app-shell .boq-stats-grid,
+    .boq-app-shell .boq-plans-stats-grid,
+    .boq-app-shell .boq-plan-grid,
+    .boq-app-shell .hardware-admin-grid,
+    .boq-app-shell .hardware-price-filters,
+    .boq-app-shell .boq-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .boq-app-shell .boq-form-span-2,
+    .boq-app-shell .hardware-price-filters > :first-child {
+        grid-column: auto;
+    }
+
+    .boq-app-shell .boq-plans-index-filter {
+        grid-template-columns: 1fr;
+    }
+
+    .boq-app-shell .boq-plans-index-filter > :last-child {
+        grid-column: auto;
+    }
+
+    .boq-app-shell .boq-sort-buttons {
+        width: 100%;
+    }
+
+    .boq-app-shell .boq-sort-button {
+        flex: 1 1 auto;
+        justify-content: center;
     }
 }

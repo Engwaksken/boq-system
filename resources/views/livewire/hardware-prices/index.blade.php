@@ -1,17 +1,16 @@
-<div class="space-y-5">
+<div class="boq-page-stack">
 
-    {{-- Header --}}
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div class="boq-page-header">
 
         <div>
 
-            <h1 class="flex items-center gap-2 text-2xl font-bold text-slate-900">
-                <i class="fas fa-screwdriver-wrench text-[#05645b]"></i>
-                Hardware Prices
+            <h1 class="boq-page-title">
+                <i class="fas fa-tags"></i>
+                Market Prices
             </h1>
 
-            <p class="mt-1 text-sm text-slate-500">
-                Track current construction material and hardware prices.
+            <p class="boq-page-subtitle">
+                Track hardware supplier prices and manufacturer/factory prices across all construction categories.
             </p>
 
         </div>
@@ -51,103 +50,105 @@
 
     </div>
 
-    @if(session('hardware-price-message'))
+    @if(
+        session(
+            'hardware-price-message'
+        )
+    )
 
-        <div class="boq-flash">
+        <div
+            class="boq-flash"
+            x-data="{ visible: true }"
+            x-show="visible"
+            x-init="
+                setTimeout(
+                    () => visible = false,
+                    5000
+                )
+            "
+        >
+            <i class="fas fa-circle-check"></i>
 
-            <i class="fas fa-circle-check mr-2"></i>
-
-            {{ session('hardware-price-message') }}
-
+            {{
+                session(
+                    'hardware-price-message'
+                )
+            }}
         </div>
 
     @endif
 
-    {{-- Statistics --}}
-    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="boq-stats-grid">
 
         <div class="boq-stat-card boq-stat-green">
-
             <div>
                 <p class="boq-stat-label">
                     Total Prices
                 </p>
 
                 <p class="boq-stat-value">
-                    {{ $stats['total'] ?? $prices->total() }}
+                    {{ $stats['total'] }}
                 </p>
             </div>
 
             <span class="boq-stat-icon">
                 <i class="fas fa-tags"></i>
             </span>
-
         </div>
 
         <div class="boq-stat-card boq-stat-blue">
-
             <div>
                 <p class="boq-stat-label">
-                    Active Prices
+                    Active
                 </p>
 
                 <p class="boq-stat-value">
-                    {{ $stats['active'] ?? 0 }}
+                    {{ $stats['active'] }}
                 </p>
             </div>
 
             <span class="boq-stat-icon">
                 <i class="fas fa-circle-check"></i>
             </span>
-
         </div>
 
         <div class="boq-stat-card boq-stat-amber">
-
             <div>
                 <p class="boq-stat-label">
-                    Categories
+                    Hardware Prices
                 </p>
 
                 <p class="boq-stat-value">
-                    {{ $stats['categories']
-                        ?? count($categories)
-                    }}
+                    {{ $stats['hardware'] }}
                 </p>
             </div>
 
             <span class="boq-stat-icon">
-                <i class="fas fa-layer-group"></i>
+                <i class="fas fa-store"></i>
             </span>
-
         </div>
 
         <div class="boq-stat-card boq-stat-purple">
-
             <div>
                 <p class="boq-stat-label">
-                    Suppliers
+                    Factory Prices
                 </p>
 
                 <p class="boq-stat-value">
-                    {{ $stats['suppliers']
-                        ?? count($suppliers)
-                    }}
+                    {{ $stats['factory'] }}
                 </p>
             </div>
 
             <span class="boq-stat-icon">
-                <i class="fas fa-truck"></i>
+                <i class="fas fa-industry"></i>
             </span>
-
         </div>
 
     </div>
 
-    {{-- Filters --}}
     <div class="boq-panel p-4">
 
-        <div class="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(260px,1.5fr)_180px_180px_180px] xl:items-end">
+        <div class="hardware-price-filters">
 
             <div>
 
@@ -163,10 +164,35 @@
                         type="search"
                         wire:model.live.debounce.300ms="search"
                         class="boq-field boq-field-with-icon"
-                        placeholder="Search item, brand or supplier..."
+                        placeholder="Search item, brand, specification or supplier..."
                     >
 
                 </div>
+
+            </div>
+
+            <div>
+
+                <label class="boq-field-label">
+                    Price Type
+                </label>
+
+                <select
+                    wire:model.live="priceType"
+                    class="boq-field"
+                >
+                    <option value="">
+                        All Price Types
+                    </option>
+
+                    <option value="hardware">
+                        Hardware Price
+                    </option>
+
+                    <option value="factory">
+                        Factory Price
+                    </option>
+                </select>
 
             </div>
 
@@ -181,25 +207,21 @@
                     class="boq-field"
                 >
                     <option value="">
-                        All categories
+                        All Categories
                     </option>
 
-                    @foreach($categories as $categoryOption)
+                    @foreach(
+                        $categories
+                        as $categoryOption
+                    )
 
-                        <option value="{{ is_object($categoryOption)
-                            ? $categoryOption->name
-                            : $categoryOption
-                        }}">
-
-                            {{ is_object($categoryOption)
-                                ? $categoryOption->name
-                                : $categoryOption
-                            }}
-
+                        <option
+                            value="{{ $categoryOption }}"
+                        >
+                            {{ $categoryOption }}
                         </option>
 
                     @endforeach
-
                 </select>
 
             </div>
@@ -207,7 +229,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Supplier
+                    Supplier / Factory
                 </label>
 
                 <select
@@ -215,17 +237,21 @@
                     class="boq-field"
                 >
                     <option value="">
-                        All suppliers
+                        All Sources
                     </option>
 
-                    @foreach($suppliers as $supplierOption)
+                    @foreach(
+                        $suppliers
+                        as $supplierOption
+                    )
 
-                        <option value="{{ $supplierOption }}">
+                        <option
+                            value="{{ $supplierOption }}"
+                        >
                             {{ $supplierOption }}
                         </option>
 
                     @endforeach
-
                 </select>
 
             </div>
@@ -241,17 +267,21 @@
                     class="boq-field"
                 >
                     <option value="">
-                        All locations
+                        All Locations
                     </option>
 
-                    @foreach($locations as $locationOption)
+                    @foreach(
+                        $locations
+                        as $locationOption
+                    )
 
-                        <option value="{{ $locationOption }}">
+                        <option
+                            value="{{ $locationOption }}"
+                        >
                             {{ $locationOption }}
                         </option>
 
                     @endforeach
-
                 </select>
 
             </div>
@@ -260,43 +290,29 @@
 
         @if($canManage)
 
-            <div class="mt-3 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-3">
+            <div
+                class="mt-3 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-3"
+            >
 
-                <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-600">
+                @foreach([
+                    'active' => 'Active',
+                    'inactive' => 'Inactive',
+                    'all' => 'All',
+                ] as $value => $label)
 
-                    <input
-                        type="radio"
-                        wire:model.live="status"
-                        value="active"
+                    <label
+                        class="inline-flex items-center gap-2 text-sm font-medium text-slate-600"
                     >
+                        <input
+                            type="radio"
+                            wire:model.live="status"
+                            value="{{ $value }}"
+                        >
 
-                    Active
+                        {{ $label }}
+                    </label>
 
-                </label>
-
-                <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-600">
-
-                    <input
-                        type="radio"
-                        wire:model.live="status"
-                        value="inactive"
-                    >
-
-                    Inactive
-
-                </label>
-
-                <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-600">
-
-                    <input
-                        type="radio"
-                        wire:model.live="status"
-                        value="all"
-                    >
-
-                    All
-
-                </label>
+                @endforeach
 
             </div>
 
@@ -304,33 +320,38 @@
 
     </div>
 
-    {{-- Hardware Table --}}
     <div class="boq-panel overflow-hidden">
 
-        <div class="overflow-x-auto">
+        <div class="boq-table-wrapper">
 
-            <table class="boq-table min-w-full">
+            <table class="boq-table">
 
                 <thead>
-
                     <tr>
                         <th>Item</th>
+                        <th>Price Type</th>
                         <th>Category</th>
                         <th>Unit</th>
-                        <th class="text-right">Price</th>
-                        <th>Supplier</th>
+                        <th>Price</th>
+                        <th>Supplier / Factory</th>
                         <th>Location</th>
                         <th>Updated</th>
-                        <th class="text-right">Actions</th>
+                        <th class="text-right">
+                            Actions
+                        </th>
                     </tr>
-
                 </thead>
 
                 <tbody>
 
-                    @forelse($prices as $price)
+                    @forelse(
+                        $prices
+                        as $price
+                    )
 
-                        <tr wire:key="hardware-price-{{ $price->id }}">
+                        <tr
+                            wire:key="price-{{ $price->id }}"
+                        >
 
                             <td>
 
@@ -342,25 +363,58 @@
                                 </a>
 
                                 @if($price->brand)
-
-                                    <div class="mt-0.5 text-xs text-slate-500">
+                                    <div
+                                        class="boq-table-subtitle"
+                                    >
                                         {{ $price->brand }}
                                     </div>
+                                @endif
 
+                                @if($price->specification)
+                                    <div
+                                        class="boq-table-subtitle"
+                                    >
+                                        {{ $price->specification }}
+                                    </div>
                                 @endif
 
                             </td>
 
                             <td>
 
-                                <span class="boq-badge">
+                                <span
+                                    class="boq-badge {{
+                                        $price->price_type === 'factory'
+                                            ? 'boq-badge-factory'
+                                            : 'boq-badge-info'
+                                    }}"
+                                >
 
-                                    <i class="fas fa-boxes-stacked mr-1"></i>
+                                    <i class="fas {{
+                                        $price->price_type === 'factory'
+                                            ? 'fa-industry'
+                                            : 'fa-store'
+                                    }}"></i>
 
-                                    {{ $price->hardwareCategory?->name
-                                        ?? $price->category
+                                    {{
+                                        $price->price_type === 'factory'
+                                            ? 'Factory'
+                                            : 'Hardware'
                                     }}
 
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                <span class="boq-badge">
+                                    {{
+                                        $price
+                                            ->hardwareCategory
+                                            ?->name
+                                        ?? $price->category
+                                    }}
                                 </span>
 
                             </td>
@@ -369,15 +423,17 @@
                                 {{ $price->unit }}
                             </td>
 
-                            <td class="text-right font-semibold text-slate-900">
-
+                            <td
+                                class="font-semibold text-slate-900"
+                            >
                                 {{ $price->currency }}
 
-                                {{ number_format(
-                                    (float) $price->price,
-                                    0
-                                ) }}
-
+                                {{
+                                    number_format(
+                                        (float) $price->price,
+                                        0
+                                    )
+                                }}
                             </td>
 
                             <td>
@@ -389,14 +445,21 @@
                             </td>
 
                             <td>
-                                {{ $price->fetched_at?->format('d M Y')
+                                {{
+                                    $price
+                                        ->fetched_at
+                                        ?->format(
+                                            'd M Y'
+                                        )
                                     ?? '—'
                                 }}
                             </td>
 
                             <td class="text-right">
 
-                                <div class="inline-flex items-center gap-2">
+                                <div
+                                    class="boq-table-actions"
+                                >
 
                                     <a
                                         href="{{ url('/hardware-prices/'.$price->id) }}"
@@ -420,19 +483,18 @@
                                         <button
                                             type="button"
                                             wire:click="toggleActive({{ $price->id }})"
-                                            class="boq-icon-btn {{
+                                            class="boq-icon-btn"
+                                            title="{{
                                                 $price->is_active
-                                                    ? 'text-red-600'
-                                                    : 'text-emerald-600'
+                                                    ? 'Deactivate'
+                                                    : 'Activate'
                                             }}"
                                         >
-
                                             <i class="fas {{
                                                 $price->is_active
                                                     ? 'fa-ban'
                                                     : 'fa-circle-check'
                                             }}"></i>
-
                                         </button>
 
                                     @endif
@@ -446,18 +508,16 @@
                     @empty
 
                         <tr>
-
                             <td
-                                colspan="8"
-                                class="p-10 text-center text-sm text-slate-500"
+                                colspan="9"
+                                class="boq-empty-table"
                             >
+                                <i class="fas fa-box-open"></i>
 
-                                <i class="fas fa-box-open mb-2 block text-2xl text-slate-300"></i>
-
-                                No hardware prices found.
-
+                                <span>
+                                    No prices found.
+                                </span>
                             </td>
-
                         </tr>
 
                     @endforelse
@@ -468,9 +528,11 @@
 
         </div>
 
-        @if($prices->hasPages())
+        @if(
+            $prices->hasPages()
+        )
 
-            <div class="border-t border-slate-200 p-4">
+            <div class="boq-pagination">
                 {{ $prices->links() }}
             </div>
 
@@ -478,37 +540,37 @@
 
     </div>
 
-    {{-- Add/Edit modal --}}
     @if($showForm)
 
         <div
             class="boq-modal-backdrop"
-            wire:key="hardware-price-modal"
+            wire:key="market-price-modal"
         >
 
-            <div class="boq-modal boq-modal-lg">
+            <div
+                class="boq-modal boq-modal-lg"
+            >
 
                 <div class="boq-modal-head">
 
                     <div>
 
-                        <h2 class="text-lg font-bold text-slate-900">
-
+                        <h2>
                             <i class="fas {{
                                 $editingId
                                     ? 'fa-pen'
                                     : 'fa-plus'
-                            }} mr-2 text-[#05645b]"></i>
+                            }}"></i>
 
-                            {{ $editingId
-                                ? 'Edit Hardware Price'
-                                : 'Add Hardware Price'
+                            {{
+                                $editingId
+                                    ? 'Edit Price'
+                                    : 'Add Price'
                             }}
-
                         </h2>
 
-                        <p class="mt-1 text-xs text-slate-500">
-                            Enter the current market price details.
+                        <p class="boq-table-subtitle">
+                            Record either a hardware supplier price or a factory/manufacturer price.
                         </p>
 
                     </div>
@@ -523,253 +585,282 @@
 
                 </div>
 
-                <div class="boq-modal-body">
+                <form
+                    wire:submit.prevent="save"
+                >
 
-                    <div class="grid gap-4 md:grid-cols-2">
+                    <div class="boq-modal-body">
 
-                        <div class="md:col-span-2">
+                        <div class="boq-form-grid">
 
-                            <label class="boq-field-label">
-                                Item Name *
-                            </label>
+                            <div>
 
-                            <input
-                                wire:model="form.item_name"
-                                class="boq-field"
-                                placeholder="e.g. Portland Cement 50kg"
-                            >
+                                <label class="boq-field-label">
+                                    Price Type *
+                                </label>
 
-                            @error('form.item_name')
-                                <p class="boq-field-error">
-                                    {{ $message }}
-                                </p>
-                            @enderror
-
-                        </div>
-
-                        <div>
-
-                            <label class="boq-field-label">
-                                Brand
-                            </label>
-
-                            <input
-                                wire:model="form.brand"
-                                class="boq-field"
-                                placeholder="e.g. Hima Cement"
-                            >
-
-                        </div>
-
-                        <div>
-
-                            <label class="boq-field-label">
-                                Category *
-                            </label>
-
-                            <input
-                                wire:model="form.category"
-                                class="boq-field"
-                                placeholder="e.g. Cement & Concrete"
-                            >
-
-                            @error('form.category')
-                                <p class="boq-field-error">
-                                    {{ $message }}
-                                </p>
-                            @enderror
-
-                        </div>
-
-                        <div>
-
-                            <label class="boq-field-label">
-                                Unit *
-                            </label>
-
-                            <input
-                                wire:model="form.unit"
-                                class="boq-field"
-                                placeholder="e.g. bag, piece, metre"
-                            >
-
-                        </div>
-
-                        <div>
-
-                            <label class="boq-field-label">
-                                Price *
-                            </label>
-
-                            <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                wire:model="form.price"
-                                class="boq-field"
-                                placeholder="0"
-                            >
-
-                        </div>
-
-                        <div>
-
-                            <label class="boq-field-label">
-                                Currency *
-                            </label>
-
-                            <select
-                                wire:model="form.currency"
-                                class="boq-field"
-                            >
-
-                                @foreach([
-                                    'UGX',
-                                    'USD',
-                                    'KES',
-                                    'TZS',
-                                    'RWF',
-                                    'GBP',
-                                    'EUR'
-                                ] as $currencyCode)
-
-                                    <option value="{{ $currencyCode }}">
-                                        {{ $currencyCode }}
+                                <select
+                                    wire:model="form.price_type"
+                                    class="boq-field"
+                                >
+                                    <option value="hardware">
+                                        Hardware Price
                                     </option>
 
-                                @endforeach
+                                    <option value="factory">
+                                        Factory Price
+                                    </option>
+                                </select>
 
-                            </select>
+                                @error('form.price_type')
+                                    <p class="boq-field-error">
+                                        {{ $message }}
+                                    </p>
+                                @enderror
 
-                        </div>
+                            </div>
 
-                        <div>
+                            <div>
 
-                            <label class="boq-field-label">
-                                Supplier *
-                            </label>
-
-                            <input
-                                wire:model="form.supplier"
-                                class="boq-field"
-                                placeholder="Supplier name"
-                            >
-
-                        </div>
-
-                        <div>
-
-                            <label class="boq-field-label">
-                                Location
-                            </label>
-
-                            <input
-                                wire:model="form.location"
-                                class="boq-field"
-                                placeholder="e.g. Kampala"
-                            >
-
-                        </div>
-
-                        <div class="md:col-span-2">
-
-                            <label class="boq-field-label">
-                                Specification
-                            </label>
-
-                            <textarea
-                                wire:model="form.specification"
-                                class="boq-field"
-                                placeholder="Size, grade, thickness, standard, packaging..."
-                            ></textarea>
-
-                        </div>
-
-                        <div>
-
-                            <label class="boq-field-label">
-                                Source URL
-                            </label>
-
-                            <input
-                                type="url"
-                                wire:model="form.source_url"
-                                class="boq-field"
-                                placeholder="https://..."
-                            >
-
-                        </div>
-
-                        <div>
-
-                            <label class="boq-field-label">
-                                Source Reference
-                            </label>
-
-                            <input
-                                wire:model="form.source_reference"
-                                class="boq-field"
-                                placeholder="Quotation, invoice or reference"
-                            >
-
-                        </div>
-
-                        <div>
-
-                            <label class="boq-field-label">
-                                Price Date *
-                            </label>
-
-                            <input
-                                type="datetime-local"
-                                wire:model="form.fetched_at"
-                                class="boq-field"
-                            >
-
-                        </div>
-
-                        <div class="flex items-end">
-
-                            <label class="inline-flex h-10 items-center gap-2 text-sm font-medium text-slate-700">
+                                <label class="boq-field-label">
+                                    Category *
+                                </label>
 
                                 <input
-                                    type="checkbox"
-                                    wire:model="form.is_active"
+                                    wire:model="form.category"
+                                    class="boq-field"
+                                    placeholder="e.g. Cement, Steel, Roofing"
                                 >
 
-                                Active price
+                                @error('form.category')
+                                    <p class="boq-field-error">
+                                        {{ $message }}
+                                    </p>
+                                @enderror
 
-                            </label>
+                            </div>
+
+                            <div class="boq-form-span-2">
+
+                                <label class="boq-field-label">
+                                    Item Name *
+                                </label>
+
+                                <input
+                                    wire:model="form.item_name"
+                                    class="boq-field"
+                                    placeholder="e.g. Portland Cement 50kg"
+                                >
+
+                                @error('form.item_name')
+                                    <p class="boq-field-error">
+                                        {{ $message }}
+                                    </p>
+                                @enderror
+
+                            </div>
+
+                            <div>
+
+                                <label class="boq-field-label">
+                                    Brand / Manufacturer
+                                </label>
+
+                                <input
+                                    wire:model="form.brand"
+                                    class="boq-field"
+                                    placeholder="e.g. Hima Cement"
+                                >
+
+                            </div>
+
+                            <div>
+
+                                <label class="boq-field-label">
+                                    Unit *
+                                </label>
+
+                                <input
+                                    wire:model="form.unit"
+                                    class="boq-field"
+                                    placeholder="bag, kg, tonne, metre..."
+                                >
+
+                            </div>
+
+                            <div>
+
+                                <label class="boq-field-label">
+                                    Price *
+                                </label>
+
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    wire:model="form.price"
+                                    class="boq-field"
+                                    placeholder="0"
+                                >
+
+                            </div>
+
+                            <div>
+
+                                <label class="boq-field-label">
+                                    Currency *
+                                </label>
+
+                                <select
+                                    wire:model="form.currency"
+                                    class="boq-field"
+                                >
+                                    @foreach([
+                                        'UGX',
+                                        'USD',
+                                        'KES',
+                                        'TZS',
+                                        'RWF',
+                                        'GBP',
+                                        'EUR',
+                                    ] as $currencyCode)
+
+                                        <option
+                                            value="{{ $currencyCode }}"
+                                        >
+                                            {{ $currencyCode }}
+                                        </option>
+
+                                    @endforeach
+                                </select>
+
+                            </div>
+
+                            <div>
+
+                                <label class="boq-field-label">
+                                    Supplier / Factory *
+                                </label>
+
+                                <input
+                                    wire:model="form.supplier"
+                                    class="boq-field"
+                                    placeholder="Supplier or manufacturer name"
+                                >
+
+                            </div>
+
+                            <div>
+
+                                <label class="boq-field-label">
+                                    Location
+                                </label>
+
+                                <input
+                                    wire:model="form.location"
+                                    class="boq-field"
+                                    placeholder="e.g. Kampala"
+                                >
+
+                            </div>
+
+                            <div class="boq-form-span-2">
+
+                                <label class="boq-field-label">
+                                    Specification
+                                </label>
+
+                                <textarea
+                                    wire:model="form.specification"
+                                    class="boq-field"
+                                    placeholder="Size, grade, thickness, standard, packaging..."
+                                ></textarea>
+
+                            </div>
+
+                            <div>
+
+                                <label class="boq-field-label">
+                                    Source URL
+                                </label>
+
+                                <input
+                                    type="url"
+                                    wire:model="form.source_url"
+                                    class="boq-field"
+                                    placeholder="https://..."
+                                >
+
+                            </div>
+
+                            <div>
+
+                                <label class="boq-field-label">
+                                    Source Reference
+                                </label>
+
+                                <input
+                                    wire:model="form.source_reference"
+                                    class="boq-field"
+                                    placeholder="Price list, quotation, market survey..."
+                                >
+
+                            </div>
+
+                            <div>
+
+                                <label class="boq-field-label">
+                                    Price Date *
+                                </label>
+
+                                <input
+                                    type="datetime-local"
+                                    wire:model="form.fetched_at"
+                                    class="boq-field"
+                                >
+
+                            </div>
+
+                            <div
+                                class="flex items-end"
+                            >
+                                <label
+                                    class="inline-flex items-center gap-2 text-sm font-medium text-slate-600"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        wire:model="form.is_active"
+                                    >
+
+                                    Active price
+                                </label>
+                            </div>
 
                         </div>
 
                     </div>
 
-                </div>
+                    <div class="boq-modal-foot">
 
-                <div class="boq-modal-foot">
+                        <button
+                            type="button"
+                            wire:click="cancelForm"
+                            class="boq-btn-secondary"
+                        >
+                            Cancel
+                        </button>
 
-                    <button
-                        type="button"
-                        wire:click="cancelForm"
-                        class="boq-btn-secondary"
-                    >
-                        <i class="fas fa-arrow-left"></i>
-                        Cancel
-                    </button>
+                        <button
+                            type="submit"
+                            class="boq-btn-primary"
+                        >
+                            <i class="fas fa-save"></i>
+                            Save Price
+                        </button>
 
-                    <button
-                        type="button"
-                        wire:click="save"
-                        wire:loading.attr="disabled"
-                        wire:target="save"
-                        class="boq-btn-primary"
-                    >
-                        <i class="fas fa-floppy-disk"></i>
-                        Save Price
-                    </button>
+                    </div>
 
-                </div>
+                </form>
 
             </div>
 
