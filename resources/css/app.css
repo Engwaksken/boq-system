@@ -1213,3 +1213,630 @@
         justify-content: center;
     }
 }
+
+
+/* ============================================================
+   BOQ DASHBOARD FIXES
+   Admin tabs, filters, tables and shared dashboard pages
+   ============================================================ */
+
+/* ============================================================
+   ADMIN TABS
+   ============================================================ */
+
+.boq-app-shell .boq-admin-tabs {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: .35rem;
+    overflow-x: auto;
+    padding: .45rem;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+}
+
+.boq-app-shell .boq-admin-tab {
+    display: inline-flex;
+    min-height: 38px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    border-radius: 8px;
+    padding: .5rem .7rem;
+    color: #475569;
+    font-size: .75rem;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+        background-color .15s ease,
+        color .15s ease,
+        box-shadow .15s ease;
+}
+
+.boq-app-shell .boq-admin-tab i {
+    color: #64748b;
+    font-size: .76rem;
+}
+
+.boq-app-shell .boq-admin-tab:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.boq-app-shell .boq-admin-tab:hover i {
+    color: var(--boq-primary);
+}
+
+.boq-app-shell .boq-admin-tab.is-active {
+    background: var(--boq-primary);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(5, 100, 91, .18);
+}
+
+.boq-app-shell .boq-admin-tab.is-active i {
+    color: #fff;
+}
+
+
+/* ============================================================
+   GENERIC INDEX FILTER GRID
+   Search + Rows + Sort in one row
+   ============================================================ */
+
+.boq-app-shell .boq-index-filter-grid {
+    display: grid;
+    grid-template-columns:
+        minmax(280px, 1.6fr)
+        120px
+        minmax(360px, 1.6fr);
+    gap: .8rem;
+    align-items: end;
+    padding: 1rem;
+}
+
+.boq-app-shell .boq-index-filter-grid-boqs {
+    grid-template-columns:
+        minmax(300px, 1.8fr)
+        110px
+        minmax(380px, 1.8fr);
+}
+
+.boq-app-shell .boq-index-filter-grid > div {
+    min-width: 0;
+}
+
+.boq-app-shell .boq-index-filter-grid .boq-sort-buttons {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: .35rem;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.boq-app-shell .boq-index-filter-grid .boq-sort-button {
+    flex: 0 0 auto;
+    min-height: 42px;
+    white-space: nowrap;
+}
+
+
+/* ============================================================
+   COMMON FILTER GRID
+   For Projects, Plans, Users, Suppliers, etc.
+   ============================================================ */
+
+.boq-app-shell .boq-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(160px, 1fr)
+    );
+    gap: .8rem;
+    align-items: end;
+    padding: 1rem;
+}
+
+.boq-app-shell .boq-filter-grid > div {
+    min-width: 0;
+}
+
+.boq-app-shell .boq-filter-row {
+    display: flex;
+    align-items: flex-end;
+    gap: .75rem;
+    width: 100%;
+}
+
+.boq-app-shell .boq-filter-row > div {
+    min-width: 0;
+}
+
+.boq-app-shell .boq-filter-grow {
+    flex: 1 1 260px;
+}
+
+.boq-app-shell .boq-filter-small {
+    flex: 0 0 130px;
+}
+
+.boq-app-shell .boq-filter-medium {
+    flex: 0 0 180px;
+}
+
+
+/* ============================================================
+   HARDWARE / FACTORY FILTERS
+   Force one row on desktop
+   ============================================================ */
+
+.boq-app-shell .hardware-price-filters {
+    display: grid;
+    grid-template-columns:
+        minmax(260px, 1.7fr)
+        minmax(145px, .8fr)
+        minmax(160px, .9fr)
+        minmax(180px, 1fr)
+        minmax(150px, .8fr);
+    gap: .75rem;
+    align-items: end;
+}
+
+.boq-app-shell .hardware-price-filters > div {
+    min-width: 0;
+}
+
+
+/* ============================================================
+   HARDWARE SCANNER
+   ============================================================ */
+
+.boq-app-shell .hardware-admin-grid {
+    display: grid;
+    grid-template-columns: repeat(
+        3,
+        minmax(0, 1fr)
+    );
+    gap: 1rem;
+}
+
+.boq-app-shell .hardware-admin-card {
+    min-width: 0;
+    padding: 1rem;
+}
+
+.boq-app-shell .hardware-admin-card .boq-form-grid {
+    grid-template-columns: repeat(
+        2,
+        minmax(0, 1fr)
+    );
+}
+
+.boq-app-shell .hardware-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: 1rem;
+}
+
+.boq-app-shell .hardware-card-head h2 {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin: 0;
+    color: #0f172a;
+    font-size: .9rem;
+    font-weight: 800;
+}
+
+.boq-app-shell .hardware-card-head h2 i {
+    color: var(--boq-primary);
+}
+
+.boq-app-shell .hardware-card-head p {
+    margin-top: .3rem;
+    color: var(--boq-text-muted);
+    font-size: .72rem;
+    line-height: 1.45;
+}
+
+.boq-app-shell .hardware-card-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .5rem;
+    margin-top: 1rem;
+}
+
+.boq-app-shell .hardware-result-block {
+    margin-top: 1rem;
+    border-top: 1px solid var(--boq-border);
+    padding-top: 1rem;
+}
+
+.boq-app-shell .hardware-category-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--boq-border);
+}
+
+.boq-app-shell .hardware-category-header h2 {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin: 0;
+    color: #0f172a;
+    font-size: .95rem;
+    font-weight: 800;
+}
+
+.boq-app-shell .hardware-category-header p {
+    margin-top: .25rem;
+    color: var(--boq-text-muted);
+    font-size: .72rem;
+}
+
+
+/* ============================================================
+   DASHBOARD GENERAL GRIDS
+   ============================================================ */
+
+.boq-app-shell .boq-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(
+        4,
+        minmax(0, 1fr)
+    );
+    gap: .8rem;
+}
+
+.boq-app-shell .boq-dashboard-section-grid {
+    display: grid;
+    grid-template-columns: repeat(
+        2,
+        minmax(0, 1fr)
+    );
+    gap: 1rem;
+}
+
+.boq-app-shell .boq-dashboard-full {
+    grid-column: 1 / -1;
+}
+
+
+/* ============================================================
+   TABLE LINKS / TABLE HELPERS
+   ============================================================ */
+
+.boq-app-shell .boq-table-link {
+    color: var(--boq-primary);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.boq-app-shell .boq-table-link:hover {
+    text-decoration: underline;
+}
+
+.boq-app-shell .boq-table-empty {
+    color: #94a3b8;
+}
+
+.boq-app-shell .boq-cell-with-icon,
+.boq-app-shell .boq-version-badge,
+.boq-app-shell .boq-item-count,
+.boq-app-shell .boq-currency-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+}
+
+.boq-app-shell .boq-cell-with-icon i,
+.boq-app-shell .boq-version-badge i,
+.boq-app-shell .boq-item-count i {
+    color: #94a3b8;
+    font-size: .7rem;
+}
+
+.boq-app-shell .boq-currency-badge {
+    border-radius: 999px;
+    background: #eef2ff;
+    padding: .25rem .5rem;
+    color: #4338ca;
+    font-size: .7rem;
+    font-weight: 700;
+}
+
+.boq-app-shell .boq-version-badge {
+    border-radius: 999px;
+    background: #f1f5f9;
+    padding: .25rem .5rem;
+    color: #475569;
+    font-size: .7rem;
+    font-weight: 700;
+}
+
+.boq-app-shell .boq-item-count {
+    color: #475569;
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+.boq-app-shell .boq-sortable-header {
+    cursor: pointer;
+    user-select: none;
+}
+
+.boq-app-shell .boq-sortable-header:hover {
+    color: var(--boq-primary);
+}
+
+.boq-app-shell .boq-sortable-header span {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+}
+
+
+/* ============================================================
+   DANGER BADGE
+   ============================================================ */
+
+.boq-app-shell .boq-badge-danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+
+/* ============================================================
+   EMPTY ACTION
+   ============================================================ */
+
+.boq-app-shell .boq-empty-action {
+    display: flex;
+    justify-content: center;
+    margin-top: .8rem;
+}
+
+
+/* ============================================================
+   RESPONSIVE FILTERS
+   ============================================================ */
+
+@media (max-width: 1180px) {
+    .boq-app-shell .boq-index-filter-grid,
+    .boq-app-shell .boq-index-filter-grid-boqs {
+        grid-template-columns:
+            minmax(240px, 1.5fr)
+            110px
+            minmax(320px, 1.4fr);
+    }
+
+    .boq-app-shell .hardware-price-filters {
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+    }
+
+    .boq-app-shell .hardware-price-filters > :first-child {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 1024px) {
+    .boq-app-shell .boq-index-filter-grid,
+    .boq-app-shell .boq-index-filter-grid-boqs {
+        grid-template-columns:
+            minmax(220px, 1fr)
+            110px;
+    }
+
+    .boq-app-shell .boq-index-filter-grid > :last-child {
+        grid-column: 1 / -1;
+    }
+
+    .boq-app-shell .hardware-admin-grid {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+    .boq-app-shell .boq-dashboard-grid {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+}
+
+@media (max-width: 700px) {
+    .boq-app-shell .boq-index-filter-grid,
+    .boq-app-shell .boq-index-filter-grid-boqs,
+    .boq-app-shell .hardware-price-filters,
+    .boq-app-shell .hardware-admin-grid,
+    .boq-app-shell .boq-dashboard-grid,
+    .boq-app-shell .boq-dashboard-section-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .boq-app-shell .boq-index-filter-grid > :last-child,
+    .boq-app-shell .hardware-price-filters > :first-child {
+        grid-column: auto;
+    }
+
+    .boq-app-shell .boq-filter-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .boq-app-shell .boq-filter-small,
+    .boq-app-shell .boq-filter-medium,
+    .boq-app-shell .boq-filter-grow {
+        flex: 1 1 auto;
+        width: 100%;
+    }
+
+    .boq-app-shell .hardware-admin-card .boq-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .boq-app-shell .hardware-category-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+/* ============================================================
+   PROFILE
+   ============================================================ */
+
+.boq-app-shell .boq-profile-tabs {
+    display: flex;
+    gap: .3rem;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--boq-border);
+    padding: .6rem .7rem 0;
+    background: #fff;
+}
+
+.boq-app-shell .boq-profile-tab {
+    display: inline-flex;
+    min-height: 42px;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: .4rem;
+    border-bottom: 3px solid transparent;
+    padding: .55rem .8rem;
+    color: #64748b;
+    font-size: .78rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.boq-app-shell .boq-profile-tab:hover {
+    color: var(--boq-primary);
+}
+
+.boq-app-shell .boq-profile-tab.is-active {
+    border-bottom-color: var(--boq-primary);
+    color: var(--boq-primary);
+}
+
+.boq-app-shell .boq-profile-content {
+    padding: 1.2rem;
+}
+
+.boq-app-shell .boq-profile-form {
+    margin-top: 1rem;
+}
+
+.boq-app-shell .boq-section-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.boq-app-shell .boq-section-title {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin: 0;
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.boq-app-shell .boq-section-title i {
+    color: var(--boq-primary);
+}
+
+.boq-app-shell .boq-section-subtitle {
+    margin-top: .25rem;
+    color: var(--boq-text-muted);
+    font-size: .76rem;
+}
+
+.boq-app-shell .boq-profile-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: .7rem;
+    margin-top: 1rem;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    background: #fffbeb;
+    padding: .8rem;
+    color: #92400e;
+    font-size: .78rem;
+}
+
+.boq-app-shell .boq-profile-warning > i {
+    margin-top: .15rem;
+}
+
+.boq-app-shell .boq-profile-warning strong {
+    display: block;
+}
+
+.boq-app-shell .boq-profile-warning p {
+    margin-top: .15rem;
+}
+
+.boq-app-shell .boq-link-button {
+    margin-top: .35rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--boq-primary);
+    font-size: .76rem;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.boq-app-shell .boq-profile-actions {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    margin-top: 1.2rem;
+    border-top: 1px solid var(--boq-border);
+    padding-top: 1rem;
+}
+
+.boq-app-shell .boq-saved-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    color: var(--boq-success);
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+@media (max-width: 700px) {
+    .boq-app-shell .boq-profile-content {
+        padding: .9rem;
+    }
+
+    .boq-app-shell .boq-profile-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .boq-app-shell .boq-profile-actions .boq-btn-primary {
+        width: 100%;
+    }
+}
