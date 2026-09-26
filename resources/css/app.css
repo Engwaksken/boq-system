@@ -1840,3 +1840,337 @@
         width: 100%;
     }
 }
+
+/* ============================================================
+   GLOBAL ADMIN / SUBSCRIPTIONS / RATE LIBRARY FIXES
+   ============================================================ */
+
+/* ---------- standard admin stat cards ---------- */
+
+.boq-app-shell .boq-admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: .8rem;
+}
+
+.boq-app-shell .boq-admin-stats-grid .boq-stat-card {
+    min-width: 0;
+    min-height: 88px;
+}
+
+
+/* ---------- generic tabs ---------- */
+
+.boq-app-shell .boq-tabs {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: .2rem;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--boq-border);
+    background: #fff;
+    padding: .55rem .7rem 0;
+}
+
+.boq-app-shell .boq-tab {
+    display: inline-flex;
+    min-height: 42px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    padding: .55rem .8rem;
+    color: #64748b;
+    font-size: .78rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.boq-app-shell .boq-tab:hover {
+    color: var(--boq-primary);
+}
+
+.boq-app-shell .boq-tab.is-active {
+    border-bottom-color: var(--boq-primary);
+    color: var(--boq-primary);
+}
+
+.boq-app-shell .boq-tab i {
+    font-size: .78rem;
+}
+
+.boq-app-shell .boq-tab-loading {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    border-bottom: 1px solid var(--boq-border);
+    padding: .7rem 1rem;
+    color: var(--boq-text-muted);
+    font-size: .75rem;
+}
+
+
+/* ---------- subscription sections ---------- */
+
+.boq-app-shell .boq-subscription-panel {
+    overflow: hidden;
+}
+
+.boq-app-shell .boq-filter-section {
+    border-bottom: 1px solid var(--boq-border);
+    padding: 1rem;
+}
+
+.boq-app-shell .boq-subscription-filter-grid {
+    display: grid;
+    grid-template-columns:
+        minmax(260px, 1.8fr)
+        minmax(150px, .9fr)
+        minmax(170px, .9fr)
+        110px;
+    gap: .75rem;
+    align-items: end;
+}
+
+.boq-app-shell .boq-plan-filter-grid {
+    display: grid;
+    grid-template-columns:
+        minmax(280px, 1.8fr)
+        minmax(150px, .8fr)
+        minmax(170px, .9fr);
+    gap: .75rem;
+    align-items: end;
+}
+
+.boq-app-shell .boq-subscription-filter-grid > div,
+.boq-app-shell .boq-plan-filter-grid > div {
+    min-width: 0;
+}
+
+
+/* ---------- admin filter row ---------- */
+
+.boq-app-shell .boq-admin-filter-row {
+    display: grid;
+    grid-template-columns:
+        minmax(280px, 1fr)
+        110px;
+    gap: .75rem;
+    align-items: end;
+    padding: 1rem;
+}
+
+.boq-app-shell .boq-admin-filter-search,
+.boq-app-shell .boq-admin-filter-small {
+    min-width: 0;
+}
+
+
+/* ---------- rate library filters ---------- */
+
+.boq-app-shell .boq-rate-filter-grid {
+    display: grid;
+    grid-template-columns:
+        minmax(320px, 1.7fr)
+        minmax(180px, .8fr)
+        minmax(150px, .7fr);
+    gap: .75rem;
+    align-items: end;
+    padding: 1rem;
+}
+
+.boq-app-shell .boq-rate-filter-grid > div {
+    min-width: 0;
+}
+
+
+/* ---------- current subscription ---------- */
+
+.boq-app-shell .boq-current-subscription {
+    min-width: 180px;
+    border: 1px solid var(--boq-border);
+    border-left: 4px solid var(--boq-primary);
+    border-radius: 10px;
+    background: #fff;
+    padding: .7rem .9rem;
+}
+
+.boq-app-shell .boq-current-subscription-label {
+    color: var(--boq-text-muted);
+    font-size: .66rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.boq-app-shell .boq-current-subscription-name {
+    margin-top: .2rem;
+    color: #0f172a;
+    font-size: .9rem;
+    font-weight: 800;
+}
+
+
+/* ---------- bulk actions ---------- */
+
+.boq-app-shell .boq-bulk-actions {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    margin-top: .75rem;
+    border-radius: 9px;
+    background: #f8fafc;
+    padding: .65rem .8rem;
+    color: #475569;
+    font-size: .75rem;
+    font-weight: 700;
+}
+
+.boq-app-shell .boq-bulk-danger,
+.boq-app-shell .boq-bulk-clear {
+    border: 0;
+    background: transparent;
+    font-size: .74rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.boq-app-shell .boq-bulk-danger {
+    color: var(--boq-danger);
+}
+
+.boq-app-shell .boq-bulk-clear {
+    color: #64748b;
+}
+
+
+/* ---------- table helper styles ---------- */
+
+.boq-app-shell .boq-table-title {
+    color: #0f172a;
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+.boq-app-shell .boq-table-subtitle {
+    margin-top: .18rem;
+    color: #64748b;
+    font-size: .7rem;
+}
+
+.boq-app-shell .boq-table-meta {
+    margin-top: .12rem;
+    color: #94a3b8;
+    font-size: .65rem;
+}
+
+.boq-app-shell .boq-cell-stack {
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+}
+
+.boq-app-shell .boq-no-action {
+    color: #94a3b8;
+    font-size: .72rem;
+}
+
+.boq-app-shell .boq-checkbox-column {
+    width: 42px;
+}
+
+
+/* ---------- icon button variants ---------- */
+
+.boq-app-shell .boq-icon-success {
+    color: var(--boq-success);
+}
+
+.boq-app-shell .boq-icon-success:hover {
+    border-color: #a7f3d0;
+    background: #ecfdf5;
+}
+
+.boq-app-shell .boq-icon-danger {
+    color: var(--boq-danger);
+}
+
+.boq-app-shell .boq-icon-danger:hover {
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+
+
+/* ---------- textarea ---------- */
+
+.boq-app-shell textarea.boq-field,
+.boq-app-shell .boq-textarea {
+    height: auto;
+    min-height: 90px;
+    padding-top: .7rem;
+    padding-bottom: .7rem;
+    resize: vertical;
+}
+
+
+/* ---------- validation ---------- */
+
+.boq-app-shell .boq-form-error-summary {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-top: 1rem;
+    border: 1px solid #fecaca;
+    border-radius: 9px;
+    background: #fef2f2;
+    padding: .7rem .8rem;
+    color: #991b1b;
+    font-size: .76rem;
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 1180px) {
+
+    .boq-app-shell .boq-admin-stats-grid {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+
+    .boq-app-shell .boq-subscription-filter-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .boq-app-shell .boq-plan-filter-grid,
+    .boq-app-shell .boq-rate-filter-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+@media (max-width: 768px) {
+
+    .boq-app-shell .boq-admin-stats-grid,
+    .boq-app-shell .boq-subscription-filter-grid,
+    .boq-app-shell .boq-plan-filter-grid,
+    .boq-app-shell .boq-rate-filter-grid,
+    .boq-app-shell .boq-admin-filter-row {
+        grid-template-columns: 1fr;
+    }
+
+    .boq-app-shell .boq-bulk-actions {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+}
