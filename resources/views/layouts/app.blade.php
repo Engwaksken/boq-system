@@ -4,154 +4,61 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    @php
-        $siteName = App\Models\SiteSetting::get('system_name', 'BOQ System');
-        $siteLogo = App\Models\SiteSetting::get('logo', '');
-        $siteFavicon = App\Models\SiteSetting::get('favicon', '');
-    @endphp
-    <title>{{ ($title ?? '') !== '' ? $title.' · ' : '' }}{{ $siteName }}</title>
-    @if($siteFavicon)
-        <link rel="icon" type="image/x-icon" href="{{ asset('storage/'.$siteFavicon) }}">
-    @else
-        <link rel="icon" href="/favicon.ico">
-    @endif
+    <meta name="theme-color" content="#05645b">
+    <meta name="description" content="{{ $metaDescription ?? 'BOQ System for project cost planning, BOQ management and market pricing.' }}">
+    <meta name="robots" content="noindex,nofollow">
+    <title>{{ isset($title) ? $title.' | BOQ System' : 'BOQ System' }}</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
->
-
-<link
-    rel="stylesheet"
-    href="{{ asset('css/boq-overrides.css') }}?v={{ @filemtime(public_path('css/boq-overrides.css')) }}"
->
+    @stack('styles')
     @livewireStyles
-
-
 </head>
 <body class="font-sans antialiased">
     @php
-        $user = Auth::user();
-        $isSuperAdmin = $user?->isSuperAdmin() ?? false;
-
-        $workspaceNavigation = [
-            ['label' => 'Dashboard', 'url' => url('/dashboard'), 'active' => request()->is('dashboard'), 'icon' => 'dashboard'],
-            ['label' => 'Projects', 'url' => url('/projects'), 'active' => request()->is('projects*'), 'icon' => 'projects'],
-            ['label' => 'BOQs', 'url' => url('/boqs'), 'active' => request()->is('boqs*'), 'icon' => 'boqs'],
-            ['label' => 'Hardware Prices', 'url' => url('/hardware-prices'), 'active' => request()->is('hardware-prices*'), 'icon' => 'prices'],
-            ['label' => 'Plans', 'url' => url('/plans'), 'active' => request()->is('plans*'), 'icon' => 'plans'],
-            ['label' => 'Subscriptions', 'url' => url('/subscriptions'), 'active' => request()->is('subscriptions*'), 'icon' => 'subscription'],
-            ['label' => 'Top-ups', 'url' => url('/topups'), 'active' => request()->is('topups*'), 'icon' => 'gift'],
-        ];
-
-        $adminNavigation = [
-            ['label' => 'Admin Overview', 'url' => url('/admin'), 'active' => request()->is('admin'), 'icon' => 'admin'],
-            ['label' => 'Plans Management', 'url' => url('/admin/plans'), 'active' => request()->is('admin/plans*'), 'icon' => 'plans'],
-            ['label' => 'Top-ups', 'url' => url('/admin/topups'), 'active' => request()->is('admin/topups*'), 'icon' => 'gift'],
-            ['label' => 'Versions', 'url' => url('/admin/versions'), 'active' => request()->is('admin/versions*'), 'icon' => 'versions'],
-            ['label' => 'Rate Library', 'url' => url('/admin/rates'), 'active' => request()->is('admin/rates*'), 'icon' => 'rates'],
-            ['label' => 'Suppliers', 'url' => url('/admin/suppliers'), 'active' => request()->is('admin/suppliers*'), 'icon' => 'suppliers'],
-            ['label' => 'Quotations', 'url' => url('/admin/quotations'), 'active' => request()->is('admin/quotations*'), 'icon' => 'quotations'],
-            ['label' => 'Subscriptions', 'url' => url('/admin/subscriptions'), 'active' => request()->is('admin/subscriptions*'), 'icon' => 'subscription'],
-            ['label' => 'Payment Gateways', 'url' => url('/admin/payment-gateways'), 'active' => request()->is('admin/payment-gateways*'), 'icon' => 'payment'],
-            ['label' => 'Users', 'url' => url('/admin/users'), 'active' => request()->is('admin/users*'), 'icon' => 'users'],
-            ['label' => 'Roles & Permissions', 'url' => url('/admin/roles-permissions'), 'active' => request()->is('admin/roles-permissions*'), 'icon' => 'roles'],
-            ['label' => 'Hardware Scanner', 'url' => url('/admin/hardware-scanner'), 'active' => request()->is('admin/hardware-scanner*'), 'icon' => 'scanner'],
-            ['label' => 'System Settings', 'url' => url('/admin/settings'), 'active' => request()->is('admin/settings*'), 'icon' => 'settings'],
-        ];
+        $authUser = Auth::user();
+        $navigation = collect([
+            ['label' => 'Dashboard', 'url' => url('/dashboard'), 'active' => request()->is('dashboard'), 'show' => true],
+            ['label' => 'Projects', 'url' => url('/projects'), 'active' => request()->is('projects*'), 'show' => $authUser->hasPermission('projects.view')],
+            ['label' => 'BOQs', 'url' => url('/boqs'), 'active' => request()->is('boqs*'), 'show' => $authUser->hasPermission('boq.view')],
+            ['label' => 'Hardware Prices', 'url' => url('/hardware-prices'), 'active' => request()->is('hardware-prices*'), 'show' => $authUser->hasPermission('hardware-prices.view')],
+            ['label' => 'Plans', 'url' => url('/plans'), 'active' => request()->is('plans*'), 'show' => true],
+            ['label' => 'Subscriptions', 'url' => url('/subscriptions'), 'active' => request()->is('subscriptions*'), 'show' => $authUser->hasPermission('subscriptions.view')],
+            ['label' => 'Administration', 'url' => url('/admin'), 'active' => request()->is('admin*'), 'show' => $authUser->isSuperAdmin()],
+        ])->where('show', true)->values()->all();
     @endphp
-
-    @php
-        $navIcon = function (string $icon) {
-            return match ($icon) {
-                'dashboard' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 13h8V3H3v10Zm10 8h8V11h-8v10ZM3 21h8v-6H3v6Zm10-12h8V3h-8v6Z"/>',
-                'projects' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 7h6l2 2h10v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 0 1 2-2h4l2 2h5"/>',
-                'boqs' => '<path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3v6h6M9 13h6M9 17h6"/>',
-                'prices' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M17 7.5c0-1.38-2.24-2.5-5-2.5S7 6.12 7 7.5 9.24 10 12 10s5 1.12 5 2.5S14.76 15 12 15s-5-1.12-5-2.5"/>',
-                'plans' => '<path stroke-linecap="round" stroke-linejoin="round" d="M4 5h16v14H4zM8 9h8M8 13h5"/>',
-                'versions' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 4v6c0 4.2-2.8 7-7 8-4.2-1-7-3.8-7-8V7l7-4Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 12.5 11 14l3.5-4"/>',
-                'rates' => '<path stroke-linecap="round" stroke-linejoin="round" d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5H6.5A2.5 2.5 0 0 0 4 19.5Z"/>',
-                'suppliers' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 7h11v9H3zM14 10h4l3 3v3h-7M6.5 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM16.5 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/>',
-                'quotations' => '<path stroke-linecap="round" stroke-linejoin="round" d="M6 2h9l4 4v16H6V2Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 11h6M9 15h6M14 2v5h5"/>',
-                'subscription' => '<rect x="3" y="5" width="18" height="14" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h3"/>',
-                'gift' => '<path stroke-linecap="round" stroke-linejoin="round" d="M20 12v9H4v-9M2 7h20v5H2zM12 22V7M12 7s-1-5-4-5c-1.6 0-3 1.3-3 3s1.3 3 3 3M12 7s1-5 4-5c1.6 0 3 1.3 3 3s-1.3 3-3 3"/>',
-                'admin' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3 4 7v5c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V7l-8-4Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 12.5 11 14l3.5-4"/>',
-                'payment' => '<rect x="3" y="5" width="18" height="14" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 9h18M15 15h2"/>',
-                'users' => '<path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
-                'roles' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3 5 6v5c0 4.4 2.9 7.7 7 9 4.1-1.3 7-4.6 7-9V6l-7-3Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 11h6M12 8v6"/>',
-                'scanner' => '<path stroke-linecap="round" stroke-linejoin="round" d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2M8 8h8v8H8z"/>',
-                'settings' => '<circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.1A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3v-4h.1A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.1A1.7 1.7 0 0 0 15.4 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.2.36.52.65.9.82.33.15.7.2 1.06.18H21v4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>',
-                default => '<circle cx="12" cy="12" r="2"/>',
-            };
-        };
-    @endphp
-
     <div x-data="{ sidebarOpen: false }" class="min-h-screen bg-slate-100">
         <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false" class="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm lg:hidden"></div>
 
-        <aside x-cloak :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="boq-sidebar fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col text-white transition-transform duration-200 lg:translate-x-0">
-            <div class="flex h-20 items-center justify-between border-b border-white/10 px-5">
-                <a href="{{ url('/dashboard') }}" class="flex items-center gap-3 min-w-0">
-                    @if($siteLogo)
-                        <img src="{{ asset('storage/'.$siteLogo) }}" alt="Logo" class="h-11 w-11 shrink-0 rounded-xl bg-white p-1 object-contain">
-                    @else
-                        <span class="boq-brand-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h10M4 18h10" /></svg>
-                        </span>
-                    @endif
-                    <span class="min-w-0"><span class="block truncate text-base font-bold tracking-wide">{{ $siteName }}</span><span class="block truncate text-xs text-slate-400">AI cost intelligence</span></span>
+        <aside x-cloak :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col bg-slate-950 text-white transition-transform duration-200 lg:translate-x-0">
+            <div class="flex h-20 items-center justify-between border-b border-white/10 px-6">
+                <a href="{{ url('/dashboard') }}" class="flex items-center gap-3">
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500 shadow-lg shadow-indigo-950/40">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h10M4 18h10" /></svg>
+                    </span>
+                    <span><span class="block text-base font-bold tracking-wide">BOQ System</span><span class="block text-xs text-slate-400">Cost intelligence</span></span>
                 </a>
                 <button @click="sidebarOpen = false" class="rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-white lg:hidden" aria-label="Close navigation">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                 </button>
             </div>
 
-            <nav class="boq-sidebar-scroll flex-1 overflow-y-auto px-3 py-5">
-                <p class="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Workspace</p>
-                <div class="space-y-1">
-                    @foreach($workspaceNavigation as $item)
-                        <a href="{{ $item['url'] }}" class="boq-nav-link {{ $item['active'] ? 'is-active' : '' }}">
-                            <span class="boq-nav-icon">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">{!! $navIcon($item['icon']) !!}</svg>
-                            </span>
-                            <span class="truncate">{{ $item['label'] }}</span>
-                        </a>
-                    @endforeach
-                </div>
-
-                @if($isSuperAdmin)
-                    <div class="my-5 border-t border-white/10"></div>
-                    <div class="mb-2 flex items-center justify-between px-3">
-                        <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Administration</p>
-                        <span class="rounded-full bg-lime-300/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-lime-300">Super Admin</span>
-                    </div>
-                    <div class="space-y-1">
-                        @foreach($adminNavigation as $item)
-                            <a href="{{ $item['url'] }}" class="boq-nav-link {{ $item['active'] ? 'is-active admin-active' : '' }}">
-                                <span class="boq-nav-icon">
-                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">{!! $navIcon($item['icon']) !!}</svg>
-                                </span>
-                                <span class="truncate">{{ $item['label'] }}</span>
-                            </a>
-                        @endforeach
-                    </div>
-                @endif
+            <nav class="flex-1 space-y-1 overflow-y-auto px-4 py-6">
+                <p class="mb-3 px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Workspace</p>
+                @foreach($navigation as $item)
+                    <a href="{{ $item['url'] }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition {{ $item['active'] ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-950/30' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}">
+                        <span class="h-2 w-2 rounded-full {{ $item['active'] ? 'bg-white' : 'bg-slate-600' }}"></span>
+                        {{ $item['label'] }}
+                    </a>
+                @endforeach
             </nav>
 
-            <div class="border-t border-white/10 p-3">
-                @if($isSuperAdmin)
-                    <a href="{{ url('/admin') }}" class="mb-2 flex items-center justify-between rounded-xl border border-lime-300/15 bg-lime-300/5 px-3 py-2 text-xs text-lime-200 transition hover:bg-lime-300/10">
-                        <span>Administration console</span>
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
-                    </a>
-                @endif
+            <div class="border-t border-white/10 p-4">
                 <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 rounded-xl p-3 transition {{ request()->is('profile') ? 'bg-white/10' : 'hover:bg-white/10' }}">
-                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-lime-300 text-sm font-bold text-slate-950">{{ strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}</span>
-                    <span class="min-w-0 flex-1"><span class="block truncate text-sm font-semibold">{{ Auth::user()->name }}</span><span class="block truncate text-xs text-slate-400">{{ $isSuperAdmin ? 'Super Administrator' : 'Account' }}</span></span>
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-400 text-sm font-bold text-slate-950">{{ strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}</span>
+                    <span class="min-w-0 flex-1"><span class="block truncate text-sm font-semibold">{{ Auth::user()->name }}</span><span class="block truncate text-xs text-slate-400">Update profile</span></span>
                     <svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
                 </a>
-                <form method="POST" action="{{ route('logout') }}" class="mt-1">
+                <form method="POST" action="{{ route('logout') }}" class="mt-2">
                     @csrf
                     <button type="submit" class="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-400 transition hover:bg-white/10 hover:text-white">Log out</button>
                 </form>
@@ -159,22 +66,11 @@
         </aside>
 
         <div class="min-h-screen lg:pl-72">
-            <header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur sm:px-6 lg:px-8">
-                <div class="flex items-center min-w-0">
-                    <button @click="sidebarOpen = true" class="mr-3 rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" aria-label="Open navigation">
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
-                    </button>
-                    <div class="min-w-0">
-                        <p class="truncate text-sm font-semibold text-slate-900">{{ $title ?? 'BOQ System' }}</p>
-                        <p class="hidden truncate text-xs text-slate-500 sm:block">Civil works BOQ, pricing and subscription management</p>
-                    </div>
-                </div>
-                @if($isSuperAdmin)
-                    <a href="{{ url('/admin') }}" class="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-lime-300 hover:text-slate-950 sm:inline-flex">
-                        <span class="h-2 w-2 rounded-full bg-lime-400"></span>
-                        Super Admin
-                    </a>
-                @endif
+            <header class="sticky top-0 z-30 flex h-16 items-center border-b border-slate-200 bg-white/90 px-4 backdrop-blur sm:px-6 lg:hidden">
+                <button @click="sidebarOpen = true" class="rounded-lg p-2 text-slate-600 hover:bg-slate-100" aria-label="Open navigation">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </button>
+                <span class="ml-3 font-bold text-slate-900">BOQ System</span>
             </header>
 
             <main class="px-4 py-6 sm:px-6 sm:py-8 xl:px-10">
