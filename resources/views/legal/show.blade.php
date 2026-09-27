@@ -1,9 +1,7 @@
 <x-layouts.guest :title="$title">
 
     <div class="text-center">
-        <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#05645b]/10 text-[#05645b]">
-            <i class="fas {{ $icon }} text-lg"></i>
-        </div>
+        <x-auth-badge :icon="$icon" />
 
         <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">
             {{ $title }}

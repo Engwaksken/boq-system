@@ -61,4 +61,24 @@ class RegistrationTest extends TestCase
 
         $this->get(route('legal.privacy'))->assertOk();
     }
+
+    public function test_auth_pages_show_uploaded_logo_instead_of_icon(): void
+    {
+        \App\Models\SiteSetting::set('logo', 'site/logo-test.png');
+
+        foreach (['/login', '/register', '/forgot-password'] as $url) {
+            $this->get($url)
+                ->assertOk()
+                ->assertSee(asset('storage/site/logo-test.png'), false)
+                ->assertDontSee('auth-badge', false);
+        }
+    }
+
+    public function test_auth_pages_fall_back_to_icon_without_logo(): void
+    {
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee('auth-badge', false)
+            ->assertSee('fa-right-to-bracket', false);
+    }
 }
