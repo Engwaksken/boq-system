@@ -27,6 +27,10 @@
     {{-- ============================================================
          STATISTICS
     ============================================================ --}}
+    @if(session('message'))
+        <div class="boq-flash"><i class="fas fa-circle-check"></i> {{ session('message') }}</div>
+    @endif
+
     <div class="boq-admin-stats-grid">
 
         <div class="boq-stat-card boq-stat-blue">
@@ -180,12 +184,20 @@
     ============================================================ --}}
     <div class="boq-panel">
 
+        <x-bulk-bar :count="count($selected)">
+            <button type="button" wire:click="bulkActivate" wire:confirm="Activate the selected pending, overdue, failed or expired subscriptions?" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> Activate</button>
+            <button type="button" wire:click="bulkCancel" wire:confirm="Cancel the selected subscriptions and revoke their access?" class="boq-btn-secondary"><i class="fas fa-ban"></i> Cancel</button>
+            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected subscriptions? Active ones are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> Delete</button>
+        </x-bulk-bar>
+
         <div class="boq-table-wrapper">
 
             <table class="boq-table">
 
                 <thead>
                     <tr>
+
+                        <th class="boq-check-col"><x-select-all :ids="$subscriptions->pluck('id')" :selected="$selected" /></th>
 
                         <th
                             wire:click="sortBy('user.name')"
@@ -286,6 +298,8 @@
 
                         <tr wire:key="admin-subscription-{{ $sub->id }}">
 
+                            <td class="boq-check-col"><x-select-row :id="$sub->id" /></td>
+
                             <td>
                                 <div class="boq-table-title">
                                     {{ $sub->user?->name ?? 'Deleted user' }}
@@ -351,10 +365,26 @@
                             </td>
 
 
-                            <td class="text-right">
-                                <span class="boq-no-action">
-                                    —
-                                </span>
+                            <td>
+                                <div class="boq-table-actions justify-end">
+                                    @if(in_array($sub->status, ['pending', 'past_due', 'failed', 'expired'], true))
+                                        <button type="button" wire:click="activate({{ $sub->id }})" wire:confirm="Activate this subscription now? Use this for payments confirmed outside the system." class="boq-icon-btn boq-icon-success" title="Activate" aria-label="Activate">
+                                            <i class="fas fa-circle-check"></i>
+                                        </button>
+                                    @endif
+
+                                    @if($sub->end_date && ! in_array($sub->status, ['cancelled'], true))
+                                        <button type="button" wire:click="openExtend({{ $sub->id }})" class="boq-icon-btn" title="Extend" aria-label="Extend">
+                                            <i class="fas fa-calendar-plus"></i>
+                                        </button>
+                                    @endif
+
+                                    @unless(in_array($sub->status, ['cancelled', 'expired'], true))
+                                        <button type="button" wire:click="cancel({{ $sub->id }})" wire:confirm="Cancel this subscription and revoke its access?" class="boq-icon-btn boq-icon-danger" title="Cancel" aria-label="Cancel">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                    @endunless
+                                </div>
                             </td>
 
                         </tr>
@@ -364,7 +394,7 @@
 
                         <tr>
                             <td
-                                colspan="7"
+                                colspan="8"
                                 class="boq-empty-table"
                             >
                                 <i class="fas fa-receipt"></i>
@@ -391,5 +421,28 @@
         @endif
 
     </div>
+
+    @if($extendingId)
+        <div class="boq-modal-backdrop" wire:key="extend-modal" role="dialog" aria-modal="true" aria-labelledby="extend-title">
+            <form wire:submit="applyExtension" class="boq-modal boq-modal-sm">
+                <div class="boq-modal-head">
+                    <h2 id="extend-title"><i class="fas fa-calendar-plus"></i> Extend Subscription</h2>
+                    <button type="button" wire:click="closeExtend" class="boq-modal-close" aria-label="Close"><i class="fas fa-xmark"></i></button>
+                </div>
+
+                <div class="boq-modal-body">
+                    <label for="extend-days" class="boq-field-label">Add days</label>
+                    <input id="extend-days" type="number" min="1" max="3650" wire:model="extendDays" class="boq-field">
+                    <p class="boq-field-help">Counted from the current end date, or from today if it has already expired.</p>
+                    @error('extendDays') <p class="boq-field-error">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="boq-modal-foot">
+                    <button type="button" wire:click="closeExtend" class="boq-btn-secondary">Cancel</button>
+                    <button type="submit" class="boq-btn-primary"><i class="fas fa-calendar-check"></i> Extend</button>
+                </div>
+            </form>
+        </div>
+    @endif
 
 </div>

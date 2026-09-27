@@ -14,6 +14,14 @@ class QuotationsManager extends Component
 {
     use WithPagination;
 
+    /**
+     * Livewire update requests skip route middleware, so re-check on every request.
+     */
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+    }
+
     public string $search = '';
     public string $status = '';
     public int $perPage = 10;

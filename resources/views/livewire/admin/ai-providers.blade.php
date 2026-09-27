@@ -200,7 +200,7 @@
                             </div>
                             <div class="boq-form-span-2">
                                 <label class="boq-field-label">API Key / Secret</label>
-                                <input type="password" wire:model="form.api_key" class="boq-field" autocomplete="new-password">
+                                <x-password-input wire:model="form.api_key" autocomplete="new-password" />
                                 <div class="boq-table-subtitle">Saved credentials display as ***stored*** and are never sent back in plain text.</div>
                             </div>
                             <div>

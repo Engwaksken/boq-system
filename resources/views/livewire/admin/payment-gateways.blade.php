@@ -34,6 +34,7 @@
                 <i class="fas fa-circle-check"></i> Activate
             </button>
             <button type="button" wire:click="bulkSetActive(false)" wire:confirm="Deactivate the selected gateways?" class="boq-btn-secondary">
+            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected gateways? Gateways with payments and the default gateway are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> Delete</button>
                 <i class="fas fa-ban"></i> Deactivate
             </button>
         </x-bulk-bar>
@@ -234,13 +235,11 @@
                                         @endphp
                                         <div>
                                             <label for="cfg-{{ $key }}" class="boq-field-label">{{ \Illuminate\Support\Str::headline($key) }}</label>
-                                            <input
-                                                id="cfg-{{ $key }}"
-                                                type="{{ $isSecret ? 'password' : 'text' }}"
-                                                wire:model="config.{{ $key }}"
-                                                class="boq-field"
-                                                autocomplete="off"
-                                            >
+                                            @if($isSecret)
+                                                <x-password-input id="cfg-{{ $key }}" wire:model="config.{{ $key }}" autocomplete="off" />
+                                            @else
+                                                <input id="cfg-{{ $key }}" type="text" wire:model="config.{{ $key }}" class="boq-field" autocomplete="off">
+                                            @endif
                                         </div>
                                     @endif
                                 @endforeach

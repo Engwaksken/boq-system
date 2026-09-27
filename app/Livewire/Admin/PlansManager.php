@@ -16,6 +16,14 @@ class PlansManager extends Component
     use WithBulkSelection;
     use WithPagination;
 
+    /**
+     * Livewire update requests skip route middleware, so re-check on every request.
+     */
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+    }
+
     public string $search = '';
     public bool $showForm = false;
     public ?int $editingId = null;
@@ -78,6 +86,11 @@ class PlansManager extends Component
         $plan = Plan::findOrFail($id);
         $plan->update(['is_archived' => true, 'is_active' => false]);
         session()->flash('message', 'Plan archived. Existing subscriptions were preserved.');
+    }
+
+    public function bulkDelete(): void
+    {
+        $this->deleteSelectedUnlessInUse(Plan::class, ['subscriptions'], 'message');
     }
 
     public function bulkSetActive(bool $active): void

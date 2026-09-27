@@ -99,16 +99,16 @@
         <div class="boq-stat-card boq-stat-blue">
             <div>
                 <p class="boq-stat-label">
-                    Active
+                    Categories
                 </p>
 
                 <p class="boq-stat-value">
-                    {{ $stats['active'] }}
+                    {{ $stats['categories'] }}
                 </p>
             </div>
 
             <span class="boq-stat-icon">
-                <i class="fas fa-circle-check"></i>
+                <i class="fas fa-layer-group"></i>
             </span>
         </div>
 
@@ -327,6 +327,7 @@
             @if($canManage)
                 <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> Activate</button>
                 <button type="button" wire:click="bulkSetActive(false)" wire:confirm="Deactivate the selected prices?" class="boq-btn-secondary"><i class="fas fa-ban"></i> Deactivate</button>
+                <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected prices? Prices linked to BOQ items are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> Delete</button>
             @endif
         </x-bulk-bar>
 
@@ -722,28 +723,7 @@
                                     Currency *
                                 </label>
 
-                                <select
-                                    wire:model="form.currency"
-                                    class="boq-field"
-                                >
-                                    @foreach([
-                                        'UGX',
-                                        'USD',
-                                        'KES',
-                                        'TZS',
-                                        'RWF',
-                                        'GBP',
-                                        'EUR',
-                                    ] as $currencyCode)
-
-                                        <option
-                                            value="{{ $currencyCode }}"
-                                        >
-                                            {{ $currencyCode }}
-                                        </option>
-
-                                    @endforeach
-                                </select>
+                                <x-currency-select wire:model="form.currency" :current="$form['currency'] ?? null" />
 
                             </div>
 

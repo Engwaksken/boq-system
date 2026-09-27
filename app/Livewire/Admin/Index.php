@@ -15,6 +15,14 @@ class Index extends Component
 {
     use WithPagination;
 
+    /**
+     * Livewire update requests skip route middleware, so re-check on every request.
+     */
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+    }
+
     public string $search = '';
     public string $activeTab = 'subscriptions';
     public int $perPage = 20;
@@ -23,7 +31,6 @@ class Index extends Component
         'subscriptions' => 'Subscriptions',
         'plans' => 'Plans',
         'users' => 'Users',
-        'statistics' => 'Statistics',
     ];
 
     public function updatedSearch(): void
@@ -36,28 +43,51 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatedActiveTab(): void
+    {
+        if (! array_key_exists($this->activeTab, $this->tabs)) {
+            $this->activeTab = 'subscriptions';
+        }
+
+        $this->search = '';
+        $this->resetPage();
+    }
+
     public function render()
     {
-        $subscriptions = Subscription::query()
-            ->when($this->search, fn ($q) => $q->whereHas('user', fn ($q) => $q->where('name', 'like', "%{$this->search}%")->orWhere('email', 'like', "%{$this->search}%")))
-            ->with(['user', 'plan'])
-            ->latest()
-            ->paginate($this->perPage);
+        $search = trim($this->search);
+        $empty = new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->perPage);
 
-        $plans = Plan::query()
-            ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
-            ->latest()
-            ->paginate($this->perPage);
+        // Only the visible tab is queried.
+        $subscriptions = $this->activeTab === 'subscriptions'
+            ? Subscription::query()
+                ->when($search !== '', fn ($q) => $q->whereHas('user', fn ($u) => $u->where(fn ($w) => $w->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))))
+                ->with(['user', 'plan'])
+                ->latest()
+                ->paginate($this->perPage)
+            : $empty;
 
-        $users = User::query()
-            ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%")->orWhere('email', 'like', "%{$this->search}%"))
-            ->with(['organisation', 'roles'])
-            ->latest()
-            ->paginate($this->perPage);
+        $plans = $this->activeTab === 'plans'
+            ? Plan::query()
+                ->when($search !== '', fn ($q) => $q->where('name', 'like', "%{$search}%"))
+                ->latest()
+                ->paginate($this->perPage)
+            : $empty;
+
+        $users = $this->activeTab === 'users'
+            ? User::query()
+                ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%")))
+                ->with(['organisation', 'roles'])
+                ->latest()
+                ->paginate($this->perPage)
+            : $empty;
 
         $stats = [
             'total_users' => User::count(),
-            'active_subscriptions' => Subscription::where('status', 'active')->count(),
+            // Same definition as the subscriptions pages: current access, not just status = active.
+            'active_subscriptions' => Subscription::whereIn('status', ['trial', 'active', 'grace_period'])
+                ->where(fn ($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', now()))
+                ->count(),
             'total_revenue' => Transaction::where('status', 'successful')->sum('amount'),
             'plans_count' => Plan::where('is_active', true)->count(),
         ];

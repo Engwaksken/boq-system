@@ -12,6 +12,7 @@
     <x-bulk-bar :count="count($selected)">
             <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> Activate</button>
             <button type="button" wire:click="bulkSetActive(false)" wire:confirm="Deactivate the selected suppliers? Historical quotations are kept." class="boq-btn-secondary"><i class="fas fa-ban"></i> Deactivate</button>
+            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected suppliers? Suppliers with rates or quotations are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> Delete</button>
     </x-bulk-bar>
 
     <div class="boq-panel overflow-x-auto">
@@ -51,7 +52,7 @@
             <form wire:submit="save">
                 <div class="boq-modal-body grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div class="md:col-span-2"><label class="text-sm font-medium">Supplier name</label><input wire:model="form.name" class="mt-1 w-full rounded-lg border-slate-300"></div>
-                    <div><label class="text-sm font-medium">Favorite currency</label><input wire:model="form.currency" class="mt-1 w-full rounded-lg border-slate-300"></div>
+                    <div><label class="text-sm font-medium">Preferred currency</label><x-currency-select wire:model="form.currency" :current="$form['currency'] ?? null" class="mt-1" /></div>
                     <div><label class="text-sm font-medium">Contact person</label><input wire:model="form.contact_name" class="mt-1 w-full rounded-lg border-slate-300"></div>
                     <div><label class="text-sm font-medium">Phone</label><input wire:model="form.phone" class="mt-1 w-full rounded-lg border-slate-300"></div>
                     <div><label class="text-sm font-medium">Email</label><input wire:model="form.email" class="mt-1 w-full rounded-lg border-slate-300"></div>

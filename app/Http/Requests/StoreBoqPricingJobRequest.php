@@ -12,7 +12,9 @@ class StoreBoqPricingJobRequest extends FormRequest
     {
         $boq = $this->route('boq');
 
-        return $boq instanceof Boq && $this->user()?->can('create', BoqPricingJob::class);
+        return $boq instanceof Boq
+            && $this->user()?->can('create', BoqPricingJob::class)
+            && $this->user()->can('process', $boq);
     }
 
     /**

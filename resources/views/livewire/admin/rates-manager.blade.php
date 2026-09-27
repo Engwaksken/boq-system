@@ -146,6 +146,7 @@
         <x-bulk-bar :count="count($selected)">
             <button type="button" wire:click="bulkApprove" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> Approve</button>
             <button type="button" wire:click="bulkReject" wire:confirm="Reject the selected rates?" class="boq-btn-danger"><i class="fas fa-circle-xmark"></i> Reject</button>
+            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected rates? Rates used in quotations are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> Delete</button>
         </x-bulk-bar>
 
         <div class="boq-table-wrapper">
@@ -479,25 +480,7 @@
                                     Currency
                                 </label>
 
-                                <select
-                                    wire:model="form.currency"
-                                    class="boq-field"
-                                >
-                                    @foreach([
-                                        'UGX',
-                                        'USD',
-                                        'KES',
-                                        'TZS',
-                                        'RWF',
-                                        'EUR',
-                                    ] as $currencyCode)
-
-                                        <option value="{{ $currencyCode }}">
-                                            {{ $currencyCode }}
-                                        </option>
-
-                                    @endforeach
-                                </select>
+                                <x-currency-select wire:model="form.currency" :current="$form['currency'] ?? null" />
 
                             </div>
 

@@ -24,6 +24,8 @@ class BoqPricingJobController extends Controller
     public function store(StoreBoqPricingJobRequest $request, Boq $boq): JsonResponse
     {
         $this->authorize('create', BoqPricingJob::class);
+        // The user must also be allowed to change this particular BOQ (tenant check).
+        $this->authorize('process', $boq);
 
         $user = $request->user();
 

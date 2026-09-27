@@ -2,10 +2,13 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\WithBulkSelection;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\SubscriptionService;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -13,7 +16,16 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class SubscriptionsManager extends Component
 {
+    use WithBulkSelection;
     use WithPagination;
+
+    private const ACTIVATABLE = ['pending', 'past_due', 'failed', 'expired'];
+
+    private const DELETABLE = ['pending', 'failed', 'cancelled', 'expired'];
+
+    public ?int $extendingId = null;
+
+    public int $extendDays = 30;
 
     public string $search = '';
     public string $statusFilter = 'all';
@@ -32,6 +44,151 @@ class SubscriptionsManager extends Component
         'end_date',
         'created_at',
     ];
+
+    /**
+     * Livewire update requests skip route middleware, so re-check on every request.
+     */
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+    }
+
+    /**
+     * Manually activate a subscription (e.g. a confirmed bank transfer).
+     */
+    public function activate(int $id, SubscriptionService $service): void
+    {
+        $subscription = Subscription::with('plan')->findOrFail($id);
+
+        if (! in_array($subscription->status, self::ACTIVATABLE, true)) {
+            session()->flash('message', 'Only pending, overdue, failed or expired subscriptions can be activated.');
+
+            return;
+        }
+
+        $this->activateSubscription($subscription, $service);
+
+        session()->flash('message', 'Subscription activated.');
+    }
+
+    public function cancel(int $id): void
+    {
+        $subscription = Subscription::findOrFail($id);
+
+        if (in_array($subscription->status, ['cancelled', 'expired'], true)) {
+            return;
+        }
+
+        $this->cancelSubscription($subscription);
+
+        session()->flash('message', 'Subscription cancelled and its entitlements revoked.');
+    }
+
+    public function openExtend(int $id): void
+    {
+        $this->extendingId = Subscription::findOrFail($id)->id;
+        $this->extendDays = 30;
+        $this->resetValidation();
+    }
+
+    public function closeExtend(): void
+    {
+        $this->extendingId = null;
+    }
+
+    public function applyExtension(): void
+    {
+        $this->validate(['extendDays' => ['required', 'integer', 'min:1', 'max:3650']]);
+
+        $subscription = Subscription::with('plan')->findOrFail($this->extendingId);
+
+        if ($subscription->end_date === null) {
+            session()->flash('message', 'This subscription has no end date (lifetime) and cannot be extended.');
+            $this->closeExtend();
+
+            return;
+        }
+
+        DB::transaction(function () use ($subscription) {
+            // Extend from today when it already lapsed, otherwise from the current end date.
+            $base = $subscription->end_date->isPast() ? now() : $subscription->end_date;
+            $endDate = $base->copy()->addDays($this->extendDays);
+            $graceDays = (int) ($subscription->plan?->grace_period_days ?? 0);
+
+            $subscription->update([
+                'end_date' => $endDate,
+                'renewal_date' => $endDate,
+                'grace_period_end_date' => $graceDays > 0 ? $endDate->copy()->addDays($graceDays) : null,
+                'status' => $subscription->status === 'expired' ? 'active' : $subscription->status,
+            ]);
+
+            if ($subscription->status === 'active') {
+                $subscription->entitlements()->where('status', 'expired')->update(['status' => 'active']);
+            }
+        });
+
+        session()->flash('message', "Subscription extended by {$this->extendDays} day(s).");
+        $this->closeExtend();
+    }
+
+    public function bulkActivate(SubscriptionService $service): void
+    {
+        $subscriptions = Subscription::with('plan')
+            ->whereKey($this->selectedIds())
+            ->whereIn('status', self::ACTIVATABLE)
+            ->get();
+
+        $subscriptions->each(fn ($subscription) => $this->activateSubscription($subscription, $service));
+
+        $this->finishBulkAction($subscriptions->count(), 'activated');
+    }
+
+    public function bulkCancel(): void
+    {
+        $subscriptions = Subscription::whereKey($this->selectedIds())
+            ->whereNotIn('status', ['cancelled', 'expired'])
+            ->get();
+
+        $subscriptions->each(fn ($subscription) => $this->cancelSubscription($subscription));
+
+        $this->finishBulkAction($subscriptions->count(), 'cancelled');
+    }
+
+    public function bulkDelete(): void
+    {
+        $count = Subscription::whereKey($this->selectedIds())
+            ->whereIn('status', self::DELETABLE)
+            ->get()
+            ->each->delete()
+            ->count();
+
+        $this->clearSelection();
+
+        session()->flash('message', "{$count} subscription(s) deleted. Active subscriptions are never deleted; cancel them first.");
+    }
+
+    private function activateSubscription(Subscription $subscription, SubscriptionService $service): void
+    {
+        if ($subscription->status === 'expired') {
+            // Start a fresh period instead of re-activating the lapsed one.
+            $subscription->start_date = now();
+        }
+
+        $service->activate($subscription);
+    }
+
+    private function cancelSubscription(Subscription $subscription): void
+    {
+        DB::transaction(function () use ($subscription) {
+            $subscription->update([
+                'status' => 'cancelled',
+                'cancellation_date' => now(),
+                'auto_renewal' => false,
+            ]);
+
+            $subscription->entitlements()->update(['status' => 'revoked']);
+        });
+    }
 
     public function updatedSearch(): void
     {
@@ -108,7 +265,10 @@ class SubscriptionsManager extends Component
 
         $stats = [
             'total' => Subscription::query()->count(),
-            'active' => Subscription::query()->where('status', 'active')->count(),
+            'active' => Subscription::query()
+                ->whereIn('status', ['trial', 'active', 'grace_period'])
+                ->where(fn ($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', now()))
+                ->count(),
             'expired' => Subscription::query()->where('status', 'expired')->count(),
             'cancelled' => Subscription::query()->where('status', 'cancelled')->count(),
             'revenue' => Transaction::query()

@@ -57,7 +57,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700">Temporary password</label>
-                        <input wire:model="newPassword" type="password" class="mt-1 w-full rounded-lg border-slate-300 text-sm" placeholder="min. 8 characters">
+                        <x-password-input wire:model="newPassword" placeholder="min. 8 characters" autocomplete="new-password" />
                         @error('newPassword') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
                     </div>
                     <div>

@@ -14,107 +14,6 @@ use Throwable;
 
 class HardwarePriceFetchingService
 {
-    private const DEFAULT_CATEGORIES = [
-        'Cement' => [
-            'Portland Cement',
-            'Waterproof Cement',
-            'White Cement',
-        ],
-
-        'Steel' => [
-            'TMT Bars',
-            'Binding Wire',
-            'Steel Mesh',
-            'Steel Plates',
-        ],
-
-        'Aggregates' => [
-            'Sand',
-            'Gravel',
-            'Crushed Stone',
-            'Murram',
-        ],
-
-        'Bricks & Blocks' => [
-            'Clay Bricks',
-            'Concrete Blocks',
-            'Interlocking Blocks',
-        ],
-
-        'Roofing' => [
-            'Iron Sheets',
-            'Roofing Tiles',
-            'Ridges',
-            'Valleys',
-            'Gutters',
-        ],
-
-        'Paint' => [
-            'Emulsion Paint',
-            'Oil Paint',
-            'Weather Guard',
-            'Primer',
-            'Thinner',
-        ],
-
-        'Plumbing' => [
-            'PVC Pipes',
-            'HDPE Pipes',
-            'Fittings',
-            'Valves',
-            'Taps',
-            'Water Tanks',
-        ],
-
-        'Electrical' => [
-            'Cables',
-            'Conduits',
-            'Switches',
-            'Sockets',
-            'DB Boxes',
-            'Bulbs',
-        ],
-
-        'Timber' => [
-            'Treated Timber',
-            'Plywood',
-            'MDF',
-            'Blockboard',
-            'Cypress',
-            'Pine',
-        ],
-
-        'Tiles' => [
-            'Ceramic Tiles',
-            'Porcelain Tiles',
-            'Floor Tiles',
-            'Wall Tiles',
-        ],
-
-        'Adhesives' => [
-            'Tile Adhesive',
-            'Grout',
-            'Silicone',
-            'Construction Adhesive',
-        ],
-
-        'Tools' => [
-            'Cement Mixers',
-            'Vibrators',
-            'Trowels',
-            'Levels',
-            'Measuring Tools',
-        ],
-
-        'Safety' => [
-            'Helmets',
-            'Boots',
-            'Gloves',
-            'Reflective Vests',
-            'Safety Nets',
-        ],
-    ];
-
     private const HARDWARE_SUPPLIERS = [
         'Hardware World Uganda',
         'Kampala Hardware',
@@ -261,13 +160,6 @@ class HardwarePriceFetchingService
                 )
                 ->pluck('name')
                 ->all();
-
-        if ($categories === []) {
-            $categories =
-                array_keys(
-                    self::DEFAULT_CATEGORIES
-                );
-        }
 
         foreach (
             $categories
@@ -810,9 +702,7 @@ PROMPT;
                 ->default_items;
         }
 
-        return self::DEFAULT_CATEGORIES[
-            $category
-        ] ?? [];
+        return [];
     }
 
     private function normalisePriceType(
@@ -857,11 +747,7 @@ PROMPT;
                 )
                 ->all();
 
-        return $categories !== []
-            ? $categories
-            : array_keys(
-                self::DEFAULT_CATEGORIES
-            );
+        return $categories;
     }
 
     public function getItemsByCategory(

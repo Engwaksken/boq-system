@@ -21,6 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => CheckPermission::class,
             'entitlement' => CheckEntitlement::class,
         ]);
+
+        $middleware->appendToGroup('web', \App\Http\Middleware\EnsureUserIsActive::class);
+        $middleware->appendToGroup('api', \App\Http\Middleware\EnsureUserIsActive::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {

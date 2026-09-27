@@ -18,6 +18,14 @@ class RatesManager extends Component
     use WithBulkSelection;
     use WithPagination;
 
+    /**
+     * Livewire update requests skip route middleware, so re-check on every request.
+     */
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+    }
+
     public string $search = '';
     public string $verification = '';
     public string $currency = '';
@@ -116,6 +124,11 @@ class RatesManager extends Component
         }
         session()->flash('message', $this->editingId ? 'Rate updated.' : 'Rate saved (pending verification).');
         $this->cancel();
+    }
+
+    public function bulkDelete(): void
+    {
+        $this->deleteSelectedUnlessInUse(Rate::class, ['quotationItems'], 'message');
     }
 
     public function bulkApprove(RateLibraryService $library): void

@@ -76,9 +76,7 @@
 
 
         {{-- Password --}}
-        <div
-            x-data="{ showPassword: false }"
-        >
+        <div>
 
             <div
                 class="mb-1.5 flex items-center justify-between"
@@ -114,7 +112,7 @@
 
                 <input
                     id="password"
-                    x-bind:type="showPassword ? 'text' : 'password'"
+                    type="password"
                     name="password"
                     required
                     autocomplete="current-password"
@@ -124,22 +122,11 @@
 
                 <button
                     type="button"
-                    x-on:click="showPassword = ! showPassword"
                     class="auth-password-toggle"
-                    x-bind:aria-label="
-                        showPassword
-                            ? 'Hide password'
-                            : 'Show password'
-                    "
+                    data-password-toggle
+                    aria-label="Show password"
                 >
-                    <i
-                        class="fas"
-                        x-bind:class="
-                            showPassword
-                                ? 'fa-eye-slash'
-                                : 'fa-eye'
-                        "
-                    ></i>
+                    <i class="fas fa-eye"></i>
                 </button>
 
             </div>
@@ -194,7 +181,32 @@
     </form>
 
 
-    @if(Route::has('register'))
+    {{-- Biometric sign-in: revealed by resources/js/app.js only on devices with Windows Hello / Touch ID / fingerprint --}}
+    <div data-biometric-only class="hidden">
+
+        <div class="auth-divider">
+            <span>or</span>
+        </div>
+
+        <button
+            type="button"
+            data-biometric-login
+            class="auth-secondary"
+        >
+            <i class="fas fa-fingerprint"></i>
+            Sign in with biometrics
+        </button>
+
+        <p data-biometric-error class="auth-error hidden text-center" role="alert"></p>
+
+        <p class="mt-2 text-center text-xs text-slate-500">
+            Set it up under Profile &rarr; Security after signing in with your password.
+        </p>
+
+    </div>
+
+
+    @if(Route::has('register') && \App\Models\SiteSetting::get('allow_registration', true))
 
         <p
             class="mt-7 text-center text-sm text-slate-500"

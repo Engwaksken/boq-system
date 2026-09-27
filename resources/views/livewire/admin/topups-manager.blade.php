@@ -13,6 +13,7 @@
             <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> Activate</button>
             <button type="button" wire:click="bulkSetActive(false)" class="boq-btn-secondary"><i class="fas fa-ban"></i> Deactivate</button>
             <button type="button" wire:click="bulkArchive" wire:confirm="Archive the selected top-ups? Existing purchases stay active." class="boq-btn-danger"><i class="fas fa-box-archive"></i> Archive</button>
+            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected top-ups? Top-ups that were purchased are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> Delete</button>
     </x-bulk-bar>
 
     <div class="boq-panel overflow-x-auto">
@@ -84,7 +85,8 @@
                         </select>
                     </div>
                     <div class="md:col-span-3"><label class="text-sm font-medium">Description</label><textarea wire:model="form.description" rows="2" class="mt-1 w-full rounded-lg border-slate-300"></textarea></div>
-                    @foreach(['price'=>'Price','currency'=>'Currency','duration_days'=>'Duration Days','release_version'=>'Release Version','purchase_limit'=>'Purchase Limit','display_order'=>'Display Order'] as $field=>$label)
+                    <div><label class="text-sm font-medium">Currency</label><x-currency-select wire:model="form.currency" :current="$form['currency'] ?? null" class="mt-1" /></div>
+                    @foreach(['price'=>'Price','duration_days'=>'Duration Days','release_version'=>'Release Version','purchase_limit'=>'Purchase Limit','display_order'=>'Display Order'] as $field=>$label)
                     <div><label class="text-sm font-medium">{{ $label }}</label><input wire:model="form.{{ $field }}" class="mt-1 w-full rounded-lg border-slate-300" type="{{ in_array($field,['duration_days','purchase_limit','display_order'],true) ? 'number' : 'text' }}"></div>
                     @endforeach
                     <div class="md:col-span-3"><label class="text-sm font-medium">Included features (comma separated codes)</label><input wire:model="form.included_features" class="mt-1 w-full rounded-lg border-slate-300" placeholder="variations,cost.tracking"></div>

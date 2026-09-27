@@ -1,39 +1,107 @@
-<div class="max-w-xl">
-    <div class="bg-slate-50 rounded-xl p-6">
-        <h3 class="text-lg font-semibold text-slate-900 mb-4">Change Password</h3>
-        <form wire:submit.prevent="updatePassword" class="space-y-4">
+<div class="max-w-2xl space-y-6">
+    <div class="boq-panel boq-panel-body">
+        <h3 class="boq-section-title mb-4">
+            <i class="fas fa-key"></i>
+            Change Password
+        </h3>
+
+        <form wire:submit="updatePassword" class="space-y-4">
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Current Password</label>
-                <input type="password" wire:model="passwordForm.current_password" class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required autocomplete="current-password">
-                @error('passwordForm.current_password') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                <label for="current_password" class="boq-field-label">Current Password</label>
+                <x-password-input id="current_password" wire:model="passwordForm.current_password" required autocomplete="current-password" />
+                @error('passwordForm.current_password') <p class="boq-field-error">{{ $message }}</p> @enderror
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">New Password</label>
-                <input type="password" wire:model="passwordForm.password" class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required autocomplete="new-password" minlength="8">
-                @error('passwordForm.password') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                <label for="new_password" class="boq-field-label">New Password</label>
+                <x-password-input id="new_password" wire:model="passwordForm.password" required autocomplete="new-password" minlength="8" />
+                @error('passwordForm.password') <p class="boq-field-error">{{ $message }}</p> @enderror
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Confirm New Password</label>
-                <input type="password" wire:model="passwordForm.password_confirmation" class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required autocomplete="new-password">
-                @error('passwordForm.password_confirmation') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                <label for="new_password_confirmation" class="boq-field-label">Confirm New Password</label>
+                <x-password-input id="new_password_confirmation" wire:model="passwordForm.password_confirmation" required autocomplete="new-password" />
+                @error('passwordForm.password_confirmation') <p class="boq-field-error">{{ $message }}</p> @enderror
             </div>
 
-            <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition">
-                <svg wire:loading.class="animate-spin" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
-                <span wire:loading.remove>Update Password</span>
-                <span wire:loading>Updating...</span>
+            <button type="submit" wire:loading.attr="disabled" wire:target="updatePassword" class="boq-btn-primary">
+                <i wire:loading.remove wire:target="updatePassword" class="fas fa-floppy-disk"></i>
+                <i wire:loading wire:target="updatePassword" class="fas fa-spinner fa-spin"></i>
+                Update Password
             </button>
         </form>
     </div>
 
-    <div class="mt-6 bg-slate-50 rounded-xl p-6">
-        <h3 class="text-lg font-semibold text-slate-900 mb-4">Two-Factor Authentication</h3>
-        <p class="text-slate-600 mb-4">Two-factor authentication is not yet configured.</p>
-        <button class="inline-flex items-center px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold rounded-lg transition cursor-not-allowed" disabled>
-            <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-            Enable 2FA (Coming Soon)
-        </button>
+    <div
+        class="boq-panel boq-panel-body"
+        x-data="{
+            busy: false,
+            error: '',
+            supported: false,
+            async init() { this.supported = await window.boqBiometric?.available() ?? false },
+            async enroll() {
+                this.busy = true;
+                this.error = '';
+                try {
+                    await window.boqBiometric.register(navigator.userAgentData?.platform || navigator.platform || 'This device');
+                    $wire.$refresh();
+                } catch (e) {
+                    this.error = e.message;
+                } finally {
+                    this.busy = false;
+                }
+            },
+        }"
+    >
+        <h3 class="boq-section-title mb-1">
+            <i class="fas fa-fingerprint"></i>
+            Biometric Sign-in
+        </h3>
+        <p class="mb-4 text-sm text-slate-500">
+            Sign in with Windows Hello, Touch ID or your fingerprint instead of typing your password.
+            Your fingerprint or face never leaves your device.
+        </p>
+
+        @if($biometricDevices->isNotEmpty())
+            <ul class="mb-4 divide-y divide-slate-100 rounded-lg border border-slate-200">
+                @foreach($biometricDevices as $device)
+                    <li class="flex items-center justify-between gap-3 px-4 py-3" wire:key="passkey-{{ $device->id }}">
+                        <div>
+                            <div class="text-sm font-semibold text-slate-800">
+                                <i class="fas fa-laptop mr-1 text-slate-400"></i>
+                                {{ $device->alias ?: 'Registered device' }}
+                            </div>
+                            <div class="text-xs text-slate-500">Added {{ $device->created_at?->format('d M Y') }}</div>
+                        </div>
+                        <button
+                            type="button"
+                            wire:click="removeBiometricDevice(@js($device->id))"
+                            wire:confirm="Remove biometric sign-in for this device?"
+                            class="boq-icon-btn boq-icon-danger"
+                            title="Remove"
+                            aria-label="Remove device"
+                        >
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+
+        <template x-if="supported">
+            <button type="button" class="boq-btn-primary" :disabled="busy" @click="enroll()">
+                <i class="fas" :class="busy ? 'fa-spinner fa-spin' : 'fa-fingerprint'"></i>
+                Enable on this device
+            </button>
+        </template>
+
+        <template x-if="! supported">
+            <p class="text-sm text-slate-500">
+                <i class="fas fa-circle-info mr-1"></i>
+                This device or browser has no biometric sign-in (Windows Hello, Touch ID or fingerprint) set up.
+            </p>
+        </template>
+
+        <p x-show="error" x-text="error" class="boq-field-error mt-2"></p>
     </div>
 </div>

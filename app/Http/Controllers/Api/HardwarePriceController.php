@@ -265,7 +265,8 @@ class HardwarePriceController extends Controller
     {
         $boqItem = BoqItem::with('boq.project')->findOrFail($boqItemId);
 
-        abort_unless($boqItem->boq->project->organisation_id === $request->user()->organisation_id, 403);
+        // BoqPolicy handles both organisation and personal (no organisation) BOQs.
+        abort_unless($request->user()->can('view', $boqItem->boq), 403);
 
         $comparison = $this->matchingService->getPriceComparison($boqItem);
 

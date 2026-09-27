@@ -384,8 +384,25 @@ class ProxySubscriptionController extends Controller
             ], 422);
         }
 
-        $payload = array_merge($request->all(), [
-            'gateway_transaction_id' => $request->input('gateway_transaction_id', $transaction->gateway_transaction_id),
+        // Never let the client swap in another (older or cheaper) payment's id: the id
+        // stored at initiation always wins, and a client id is only accepted when none
+        // was stored and no other transaction has already used it.
+        $gatewayTransactionId = $transaction->gateway_transaction_id ?: $request->input('gateway_transaction_id');
+
+        if (
+            ! $transaction->gateway_transaction_id
+            && filled($gatewayTransactionId)
+            && Transaction::where('gateway_transaction_id', $gatewayTransactionId)->whereKeyNot($transaction->getKey())->exists()
+        ) {
+            return response()->json([
+                'success' => false,
+                'error_code' => 'PAYMENT_ALREADY_USED',
+                'message' => 'This payment has already been used for another purchase.',
+            ], 422);
+        }
+
+        $payload = array_merge($request->except('gateway_transaction_id'), [
+            'gateway_transaction_id' => $gatewayTransactionId,
             'reference' => $transaction->reference,
         ]);
 

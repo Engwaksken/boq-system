@@ -48,6 +48,7 @@ use App\Models\Boq;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Laragear\WebAuthn\Http\Routes as WebAuthnRoutes;
 
 
 /*
@@ -61,6 +62,9 @@ Route::get('/', function () {
         ? redirect()->route('dashboard')
         : redirect()->route('login');
 })->name('home');
+
+// Biometric (WebAuthn passkey) sign-in and device registration.
+WebAuthnRoutes::register()->middleware('throttle:20,1');
 
 Route::get('/privacy-policy', [LegalPageController::class, 'privacy'])->name('legal.privacy');
 Route::get('/terms-of-use', [LegalPageController::class, 'terms'])->name('legal.terms');

@@ -16,6 +16,14 @@ class TopupsManager extends Component
     use WithBulkSelection;
     use WithPagination;
 
+    /**
+     * Livewire update requests skip route middleware, so re-check on every request.
+     */
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+    }
+
     public string $search = '';
     public bool $showForm = false;
     public ?int $editingId = null;
@@ -83,6 +91,11 @@ class TopupsManager extends Component
         Topup::updateOrCreate(['id' => $this->editingId], $data);
         session()->flash('message', $this->editingId ? 'Top-up updated successfully.' : 'Top-up created successfully.');
         $this->cancel();
+    }
+
+    public function bulkDelete(): void
+    {
+        $this->deleteSelectedUnlessInUse(Topup::class, ['purchases'], 'message');
     }
 
     public function bulkSetActive(bool $active): void

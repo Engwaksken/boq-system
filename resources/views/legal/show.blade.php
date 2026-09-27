@@ -8,8 +8,9 @@
         </h1>
     </div>
 
-    <div class="mt-6 max-h-[60vh] overflow-y-auto whitespace-pre-line text-sm leading-6 text-slate-600">
-        @if($content !== '')
+    {{-- $content is an HtmlString sanitised in LegalPageController::toSafeHtml() --}}
+    <div class="auth-legal-content mt-6 max-h-[60vh] overflow-y-auto">
+        @if($content)
             {{ $content }}
         @else
             This document has not been published yet. Please contact the system administrator for details.

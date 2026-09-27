@@ -16,6 +16,14 @@ class UsersManager extends Component
     use WithBulkSelection;
     use WithPagination;
 
+    /**
+     * Livewire update requests skip route middleware, so re-check on every request.
+     */
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+    }
+
     public string $search='';
     public string $status='all';
     public int $perPage=20;
@@ -73,9 +81,17 @@ class UsersManager extends Component
     public function bulkSetActive(bool $active): void
     {
         // Never let an administrator disable their own account in bulk.
-        $count = User::whereKey($this->selectedIds())
-            ->whereKeyNot(auth()->id())
-            ->update(['is_active' => $active]);
+        $users = User::whereKey($this->selectedIds())->whereKeyNot(auth()->id())->get();
+
+        foreach ($users as $user) {
+            $user->update(['is_active' => $active]);
+
+            if (! $active) {
+                $user->tokens()->delete();
+            }
+        }
+
+        $count = $users->count();
 
         $this->finishBulkAction($count, $active ? 'enabled' : 'disabled');
     }
@@ -101,6 +117,12 @@ class UsersManager extends Component
         $user = User::findOrFail($id);
         abort_if($user->id === auth()->id(), 422, 'You cannot disable your own account.');
         $user->update(['is_active' => ! $user->is_active]);
+
+        if (! $user->is_active) {
+            // Sign the user out of the mobile app too.
+            $user->tokens()->delete();
+        }
+
         session()->flash('message', 'User status updated.');
     }
 

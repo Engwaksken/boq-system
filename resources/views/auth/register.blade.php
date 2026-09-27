@@ -105,9 +105,7 @@
 
 
         {{-- Password --}}
-        <div
-            x-data="{ showPassword: false }"
-        >
+        <div>
 
             <label
                 for="password"
@@ -126,7 +124,7 @@
 
                 <input
                     id="password"
-                    x-bind:type="showPassword ? 'text' : 'password'"
+                    type="password"
                     name="password"
                     required
                     autocomplete="new-password"
@@ -136,18 +134,11 @@
 
                 <button
                     type="button"
-                    x-on:click="showPassword = ! showPassword"
                     class="auth-password-toggle"
-                    aria-label="Show or hide password"
+                    data-password-toggle
+                    aria-label="Show password"
                 >
-                    <i
-                        class="fas"
-                        x-bind:class="
-                            showPassword
-                                ? 'fa-eye-slash'
-                                : 'fa-eye'
-                        "
-                    ></i>
+                    <i class="fas fa-eye"></i>
                 </button>
 
             </div>
@@ -170,9 +161,7 @@
 
 
         {{-- Confirm Password --}}
-        <div
-            x-data="{ showPassword: false }"
-        >
+        <div>
 
             <label
                 for="password_confirmation"
@@ -191,7 +180,7 @@
 
                 <input
                     id="password_confirmation"
-                    x-bind:type="showPassword ? 'text' : 'password'"
+                    type="password"
                     name="password_confirmation"
                     required
                     autocomplete="new-password"
@@ -201,18 +190,11 @@
 
                 <button
                     type="button"
-                    x-on:click="showPassword = ! showPassword"
                     class="auth-password-toggle"
-                    aria-label="Show or hide password confirmation"
+                    data-password-toggle
+                    aria-label="Show password"
                 >
-                    <i
-                        class="fas"
-                        x-bind:class="
-                            showPassword
-                                ? 'fa-eye-slash'
-                                : 'fa-eye'
-                        "
-                    ></i>
+                    <i class="fas fa-eye"></i>
                 </button>
 
             </div>

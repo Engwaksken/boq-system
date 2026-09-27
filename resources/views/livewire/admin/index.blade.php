@@ -26,9 +26,7 @@
                     </button>
                 @endforeach
             </div>
-            @unless($activeTab === 'statistics')
-                <input wire:model.live.debounce.300ms="search" class="w-full rounded-lg border-slate-300 text-sm md:w-80" placeholder="Search current tab...">
-            @endunless
+            <input wire:model.live.debounce.300ms="search" class="w-full rounded-lg border-slate-300 text-sm md:w-80" placeholder="Search current tab...">
         </div>
 
         @if($activeTab === 'subscriptions')
@@ -78,15 +76,6 @@
                     </tbody>
                 </table>
                 <div class="p-4">{{ $users->links() }}</div>
-            </div>
-        @else
-            <div class="p-5">
-                <div class="boq-stats-grid">
-                    <x-stat-card label="Total Users" :value="number_format($stats['total_users'])" icon="fa-users" color="green" />
-                    <x-stat-card label="Active Subscriptions" :value="number_format($stats['active_subscriptions'])" icon="fa-receipt" color="blue" />
-                    <x-stat-card label="Plans" :value="number_format($stats['plans_count'])" icon="fa-layer-group" color="purple" />
-                    <x-stat-card label="Successful Revenue" :value="'UGX '.number_format((float) $stats['total_revenue'], 0)" icon="fa-sack-dollar" color="amber" />
-                </div>
             </div>
         @endif
     </div>

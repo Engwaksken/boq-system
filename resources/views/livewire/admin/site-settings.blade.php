@@ -22,6 +22,8 @@
                 'general' => ['fa-sliders', 'General'],
                 'branding' => ['fa-image', 'Branding'],
                 'mobile' => ['fa-mobile-screen', 'Mobile App'],
+                'currencies' => ['fa-coins', 'Currencies'],
+                'languages' => ['fa-language', 'Languages'],
                 'access' => ['fa-user-lock', 'Registration & Access'],
                 'legal' => ['fa-scale-balanced', 'Legal'],
             ] as $key => [$icon, $label])
@@ -50,13 +52,19 @@
 
                 <div>
                     <label for="currency" class="boq-field-label">Default Currency</label>
-                    <input id="currency" type="text" wire:model="settings.currency" class="boq-field" placeholder="e.g. UGX">
+                    <x-currency-select id="currency" wire:model="settings.currency" :current="$settings['currency'] ?? null" />
+                    <p class="boq-field-help">Add or deactivate currencies on the Currencies tab.</p>
                     @error('settings.currency') <p class="boq-field-error">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
                     <label for="language" class="boq-field-label">Default Language</label>
-                    <input id="language" type="text" wire:model="settings.language" class="boq-field" placeholder="e.g. en">
+                    <select id="language" wire:model="settings.language" class="boq-field">
+                        @foreach($languageOptions as $code => $name)
+                            <option value="{{ $code }}">{{ $name }} ({{ $code }})</option>
+                        @endforeach
+                    </select>
+                    <p class="boq-field-help">Add or deactivate languages on the Languages tab.</p>
                     @error('settings.language') <p class="boq-field-error">{{ $message }}</p> @enderror
                 </div>
 
@@ -87,7 +95,7 @@
                             <label class="boq-btn-secondary cursor-pointer">
                                 <i class="fas fa-upload"></i>
                                 Choose logo
-                                <input type="file" wire:model="logoFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="hidden">
+                                <input type="file" wire:model="logoFile" accept="image/png,image/jpeg,image/webp" class="hidden">
                             </label>
                             @if($logoUrl)
                                 <button type="button" wire:click="removeLogo" class="boq-btn-secondary text-red-600">
@@ -99,7 +107,7 @@
                     </div>
                     <p wire:loading wire:target="logoFile" class="boq-field-help">Uploading logo...</p>
                     @error('logoFile') <p class="boq-field-error">{{ $message }}</p> @enderror
-                    <p class="boq-field-help">Shown in the sidebar and browser tab. Max 2MB: PNG, JPG, WEBP, SVG.</p>
+                    <p class="boq-field-help">Shown in the sidebar and on the sign-in pages. Max 2MB: PNG, JPG, WEBP.</p>
                 </div>
 
                 <div>
@@ -115,7 +123,7 @@
                             <label class="boq-btn-secondary cursor-pointer">
                                 <i class="fas fa-upload"></i>
                                 Choose favicon
-                                <input type="file" wire:model="faviconFile" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon" class="hidden">
+                                <input type="file" wire:model="faviconFile" accept="image/png,image/jpeg,image/webp,image/x-icon" class="hidden">
                             </label>
                             @if($faviconUrl)
                                 <button type="button" wire:click="removeFavicon" class="boq-btn-secondary text-red-600">
@@ -127,7 +135,7 @@
                     </div>
                     <p wire:loading wire:target="faviconFile" class="boq-field-help">Uploading favicon...</p>
                     @error('faviconFile') <p class="boq-field-error">{{ $message }}</p> @enderror
-                    <p class="boq-field-help">Max 1MB: PNG, JPG, WEBP, SVG, ICO.</p>
+                    <p class="boq-field-help">Max 1MB: PNG, JPG, WEBP, ICO.</p>
                 </div>
             </div>
 
@@ -167,6 +175,16 @@
                 </div>
             </div>
 
+            {{-- Currencies (own component, saves independently) --}}
+            <div x-show="tab === 'currencies'" x-cloak>
+                <livewire:admin.currencies-manager />
+            </div>
+
+            {{-- Languages (own component, saves independently) --}}
+            <div x-show="tab === 'languages'" x-cloak>
+                <livewire:admin.languages-manager />
+            </div>
+
             {{-- Access --}}
             <div x-show="tab === 'access'" x-cloak>
                 <p class="mb-4 text-sm text-slate-500">Which options appear on the login screens.</p>
@@ -188,19 +206,22 @@
             <div x-show="tab === 'legal'" x-cloak>
                 <p class="mb-4 text-sm text-slate-500">
                     Linked from the registration page and mobile login screen. Leave blank to hide a link.
-                    If the text is a URL, it opens that address; otherwise the text is shown.
+                    If the value is a URL, that address opens. Otherwise it is shown as a page, and basic HTML is allowed
+                    (headings, paragraphs, lists, bold/italic, links, tables). Scripts and unsafe markup are removed automatically.
                 </p>
 
                 <div class="space-y-4">
                     <div>
                         <label for="privacy_policy" class="boq-field-label">Privacy Policy</label>
-                        <textarea id="privacy_policy" wire:model="settings.privacy_policy" rows="8" class="boq-field boq-textarea" placeholder="Paste the privacy policy text or a full URL"></textarea>
+                        <textarea id="privacy_policy" wire:model="settings.privacy_policy" rows="10" class="boq-field boq-textarea font-mono text-xs" placeholder="&lt;h2&gt;Privacy Policy&lt;/h2&gt;&lt;p&gt;...&lt;/p&gt; or a full URL"></textarea>
+                        <a href="{{ route('legal.privacy') }}" target="_blank" rel="noopener" class="boq-field-help inline-block"><i class="fas fa-arrow-up-right-from-square"></i> Preview saved page</a>
                         @error('settings.privacy_policy') <p class="boq-field-error">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label for="terms_of_use" class="boq-field-label">Terms of Use</label>
-                        <textarea id="terms_of_use" wire:model="settings.terms_of_use" rows="8" class="boq-field boq-textarea" placeholder="Paste the terms of use text or a full URL"></textarea>
+                        <textarea id="terms_of_use" wire:model="settings.terms_of_use" rows="10" class="boq-field boq-textarea font-mono text-xs" placeholder="&lt;h2&gt;Terms of Use&lt;/h2&gt;&lt;p&gt;...&lt;/p&gt; or a full URL"></textarea>
+                        <a href="{{ route('legal.terms') }}" target="_blank" rel="noopener" class="boq-field-help inline-block"><i class="fas fa-arrow-up-right-from-square"></i> Preview saved page</a>
                         @error('settings.terms_of_use') <p class="boq-field-error">{{ $message }}</p> @enderror
                     </div>
                 </div>

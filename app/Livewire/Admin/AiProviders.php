@@ -20,6 +20,14 @@ class AiProviders extends Component
 {
     use WithPagination;
 
+    /**
+     * Livewire update requests skip route middleware, so re-check on every request.
+     */
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+    }
+
     private const SECRET_MASK = '***stored***';
 
     /*

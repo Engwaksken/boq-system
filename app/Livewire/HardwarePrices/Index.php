@@ -319,6 +319,11 @@ class Index extends Component
         $this->resetValidation();
     }
 
+    public function bulkDelete(): void
+    {
+        $this->deleteSelectedUnlessInUse(HardwarePrice::class, ['boqItems'], 'hardware-price-message', fn ($query) => $query->where('organisation_id', $this->managementUser()->organisation_id));
+    }
+
     public function bulkSetActive(
         bool $active,
         HardwarePriceManager $manager
@@ -603,9 +608,11 @@ class Index extends Component
                 ->filter()
                 ->values();
 
+        // Hardware + factory add up to "active"; total only counts what this user can see.
         $stats = [
             'total' =>
                 (clone $baseQuery)
+                    ->when(! $canManage, fn ($query) => $query->where('is_active', true))
                     ->count(),
 
             'active' =>
@@ -618,6 +625,7 @@ class Index extends Component
 
             'hardware' =>
                 (clone $baseQuery)
+                    ->where('is_active', true)
                     ->where(
                         'price_type',
                         HardwarePrice::TYPE_HARDWARE
@@ -626,6 +634,7 @@ class Index extends Component
 
             'factory' =>
                 (clone $baseQuery)
+                    ->where('is_active', true)
                     ->where(
                         'price_type',
                         HardwarePrice::TYPE_FACTORY

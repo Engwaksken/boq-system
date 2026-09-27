@@ -15,6 +15,14 @@ class SuppliersManager extends Component
     use WithBulkSelection;
     use WithPagination;
 
+    /**
+     * Livewire update requests skip route middleware, so re-check on every request.
+     */
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+    }
+
     public string $search = '';
     public int $perPage = 10;
     public bool $showForm = false;
@@ -76,6 +84,11 @@ class SuppliersManager extends Component
         }
         session()->flash('message', $this->editingId ? 'Supplier updated.' : 'Supplier created.');
         $this->cancel();
+    }
+
+    public function bulkDelete(): void
+    {
+        $this->deleteSelectedUnlessInUse(Supplier::class, ['quotations', 'rates'], 'message');
     }
 
     public function bulkSetActive(bool $active): void

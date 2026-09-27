@@ -29,6 +29,7 @@
             <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> Activate</button>
             <button type="button" wire:click="bulkSetActive(false)" class="boq-btn-secondary"><i class="fas fa-ban"></i> Deactivate</button>
             <button type="button" wire:click="bulkArchive" wire:confirm="Archive the selected plans? Existing subscriptions are kept." class="boq-btn-danger"><i class="fas fa-box-archive"></i> Archive</button>
+            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected plans? Plans with subscriptions are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> Delete</button>
         </x-bulk-bar>
 
         <div class="boq-table-wrapper">
@@ -92,7 +93,8 @@
                     <div><label class="text-sm font-medium">Code</label><input wire:model="form.code" class="mt-1 w-full rounded-lg border-slate-300" placeholder="auto-generated"></div>
                     <div><label class="text-sm font-medium">Type</label><select wire:model="form.type" class="mt-1 w-full rounded-lg border-slate-300"><option value="monthly">Monthly</option><option value="three_month">3 Months</option><option value="six_month">6 Months</option><option value="annual">Annual</option><option value="one_time">One Time</option><option value="lifetime">Lifetime</option></select></div>
                     <div class="md:col-span-3"><label class="text-sm font-medium">Description</label><textarea wire:model="form.description" rows="2" class="mt-1 w-full rounded-lg border-slate-300"></textarea></div>
-                    @foreach(['price'=>'Price','currency'=>'Currency','duration_days'=>'Duration Days','max_users'=>'Max Users','max_projects'=>'Max Projects','max_boqs'=>'Max BOQs','max_ai_credits'=>'AI Credits','max_ocr_pages'=>'OCR Pages','max_translations'=>'Translations','grace_period_days'=>'Grace Days','display_order'=>'Display Order'] as $field=>$label)
+                    <div><label class="text-sm font-medium">Currency</label><x-currency-select wire:model="form.currency" :current="$form['currency'] ?? null" class="mt-1" /></div>
+                    @foreach(['price'=>'Price','duration_days'=>'Duration Days','max_users'=>'Max Users','max_projects'=>'Max Projects','max_boqs'=>'Max BOQs','max_ai_credits'=>'AI Credits','max_ocr_pages'=>'OCR Pages','max_translations'=>'Translations','grace_period_days'=>'Grace Days','display_order'=>'Display Order'] as $field=>$label)
                     <div><label class="text-sm font-medium">{{ $label }}</label><input wire:model="form.{{ $field }}" class="mt-1 w-full rounded-lg border-slate-300" type="{{ $field==='currency' ? 'text' : 'number' }}"></div>
                     @endforeach
                     <div><label class="text-sm font-medium">Storage bytes</label><input wire:model="form.max_storage_bytes" type="number" class="mt-1 w-full rounded-lg border-slate-300"></div>

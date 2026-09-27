@@ -2,8 +2,13 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\Currency;
+use App\Models\Language;
 use App\Models\SiteSetting;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -21,6 +26,26 @@ class SiteSettings extends Component
     public string $logoUrl = '';
 
     public string $faviconUrl = '';
+
+    /**
+     * Livewire update requests skip route middleware, so re-check on every request.
+     */
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+    }
+
+    #[On('default-currency-changed')]
+    public function syncDefaultCurrency(string $code): void
+    {
+        $this->settings['currency'] = $code;
+    }
+
+    #[On('default-language-changed')]
+    public function syncDefaultLanguage(string $code): void
+    {
+        $this->settings['language'] = $code;
+    }
 
     public function mount(): void
     {
@@ -56,8 +81,8 @@ class SiteSettings extends Component
 
         $this->validate([
             'settings.system_name' => 'required|string|max:255',
-            'settings.currency' => 'required|string|max:10',
-            'settings.language' => 'required|string|max:10',
+            'settings.currency' => ['required', 'string', 'size:3', Rule::exists('currencies', 'code')],
+            'settings.language' => ['required', 'string', 'max:10', Rule::exists('languages', 'code')],
             'settings.trial_duration' => 'required|integer|min:0',
             'settings.maintenance_mode' => 'boolean',
             'settings.logo' => 'nullable|string|max:255',
@@ -71,14 +96,14 @@ class SiteSettings extends Component
             'settings.allow_forgot_password' => 'boolean',
             'settings.privacy_policy' => 'nullable|string',
             'settings.terms_of_use' => 'nullable|string',
-            'logoFile' => 'nullable|image|mimes:png,jpg,jpeg,webp,svg|max:2048',
-            'faviconFile' => 'nullable|image|mimes:png,jpg,jpeg,webp,svg,ico|max:1024',
+            'logoFile' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:2048',
+            'faviconFile' => 'nullable|mimes:png,jpg,jpeg,webp,ico|max:1024',
         ]);
 
         if ($this->logoFile) {
             $this->settings['logo'] = $this->logoFile->storePubliclyAs(
                 'site',
-                'logo-'.now()->timestamp.'.'.$this->logoFile->getClientOriginalExtension(),
+                'logo-'.now()->timestamp.'.'.$this->logoFile->guessExtension(),
                 'public'
             );
             $this->logoUrl = asset('storage/'.$this->settings['logo']);
@@ -87,7 +112,7 @@ class SiteSettings extends Component
         if ($this->faviconFile) {
             $this->settings['favicon'] = $this->faviconFile->storePubliclyAs(
                 'site',
-                'favicon-'.now()->timestamp.'.'.$this->faviconFile->getClientOriginalExtension(),
+                'favicon-'.now()->timestamp.'.'.($this->faviconFile->guessExtension() ?: 'ico'),
                 'public'
             );
             $this->faviconUrl = asset('storage/'.$this->settings['favicon']);
@@ -97,6 +122,14 @@ class SiteSettings extends Component
             $type = is_bool($value) ? 'boolean' : (is_int($value) ? 'integer' : 'string');
             SiteSetting::set($key, $value, 'general', $type);
         }
+
+        // Keep the currency/language tables' default flags in step with the settings.
+        DB::transaction(function () {
+            Currency::query()->update(['is_default' => false]);
+            Currency::where('code', $this->settings['currency'])->update(['is_default' => true, 'is_active' => true]);
+            Language::query()->update(['is_default' => false]);
+            Language::where('code', $this->settings['language'])->update(['is_default' => true, 'is_active' => true]);
+        });
 
         cache()->forget('mobile_config');
 
@@ -119,6 +152,13 @@ class SiteSettings extends Component
 
     public function render()
     {
-        return view('livewire.admin.site-settings');
+        return view('livewire.admin.site-settings', [
+            'languageOptions' => Language::query()
+                ->where(fn ($q) => $q->where('is_active', true)->orWhere('code', $this->settings['language'] ?? null))
+                ->orderByDesc('is_default')
+                ->orderBy('name')
+                ->pluck('name', 'code')
+                ->all(),
+        ]);
     }
 }

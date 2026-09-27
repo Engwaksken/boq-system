@@ -111,15 +111,7 @@
 
                 <div>
                     <label for="currency" class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-                    <select wire:model="currency" id="currency" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                        <option value="UGX">UGX - Ugandan Shilling</option>
-                        <option value="USD">USD - US Dollar</option>
-                        <option value="EUR">EUR - Euro</option>
-                        <option value="GBP">GBP - British Pound</option>
-                        <option value="KES">KES - Kenyan Shilling</option>
-                        <option value="TZS">TZS - Tanzanian Shilling</option>
-                        <option value="RWF">RWF - Rwandan Franc</option>
-                    </select>
+                    <x-currency-select wire:model="currency" id="currency" :current="$currency" />
                     @error('currency') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 

@@ -11,6 +11,14 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class RolesManager extends Component
 {
+    /**
+     * Livewire update requests skip route middleware, so re-check on every request.
+     */
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+    }
+
     public bool $showForm=false;
     public ?int $editingId=null;
     public string $name='';

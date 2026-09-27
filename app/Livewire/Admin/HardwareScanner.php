@@ -21,6 +21,14 @@ class HardwareScanner extends Component
 {
     use WithFileUploads;
 
+    /**
+     * Livewire update requests skip route middleware, so re-check on every request.
+     */
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+    }
+
     public array $scanForm = [
         'price_type' =>
             HardwarePrice::TYPE_HARDWARE,

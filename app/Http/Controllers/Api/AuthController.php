@@ -23,6 +23,14 @@ class AuthController extends Controller
      */
     public function register(Request $request): JsonResponse
     {
+        if (! SiteSetting::get('allow_registration', true)) {
+            return response()->json([
+                'success' => false,
+                'error_code' => 'REGISTRATION_DISABLED',
+                'message' => 'New account registration is currently closed.',
+            ], 403);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],

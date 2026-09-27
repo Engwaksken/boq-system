@@ -354,6 +354,20 @@ class Index extends Component
     }
 
     /**
+     * Remove a registered biometric (passkey) device from the account.
+     */
+    public function removeBiometricDevice(string $credentialId): void
+    {
+        $user = Auth::user();
+
+        abort_unless($user, 401);
+
+        $user->webAuthnCredentials()->whereKey($credentialId)->delete();
+
+        session()->flash('status', 'Biometric sign-in removed for that device.');
+    }
+
+    /**
      * Open account deletion confirmation.
      */
     public function confirmDeleteAccount(): void
@@ -394,6 +408,9 @@ class Index extends Component
 
         return view('livewire.profile.index', [
             'user' => $user,
+            'biometricDevices' => $this->activeTab === 'security'
+                ? $user->webAuthnCredentials()->latest()->get()
+                : collect(),
             'bookmarkedHardware' => $user->hardwareBookmarks()
                 ->with('hardwarePrice')
                 ->latest()
