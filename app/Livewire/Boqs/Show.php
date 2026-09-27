@@ -767,6 +767,21 @@ class Show extends Component
                 === $userId;
     }
 
+    /**
+     * Soft-delete this BOQ (owner or same organisation, with boq.edit) and return to the list.
+     */
+    public function deleteBoq(): void
+    {
+        $boq = Boq::with('project')->findOrFail($this->boq->id);
+
+        abort_unless(auth()->user()->can('delete', $boq), 403);
+
+        $boq->delete();
+
+        session()->flash('status', __('BOQ deleted.'));
+        $this->redirectRoute('boqs.index');
+    }
+
     private function authorisedBoq(
         string $permission
     ): Boq {

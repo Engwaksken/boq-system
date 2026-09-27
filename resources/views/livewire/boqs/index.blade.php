@@ -1,5 +1,9 @@
 <div class="boq-page-stack">
 
+    @if(session('status'))
+        <div class="boq-flash mb-4"><i class="fas fa-circle-check"></i> {{ session('status') }}</div>
+    @endif
+
     {{-- =====================================================
          HEADER
     ====================================================== --}}
@@ -248,6 +252,11 @@
     ====================================================== --}}
     <div class="boq-panel">
 
+        <x-bulk-bar :count="count($selected)">
+            <button type="button" wire:click="bulkDelete" wire:confirm="{{ __('Delete the selected BOQs?') }}" class="boq-btn-danger"><i class="fas fa-trash"></i> {{ __('Delete') }}</button>
+        </x-bulk-bar>
+
+
         <div class="boq-table-wrapper">
 
             <table class="boq-table">
@@ -255,6 +264,8 @@
                 <thead>
 
                     <tr>
+
+                        <th class="boq-check-col"><x-select-all :ids="$boqs->pluck('id')" :selected="$selected" /></th>
 
                         {{-- Name --}}
                         <th
@@ -381,6 +392,12 @@
                     @forelse($boqs as $boq)
 
                         <tr wire:key="boq-{{ $boq->id }}">
+
+                            <td class="boq-check-col">
+                                @can('delete', $boq)
+                                    <x-select-row :id="$boq->id" />
+                                @endcan
+                            </td>
 
                             {{-- BOQ --}}
                             <td>
@@ -570,6 +587,18 @@
                                         <i class="fas fa-eye"></i>
                                     </a>
 
+                                    @can('update', $boq)
+                                        <button type="button" wire:click="editBoq({{ $boq->id }})" class="boq-icon-btn" title="{{ __('Edit BOQ') }}" aria-label="{{ __('Edit BOQ') }}">
+                                            <i class="fas fa-pen"></i>
+                                        </button>
+                                    @endcan
+
+                                    @can('delete', $boq)
+                                        <button type="button" wire:click="confirmDelete({{ $boq->id }})" class="boq-icon-btn boq-icon-danger" title="{{ __('Delete BOQ') }}" aria-label="{{ __('Delete BOQ') }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    @endcan
+
                                 </div>
 
                             </td>
@@ -582,7 +611,7 @@
                         <tr>
 
                             <td
-                                colspan="8"
+                                colspan="9"
                                 class="boq-empty-table"
                             >
 
@@ -632,4 +661,58 @@
 
     </div>
 
+
+    @if($editingBoqId)
+        <div class="boq-modal-backdrop" wire:key="boq-edit-modal" role="dialog" aria-modal="true" aria-labelledby="boq-edit-title">
+            <form wire:submit="saveBoq" class="boq-modal boq-modal-sm">
+                <div class="boq-modal-head">
+                    <h2 id="boq-edit-title"><i class="fas fa-pen"></i> {{ __('Edit BOQ') }}</h2>
+                    <button type="button" wire:click="closeEdit" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
+                </div>
+
+                <div class="boq-modal-body space-y-4">
+                    <div>
+                        <label for="boq-edit-name" class="boq-field-label">{{ __('BOQ Name') }} *</label>
+                        <input id="boq-edit-name" type="text" wire:model="editName" class="boq-field" maxlength="255" placeholder="{{ __('e.g. Main building - Phase 1') }}">
+                        @error('editName') <p class="boq-field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label for="boq-edit-project" class="boq-field-label">{{ __('Project') }} *</label>
+                        <select id="boq-edit-project" wire:model="editProjectId" class="boq-field">
+                            @foreach($projects as $projectOption)
+                                <option value="{{ $projectOption->id }}">{{ $projectOption->name }}{{ $projectOption->code ? ' ('.$projectOption->code.')' : '' }}</option>
+                            @endforeach
+                        </select>
+                        @error('editProjectId') <p class="boq-field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <p class="boq-field-help">{{ __('To change item rates, open the BOQ and review its items.') }}</p>
+                </div>
+
+                <div class="boq-modal-foot">
+                    <button type="button" wire:click="closeEdit" class="boq-btn-secondary">{{ __('Cancel') }}</button>
+                    <button type="submit" class="boq-btn-primary"><i class="fas fa-floppy-disk"></i> {{ __('Save Changes') }}</button>
+                </div>
+            </form>
+        </div>
+    @endif
+
+    @if($deletingBoqId)
+        <div class="boq-modal-backdrop" wire:key="boq-delete-modal" role="dialog" aria-modal="true" aria-labelledby="boq-delete-title">
+            <div class="boq-modal boq-modal-sm">
+                <div class="boq-modal-head">
+                    <h2 id="boq-delete-title"><i class="fas fa-trash"></i> {{ __('Delete BOQ?') }}</h2>
+                    <button type="button" wire:click="cancelDelete" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
+                </div>
+                <div class="boq-modal-body">
+                    <p class="boq-modal-message">{{ __('The BOQ and its items will be removed from your list. An administrator can restore it if needed.') }}</p>
+                </div>
+                <div class="boq-modal-foot">
+                    <button type="button" wire:click="cancelDelete" class="boq-btn-secondary">{{ __('Cancel') }}</button>
+                    <button type="button" wire:click="deleteBoq" class="boq-btn-danger"><i class="fas fa-trash"></i> {{ __('Delete') }}</button>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

@@ -60,6 +60,18 @@
                 </button>
             @endif
 
+            @can('delete', $boq)
+                <button
+                    type="button"
+                    wire:click="deleteBoq"
+                    wire:confirm="{{ __('Delete this BOQ? An administrator can restore it if needed.') }}"
+                    class="boq-btn-secondary text-red-600"
+                >
+                    <i class="fas fa-trash"></i>
+                    {{ __('Delete') }}
+                </button>
+            @endcan
+
             @if($canEdit)
                 <button
                     wire:click="generateBoq"
