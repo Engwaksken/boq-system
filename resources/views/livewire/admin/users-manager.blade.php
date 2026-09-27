@@ -69,7 +69,7 @@
                         <div>
                             <label class="block text-sm font-semibold text-slate-700">{{ __('Organisation') }}</label>
                             <select wire:model="newOrganisationId" class="mt-1 w-full rounded-lg border-slate-300 text-sm">
-                                <option value="">{{ __('Select...') }}</option>
+                                <option value="0">{{ __('None (personal account)') }}</option>
                                 @foreach($organisations as $org)<option value="{{$org->id}}">{{$org->name}}</option>@endforeach
                             </select>
                             @error('newOrganisationId') <span class="text-xs text-red-600">{{ $message }}</span> @enderror

@@ -40,9 +40,10 @@ class UsersManager extends Component
 
     public function mount(): void
     {
-        $this->newOrganisationId = auth()->user()->organisation_id
-            ?? Organisation::query()->value('id')
-            ?? 0;
+        // New users start as personal accounts: joining an organisation shares its
+        // projects, BOQs and subscriptions, so the admin must choose it explicitly.
+        $this->newOrganisationId = 0;
+        $this->newRoleId = (int) (Role::where('slug', 'viewer')->value('id') ?? 0);
     }
 
     public function createUser(): void
@@ -53,7 +54,11 @@ class UsersManager extends Component
             'newPassword' => ['required','string','min:8'],
             'newPhone' => ['nullable','string','max:50'],
             'newRoleId' => ['required','exists:roles,id'],
-            'newOrganisationId' => ['required','exists:organisations,id'],
+            'newOrganisationId' => ['nullable','integer', function ($attribute, $value, $fail) {
+                if ((int) $value !== 0 && ! Organisation::whereKey($value)->exists()) {
+                    $fail('Choose a valid organisation.');
+                }
+            }],
         ]);
 
         $this->creating = true;
@@ -65,18 +70,20 @@ class UsersManager extends Component
                 'password' => $this->newPassword,
                 'phone' => $this->newPhone !== '' ? $this->newPhone : null,
                 'locale' => 'en',
-                'organisation_id' => $this->newOrganisationId,
+                'organisation_id' => $this->newOrganisationId ?: null,
                 'is_active' => true,
             ]);
 
-            $user->roles()->attach($this->newRoleId, ['organisation_id' => $this->newOrganisationId]);
+            $user->roles()->attach($this->newRoleId, ['organisation_id' => $this->newOrganisationId ?: null]);
 
             session()->flash('message', "User {$user->name} created successfully.");
         } finally {
             $this->creating = false;
         }
 
-        $this->reset(['showCreate','newName','newEmail','newPassword','newPhone','newRoleId']);
+        $this->reset(['showCreate','newName','newEmail','newPassword','newPhone']);
+        $this->newOrganisationId = 0;
+        $this->newRoleId = (int) (Role::where('slug', 'viewer')->value('id') ?? 0);
     }
 
     public function bulkSetActive(bool $active): void

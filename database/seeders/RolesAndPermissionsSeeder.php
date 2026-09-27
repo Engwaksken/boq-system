@@ -258,8 +258,9 @@ class RolesAndPermissionsSeeder extends Seeder
                 'is_system' => true,
                 'permissions' => [
                     'dashboard.view',
-                    'projects.view', 'projects.create',
-                    'boq.view',
+                    'projects.view', 'projects.create', 'projects.edit',
+                    'boq.view', 'boq.edit',
+                    'subscriptions.view',
                     'reports.view',
                 ],
             ],
