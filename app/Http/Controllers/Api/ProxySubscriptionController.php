@@ -8,6 +8,7 @@ use App\Http\Resources\ProxySubscriptionResource;
 use App\Models\PaymentGateway;
 use App\Models\Plan;
 use App\Models\Subscription;
+use App\Models\UserNotification;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\Payments\PaymentManager;
@@ -503,8 +504,7 @@ class ProxySubscriptionController extends Controller
     /**
      * Send notification to beneficiary about subscription activation.
      *
-     * Currently logs the notification event. Will be extended to send
-     * email and in-app notifications when the notification system is ready.
+     * Creates an in-app notification for the beneficiary.
      */
     private function notifyBeneficiary(Subscription $subscription): void
     {
@@ -517,17 +517,19 @@ class ProxySubscriptionController extends Controller
                 return;
             }
 
-            // TODO: Implement actual notification (email, in-app, etc.)
-            // For now, log the notification event
+            UserNotification::create([
+                'user_id' => $beneficiary->id,
+                'type' => 'subscription',
+                'title' => 'Subscription activated',
+                'message' => sprintf('Your %s subscription has been activated.', $subscription->plan->name),
+                'data' => ['subscription_id' => $subscription->id],
+            ]);
+
             Log::info('Beneficiary notified of proxy subscription activation', [
                 'subscription_id' => $subscription->id,
                 'beneficiary_id' => $beneficiary->id,
-                'beneficiary_email' => $beneficiary->email,
                 'plan_name' => $subscription->plan->name,
             ]);
-
-            // Example of how to send email notification when notification system is ready:
-            // $beneficiary->notify(new ProxySubscriptionActivated($subscription));
         } catch (Throwable $e) {
             report($e);
             Log::error('Failed to notify beneficiary of proxy subscription activation', [

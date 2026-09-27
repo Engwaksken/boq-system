@@ -197,6 +197,8 @@ class AuthController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'locale' => ['required', 'string', 'max:10'],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:30'],
+            'location' => ['sometimes', 'nullable', 'string', 'max:255'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ]);
 

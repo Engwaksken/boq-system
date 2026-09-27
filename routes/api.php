@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\HardwareCategoryController;
 use App\Http\Controllers\Api\HardwarePriceController;
 use App\Http\Controllers\Api\Mcp\McpToolController;
 use App\Http\Controllers\Api\MobileConfigController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PlanController;
 use App\Http\Controllers\Api\ProjectController;
@@ -58,12 +59,19 @@ Route::prefix('v1')->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::put('auth/profile', [AuthController::class, 'updateProfile']);
 
+        // Notifications
+        Route::get('notifications', [NotificationController::class, 'index']);
+        Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
+
         // Dashboard
         Route::get('dashboard', [DashboardController::class, 'index']);
         Route::middleware(['permission:boq.edit', 'entitlement:boq.management'])->group(function () {
             Route::post('boqs', [BoqController::class, 'store'])
                 ->middleware('throttle:10,1')
                 ->name('api.v1.boqs.store');
+            Route::delete('boqs/{boq}', [BoqController::class, 'destroy'])
+                ->middleware('throttle:10,1')
+                ->name('api.v1.boqs.destroy');
         });
 
         Route::middleware(['permission:boq.view', 'entitlement:boq.management'])->group(function () {

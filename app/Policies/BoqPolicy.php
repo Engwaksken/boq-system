@@ -27,6 +27,14 @@ class BoqPolicy
     }
 
     /**
+     * Determine whether the user can delete a BOQ.
+     */
+    public function delete(User $user, Boq $boq): bool
+    {
+        return $this->update($user, $boq);
+    }
+
+    /**
      * Determine whether the user can process an uploaded BOQ.
      */
     public function process(User $user, Boq $boq): bool

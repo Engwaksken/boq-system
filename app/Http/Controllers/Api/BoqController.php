@@ -238,6 +238,18 @@ public function show(Request $request, Boq $boq): JsonResponse
             ->response();
     }
 
+    public function destroy(Request $request, Boq $boq): JsonResponse
+    {
+        $this->authorize('delete', $boq);
+
+        $boq->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => __('BOQ deleted successfully.'),
+        ]);
+    }
+
     public function item(Request $request, BoqItem $boqItem): JsonResponse
     {
         $user = $request->user();

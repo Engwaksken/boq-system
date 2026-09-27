@@ -101,6 +101,34 @@ class BoqProcessApiTest extends TestCase
             ->assertJsonPath('data.id', $boq->id);
     }
 
+    public function test_user_can_delete_a_boq_in_its_own_tenant(): void
+    {
+        [$user, $boq] = $this->makeBoqForUser();
+        $this->grantPermission($user, 'boq.edit');
+        $this->grantEntitlement($user, 'boq.management');
+
+        $this->actingAs($user)
+            ->deleteJson(route('api.v1.boqs.destroy', $boq))
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertSoftDeleted('boqs', ['id' => $boq->id]);
+    }
+
+    public function test_user_cannot_delete_a_boq_from_another_tenant(): void
+    {
+        $boq = $this->makeBoq();
+        $otherUser = User::factory()->create(['organisation_id' => Organisation::factory()->create()->id]);
+        $this->grantPermission($otherUser, 'boq.edit');
+        $this->grantEntitlement($otherUser, 'boq.management');
+
+        $this->actingAs($otherUser)
+            ->deleteJson(route('api.v1.boqs.destroy', $boq))
+            ->assertStatus(403);
+
+        $this->assertNotSoftDeleted('boqs', ['id' => $boq->id]);
+    }
+
     /** @return array{User, Boq} */
     private function makeBoqForUser(): array
     {

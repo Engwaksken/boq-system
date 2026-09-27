@@ -31,6 +31,7 @@ class User extends Authenticatable
         'timezone',
         'phone',
         'country',
+        'location',
         'original_language',
         'report_language',
         'is_active',
