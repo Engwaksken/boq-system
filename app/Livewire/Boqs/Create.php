@@ -56,8 +56,9 @@ class Create extends Component
 
         abort_unless($tenantAccess || $personalAccess, 403);
 
-        $path = $this->file->store("boqs/{$project->id}");
         $extension = strtolower($this->file->getClientOriginalExtension());
+        // Keep the real extension: guessing it from the content turns CSVs into .txt.
+        $path = $this->file->storeAs("boqs/{$project->id}", \Illuminate\Support\Str::random(40).'.'.$extension);
 
         $boq = Boq::create([
             'project_id' => $project->id,

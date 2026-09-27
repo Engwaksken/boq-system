@@ -12,7 +12,6 @@ use App\Models\SubElement;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
-use OpenSpout\Reader\Common\Creator\ReaderFactory;
 use OpenSpout\Common\Entity\Cell\FormulaCell;
 use Throwable;
 
@@ -57,7 +56,7 @@ class BoqSpreadsheetImporter
         $translationMetadata = [];
 
         try {
-            $reader = ReaderFactory::createFromFile($path);
+            $reader = $this->readerFor($path);
             $reader->open($path);
 
             foreach ($reader->getSheetIterator() as $sheetIndex => $sheet) {
@@ -171,7 +170,7 @@ class BoqSpreadsheetImporter
             throw $exception;
         } catch (Throwable $exception) {
             report($exception);
-            throw ValidationException::withMessages(['boq' => 'The uploaded BOQ could not be read.']);
+            throw ValidationException::withMessages(['boq' => $this->unreadableMessage($path)]);
         } finally {
             if ($reader) {
                 try {
@@ -513,5 +512,81 @@ class BoqSpreadsheetImporter
             'grand_total' => $grandTotal,
             'metadata' => ['item_count' => $allItems->count()],
         ]);
+    }
+
+    /**
+     * Pick the reader from the file's contents, not its extension: uploads are stored
+     * under generated names whose extension is guessed (a CSV often becomes .txt,
+     * an .xlsx sometimes .zip).
+     */
+    private function readerFor(string $path): \OpenSpout\Reader\ReaderInterface
+    {
+        $head = (string) file_get_contents($path, false, null, 0, 4096);
+
+        if (str_starts_with($head, "PK\x03\x04")) {
+            if (! class_exists(\ZipArchive::class)) {
+                throw ValidationException::withMessages(['boq' => 'Excel files cannot be read because the server is missing the PHP "zip" extension. Ask your administrator to enable it, or upload the BOQ as .csv.']);
+            }
+
+            $zip = new \ZipArchive();
+
+            if ($zip->open($path) === true) {
+                $isOds = $zip->getFromName('mimetype') === 'application/vnd.oasis.opendocument.spreadsheet';
+                $zip->close();
+
+                if ($isOds) {
+                    return new \OpenSpout\Reader\ODS\Reader();
+                }
+            }
+
+            return new \OpenSpout\Reader\XLSX\Reader();
+        }
+
+        if (str_starts_with($head, "\xD0\xCF\x11\xE0")) {
+            throw ValidationException::withMessages(['boq' => $this->unreadableMessage($path)]);
+        }
+
+        $options = new \OpenSpout\Reader\CSV\Options();
+        $options->FIELD_DELIMITER = $this->csvDelimiter($head);
+
+        if (! mb_check_encoding(preg_replace('/^\xEF\xBB\xBF/', '', $head), 'UTF-8')) {
+            $options->ENCODING = 'Windows-1252';
+        }
+
+        return new \OpenSpout\Reader\CSV\Reader($options);
+    }
+
+    /** Comma, semicolon (European Excel) or tab, whichever splits the first lines most. */
+    private function csvDelimiter(string $head): string
+    {
+        $lines = array_slice(preg_split('/\r\n|\r|\n/', $head) ?: [], 0, 5);
+        $best = ',';
+        $bestCount = 0;
+
+        foreach ([',', ';', "\t", '|'] as $delimiter) {
+            $count = array_sum(array_map(fn ($line) => substr_count($line, $delimiter), $lines));
+
+            if ($count > $bestCount) {
+                $best = $delimiter;
+                $bestCount = $count;
+            }
+        }
+
+        return $best;
+    }
+
+    private function unreadableMessage(string $path): string
+    {
+        $head = (string) @file_get_contents($path, false, null, 0, 8);
+
+        if (str_starts_with($head, "\xD0\xCF\x11\xE0")) {
+            return 'This looks like an old Excel 97-2003 (.xls) or password-protected file. Open it in Excel, remove any password and save it as .xlsx or .csv, then upload again.';
+        }
+
+        if (str_starts_with($head, '%PDF')) {
+            return 'This file is a PDF. Upload it as a PDF so the items can be extracted with "Generate BOQ".';
+        }
+
+        return 'The spreadsheet could not be opened. Save it again as .xlsx or .csv (UTF-8) and upload it again.';
     }
 }
