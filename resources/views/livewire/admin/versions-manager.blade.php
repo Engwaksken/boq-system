@@ -51,7 +51,7 @@
             <form wire:submit="save">
                 <div class="boq-modal-body grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div><label class="text-sm font-medium">Version number</label><input wire:model="form.version_number" class="mt-1 w-full rounded-lg border-slate-300" placeholder="2.0"></div>
-                    <div><label class="text-sm font-medium">Name</label><input wire:model="form.name" class="mt-1 w-full rounded-lg border-slate-300"></div>
+                    <div><label class="text-sm font-medium">Name</label><input placeholder="Enter name" wire:model="form.name" class="mt-1 w-full rounded-lg border-slate-300"></div>
                     <div><label class="text-sm font-medium">Classification</label>
                         <select wire:model="form.classification" class="mt-1 w-full rounded-lg border-slate-300">
                             <option value="major">Major</option><option value="minor">Minor</option><option value="patch">Patch</option>
@@ -64,7 +64,7 @@
                             <option value="1">Yes</option><option value="0">No</option>
                         </select>
                     </div>
-                    <div class="md:col-span-3"><label class="text-sm font-medium">Release notes</label><textarea wire:model="form.release_notes" rows="3" class="mt-1 w-full rounded-lg border-slate-300"></textarea></div>
+                    <div class="md:col-span-3"><label class="text-sm font-medium">Release notes</label><textarea placeholder="Add release notes..." wire:model="form.release_notes" rows="3" class="mt-1 w-full rounded-lg border-slate-300"></textarea></div>
                     <div class="md:col-span-3"><label class="text-sm font-medium">Included features (comma separated codes)</label><input wire:model="form.included_features" class="mt-1 w-full rounded-lg border-slate-300" placeholder="variations,cost.tracking"></div>
                     <div class="md:col-span-3"><label class="text-sm font-medium">Eligible plans (comma separated codes, blank = all)</label><input wire:model="form.eligible_plans" class="mt-1 w-full rounded-lg border-slate-300" placeholder="monthly-professional,one-time"></div>
                     <div class="flex flex-wrap items-center gap-5 md:col-span-3">

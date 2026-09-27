@@ -331,7 +331,7 @@
 
                             <td class="text-right">
                                 <strong>
-                                    {{ $sub->plan?->currency ?? 'UGX' }}
+                                    {{ $sub->plan?->currency ?? \App\Support\Regional::currency() }}
 
                                     {{ number_format(
                                         (float) (
@@ -432,7 +432,7 @@
 
                 <div class="boq-modal-body">
                     <label for="extend-days" class="boq-field-label">Add days</label>
-                    <input id="extend-days" type="number" min="1" max="3650" wire:model="extendDays" class="boq-field">
+                    <input placeholder="e.g. 30" id="extend-days" type="number" min="1" max="3650" wire:model="extendDays" class="boq-field">
                     <p class="boq-field-help">Counted from the current end date, or from today if it has already expired.</p>
                     @error('extendDays') <p class="boq-field-error">{{ $message }}</p> @enderror
                 </div>

@@ -218,7 +218,7 @@
                                                     @unless(is_array($subValue))
                                                         <div>
                                                             <label for="cfg-{{ $key }}-{{ $subKey }}" class="boq-field-label">{{ \Illuminate\Support\Str::headline($subKey) }}</label>
-                                                            <input id="cfg-{{ $key }}-{{ $subKey }}" type="text" wire:model="config.{{ $key }}.{{ $subKey }}" class="boq-field">
+                                                            <input placeholder="{{ \Illuminate\Support\Str::headline($subKey) }}" id="cfg-{{ $key }}-{{ $subKey }}" type="text" wire:model="config.{{ $key }}.{{ $subKey }}" class="boq-field">
                                                         </div>
                                                     @endunless
                                                 @endforeach
@@ -236,9 +236,9 @@
                                         <div>
                                             <label for="cfg-{{ $key }}" class="boq-field-label">{{ \Illuminate\Support\Str::headline($key) }}</label>
                                             @if($isSecret)
-                                                <x-password-input id="cfg-{{ $key }}" wire:model="config.{{ $key }}" autocomplete="off" />
+                                                <x-password-input placeholder="••••••••" id="cfg-{{ $key }}" wire:model="config.{{ $key }}" autocomplete="off" />
                                             @else
-                                                <input id="cfg-{{ $key }}" type="text" wire:model="config.{{ $key }}" class="boq-field" autocomplete="off">
+                                                <input placeholder="{{ \Illuminate\Support\Str::headline($key) }}" id="cfg-{{ $key }}" type="text" wire:model="config.{{ $key }}" class="boq-field" autocomplete="off">
                                             @endif
                                         </div>
                                     @endif

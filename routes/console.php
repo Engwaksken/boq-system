@@ -8,9 +8,10 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('hardware:fetch-daily --location=Kampala --limit=3')
+// Market location and timezone come from Admin > Settings (App\Support\Regional).
+Schedule::command('hardware:fetch-daily --limit=3')
     ->dailyAt('06:00')
-    ->timezone('Africa/Kampala')
+    ->timezone(App\Support\Regional::timezone())
     ->withoutOverlapping();
 
 Schedule::command('subscriptions:expire')

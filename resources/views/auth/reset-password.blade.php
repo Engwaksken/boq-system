@@ -19,7 +19,7 @@
             <div class="auth-input-wrap">
                 <i class="fas fa-envelope auth-input-icon"></i>
 
-                <input
+                <input placeholder="name@example.com"
                     id="email"
                     type="email"
                     name="email"

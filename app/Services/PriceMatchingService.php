@@ -250,7 +250,7 @@ class PriceMatchingService
         $matches = $this->findMatches($boqItem, 10);
 
         $currentPrice = $boqItem->approved_rate ?? $boqItem->original_rate ?? 0;
-        $currency = $boqItem->boq->currency ?? 'UGX';
+        $currency = $boqItem->boq->currency ?? \App\Support\Regional::currency();
 
         return [
             'boq_item' => [

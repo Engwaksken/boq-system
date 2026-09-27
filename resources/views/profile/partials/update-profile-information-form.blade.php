@@ -43,7 +43,7 @@
             <div>
                 <x-input-label for="timezone" :value="__('Timezone')" />
                 <select id="timezone" name="timezone" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                    @foreach(['Africa/Kampala', 'Africa/Nairobi', 'Africa/Kigali', 'Africa/Dar_es_Salaam', 'UTC'] as $timezone)
+                    @foreach(timezone_identifiers_list() as $timezone)
                         <option value="{{ $timezone }}" @selected(old('timezone', $user->timezone) === $timezone)>{{ str_replace('_', ' ', $timezone) }}</option>
                     @endforeach
                 </select>

@@ -18,6 +18,11 @@ class SuppliersManager extends Component
     /**
      * Livewire update requests skip route middleware, so re-check on every request.
      */
+    public function mount(): void
+    {
+        $this->form['currency'] = \App\Support\Regional::currency();
+    }
+
     public function boot(): void
     {
         abort_unless(auth()->user()?->isSuperAdmin(), 403);
@@ -30,7 +35,7 @@ class SuppliersManager extends Component
 
     public array $form = [
         'name' => '', 'contact_name' => '', 'email' => '', 'phone' => '',
-        'location' => '', 'region' => '', 'country' => '', 'currency' => 'UGX',
+        'location' => '', 'region' => '', 'country' => '', 'currency' => '',
         'materials_text' => '', 'notes' => '', 'preferred_language' => 'en', 'rating' => 0,
     ];
 
@@ -111,7 +116,7 @@ class SuppliersManager extends Component
     }
 
     public function cancel(): void { $this->showForm = false; $this->resetForm(); }
-    private function resetForm(): void { $this->editingId = null; $this->reset('form'); $this->form['currency']='UGX'; $this->form['preferred_language']='en'; }
+    private function resetForm(): void { $this->editingId = null; $this->reset('form'); $this->form['currency'] = \App\Support\Regional::currency(); $this->form['preferred_language']='en'; }
     public function updatedSearch(): void { $this->resetPage(); }
 
     public function render()

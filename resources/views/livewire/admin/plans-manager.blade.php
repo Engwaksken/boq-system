@@ -89,20 +89,20 @@
             </div>
             <form wire:submit="save">
                 <div class="boq-modal-body grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div><label class="text-sm font-medium">Name</label><input wire:model="form.name" class="mt-1 w-full rounded-lg border-slate-300"></div>
+                    <div><label class="text-sm font-medium">Name</label><input placeholder="Enter name" wire:model="form.name" class="mt-1 w-full rounded-lg border-slate-300"></div>
                     <div><label class="text-sm font-medium">Code</label><input wire:model="form.code" class="mt-1 w-full rounded-lg border-slate-300" placeholder="auto-generated"></div>
                     <div><label class="text-sm font-medium">Type</label><select wire:model="form.type" class="mt-1 w-full rounded-lg border-slate-300"><option value="monthly">Monthly</option><option value="three_month">3 Months</option><option value="six_month">6 Months</option><option value="annual">Annual</option><option value="one_time">One Time</option><option value="lifetime">Lifetime</option></select></div>
-                    <div class="md:col-span-3"><label class="text-sm font-medium">Description</label><textarea wire:model="form.description" rows="2" class="mt-1 w-full rounded-lg border-slate-300"></textarea></div>
+                    <div class="md:col-span-3"><label class="text-sm font-medium">Description</label><textarea placeholder="Add description..." wire:model="form.description" rows="2" class="mt-1 w-full rounded-lg border-slate-300"></textarea></div>
                     <div><label class="text-sm font-medium">Currency</label><x-currency-select wire:model="form.currency" :current="$form['currency'] ?? null" class="mt-1" /></div>
                     @foreach(['price'=>'Price','duration_days'=>'Duration Days','max_users'=>'Max Users','max_projects'=>'Max Projects','max_boqs'=>'Max BOQs','max_ai_credits'=>'AI Credits','max_ocr_pages'=>'OCR Pages','max_translations'=>'Translations','grace_period_days'=>'Grace Days','display_order'=>'Display Order'] as $field=>$label)
-                    <div><label class="text-sm font-medium">{{ $label }}</label><input wire:model="form.{{ $field }}" class="mt-1 w-full rounded-lg border-slate-300" type="{{ $field==='currency' ? 'text' : 'number' }}"></div>
+                    <div><label class="text-sm font-medium">{{ $label }}</label><input placeholder="{{ \Illuminate\Support\Str::headline($field) }}" wire:model="form.{{ $field }}" class="mt-1 w-full rounded-lg border-slate-300" type="{{ $field==='currency' ? 'text' : 'number' }}"></div>
                     @endforeach
-                    <div><label class="text-sm font-medium">Storage bytes</label><input wire:model="form.max_storage_bytes" type="number" class="mt-1 w-full rounded-lg border-slate-300"></div>
+                    <div><label class="text-sm font-medium">Storage bytes</label><input placeholder="e.g. 104857600 (100 MB)" wire:model="form.max_storage_bytes" type="number" class="mt-1 w-full rounded-lg border-slate-300"></div>
                     <div class="flex flex-wrap items-center gap-5 md:col-span-3">
                         <label><input type="checkbox" wire:model="form.is_active"> Active</label>
                         <label><input type="checkbox" wire:model="form.has_trial"> Trial enabled</label>
                         <label><input type="checkbox" wire:model="form.auto_renewal"> Auto renewal</label>
-                        <label class="text-sm">Trial days <input wire:model="form.trial_days" type="number" class="ml-2 w-24 rounded-lg border-slate-300"></label>
+                        <label class="text-sm">Trial days <input placeholder="e.g. 30" wire:model="form.trial_days" type="number" class="ml-2 w-24 rounded-lg border-slate-300"></label>
                     </div>
                     @if($errors->any())<div class="md:col-span-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ $errors->first() }}</div>@endif
                 </div>

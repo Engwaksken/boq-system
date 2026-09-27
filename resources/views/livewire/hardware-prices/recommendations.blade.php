@@ -15,7 +15,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label for="location" class="block text-xs font-medium text-gray-500 mb-1">Location</label>
-                <input type="text" wire:model.live.debounce.300ms="location" id="location" placeholder="e.g. Kampala"
+                <input type="text" wire:model.live.debounce.300ms="location" id="location" placeholder="e.g. city, town or market"
                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
             </div>
             <div class="flex items-end">

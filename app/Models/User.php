@@ -62,8 +62,49 @@ class User extends Authenticatable implements WebAuthnAuthenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
+            'notification_preferences' => 'array',
+            'display_preferences' => 'array',
         ];
     }
+
+    /**
+     * Notification channels and digest frequency, falling back to defaults.
+     *
+     * @return array<string, bool|string>
+     */
+    public function notificationPreferences(): array
+    {
+        return array_merge(self::DEFAULT_NOTIFICATION_PREFERENCES, $this->notification_preferences ?? []);
+    }
+
+    public const DATE_FORMATS = ['Y-m-d' => 'YYYY-MM-DD (ISO)', 'd/m/Y' => 'DD/MM/YYYY', 'm/d/Y' => 'MM/DD/YYYY', 'd.m.Y' => 'DD.MM.YYYY'];
+
+    public const NUMBER_FORMATS = ['1,234.56', '1.234,56', '1 234,56', "1'234.56"];
+
+    /**
+     * Display settings (currency, date/number format, rows per page), falling back to system defaults.
+     *
+     * @return array<string, string|int>
+     */
+    public function displayPreferences(): array
+    {
+        return array_merge([
+            'currency' => \App\Support\Regional::currency(),
+            'date_format' => 'Y-m-d',
+            'number_format' => '1,234.56',
+            'per_page' => 20,
+        ], $this->display_preferences ?? []);
+    }
+
+    public const DEFAULT_NOTIFICATION_PREFERENCES = [
+        'email_project_updates' => true,
+        'email_boq_changes' => true,
+        'email_price_alerts' => false,
+        'in_app_project_updates' => true,
+        'in_app_boq_changes' => true,
+        'in_app_approvals' => true,
+        'frequency' => 'immediate',
+    ];
 
     /**
      * The organisation this user belongs to.

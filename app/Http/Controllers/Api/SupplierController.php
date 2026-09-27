@@ -90,7 +90,7 @@ class SupplierController extends Controller
             'location' => $validated['location'] ?? null,
             'region' => $validated['region'] ?? null,
             'country' => $validated['country'] ?? null,
-            'currency' => $validated['currency'] ?? 'UGX',
+            'currency' => $validated['currency'] ?? \App\Support\Regional::currency(),
             'materials' => $validated['materials'] ?? [],
             'notes' => $validated['notes'] ?? null,
             'preferred_language' => $validated['preferred_language'] ?? 'en',

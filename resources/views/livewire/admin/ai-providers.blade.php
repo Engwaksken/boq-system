@@ -200,24 +200,24 @@
                             </div>
                             <div class="boq-form-span-2">
                                 <label class="boq-field-label">API Key / Secret</label>
-                                <x-password-input wire:model="form.api_key" autocomplete="new-password" />
+                                <x-password-input placeholder="••••••••" wire:model="form.api_key" autocomplete="new-password" />
                                 <div class="boq-table-subtitle">Saved credentials display as ***stored*** and are never sent back in plain text.</div>
                             </div>
                             <div>
                                 <label class="boq-field-label">Temperature</label>
-                                <input type="number" min="0" max="2" step="0.1" wire:model="form.temperature" class="boq-field">
+                                <input placeholder="e.g. 0.7" type="number" min="0" max="2" step="0.1" wire:model="form.temperature" class="boq-field">
                             </div>
                             <div>
                                 <label class="boq-field-label">Timeout (seconds)</label>
-                                <input type="number" min="5" max="300" wire:model="form.timeout" class="boq-field">
+                                <input placeholder="e.g. 30 (seconds)" type="number" min="5" max="300" wire:model="form.timeout" class="boq-field">
                             </div>
                             <div>
                                 <label class="boq-field-label">Max Tokens</label>
-                                <input type="number" wire:model="form.max_tokens" class="boq-field">
+                                <input placeholder="e.g. 4096" type="number" wire:model="form.max_tokens" class="boq-field">
                             </div>
                             <div>
                                 <label class="boq-field-label">Sort Order</label>
-                                <input type="number" min="0" wire:model="form.sort_order" class="boq-field">
+                                <input placeholder="e.g. 10" type="number" min="0" wire:model="form.sort_order" class="boq-field">
                             </div>
                             <div class="boq-form-span-2 boq-check-row">
                                 <label><input type="checkbox" wire:model="form.is_enabled"> Enabled</label>

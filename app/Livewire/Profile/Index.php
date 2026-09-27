@@ -50,6 +50,14 @@ class Index extends Component
 
     public bool $showBookmarkModal = false;
 
+    /** @var array<string, bool|string> */
+    public array $notificationPrefs = [];
+
+    /** @var array<string, string|int> */
+    public array $displayPrefs = [];
+
+    public string $bookmarkLocationChoice = '';
+
     protected function rules(): array
     {
         return [
@@ -105,11 +113,122 @@ class Index extends Component
             'avatar' => null,
         ];
 
+        $this->notificationPrefs = $user->notificationPreferences();
+        $this->displayPrefs = $user->displayPreferences() + ['locale' => $user->locale ?: 'en'];
+
         $tab = (string) request()->query('tab', '');
 
         if (array_key_exists($tab, $this->tabs)) {
             $this->activeTab = $tab;
         }
+    }
+
+    /**
+     * Picking a hardware price fills the location from that price.
+     */
+    public function updatedHardwareBookmarkFormHardwarePriceId($priceId): void
+    {
+        $price = $this->bookmarkablePrice((int) $priceId);
+        $location = (string) ($price?->location ?? '');
+
+        $this->hardwareBookmarkForm['location'] = $location;
+        $this->bookmarkLocationChoice = $location;
+    }
+
+    public function updatedBookmarkLocationChoice(string $value): void
+    {
+        $this->hardwareBookmarkForm['location'] = $value === '__other__' ? '' : $value;
+    }
+
+    private function bookmarkablePrice(int $priceId): ?HardwarePrice
+    {
+        if ($priceId <= 0) {
+            return null;
+        }
+
+        return HardwarePrice::query()
+            ->where('organisation_id', Auth::user()?->organisation_id)
+            ->find($priceId);
+    }
+
+    /**
+     * Locations where the selected item (same name and price type) has a recorded price.
+     *
+     * @return list<string>
+     */
+    private function bookmarkLocationOptions(): array
+    {
+        $price = $this->bookmarkablePrice((int) ($this->hardwareBookmarkForm['hardware_price_id'] ?? 0));
+
+        if (! $price) {
+            return [];
+        }
+
+        return HardwarePrice::query()
+            ->where('organisation_id', $price->organisation_id)
+            ->where('item_name', $price->item_name)
+            ->where('price_type', $price->price_type)
+            ->whereNotNull('location')
+            ->where('location', '!=', '')
+            ->distinct()
+            ->orderBy('location')
+            ->pluck('location')
+            ->all();
+    }
+
+    /**
+     * Display preferences save as soon as they change; language updates the user's locale.
+     */
+    public function updatedDisplayPrefs(): void
+    {
+        $this->validate([
+            'displayPrefs.locale' => ['required', 'string', Rule::exists('languages', 'code')->where('is_active', true)],
+            'displayPrefs.currency' => ['required', 'string', 'size:3', Rule::exists('currencies', 'code')],
+            'displayPrefs.date_format' => ['required', Rule::in(array_keys(User::DATE_FORMATS))],
+            'displayPrefs.number_format' => ['required', Rule::in(User::NUMBER_FORMATS)],
+            'displayPrefs.per_page' => ['required', 'integer', Rule::in([10, 20, 50, 100])],
+        ]);
+
+        $user = Auth::user();
+        abort_unless($user, 401);
+
+        $user->forceFill([
+            'locale' => $this->displayPrefs['locale'],
+            'display_preferences' => [
+                'currency' => $this->displayPrefs['currency'],
+                'date_format' => $this->displayPrefs['date_format'],
+                'number_format' => $this->displayPrefs['number_format'],
+                'per_page' => (int) $this->displayPrefs['per_page'],
+            ],
+        ])->save();
+
+        $this->form['locale'] = $this->displayPrefs['locale'];
+
+        $this->dispatch('display-preferences-saved');
+    }
+
+    /**
+     * Notification switches and the digest radio save as soon as they change.
+     */
+    public function updatedNotificationPrefs(): void
+    {
+        $defaults = User::DEFAULT_NOTIFICATION_PREFERENCES;
+
+        $clean = [];
+        foreach ($defaults as $key => $default) {
+            $value = $this->notificationPrefs[$key] ?? $default;
+            $clean[$key] = $key === 'frequency'
+                ? (in_array($value, ['immediate', 'hourly', 'daily', 'weekly'], true) ? $value : 'immediate')
+                : (bool) $value;
+        }
+
+        $user = Auth::user();
+        abort_unless($user, 401);
+
+        $user->forceFill(['notification_preferences' => $clean])->save();
+        $this->notificationPrefs = $clean;
+
+        $this->dispatch('notification-preferences-saved');
     }
 
     /**
@@ -208,6 +327,12 @@ class Index extends Component
 
         $this->editingBookmarkId = null;
 
+        $this->bookmarkLocationChoice = '';
+
+        if ($hardwarePriceId) {
+            $this->updatedHardwareBookmarkFormHardwarePriceId($hardwarePriceId);
+        }
+
         $this->resetValidation();
 
         $this->showBookmarkModal = true;
@@ -232,6 +357,10 @@ class Index extends Component
         ];
 
         $this->editingBookmarkId = $bookmark->id;
+
+        $this->bookmarkLocationChoice = in_array($bookmark->location, $this->bookmarkLocationOptions(), true)
+            ? (string) $bookmark->location
+            : ($bookmark->location ? '__other__' : '');
 
         $this->resetValidation();
 
@@ -415,6 +544,7 @@ class Index extends Component
                 ->with('hardwarePrice')
                 ->latest()
                 ->get(),
+            'bookmarkLocations' => $this->showBookmarkModal ? $this->bookmarkLocationOptions() : [],
             'bookmarkablePrices' => $this->activeTab === 'hardware-bookmarks'
                 ? HardwarePrice::active()
                     ->where('organisation_id', $user->organisation_id)

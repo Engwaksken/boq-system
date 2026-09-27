@@ -107,11 +107,11 @@
                 <div class="boq-modal-body space-y-4">
                     <div>
                         <label for="bookmark-price" class="boq-field-label">Hardware price</label>
-                        <select id="bookmark-price" wire:model="hardwareBookmarkForm.hardware_price_id" class="boq-field" required>
+                        <select id="bookmark-price" wire:model.live="hardwareBookmarkForm.hardware_price_id" class="boq-field" required>
                             <option value="">Select hardware price...</option>
                             @foreach($bookmarkablePrices as $price)
                                 <option value="{{ $price->id }}">
-                                    {{ $price->item_name }} ({{ $price->category }}) - {{ $price->currency }} {{ number_format((float) $price->price, 2) }}
+                                    {{ $price->item_name }} · {{ ucfirst($price->price_type ?? 'hardware') }} · {{ $price->category }}{{ $price->location ? ' · '.$price->location : '' }} · {{ $price->currency }} {{ number_format((float) $price->price, 2) }}
                                 </option>
                             @endforeach
                         </select>
@@ -121,11 +121,18 @@
                         @error('hardwareBookmarkForm.hardware_price_id') <p class="boq-field-error">{{ $message }}</p> @enderror
                     </div>
 
-                    <div>
-                        <label for="bookmark-location" class="boq-field-label">Location</label>
-                        <input id="bookmark-location" type="text" wire:model="hardwareBookmarkForm.location" class="boq-field" required maxlength="150" placeholder="e.g. Kampala Central Market">
-                        @error('hardwareBookmarkForm.location') <p class="boq-field-error">{{ $message }}</p> @enderror
-                    </div>
+                    <x-select-with-other
+                        label="Location"
+                        choice="bookmarkLocationChoice"
+                        value="hardwareBookmarkForm.location"
+                        :current="$bookmarkLocationChoice"
+                        :options="$bookmarkLocations"
+                        :placeholder="empty($hardwareBookmarkForm['hardware_price_id']) ? 'Select a hardware price first...' : 'Select location...'"
+                        other-placeholder="e.g. a market, town or supplier branch"
+                        error="hardwareBookmarkForm.location"
+                        required
+                    />
+                    <p class="boq-field-help -mt-2">Filled in from the selected price. Pick another location where this item is priced, or choose Other.</p>
 
                     <div>
                         <label for="bookmark-notes" class="boq-field-label">Notes (optional)</label>

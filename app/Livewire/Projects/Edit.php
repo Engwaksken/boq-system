@@ -43,7 +43,7 @@ class Edit extends Component
 
     public $contractValue = null;
 
-    public string $currency = 'UGX';
+    public string $currency = '';
 
     public string $status = 'draft';
 
@@ -75,7 +75,7 @@ class Edit extends Component
         $this->startDate = $project->start_date?->format('Y-m-d');
         $this->expectedCompletionDate = $project->expected_completion_date?->format('Y-m-d');
         $this->contractValue = $project->contract_value;
-        $this->currency = $project->currency ?: 'UGX';
+        $this->currency = $project->currency ?: \App\Support\Regional::currency();
         $this->status = $project->status ?: 'draft';
         $this->description = $project->description;
     }

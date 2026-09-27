@@ -67,7 +67,7 @@
             </div>
             <form wire:submit="save">
                 <div class="boq-modal-body grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div><label class="text-sm font-medium">Name</label><input wire:model="form.name" class="mt-1 w-full rounded-lg border-slate-300"></div>
+                    <div><label class="text-sm font-medium">Name</label><input placeholder="Enter name" wire:model="form.name" class="mt-1 w-full rounded-lg border-slate-300"></div>
                     <div><label class="text-sm font-medium">Code</label><input wire:model="form.code" class="mt-1 w-full rounded-lg border-slate-300" placeholder="auto-generated"></div>
                     <div><label class="text-sm font-medium">Type</label>
                         <select wire:model="form.type" class="mt-1 w-full rounded-lg border-slate-300">
@@ -84,10 +84,10 @@
                             <option value="report_export_topup">Report Export Top-up</option>
                         </select>
                     </div>
-                    <div class="md:col-span-3"><label class="text-sm font-medium">Description</label><textarea wire:model="form.description" rows="2" class="mt-1 w-full rounded-lg border-slate-300"></textarea></div>
+                    <div class="md:col-span-3"><label class="text-sm font-medium">Description</label><textarea placeholder="Add description..." wire:model="form.description" rows="2" class="mt-1 w-full rounded-lg border-slate-300"></textarea></div>
                     <div><label class="text-sm font-medium">Currency</label><x-currency-select wire:model="form.currency" :current="$form['currency'] ?? null" class="mt-1" /></div>
                     @foreach(['price'=>'Price','duration_days'=>'Duration Days','release_version'=>'Release Version','purchase_limit'=>'Purchase Limit','display_order'=>'Display Order'] as $field=>$label)
-                    <div><label class="text-sm font-medium">{{ $label }}</label><input wire:model="form.{{ $field }}" class="mt-1 w-full rounded-lg border-slate-300" type="{{ in_array($field,['duration_days','purchase_limit','display_order'],true) ? 'number' : 'text' }}"></div>
+                    <div><label class="text-sm font-medium">{{ $label }}</label><input placeholder="{{ \Illuminate\Support\Str::headline($field) }}" wire:model="form.{{ $field }}" class="mt-1 w-full rounded-lg border-slate-300" type="{{ in_array($field,['duration_days','purchase_limit','display_order'],true) ? 'number' : 'text' }}"></div>
                     @endforeach
                     <div class="md:col-span-3"><label class="text-sm font-medium">Included features (comma separated codes)</label><input wire:model="form.included_features" class="mt-1 w-full rounded-lg border-slate-300" placeholder="variations,cost.tracking"></div>
                     <div class="md:col-span-3"><label class="text-sm font-medium">Usage credits (JSON, e.g. {"ai_credits":50,"ocr_pages":100})</label><textarea wire:model="form.usage_credits" rows="2" class="mt-1 w-full rounded-lg border-slate-300" placeholder='{"ai_credits":50}'></textarea></div>

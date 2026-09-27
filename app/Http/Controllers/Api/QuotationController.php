@@ -110,7 +110,7 @@ class QuotationController extends Controller
             'status' => $validated['status'] ?? 'draft',
             'quotation_date' => $validated['quotation_date'] ?? now()->toDateString(),
             'valid_until' => $validated['valid_until'] ?? null,
-            'currency' => $validated['currency'] ?? 'UGX',
+            'currency' => $validated['currency'] ?? \App\Support\Regional::currency(),
             'tax_rate' => $validated['tax_rate'] ?? 0,
             'discount_amount' => $validated['discount_amount'] ?? 0,
             'source' => $validated['source'] ?? 'manual',

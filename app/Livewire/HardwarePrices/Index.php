@@ -6,6 +6,7 @@ namespace App\Livewire\HardwarePrices;
 
 use App\Livewire\Concerns\WithBulkSelection;
 use App\Models\HardwareCategory;
+use App\Models\HardwareItem;
 use App\Models\HardwarePrice;
 use App\Services\HardwarePriceCsvImporter;
 use App\Services\HardwarePriceManager;
@@ -134,12 +135,13 @@ class Index extends Component
             return [];
         }
 
-        $defaults = HardwareCategory::query()
-            ->whereRaw('LOWER(name) = ?', [mb_strtolower($category)])
-            ->where(fn ($q) => $q->whereNull('organisation_id')->orWhere('organisation_id', $organisationId))
-            ->pluck('default_items')
-            ->filter(fn ($items) => is_array($items))
-            ->flatten();
+        $defaults = HardwareItem::query()
+            ->active()
+            ->whereHas('category', fn ($q) => $q
+                ->whereRaw('LOWER(name) = ?', [mb_strtolower($category)])
+                ->where(fn ($w) => $w->whereNull('organisation_id')->orWhere('organisation_id', $organisationId)))
+            ->orderBy('sort_order')
+            ->pluck('name');
 
         return $defaults
             ->merge(
@@ -724,7 +726,7 @@ class Index extends Component
             'specification' => '',
             'unit' => '',
             'price' => '',
-            'currency' => 'UGX',
+            'currency' => \App\Support\Regional::currency(),
             'supplier' => '',
             'location' => '',
             'source_url' => '',

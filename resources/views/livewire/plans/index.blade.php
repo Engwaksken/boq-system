@@ -287,7 +287,7 @@
                     <div class="boq-plan-price">
 
                         <span class="boq-plan-currency">
-                            {{ $plan->currency ?? 'UGX' }}
+                            {{ $plan->currency ?? \App\Support\Regional::currency() }}
                         </span>
 
                         <span class="boq-plan-price-value">

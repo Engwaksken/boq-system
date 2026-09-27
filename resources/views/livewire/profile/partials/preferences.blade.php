@@ -1,66 +1,64 @@
-<div class="grid gap-6 sm:grid-cols-2">
-    <div class="bg-slate-50 rounded-xl p-6">
-        <h3 class="text-lg font-semibold text-slate-900 mb-4">Display Preferences</h3>
-        <div class="space-y-4">
+<div
+    class="max-w-3xl"
+    x-data="{ saved: false }"
+    x-on:display-preferences-saved.window="saved = true; setTimeout(() => saved = false, 2000)"
+>
+    <div class="boq-panel boq-panel-body">
+        <div class="mb-4 flex items-start justify-between gap-3">
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Theme</label>
-                <select class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    <option>System Default</option>
-                    <option>Light</option>
-                    <option>Dark</option>
-                </select>
+                <h3 class="boq-section-title"><i class="fas fa-sliders"></i> Display &amp; Regional Preferences</h3>
+                <p class="boq-section-subtitle">How dates, numbers and money are shown to you. Changes save automatically.</p>
             </div>
-
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Language</label>
-                <select class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    <option value="en" {{ Auth::user()->locale === 'en' ? 'selected' : '' }}>English</option>
-                    <option value="fr" {{ Auth::user()->locale === 'fr' ? 'selected' : '' }}>French</option>
-                    <option value="sw" {{ Auth::user()->locale === 'sw' ? 'selected' : '' }}>Swahili</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Date Format</label>
-                <select class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    <option>DD/MM/YYYY</option>
-                    <option>MM/DD/YYYY</option>
-                    <option>YYYY-MM-DD</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Number Format</label>
-                <select class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    <option>1,234.56</option>
-                    <option>1.234,56</option>
-                    <option>1 234,56</option>
-                </select>
-            </div>
+            <span x-show="saved" x-transition class="boq-badge boq-badge-success" role="status">
+                <i class="fas fa-check"></i> Saved
+            </span>
         </div>
-    </div>
 
-    <div class="bg-slate-50 rounded-xl p-6">
-        <h3 class="text-lg font-semibold text-slate-900 mb-4">Default Values</h3>
-        <div class="space-y-4">
+        <div class="boq-form-grid">
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Default Currency</label>
-                <select class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    <option value="UGX" {{ Auth::user()->currency === 'UGX' ? 'selected' : '' }}>UGX</option>
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="KES">KES</option>
+                <label for="pref-locale" class="boq-field-label">Language</label>
+                <select id="pref-locale" wire:model.live="displayPrefs.locale" class="boq-field">
+                    @foreach(\App\Models\Language::where('is_active', true)->orderByDesc('is_default')->orderBy('name')->get() as $language)
+                        <option value="{{ $language->code }}">{{ $language->name }}{{ $language->native_name !== $language->name ? ' · '.$language->native_name : '' }}</option>
+                    @endforeach
                 </select>
+                @error('displayPrefs.locale') <p class="boq-field-error">{{ $message }}</p> @enderror
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Items Per Page</label>
-                <select class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    <option value="10">10</option>
-                    <option value="20" selected>20</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
+                <label for="pref-currency" class="boq-field-label">Preferred Currency</label>
+                <x-currency-select id="pref-currency" wire:model.live="displayPrefs.currency" :current="$displayPrefs['currency'] ?? null" />
+                @error('displayPrefs.currency') <p class="boq-field-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label for="pref-date" class="boq-field-label">Date Format</label>
+                <select id="pref-date" wire:model.live="displayPrefs.date_format" class="boq-field">
+                    @foreach(\App\Models\User::DATE_FORMATS as $format => $label)
+                        <option value="{{ $format }}">{{ $label }} · {{ now()->format($format) }}</option>
+                    @endforeach
                 </select>
+                @error('displayPrefs.date_format') <p class="boq-field-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label for="pref-number" class="boq-field-label">Number Format</label>
+                <select id="pref-number" wire:model.live="displayPrefs.number_format" class="boq-field">
+                    @foreach(\App\Models\User::NUMBER_FORMATS as $format)
+                        <option value="{{ $format }}">{{ $format }}</option>
+                    @endforeach
+                </select>
+                @error('displayPrefs.number_format') <p class="boq-field-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label for="pref-per-page" class="boq-field-label">Rows Per Page</label>
+                <select id="pref-per-page" wire:model.live="displayPrefs.per_page" class="boq-field">
+                    @foreach([10, 20, 50, 100] as $size)
+                        <option value="{{ $size }}">{{ $size }}</option>
+                    @endforeach
+                </select>
+                @error('displayPrefs.per_page') <p class="boq-field-error">{{ $message }}</p> @enderror
             </div>
         </div>
     </div>

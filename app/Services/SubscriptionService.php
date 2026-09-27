@@ -175,7 +175,7 @@ class SubscriptionService
                 'type' => 'monthly',
                 'duration_days' => 7,
                 'price' => 0,
-                'currency' => 'UGX',
+                'currency' => \App\Support\Regional::currency(),
                 'has_trial' => true,
                 'trial_days' => 7,
                 'is_active' => true,

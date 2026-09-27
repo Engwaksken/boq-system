@@ -17,7 +17,7 @@ class HardwareCategoryResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
-            'default_items' => $this->default_items,
+            'default_items' => $this->itemNames(),
             'is_active' => $this->is_active,
             'sort_order' => $this->sort_order,
             'created_at' => $this->created_at?->toISOString(),

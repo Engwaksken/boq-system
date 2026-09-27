@@ -41,7 +41,13 @@ class Create extends Component
 
     public $contractValue = null;
 
-    public string $currency = 'UGX';
+    public string $currency = '';
+
+    public function mount(): void
+    {
+        $this->currency = \App\Support\Regional::currency();
+        $this->country = $this->country ?: \App\Support\Regional::countryName();
+    }
 
     public string $status = 'draft';
 

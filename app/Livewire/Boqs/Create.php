@@ -63,7 +63,7 @@ class Create extends Component
             'project_id' => $project->id,
             'organisation_id' => $project->organisation_id,
             'name' => ($validated['name'] ?? null) ?: pathinfo($this->file->getClientOriginalName(), PATHINFO_FILENAME),
-            'currency' => $project->currency ?: 'UGX',
+            'currency' => $project->currency ?: \App\Support\Regional::currency(),
             'status' => 'uploaded',
             'source_type' => in_array($extension, ['xlsx', 'csv']) ? 'excel' : ($extension === 'pdf' ? 'pdf' : 'scan'),
             'source_file_path' => $path,

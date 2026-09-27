@@ -49,7 +49,7 @@ class AuthController extends Controller
                     'name' => $validated['organisation_name'],
                     'code' => Str::upper(Str::random(6)),
                     'default_locale' => $validated['locale'] ?? 'en',
-                    'default_currency' => 'UGX',
+                    'default_currency' => \App\Support\Regional::currency(),
                     'is_active' => true,
                 ]);
             }

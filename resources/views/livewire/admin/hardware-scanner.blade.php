@@ -265,7 +265,7 @@
                     <input
                         wire:model="scanForm.location"
                         class="boq-field"
-                        placeholder="e.g. Kampala"
+                        placeholder="e.g. city, town or market"
                     >
 
                     @error('scanForm.location')
@@ -282,7 +282,7 @@
                         Items to Scan
                     </label>
 
-                    <input
+                    <input placeholder="e.g. 10"
                         type="number"
                         min="1"
                         max="50"
@@ -527,12 +527,7 @@
                             </td>
 
                             <td>
-                                {{
-                                    count(
-                                        $category->default_items
-                                        ?? []
-                                    )
-                                }}
+                                {{ $category->items_count ?? count($category->default_items ?? []) }}
                             </td>
 
                             <td>
@@ -703,7 +698,7 @@
                                     Sort Order
                                 </label>
 
-                                <input
+                                <input placeholder="e.g. 10"
                                     type="number"
                                     min="0"
                                     wire:model="categoryForm.sort_order"

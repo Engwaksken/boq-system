@@ -21,6 +21,11 @@ class RatesManager extends Component
     /**
      * Livewire update requests skip route middleware, so re-check on every request.
      */
+    public function mount(): void
+    {
+        $this->form['currency'] = \App\Support\Regional::currency();
+    }
+
     public function boot(): void
     {
         abort_unless(auth()->user()?->isSuperAdmin(), 403);
@@ -37,7 +42,7 @@ class RatesManager extends Component
 
     public array $form = [
         'item' => '', 'description' => '', 'category' => '', 'unit' => 'NO', 'rate' => 0,
-        'currency' => 'UGX', 'region' => '', 'country' => '', 'supplier_id' => null,
+        'currency' => '', 'region' => '', 'country' => '', 'supplier_id' => null,
         'source_type' => 'previous_boq', 'source_reference' => '',
         'effective_from' => '', 'effective_until' => '', 'verification_status' => 'pending',
     ];
@@ -166,7 +171,7 @@ class RatesManager extends Component
     }
 
     public function cancel(): void { $this->showForm = false; $this->resetForm(); }
-    private function resetForm(): void { $this->editingId = null; $this->categoryChoice = ''; $this->itemChoice = ''; $this->reset('form'); $this->form['currency']='UGX'; $this->form['unit']='NO'; $this->form['source_type']='previous_boq'; $this->form['verification_status']='pending'; }
+    private function resetForm(): void { $this->editingId = null; $this->categoryChoice = ''; $this->itemChoice = ''; $this->reset('form'); $this->form['currency'] = \App\Support\Regional::currency(); $this->form['unit']='NO'; $this->form['source_type']='previous_boq'; $this->form['verification_status']='pending'; }
     public function updatedSearch(): void { $this->resetPage(); }
     public function updatedVerification(): void { $this->resetPage(); }
     public function updatedCurrency(): void { $this->resetPage(); }

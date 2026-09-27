@@ -35,6 +35,8 @@ class SiteSetting extends Model
 
     public static function set(string $key, $value, string $group = 'general', string $type = 'string')
     {
+        \App\Support\Regional::flush();
+
         if (is_bool($value)) {
             $type = $type === 'string' ? 'boolean' : $type;
             $value = $value ? '1' : '0';

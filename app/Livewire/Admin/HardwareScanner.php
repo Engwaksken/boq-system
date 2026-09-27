@@ -35,8 +35,7 @@ class HardwareScanner extends Component
 
         'category' => '',
 
-        'location' =>
-            'Kampala',
+        'location' => '',
 
         'limit' => 5,
     ];
@@ -67,6 +66,8 @@ class HardwareScanner extends Component
 
     public function mount(): void
     {
+        $this->scanForm['location'] = \App\Support\Regional::marketLocation();
+
         $this->ensureSelectedCategory();
     }
 
@@ -213,7 +214,7 @@ class HardwareScanner extends Component
 
                     'currency' =>
                         $item['currency']
-                        ?? 'UGX',
+                        ?? \App\Support\Regional::currency(),
 
                     'supplier' =>
                         $item['supplier']
@@ -284,9 +285,9 @@ class HardwareScanner extends Component
                         '42.5N 50kg',
                         'bag',
                         '38000',
-                        'UGX',
-                        'Hima Cement',
-                        'Kasese',
+                        \App\Support\Regional::currency(),
+                        'Example Cement Factory',
+                        \App\Support\Regional::marketLocation() ?: 'Main market',
                         '',
                         'Factory price list',
                     ]
@@ -334,8 +335,7 @@ class HardwareScanner extends Component
             'default_items' =>
                 implode(
                     ', ',
-                    $category->default_items
-                    ?? []
+                    $category->itemNames()
                 ),
 
             'sort_order' =>
@@ -592,6 +592,7 @@ class HardwareScanner extends Component
     {
         $categories =
             HardwareCategory::query()
+                ->withCount(['items' => fn ($query) => $query->where('is_active', true)])
                 ->orderBy(
                     'sort_order'
                 )

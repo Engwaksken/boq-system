@@ -35,7 +35,15 @@ document.addEventListener('click', (event) => {
 
 /*
  * Biometric (WebAuthn passkey) helpers: Windows Hello, Touch ID, fingerprint.
+ * Webpass sends no CSRF token by default, so pass the page's token explicitly.
  */
+const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+
+const webpass = () => Webpass.create({
+    headers: { 'X-CSRF-TOKEN': csrfToken() },
+    credentials: 'same-origin',
+});
+
 const biometric = {
     /** True only when this device has a built-in biometric/PIN authenticator. */
     async available() {
@@ -51,7 +59,7 @@ const biometric = {
     },
 
     async login() {
-        const { success, user, error } = await Webpass.assert('/webauthn/login/options', '/webauthn/login');
+        const { success, user, error } = await webpass().assert('/webauthn/login/options', '/webauthn/login');
 
         if (! success) {
             throw new Error(error?.data?.message ?? 'Biometric sign-in was cancelled or failed.');
@@ -61,7 +69,7 @@ const biometric = {
     },
 
     async register(alias) {
-        const { success, error } = await Webpass.attest(
+        const { success, error } = await webpass().attest(
             { path: '/webauthn/register/options' },
             { path: '/webauthn/register', body: { alias } },
         );

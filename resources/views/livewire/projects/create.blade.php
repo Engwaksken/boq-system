@@ -15,7 +15,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="md:col-span-2">
                     <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Project Name <span class="text-red-500">*</span></label>
-                    <input type="text" wire:model="name" id="name" placeholder="e.g. Kampala Office Development" required class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <input type="text" wire:model="name" id="name" placeholder="e.g. Riverside Office Block" required class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                     @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
@@ -69,13 +69,14 @@
 
                 <div>
                     <label for="country" class="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                    <input type="text" wire:model="country" id="country" placeholder="e.g. Uganda" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <input type="text" wire:model="country" id="country" list="country-options" autocomplete="country-name" placeholder="e.g. Kenya" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <datalist id="country-options">@foreach(\App\Models\Country::options() as $countryName)<option value="{{ $countryName }}">@endforeach</datalist>
                     @error('country') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
                     <label for="district" class="block text-sm font-medium text-gray-700 mb-1">District</label>
-                    <input type="text" wire:model="district" id="district" placeholder="e.g. Kampala" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <input type="text" wire:model="district" id="district" placeholder="e.g. district, county or state" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                     @error('district') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 

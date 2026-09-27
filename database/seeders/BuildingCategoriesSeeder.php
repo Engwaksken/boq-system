@@ -96,5 +96,8 @@ class BuildingCategoriesSeeder extends Seeder
 
             DB::table('hardware_categories')->insert($row);
         }
+
+        // Keep the hardware_items table (source of truth for items) in step.
+        \App\Models\HardwareCategory::syncAllItemsFromDefaults();
     }
 }

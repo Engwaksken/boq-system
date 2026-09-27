@@ -51,8 +51,11 @@ class SiteSettings extends Component
     {
         $this->settings = [
             'system_name' => SiteSetting::get('system_name', 'Civil Works AI BOQ Platform'),
-            'currency' => SiteSetting::get('currency', 'UGX'),
+            'currency' => SiteSetting::get('currency', \App\Support\Regional::currency()),
             'language' => SiteSetting::get('language', 'en'),
+            'country' => (string) SiteSetting::get('country', ''),
+            'market_location' => (string) SiteSetting::get('market_location', ''),
+            'timezone' => (string) SiteSetting::get('timezone', config('app.timezone', 'UTC')),
             'trial_duration' => SiteSetting::get('trial_duration', 7),
             'maintenance_mode' => SiteSetting::get('maintenance_mode', false),
             'logo' => SiteSetting::get('logo', ''),
@@ -83,6 +86,9 @@ class SiteSettings extends Component
             'settings.system_name' => 'required|string|max:255',
             'settings.currency' => ['required', 'string', 'size:3', Rule::exists('currencies', 'code')],
             'settings.language' => ['required', 'string', 'max:10', Rule::exists('languages', 'code')],
+            'settings.country' => ['nullable', 'string', 'size:2', Rule::exists('countries', 'iso2')],
+            'settings.market_location' => ['nullable', 'string', 'max:150'],
+            'settings.timezone' => ['required', 'timezone:all'],
             'settings.trial_duration' => 'required|integer|min:0',
             'settings.maintenance_mode' => 'boolean',
             'settings.logo' => 'nullable|string|max:255',

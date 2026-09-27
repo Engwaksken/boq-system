@@ -2912,3 +2912,80 @@ a:visited {
     background: #f1f5f9;
     color: var(--boq-primary);
 }
+
+
+/* ---------- toggle rows, switches and radio cards (profile preferences) ---------- */
+
+.boq-app-shell .boq-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border: 1px solid var(--boq-border);
+    border-radius: var(--boq-radius);
+    background: #fff;
+    padding: .8rem 1rem;
+    cursor: pointer;
+}
+
+.boq-app-shell .boq-toggle-row:hover {
+    border-color: var(--boq-border-dark);
+}
+
+.boq-app-shell input[type="checkbox"].boq-switch {
+    position: relative;
+    width: 2.75rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+    appearance: none;
+    border-radius: 999px;
+    background: #cbd5e1;
+    cursor: pointer;
+    transition: background .2s ease;
+}
+
+.boq-app-shell input[type="checkbox"].boq-switch::after {
+    content: "";
+    position: absolute;
+    top: .2rem;
+    left: .2rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .25);
+    transition: transform .2s ease;
+}
+
+.boq-app-shell input[type="checkbox"].boq-switch:checked {
+    background: var(--boq-primary);
+}
+
+.boq-app-shell input[type="checkbox"].boq-switch:checked::after {
+    transform: translateX(1.25rem);
+}
+
+.boq-app-shell input[type="checkbox"].boq-switch:focus-visible {
+    outline: 3px solid rgba(5, 100, 91, .3);
+    outline-offset: 2px;
+}
+
+.boq-app-shell .boq-radio-card {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    border: 1px solid var(--boq-border);
+    border-radius: var(--boq-radius);
+    background: #fff;
+    padding: .7rem .85rem;
+    cursor: pointer;
+}
+
+.boq-app-shell .boq-radio-card input {
+    margin-top: .15rem;
+}
+
+.boq-app-shell .boq-radio-card:has(input:checked) {
+    border-color: var(--boq-primary);
+    background: var(--boq-primary-lighter);
+}

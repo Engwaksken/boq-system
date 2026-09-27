@@ -74,13 +74,37 @@ Decide on both before launch. The work is scoped under "Open P0" below.
   - The overview only queries the open tab, with its own pagination.
 - **Legal pages accept HTML:** sanitised (no scripts, event handlers or `javascript:` links). The mobile app receives a plain-text version plus a link to the formatted page.
 
+## Global readiness (follow-up release)
+
+The system was built around Uganda: UGX, Kampala, Africa/Kampala and a Ugandan AI prompt were hard-coded in about 40 places. Region is now configuration, not code.
+
+- **Region settings:** Admin → Settings → General sets the **default country**, **default market location** (used for daily AI price research) and **system timezone** (used by the scheduler), next to default currency and language. `App\Support\Regional` is the single source for these defaults. The fallback currency is `APP_DEFAULT_CURRENCY` (USD), not UGX.
+- **Reference data in the database:**
+  - `countries`: 200 countries and territories (ISO 3166) with dialling code and currency.
+  - `hardware_items`: category items, replacing the JSON list. The JSON list is kept in sync automatically when categories are edited.
+  - `currencies` and `languages`: managed in Settings.
+- **Price research:**
+  - The AI prompt uses the configured location, country and currency.
+  - The Ugandan supplier, manufacturer and location lists are removed; suppliers and locations now come from recorded prices and the Suppliers table.
+  - Fixed a bug where the daily fetch command always failed: it passed a wrong parameter name to the fetching service.
+- **User-level localisation:**
+  - The profile timezone offers every IANA zone, grouped by region.
+  - Preferences now save language, currency, date format (ISO by default), number format and rows per page. They were previously non-functional placeholders.
+  - Phone placeholders use the international format.
+  - Project country fields suggest countries from the table.
+- **Mobile config:** returns the worldwide country list (default country first), `countries_detailed` (ISO code, dialling code, currency), `default_country` and `default_currency`.
+- **Still to do for full internationalisation:**
+  - Translate the web views (P1 #8).
+  - Apply each user's date and number format when rendering lists.
+  - Mobile payment gateways are still the African providers (MTN, Airtel, Flutterwave, Pesapal, ioTec); add Stripe or another global card gateway to the web checkout (P0 #4).
+
 ## Deployment steps for this release
 
 ```bash
 # back up the database first
 git fetch origin && git merge --ff-only origin/main
 composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
-php artisan migrate --force        # webauthn_credentials, currencies, languages, building categories
+php artisan migrate --force        # webauthn_credentials, currencies, languages, categories, hardware_items, countries, user preferences
 php artisan optimize:clear && php artisan config:cache && php artisan route:cache && php artisan view:cache
 php artisan queue:restart
 ```

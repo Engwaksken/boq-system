@@ -7,6 +7,8 @@ namespace App\Services;
 use App\Models\HardwareCategory;
 use App\Models\HardwarePrice;
 use App\Models\PriceHistory;
+use App\Models\Supplier;
+use App\Support\Regional;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -14,46 +16,6 @@ use Throwable;
 
 class HardwarePriceFetchingService
 {
-    private const HARDWARE_SUPPLIERS = [
-        'Hardware World Uganda',
-        'Kampala Hardware',
-        'Uganda Building Supplies',
-        'Mukwano Hardware',
-        'Savannah Hardware',
-        'Quality Hardware',
-        'Prime Hardware',
-        'Buildmart Uganda',
-    ];
-
-    private const FACTORY_MANUFACTURERS = [
-        'Hima Cement',
-        'Tororo Cement',
-        'Simba Cement',
-        'National Cement',
-        'Steel & Tube Industries',
-        'Roofings Group',
-        'Crown Paints',
-        'Kansai Plascon',
-        'Uganda Baati',
-    ];
-
-    private const LOCATIONS = [
-        'Kampala',
-        'Wakiso',
-        'Mukono',
-        'Entebbe',
-        'Jinja',
-        'Mbale',
-        'Mbarara',
-        'Gulu',
-        'Arua',
-        'Fort Portal',
-        'Masaka',
-        'Lira',
-        'Soroti',
-        'Hoima',
-    ];
-
     public function fetchPricesForCategory(
         string $category,
         string $location,
@@ -126,10 +88,12 @@ class HardwarePriceFetchingService
 
     public function fetchDailyPrices(
         ?int $organisationId = null,
-        string $location = 'Kampala',
+        ?string $location = null,
         int $limit = 3,
         string $priceType = HardwarePrice::TYPE_HARDWARE
     ): array {
+        $location = trim((string) $location) ?: Regional::marketLocation();
+
         $results = [
             'fetched' => 0,
             'created' => 0,
@@ -217,18 +181,11 @@ class HardwarePriceFetchingService
         string $location,
         string $priceType
     ): ?array {
-        $sourceNames =
-            $priceType
-            === HardwarePrice::TYPE_FACTORY
-                ? self::FACTORY_MANUFACTURERS
-                : self::HARDWARE_SUPPLIERS;
+        $sourceNames = $this->getSuppliers($priceType);
 
-        $source =
-            $sourceNames[
-                array_rand(
-                    $sourceNames
-                )
-            ];
+        $source = $sourceNames !== []
+            ? $sourceNames[array_rand($sourceNames)]
+            : ($priceType === HardwarePrice::TYPE_FACTORY ? 'a local manufacturer' : 'a local hardware supplier');
 
         $prompt =
             $this->buildPricePrompt(
@@ -377,17 +334,21 @@ Find a current hardware supplier, distributor, retail or wholesale market price.
 Use a realistic construction-market supplier price.
 TEXT;
 
+        $country = Regional::countryName();
+        $place = trim(implode(', ', array_filter([$location, $country]))) ?: 'the local market';
+        $currency = Regional::currency();
+
         return <<<PROMPT
-You are a Uganda construction material price researcher.
+You are a construction material price researcher for {$place}.
 
 {$typeInstruction}
 
 Item: {$itemName}
 Category: {$category}
 Suggested source: {$source}
-Location: {$location}, Uganda
+Location: {$place}
 Price type: {$priceType}
-Currency: UGX
+Currency: {$currency} (convert if the source uses another currency)
 
 Return ONLY one valid JSON object.
 
@@ -399,7 +360,7 @@ Return ONLY one valid JSON object.
   "specification": "grade, size, thickness or packaging",
   "unit": "bag, tonne, piece, metre, litre, kg, roll, sheet or box",
   "price": 123456.78,
-  "currency": "UGX",
+  "currency": "{$currency}",
   "supplier": "supplier, distributor, manufacturer or factory name",
   "location": "{$location}",
   "source_url": null,
@@ -520,7 +481,7 @@ PROMPT;
                     trim(
                         (string) (
                             $data['currency']
-                            ?? 'UGX'
+                            ?? Regional::currency()
                         )
                     )
                 ),
@@ -690,19 +651,7 @@ PROMPT;
                 )
                 ->first();
 
-        if (
-            $configured
-            && is_array(
-                $configured->default_items
-            )
-            && $configured->default_items
-                !== []
-        ) {
-            return $configured
-                ->default_items;
-        }
-
-        return [];
+        return $configured?->itemNames() ?? [];
     }
 
     private function normalisePriceType(
@@ -758,18 +707,44 @@ PROMPT;
         );
     }
 
+    /**
+     * Supplier/manufacturer names known to the system for the price type.
+     *
+     * @return list<string>
+     */
     public function getSuppliers(
         string $priceType =
             HardwarePrice::TYPE_HARDWARE
     ): array {
-        return $priceType
-            === HardwarePrice::TYPE_FACTORY
-                ? self::FACTORY_MANUFACTURERS
-                : self::HARDWARE_SUPPLIERS;
+        $recorded = HardwarePrice::query()
+            ->where('price_type', $this->normalisePriceType($priceType))
+            ->whereNotNull('supplier')
+            ->distinct()
+            ->pluck('supplier');
+
+        $managed = $priceType === HardwarePrice::TYPE_FACTORY
+            ? collect()
+            : Supplier::query()->where('is_active', true)->pluck('name');
+
+        return $recorded->merge($managed)
+            ->filter(fn ($name) => is_string($name) && trim($name) !== '')
+            ->unique()
+            ->values()
+            ->all();
     }
 
+    /**
+     * Locations already used on prices, plus the configured market location.
+     *
+     * @return list<string>
+     */
     public function getLocations(): array
     {
-        return self::LOCATIONS;
+        return collect([Regional::marketLocation()])
+            ->merge(HardwarePrice::query()->whereNotNull('location')->distinct()->orderBy('location')->pluck('location'))
+            ->filter(fn ($name) => is_string($name) && trim($name) !== '')
+            ->unique()
+            ->values()
+            ->all();
     }
 }

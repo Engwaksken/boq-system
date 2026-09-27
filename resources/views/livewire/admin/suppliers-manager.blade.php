@@ -51,16 +51,16 @@
             </div>
             <form wire:submit="save">
                 <div class="boq-modal-body grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div class="md:col-span-2"><label class="text-sm font-medium">Supplier name</label><input wire:model="form.name" class="mt-1 w-full rounded-lg border-slate-300"></div>
+                    <div class="md:col-span-2"><label class="text-sm font-medium">Supplier name</label><input placeholder="Enter name" wire:model="form.name" class="mt-1 w-full rounded-lg border-slate-300"></div>
                     <div><label class="text-sm font-medium">Preferred currency</label><x-currency-select wire:model="form.currency" :current="$form['currency'] ?? null" class="mt-1" /></div>
-                    <div><label class="text-sm font-medium">Contact person</label><input wire:model="form.contact_name" class="mt-1 w-full rounded-lg border-slate-300"></div>
-                    <div><label class="text-sm font-medium">Phone</label><input wire:model="form.phone" class="mt-1 w-full rounded-lg border-slate-300"></div>
-                    <div><label class="text-sm font-medium">Email</label><input wire:model="form.email" class="mt-1 w-full rounded-lg border-slate-300"></div>
-                    <div><label class="text-sm font-medium">Location</label><input wire:model="form.location" class="mt-1 w-full rounded-lg border-slate-300"></div>
-                    <div><label class="text-sm font-medium">Region</label><input wire:model="form.region" class="mt-1 w-full rounded-lg border-slate-300"></div>
-                    <div><label class="text-sm font-medium">Preferred language</label><input wire:model="form.preferred_language" class="mt-1 w-full rounded-lg border-slate-300"></div>
-                    <div class="md:col-span-3"><label class="text-sm font-medium">Materials / services supplied (comma separated)</label><input wire:model="form.materials_text" class="mt-1 w-full rounded-lg border-slate-300"></div>
-                    <div class="md:col-span-3"><label class="text-sm font-medium">Notes</label><textarea wire:model="form.notes" rows="2" class="mt-1 w-full rounded-lg border-slate-300"></textarea></div>
+                    <div><label class="text-sm font-medium">Contact person</label><input placeholder="e.g. full name" wire:model="form.contact_name" class="mt-1 w-full rounded-lg border-slate-300"></div>
+                    <div><label class="text-sm font-medium">Phone</label><input placeholder="+1 202 555 0143" wire:model="form.phone" class="mt-1 w-full rounded-lg border-slate-300"></div>
+                    <div><label class="text-sm font-medium">Email</label><input placeholder="name@example.com" wire:model="form.email" class="mt-1 w-full rounded-lg border-slate-300"></div>
+                    <div><label class="text-sm font-medium">Location</label><input placeholder="e.g. city, town or market" wire:model="form.location" class="mt-1 w-full rounded-lg border-slate-300"></div>
+                    <div><label class="text-sm font-medium">Region</label><input placeholder="e.g. city, town or market" wire:model="form.region" class="mt-1 w-full rounded-lg border-slate-300"></div>
+                    <div><label class="text-sm font-medium">Preferred language</label><input placeholder="e.g. en" wire:model="form.preferred_language" class="mt-1 w-full rounded-lg border-slate-300"></div>
+                    <div class="md:col-span-3"><label class="text-sm font-medium">Materials / services supplied (comma separated)</label><input placeholder="e.g. cement, steel, roofing" wire:model="form.materials_text" class="mt-1 w-full rounded-lg border-slate-300"></div>
+                    <div class="md:col-span-3"><label class="text-sm font-medium">Notes</label><textarea placeholder="Add notes..." wire:model="form.notes" rows="2" class="mt-1 w-full rounded-lg border-slate-300"></textarea></div>
                     @if($errors->any())<div class="md:col-span-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ $errors->first() }}</div>@endif
                 </div>
                 <div class="boq-modal-foot"><button type="button" wire:click="cancel" class="boq-btn-secondary">Cancel</button><button class="boq-btn-primary">Save Supplier</button></div>

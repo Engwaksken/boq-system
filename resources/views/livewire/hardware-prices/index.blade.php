@@ -750,7 +750,7 @@
                                 <input
                                     wire:model="form.location"
                                     class="boq-field"
-                                    placeholder="e.g. Kampala"
+                                    placeholder="e.g. city, town or market"
                                 >
 
                             </div>

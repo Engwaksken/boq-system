@@ -67,6 +67,9 @@ return [
 
     'timezone' => env('APP_TIMEZONE', 'UTC'),
 
+    // Fallback currency when none is chosen in Admin > Settings (ISO 4217).
+    'default_currency' => env('APP_DEFAULT_CURRENCY', 'USD'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration

@@ -62,7 +62,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700">Phone (optional)</label>
-                        <input wire:model="newPhone" type="text" class="mt-1 w-full rounded-lg border-slate-300 text-sm" placeholder="+256...">
+                        <input wire:model="newPhone" type="tel" class="mt-1 w-full rounded-lg border-slate-300 text-sm" placeholder="+1 202 555 0143 (include country code)">
                         @error('newPhone') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
                     </div>
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">

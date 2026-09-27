@@ -58,7 +58,7 @@ class McpService
         return [
             'project' => $this->projectSummary($project),
             'client' => $project->client,
-            'currency' => $project->currency ?: 'UGX',
+            'currency' => $project->currency ?: \App\Support\Regional::currency(),
             'boqs' => $project->boqs->map(fn (Boq $boq) => [
                 'id' => $boq->id, 'name' => $boq->name, 'status' => $boq->status,
                 'currency' => $boq->currency, 'items' => $boq->items->map(fn (BoqItem $item) => $this->item($item)),
@@ -92,7 +92,7 @@ class McpService
             if ($rate === null) { $missing[] = $item->id; continue; }
             $total += (float) $item->quantity * (float) $rate;
         }
-        return ['boq_id' => $boq->id, 'currency' => $boq->currency ?: 'UGX', 'total' => round($total, 2), 'formula' => 'quantity x approved_rate (or original_rate)', 'missing_price_item_ids' => $missing];
+        return ['boq_id' => $boq->id, 'currency' => $boq->currency ?: \App\Support\Regional::currency(), 'total' => round($total, 2), 'formula' => 'quantity x approved_rate (or original_rate)', 'missing_price_item_ids' => $missing];
     }
 
     private function analyseBoq(array $parameters, User $user): array
@@ -105,7 +105,7 @@ class McpService
             if ($matches->isEmpty()) { $missing[] = ['item_id' => $item->id, 'description' => $item->description]; continue; }
             $price = $matches->first()['hardware_price']; $rate = (float) $price->price;
             // Only compare like currencies; this application has no approved exchange-rate service yet.
-            if ($price->currency !== ($boq->currency ?: 'UGX')) { $missing[] = ['item_id' => $item->id, 'description' => $item->description, 'reason' => 'Currency conversion unavailable']; continue; }
+            if ($price->currency !== ($boq->currency ?: \App\Support\Regional::currency())) { $missing[] = ['item_id' => $item->id, 'description' => $item->description, 'reason' => 'Currency conversion unavailable']; continue; }
             $current += (float) $item->quantity * $rate;
             $oldRate = (float) ($item->approved_rate ?? $item->original_rate ?? 0);
             $variance = $oldRate > 0 ? round((($rate - $oldRate) / $oldRate) * 100, 2) : null;
@@ -116,7 +116,7 @@ class McpService
             $recommendations[] = ['item_id' => $item->id, 'supplier' => $price->supplier, 'price' => $price->price, 'currency' => $price->currency, 'source_date' => $price->fetched_at->toDateString()];
         }
         $variance = $current - $uploaded;
-        return ['boq_id' => $boq->id, 'currency' => $boq->currency ?: 'UGX', 'current_estimated_cost' => round($current, 2), 'uploaded_estimated_cost' => round($uploaded, 2), 'variance' => round($variance, 2), 'variance_percentage' => $uploaded > 0 ? round(($variance / $uploaded) * 100, 2) : null, 'major_price_increases' => $increases, 'major_price_reductions' => $reductions, 'potentially_outdated_rates' => $outdated, 'missing_prices' => $missing, 'recommended_suppliers' => $recommendations, 'confidence_level' => $missing === [] ? 'medium' : 'low'];
+        return ['boq_id' => $boq->id, 'currency' => $boq->currency ?: \App\Support\Regional::currency(), 'current_estimated_cost' => round($current, 2), 'uploaded_estimated_cost' => round($uploaded, 2), 'variance' => round($variance, 2), 'variance_percentage' => $uploaded > 0 ? round(($variance / $uploaded) * 100, 2) : null, 'major_price_increases' => $increases, 'major_price_reductions' => $reductions, 'potentially_outdated_rates' => $outdated, 'missing_prices' => $missing, 'recommended_suppliers' => $recommendations, 'confidence_level' => $missing === [] ? 'medium' : 'low'];
     }
 
     private function prices(array $parameters, User $user): array
@@ -180,7 +180,7 @@ class McpService
     private function supplierName(array $p): string { $name = trim((string) ($p['supplier'] ?? '')); if ($name === '') throw new McpException('VALIDATION_ERROR', 'A supplier is required.', 422); return $name; }
     private function perPage(array $p): int { return min(max((int) ($p['per_page'] ?? 25), 1), 100); }
     private function paginated($page, callable $map): array { return ['items' => $page->getCollection()->map($map)->values(), 'pagination' => ['current_page' => $page->currentPage(), 'per_page' => $page->perPage(), 'total' => $page->total(), 'last_page' => $page->lastPage()]]; }
-    private function projectSummary(Project $p): array { return ['id' => $p->id, 'name' => $p->name, 'client' => $p->client, 'currency' => $p->currency ?: 'UGX', 'location' => $p->location, 'status' => $p->status]; }
+    private function projectSummary(Project $p): array { return ['id' => $p->id, 'name' => $p->name, 'client' => $p->client, 'currency' => $p->currency ?: \App\Support\Regional::currency(), 'location' => $p->location, 'status' => $p->status]; }
     private function item(BoqItem $i): array { $rate = $i->approved_rate ?? $i->original_rate; return ['id' => $i->id, 'item_code' => $i->item_code, 'description' => $i->description, 'unit' => $i->unit, 'quantity' => $i->quantity, 'rate' => $rate, 'total' => $rate === null ? null : round((float) $i->quantity * (float) $rate, 2), 'currency' => $i->currency, 'status' => $i->status]; }
     private function price(HardwarePrice $p): array { return ['material_id' => $p->id, 'name' => $p->item_name, 'category' => $p->category, 'brand' => $p->brand, 'unit' => $p->unit, 'current_price' => $p->price, 'price' => $p->price, 'currency' => $p->currency, 'supplier' => $p->supplier, 'location' => $p->location, 'price_date' => $p->fetched_at->toDateString(), 'date_collected' => $p->fetched_at->toIso8601String(), 'price_change_percentage' => $p->price_change_percent, 'source' => $p->source_reference, 'source_url' => $p->source_url, 'confidence_score' => data_get($p->ai_metadata, 'confidence_score')]; }
     private function historyRecord(PriceHistory $h): array { return ['material_id' => $h->hardware_price_id, 'supplier' => $h->supplier, 'price' => $h->price, 'currency' => $h->currency, 'location' => $h->location, 'source_url' => $h->source_url, 'captured_at' => $h->recorded_at->toIso8601String(), 'verified_at' => data_get($h->metadata, 'verified_at'), 'confidence_score' => data_get($h->metadata, 'confidence_score')]; }

@@ -118,14 +118,7 @@
                         All currencies
                     </option>
 
-                    @foreach([
-                        'UGX',
-                        'USD',
-                        'KES',
-                        'TZS',
-                        'RWF',
-                        'EUR',
-                    ] as $currencyCode)
+                    @foreach(\App\Models\Currency::activeCodes() as $currencyCode)
 
                         <option value="{{ $currencyCode }}">
                             {{ $currencyCode }}
@@ -434,7 +427,7 @@
                                     Description
                                 </label>
 
-                                <textarea
+                                <textarea placeholder="Add description..."
                                     wire:model="form.description"
                                     rows="3"
                                     class="boq-field boq-textarea"
@@ -449,7 +442,7 @@
                                     Unit
                                 </label>
 
-                                <input
+                                <input placeholder="e.g. bag, m³, kg, piece"
                                     wire:model="form.unit"
                                     class="boq-field"
                                 >
@@ -463,7 +456,7 @@
                                     Rate
                                 </label>
 
-                                <input
+                                <input placeholder="0.00"
                                     wire:model="form.rate"
                                     type="number"
                                     step="0.01"
@@ -491,7 +484,7 @@
                                     Region
                                 </label>
 
-                                <input
+                                <input placeholder="e.g. city, town or market"
                                     wire:model="form.region"
                                     class="boq-field"
                                 >
@@ -568,7 +561,7 @@
                                     Source Reference
                                 </label>
 
-                                <input
+                                <input placeholder="e.g. supplier quote #123"
                                     wire:model="form.source_reference"
                                     class="boq-field"
                                 >

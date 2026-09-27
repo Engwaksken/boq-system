@@ -8,19 +8,19 @@
         <form wire:submit="updatePassword" class="space-y-4">
             <div>
                 <label for="current_password" class="boq-field-label">Current Password</label>
-                <x-password-input id="current_password" wire:model="passwordForm.current_password" required autocomplete="current-password" />
+                <x-password-input placeholder="••••••••" id="current_password" wire:model="passwordForm.current_password" required autocomplete="current-password" />
                 @error('passwordForm.current_password') <p class="boq-field-error">{{ $message }}</p> @enderror
             </div>
 
             <div>
                 <label for="new_password" class="boq-field-label">New Password</label>
-                <x-password-input id="new_password" wire:model="passwordForm.password" required autocomplete="new-password" minlength="8" />
+                <x-password-input placeholder="••••••••" id="new_password" wire:model="passwordForm.password" required autocomplete="new-password" minlength="8" />
                 @error('passwordForm.password') <p class="boq-field-error">{{ $message }}</p> @enderror
             </div>
 
             <div>
                 <label for="new_password_confirmation" class="boq-field-label">Confirm New Password</label>
-                <x-password-input id="new_password_confirmation" wire:model="passwordForm.password_confirmation" required autocomplete="new-password" />
+                <x-password-input placeholder="••••••••" id="new_password_confirmation" wire:model="passwordForm.password_confirmation" required autocomplete="new-password" />
                 @error('passwordForm.password_confirmation') <p class="boq-field-error">{{ $message }}</p> @enderror
             </div>
 

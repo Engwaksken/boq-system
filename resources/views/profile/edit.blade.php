@@ -110,7 +110,7 @@
                                 '_',
                                 ' ',
                                 auth()->user()->timezone
-                                    ?? 'Africa/Kampala'
+                                    ?? config('app.timezone', 'UTC')
                             )
                         }}
                     </p>

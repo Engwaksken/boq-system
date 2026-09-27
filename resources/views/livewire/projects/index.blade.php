@@ -573,7 +573,7 @@
 
                                 <strong style="color:#0f172a;">
 
-                                    {{ $project->currency ?? 'UGX' }}
+                                    {{ $project->currency ?? \App\Support\Regional::currency() }}
 
                                     {{ number_format(
                                         (float) ($project->contract_value ?? 0),

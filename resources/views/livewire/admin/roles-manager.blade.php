@@ -26,9 +26,9 @@
         <div class="boq-modal boq-modal-lg" @click.stop>
             <div class="boq-modal-head"><div><h2 class="text-lg font-bold">{{ $editingId ? 'Edit Role' : 'Create Role' }}</h2><p class="text-xs text-slate-500">Configure permissions in this modal.</p></div><button wire:click="cancel" class="text-2xl text-slate-400">&times;</button></div>
             <div class="boq-modal-body grid gap-4 md:grid-cols-2">
-                <div><label class="text-sm font-medium">Name</label><input wire:model="name" class="mt-1 w-full rounded-lg border-slate-300"></div>
+                <div><label class="text-sm font-medium">Name</label><input placeholder="Enter name" wire:model="name" class="mt-1 w-full rounded-lg border-slate-300"></div>
                 <div><label class="text-sm font-medium">Slug</label><input wire:model="slug" class="mt-1 w-full rounded-lg border-slate-300" placeholder="auto if empty"></div>
-                <div class="md:col-span-2"><label class="text-sm font-medium">Description</label><textarea wire:model="description" class="mt-1 w-full rounded-lg border-slate-300"></textarea></div>
+                <div class="md:col-span-2"><label class="text-sm font-medium">Description</label><textarea placeholder="Add description..." wire:model="description" class="mt-1 w-full rounded-lg border-slate-300"></textarea></div>
                 <div class="md:col-span-2"><h3 class="mb-2 font-semibold">Permissions</h3><div class="grid gap-3 md:grid-cols-3">@foreach($permissions as $module=>$items)<div class="rounded-xl border border-slate-200 p-3"><div class="mb-2 font-semibold">{{$module}}</div>@foreach($items as $permission)<label class="mb-1 block text-sm"><input type="checkbox" wire:model="permissionIds" value="{{$permission->id}}"> {{$permission->name}}</label>@endforeach</div>@endforeach</div></div>
                 @if($errors->any())<div class="md:col-span-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ $errors->first() }}</div>@endif
             </div>

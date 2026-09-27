@@ -94,12 +94,12 @@
                     </div>
                     <div>
                         <label for="cur-decimals" class="boq-field-label">Decimal Places *</label>
-                        <input id="cur-decimals" type="number" min="0" max="4" wire:model="form.decimal_places" class="boq-field">
+                        <input placeholder="e.g. 2" id="cur-decimals" type="number" min="0" max="4" wire:model="form.decimal_places" class="boq-field">
                         @error('form.decimal_places') <p class="boq-field-error">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label for="cur-order" class="boq-field-label">Sort Order *</label>
-                        <input id="cur-order" type="number" min="0" wire:model="form.sort_order" class="boq-field">
+                        <input placeholder="e.g. 10" id="cur-order" type="number" min="0" wire:model="form.sort_order" class="boq-field">
                         @error('form.sort_order') <p class="boq-field-error">{{ $message }}</p> @enderror
                     </div>
                     <label class="boq-check boq-form-span-2">

@@ -4,19 +4,19 @@
         <form wire:submit.prevent="updateProfile" class="space-y-4">
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Name</label>
-                <input type="text" wire:model="form.name" class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                <input placeholder="Enter name" type="text" wire:model="form.name" class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
                 @error('form.name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                <input type="email" wire:model="form.email" class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                <input placeholder="name@example.com" type="email" wire:model="form.email" class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
                 @error('form.email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-                <input type="tel" wire:model="form.phone" class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <input placeholder="+1 202 555 0143" type="tel" wire:model="form.phone" class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                 @error('form.phone') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
 
@@ -32,11 +32,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Timezone</label>
-                    <select wire:model="form.timezone" class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                        @foreach(['Africa/Kampala', 'Africa/Nairobi', 'Africa/Kigali', 'Africa/Dar_es_Salaam', 'UTC'] as $tz)
-                            <option value="{{ $tz }}">{{ str_replace('_', ' ', $tz) }}</option>
-                        @endforeach
-                    </select>
+                    <x-timezone-select wire:model="form.timezone" required />
                 </div>
             </div>
 

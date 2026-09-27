@@ -69,6 +69,32 @@
                 </div>
 
                 <div>
+                    <label for="country" class="boq-field-label">Default Country</label>
+                    <select id="country" wire:model="settings.country" class="boq-field">
+                        <option value="">Not set (international)</option>
+                        @foreach(\App\Models\Country::options() as $iso => $name)
+                            <option value="{{ $iso }}">{{ $name }}</option>
+                        @endforeach
+                    </select>
+                    <p class="boq-field-help">Used for AI price research and as the default for new projects.</p>
+                    @error('settings.country') <p class="boq-field-error">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label for="market_location" class="boq-field-label">Default Market Location</label>
+                    <input id="market_location" type="text" wire:model="settings.market_location" class="boq-field" placeholder="e.g. Nairobi, Lagos, Dubai or London">
+                    <p class="boq-field-help">City or market used when fetching daily prices.</p>
+                    @error('settings.market_location') <p class="boq-field-error">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label for="timezone" class="boq-field-label">System Timezone</label>
+                    <x-timezone-select id="timezone" wire:model="settings.timezone" />
+                    <p class="boq-field-help">Scheduled jobs such as the daily price fetch run in this timezone.</p>
+                    @error('settings.timezone') <p class="boq-field-error">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
                     <label for="trial_duration" class="boq-field-label">Trial Duration (Days)</label>
                     <input id="trial_duration" type="number" wire:model="settings.trial_duration" class="boq-field" placeholder="14">
                     @error('settings.trial_duration') <p class="boq-field-error">{{ $message }}</p> @enderror

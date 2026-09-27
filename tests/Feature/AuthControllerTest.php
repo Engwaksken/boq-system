@@ -270,11 +270,18 @@ class AuthControllerTest extends TestCase
     {
         (new LanguagesSeeder)->run();
 
+        \App\Models\SiteSetting::set('country', 'UG');
+
         $response = $this->getJson('/api/v1/mobile-config');
 
+        // Worldwide list, with the configured default country first.
         $response->assertOk()
             ->assertJsonPath('data.countries.0', 'Uganda')
-            ->assertJsonStructure(['data' => ['countries', 'languages']])
+            ->assertJsonPath('data.default_country', 'UG')
+            ->assertJsonStructure(['data' => ['countries', 'countries_detailed', 'languages', 'default_currency']])
             ->assertJsonPath('data.languages.0.code', 'en');
+
+        $this->assertContains('Japan', $response->json('data.countries'));
+        $this->assertContains('Brazil', $response->json('data.countries'));
     }
 }

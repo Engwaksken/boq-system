@@ -13,14 +13,14 @@ class FetchDailyHardwarePrices extends Command
 {
     protected $signature = 'hardware:fetch-daily
                             {--organisation= : Process only one organisation ID}
-                            {--location=Kampala : Uganda market location}
+                            {--location= : Market location (defaults to the Settings market location)}
                             {--limit=3 : Number of items to fetch per category}';
 
     protected $description = 'Fetch and store daily hardware prices using the configured AI provider';
 
     public function handle(HardwarePriceFetchingService $service): int
     {
-        $location = trim((string) $this->option('location')) ?: 'Kampala';
+        $location = trim((string) $this->option('location')) ?: \App\Support\Regional::marketLocation();
         $limit = max(1, min(20, (int) $this->option('limit')));
 
         $organisationOption = $this->option('organisation');
@@ -45,7 +45,7 @@ class FetchDailyHardwarePrices extends Command
                 $results = $service->fetchDailyPrices(
                     organisationId: (int) $organisationId,
                     location: $location,
-                    limitPerCategory: $limit
+                    limit: $limit
                 );
 
                 $totalFetched += $results['fetched'];

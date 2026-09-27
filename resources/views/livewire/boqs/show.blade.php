@@ -1099,7 +1099,7 @@
                                                     Reviewed Rate
                                                 </label>
 
-                                                <input
+                                                <input placeholder="0.00"
                                                     id="manual-rate-{{ $item->id }}"
                                                     wire:model="manualRate"
                                                     type="number"

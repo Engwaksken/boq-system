@@ -19,6 +19,11 @@ class TopupsManager extends Component
     /**
      * Livewire update requests skip route middleware, so re-check on every request.
      */
+    public function mount(): void
+    {
+        $this->form['currency'] = \App\Support\Regional::currency();
+    }
+
     public function boot(): void
     {
         abort_unless(auth()->user()?->isSuperAdmin(), 403);
@@ -31,7 +36,7 @@ class TopupsManager extends Component
 
     public array $form = [
         'name' => '', 'code' => '', 'description' => '', 'type' => 'bundle', 'price' => 0,
-        'currency' => 'UGX', 'duration_days' => null, 'is_permanent' => false,
+        'currency' => '', 'duration_days' => null, 'is_permanent' => false,
         'release_version' => '', 'included_features' => '', 'usage_credits' => '',
         'applicable_plans' => '', 'purchase_limit' => null, 'requires_confirmation' => true,
         'is_active' => true, 'is_archived' => false, 'display_order' => 0,
@@ -133,7 +138,7 @@ class TopupsManager extends Component
     {
         $this->editingId = null;
         $this->reset('form');
-        $this->form['currency'] = 'UGX';
+        $this->form['currency'] = \App\Support\Regional::currency();
         $this->form['type'] = 'bundle';
         $this->form['is_permanent'] = false;
         $this->form['requires_confirmation'] = true;

@@ -3,25 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Country;
 use App\Models\Language;
 use App\Models\SiteSetting;
+use App\Support\Regional;
 use Illuminate\Http\JsonResponse;
 
 class MobileConfigController extends Controller
 {
-    /**
-     * Countries offered as a free-text-friendly list for sign-up and profiles.
-     * Kept local to the endpoint since country data is small and stable.
-     */
-    private const COUNTRIES = [
-        'Uganda', 'Kenya', 'Tanzania', 'Rwanda', 'Burundi',
-        'South Sudan', 'Sudan', 'Democratic Republic of the Congo',
-        'Somalia', 'Ethiopia', 'Eritrea', 'Djibouti', 'Egypt',
-        'Nigeria', 'Ghana', 'South Africa', 'Zambia', 'Mozambique',
-        'Malawi', 'Zimbabwe', 'Angola', 'Cameroon', 'Botswana', 'Namibia',
-        'United Kingdom', 'United States', 'Canada', 'Australia', 'India', 'Other',
-    ];
-
     /**
      * Return the configuration the Flutter app needs for its splash screen,
      * login screen and legal links. Values are managed from the admin
@@ -45,6 +34,23 @@ class MobileConfigController extends Controller
         return trim(preg_replace("/\n{3,}/", "\n\n", $text));
     }
 
+    /**
+     * Country names for the app's picker: the configured default country first, then A-Z.
+     *
+     * @return list<string>
+     */
+    private static function countryNames(): array
+    {
+        $names = array_values(Country::options());
+        $default = Regional::countryName();
+
+        if ($default !== '' && in_array($default, $names, true)) {
+            $names = array_merge([$default], array_values(array_diff($names, [$default])));
+        }
+
+        return array_merge($names, ['Other']);
+    }
+
     public function __invoke(): JsonResponse
     {
         $config = cache()->remember('mobile_config', 60, function () {
@@ -62,7 +68,11 @@ class MobileConfigController extends Controller
                 'terms_of_use' => self::plainText((string) SiteSetting::get('terms_of_use', '')),
                 'privacy_policy_url' => route('legal.privacy'),
                 'terms_of_use_url' => route('legal.terms'),
-                'countries' => self::COUNTRIES,
+                // Country names (the app's picker) plus codes for dialling prefixes and currency.
+                'countries' => self::countryNames(),
+                'countries_detailed' => Country::active()->orderBy('name')->get(['iso2', 'name', 'dial_code', 'currency_code']),
+                'default_country' => Regional::countryCode(),
+                'default_currency' => Regional::currency(),
                 'languages' => Language::query()
                     ->where('is_active', true)
                     ->orderBy('name')

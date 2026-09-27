@@ -19,6 +19,11 @@ class PlansManager extends Component
     /**
      * Livewire update requests skip route middleware, so re-check on every request.
      */
+    public function mount(): void
+    {
+        $this->form['currency'] = \App\Support\Regional::currency();
+    }
+
     public function boot(): void
     {
         abort_unless(auth()->user()?->isSuperAdmin(), 403);
@@ -31,7 +36,7 @@ class PlansManager extends Component
 
     public array $form = [
         'name' => '', 'code' => '', 'description' => '', 'type' => 'monthly', 'duration_days' => 30,
-        'price' => 0, 'currency' => 'UGX', 'is_active' => true, 'is_archived' => false,
+        'price' => 0, 'currency' => '', 'is_active' => true, 'is_archived' => false,
         'has_trial' => false, 'trial_days' => 7, 'max_users' => 1, 'max_projects' => 5,
         'max_boqs' => 20, 'max_storage_bytes' => 104857600, 'max_ai_credits' => 100,
         'max_ocr_pages' => 50, 'max_translations' => 50, 'auto_renewal' => false,
@@ -110,7 +115,7 @@ class PlansManager extends Component
     }
 
     public function cancel(): void { $this->showForm = false; $this->resetForm(); }
-    private function resetForm(): void { $this->editingId = null; $this->reset('form'); $this->form['currency']='UGX'; $this->form['type']='monthly'; $this->form['duration_days']=30; $this->form['trial_days']=7; $this->form['is_active']=true; }
+    private function resetForm(): void { $this->editingId = null; $this->reset('form'); $this->form['currency'] = \App\Support\Regional::currency(); $this->form['type']='monthly'; $this->form['duration_days']=30; $this->form['trial_days']=7; $this->form['is_active']=true; }
     public function updatedSearch(): void { $this->resetPage(); }
 
     public function render()
