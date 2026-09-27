@@ -1,7 +1,6 @@
 
 <div class="space-y-5" x-data="{ showCreate:false, confirmStatus:false, statusId:null, statusName:'', statusAction:'', confirmRole:false, roleUserId:null, roleId:null, roleName:'', roleUserName:'' }">
     <div><h1 class="text-2xl font-bold">Users</h1><p class="text-sm text-slate-500">Manage account access, roles and subscription links.</p></div>
-    @include('livewire.admin._tabs')
     @if(session('message'))<div class="boq-flash">{{session('message')}}</div>@endif
 
     <div class="flex flex-wrap gap-3">

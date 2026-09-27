@@ -357,7 +357,7 @@
 
                                 <a
                                     href="{{ url('/hardware-prices/'.$price->id) }}"
-                                    class="font-semibold text-[#05645b] hover:underline"
+                                    class="font-semibold text-[#05645b] "
                                 >
                                     {{ $price->item_name }}
                                 </a>
@@ -468,6 +468,21 @@
                                     >
                                         <i class="fas fa-eye"></i>
                                     </a>
+
+                                    @php($isBookmarked = in_array($price->id, $bookmarkedIds))
+
+                                    <button
+                                        type="button"
+                                        wire:click="toggleBookmark({{ $price->id }})"
+                                        wire:loading.attr="disabled"
+                                        wire:target="toggleBookmark({{ $price->id }})"
+                                        class="boq-icon-btn {{ $isBookmarked ? 'is-bookmarked' : '' }}"
+                                        title="{{ $isBookmarked ? 'Remove bookmark' : 'Bookmark' }}"
+                                        aria-label="{{ $isBookmarked ? 'Remove bookmark' : 'Bookmark' }}"
+                                        aria-pressed="{{ $isBookmarked ? 'true' : 'false' }}"
+                                    >
+                                        <i class="{{ $isBookmarked ? 'fas' : 'far' }} fa-bookmark"></i>
+                                    </button>
 
                                     @if($canManage)
 

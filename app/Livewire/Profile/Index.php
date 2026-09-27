@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Profile;
 
+use App\Models\HardwarePrice;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -46,6 +47,8 @@ class Index extends Component
     ];
 
     public ?int $editingBookmarkId = null;
+
+    public bool $showBookmarkModal = false;
 
     protected function rules(): array
     {
@@ -101,6 +104,12 @@ class Index extends Component
             'timezone' => $user->timezone ?: 'UTC',
             'avatar' => null,
         ];
+
+        $tab = (string) request()->query('tab', '');
+
+        if (array_key_exists($tab, $this->tabs)) {
+            $this->activeTab = $tab;
+        }
     }
 
     /**
@@ -201,10 +210,7 @@ class Index extends Component
 
         $this->resetValidation();
 
-        $this->dispatch('openModal', [
-            'title' => 'Bookmark Hardware',
-            'size' => 'md',
-        ]);
+        $this->showBookmarkModal = true;
     }
 
     /**
@@ -229,10 +235,7 @@ class Index extends Component
 
         $this->resetValidation();
 
-        $this->dispatch('openModal', [
-            'title' => 'Edit Bookmark',
-            'size' => 'md',
-        ]);
+        $this->showBookmarkModal = true;
     }
 
     /**
@@ -266,6 +269,24 @@ class Index extends Component
 
         $data = $validated['hardwareBookmarkForm'];
 
+        $duplicate = $user->hardwareBookmarks()
+            ->where('hardware_price_id', $data['hardware_price_id'])
+            ->where('location', $data['location'])
+            ->when(
+                $this->editingBookmarkId !== null,
+                fn ($query) => $query->whereKeyNot($this->editingBookmarkId)
+            )
+            ->exists();
+
+        if ($duplicate) {
+            $this->addError(
+                'hardwareBookmarkForm.location',
+                'You have already bookmarked this item for this location.'
+            );
+
+            return;
+        }
+
         if ($this->editingBookmarkId !== null) {
             $bookmark = $user->hardwareBookmarks()
                 ->findOrFail($this->editingBookmarkId);
@@ -291,11 +312,25 @@ class Index extends Component
             'notes' => '',
         ];
 
+        $this->closeBookmarkModal();
+    }
+
+    /**
+     * Close the hardware bookmark form.
+     */
+    public function closeBookmarkModal(): void
+    {
+        $this->showBookmarkModal = false;
+
         $this->editingBookmarkId = null;
 
-        $this->resetValidation();
+        $this->hardwareBookmarkForm = [
+            'hardware_price_id' => null,
+            'location' => '',
+            'notes' => '',
+        ];
 
-        $this->dispatch('closeModal');
+        $this->resetValidation();
     }
 
     /**
@@ -359,7 +394,16 @@ class Index extends Component
 
         return view('livewire.profile.index', [
             'user' => $user,
-            'bookmarkedHardware' => $user->hardwareBookmarks,
+            'bookmarkedHardware' => $user->hardwareBookmarks()
+                ->with('hardwarePrice')
+                ->latest()
+                ->get(),
+            'bookmarkablePrices' => $this->activeTab === 'hardware-bookmarks'
+                ? HardwarePrice::active()
+                    ->where('organisation_id', $user->organisation_id)
+                    ->orderBy('item_name')
+                    ->get()
+                : collect(),
         ]);
     }
 }

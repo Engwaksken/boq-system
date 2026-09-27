@@ -3,7 +3,6 @@
         <div><h1 class="text-2xl font-bold text-slate-900">Product Versions</h1><p class="text-sm text-slate-500">Manage app releases and the features each version introduces.</p></div>
         <button wire:click="create" class="boq-btn-primary">+ Add Version</button>
     </div>
-    @include('livewire.admin._tabs')
     @if(session('message'))<div class="boq-flash">{{ session('message') }}</div>@endif
 
     <div class="flex gap-3">

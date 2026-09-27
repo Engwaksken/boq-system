@@ -4,7 +4,6 @@
         <div><h1 class="text-2xl font-bold">Roles & Permissions</h1><p class="text-sm text-slate-500">Control access to BOQ, pricing, reports and administration.</p></div>
         <button wire:click="create" class="boq-btn-primary">+ Add Role</button>
     </div>
-    @include('livewire.admin._tabs')
     @if(session('message'))<div class="boq-flash">{{session('message')}}</div>@endif
 
     <div class="boq-panel overflow-x-auto">

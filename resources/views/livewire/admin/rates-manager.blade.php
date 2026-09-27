@@ -25,7 +25,6 @@
     </div>
 
 
-    @include('livewire.admin._tabs')
 
 
     @if(session('message'))

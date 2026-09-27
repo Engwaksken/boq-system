@@ -224,6 +224,60 @@
         </div>
 
 
+        {{-- Privacy policy & terms --}}
+        <div>
+
+            <label
+                for="terms"
+                class="flex cursor-pointer items-start gap-2.5 text-sm leading-6 text-slate-600"
+            >
+
+                <input
+                    id="terms"
+                    type="checkbox"
+                    name="terms"
+                    value="1"
+                    required
+                    @checked(old('terms'))
+                    class="mt-1 rounded border-slate-300 text-[#05645b] focus:ring-[#05645b]"
+                >
+
+                <span>
+                    I agree to the
+
+                    <a
+                        href="{{ route('legal.privacy') }}"
+                        target="_blank"
+                        rel="noopener"
+                        class="auth-link"
+                    >
+                        Privacy Policy
+                    </a>
+
+                    and
+
+                    <a
+                        href="{{ route('legal.terms') }}"
+                        target="_blank"
+                        rel="noopener"
+                        class="auth-link"
+                    >
+                        Terms of Use
+                    </a>
+                </span>
+
+            </label>
+
+            @error('terms')
+                <p class="auth-error">
+                    <i class="fas fa-circle-exclamation mr-1"></i>
+                    {{ $message }}
+                </p>
+            @enderror
+
+        </div>
+
+
         {{-- Submit --}}
         <button
             type="submit"

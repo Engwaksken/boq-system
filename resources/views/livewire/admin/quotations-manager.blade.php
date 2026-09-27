@@ -2,7 +2,6 @@
     <div class="flex flex-wrap items-end justify-between gap-3">
         <div><h1 class="text-2xl font-bold text-slate-900">Supplier Quotations</h1><p class="text-sm text-slate-500">Review, approve lines and promote prices into the rate library.</p></div>
     </div>
-    @include('livewire.admin._tabs')
     @if(session('message'))<div class="boq-flash">{{ session('message') }}</div>@endif
 
     <div class="flex flex-wrap gap-3">

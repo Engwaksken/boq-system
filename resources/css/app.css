@@ -50,6 +50,14 @@
     display: none !important;
 }
 
+/* Links are never underlined anywhere in the system. */
+a,
+a:hover,
+a:focus,
+a:visited {
+    text-decoration: none;
+}
+
 /* ============================================================
    APPLICATION SHELL
    ============================================================ */
@@ -66,6 +74,42 @@
 .boq-app-shell *::before,
 .boq-app-shell *::after {
     box-sizing: border-box;
+}
+
+/*
+ * One palette for every page: legacy indigo accents render in the brand
+ * green, and gray utilities match the slate greys used elsewhere.
+ */
+.boq-app-shell {
+    --color-indigo-50: var(--boq-primary-lighter);
+    --color-indigo-100: var(--boq-primary-soft);
+    --color-indigo-200: #b7ded6;
+    --color-indigo-300: #8ccabe;
+    --color-indigo-400: #3f9a8f;
+    --color-indigo-500: var(--boq-primary);
+    --color-indigo-600: var(--boq-primary);
+    --color-indigo-700: var(--boq-primary-dark);
+    --color-indigo-800: #033d38;
+    --color-indigo-900: #022e2a;
+
+    --color-gray-50: var(--color-slate-50);
+    --color-gray-100: var(--color-slate-100);
+    --color-gray-200: var(--color-slate-200);
+    --color-gray-300: var(--color-slate-300);
+    --color-gray-400: var(--color-slate-400);
+    --color-gray-500: var(--color-slate-500);
+    --color-gray-600: var(--color-slate-600);
+    --color-gray-700: var(--color-slate-700);
+    --color-gray-800: var(--color-slate-800);
+    --color-gray-900: var(--color-slate-900);
+}
+
+/* Consistent page titles regardless of the utility classes on each page. */
+.boq-app-shell main h1 {
+    color: var(--boq-text);
+    font-size: 1.45rem;
+    font-weight: 800;
+    line-height: 1.3;
 }
 
 .boq-app-shell button,
@@ -209,6 +253,12 @@
     font-size: 1.45rem;
     font-weight: 800;
     line-height: 1.15;
+}
+
+.boq-app-shell .boq-stat-hint {
+    margin-top: .2rem;
+    color: var(--boq-text-muted);
+    font-size: .72rem;
 }
 
 .boq-app-shell .boq-stat-icon {
@@ -1523,7 +1573,7 @@
 }
 
 .boq-app-shell .boq-table-link:hover {
-    text-decoration: underline;
+    color: var(--boq-primary-dark);
 }
 
 .boq-app-shell .boq-table-empty {
@@ -1804,7 +1854,7 @@
     color: var(--boq-primary);
     font-size: .76rem;
     font-weight: 700;
-    text-decoration: underline;
+    text-decoration: none;
     cursor: pointer;
 }
 
@@ -2173,4 +2223,136 @@
         flex-direction: column;
     }
 
+}
+
+
+/* ============================================================
+   SUBSCRIPTIONS / SHARED UTILITIES (previously unstyled)
+   ============================================================ */
+
+.boq-app-shell .boq-flash-close {
+    display: inline-flex;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: inherit;
+    opacity: .7;
+    cursor: pointer;
+}
+
+.boq-app-shell .boq-flash-close:hover {
+    background: rgba(15, 23, 42, .06);
+    opacity: 1;
+}
+
+.boq-app-shell .boq-flash-warning {
+    border-color: #fde68a;
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.boq-app-shell .boq-plan-secondary-limits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    margin: .7rem 1rem 0;
+}
+
+.boq-app-shell .boq-plan-secondary-limits > div {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border: 1px solid #e7edf2;
+    border-radius: 999px;
+    background: #f8fafc;
+    padding: .25rem .6rem;
+    color: #475569;
+    font-size: .72rem;
+    font-weight: 600;
+}
+
+.boq-app-shell .boq-plan-secondary-limits i {
+    color: var(--boq-primary);
+    font-size: .68rem;
+}
+
+.boq-app-shell .boq-current-plan-button {
+    display: flex;
+    width: 100%;
+    min-height: 40px;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    border: 1px solid #a7f3d0;
+    border-radius: 9px;
+    background: var(--boq-primary-soft);
+    color: var(--boq-primary);
+    font-size: .8rem;
+    font-weight: 700;
+    cursor: default;
+}
+
+.boq-app-shell .boq-plans-empty {
+    display: flex;
+    grid-column: 1 / -1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .6rem;
+    border: 1px dashed var(--boq-border-dark);
+    border-radius: var(--boq-radius-lg);
+    background: var(--boq-surface-soft);
+    padding: 2.5rem 1rem;
+    color: var(--boq-text-muted);
+    font-size: .85rem;
+    text-align: center;
+}
+
+.boq-app-shell .boq-plans-empty i {
+    color: var(--boq-text-soft);
+    font-size: 1.6rem;
+}
+
+.boq-app-shell .boq-ai-filter-grid {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1.8fr)
+        repeat(3, minmax(0, 1fr));
+    gap: .75rem;
+    align-items: end;
+    padding: 1rem;
+}
+
+.boq-app-shell .boq-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    padding: 1.5rem 1rem;
+    color: var(--boq-text-muted);
+    font-size: .82rem;
+}
+
+.boq-app-shell .boq-icon-btn.is-bookmarked {
+    border-color: #a7f3d0;
+    background: var(--boq-primary-soft);
+    color: var(--boq-primary);
+}
+
+@media (max-width: 1180px) {
+    .boq-app-shell .boq-ai-filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .boq-app-shell .boq-ai-filter-grid {
+        grid-template-columns: 1fr;
+    }
 }

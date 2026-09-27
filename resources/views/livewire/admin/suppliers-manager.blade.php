@@ -3,7 +3,6 @@
         <div><h1 class="text-2xl font-bold text-slate-900">Suppliers</h1><p class="text-sm text-slate-500">Manage suppliers, their price lists and quotations.</p></div>
         <button wire:click="create" class="boq-btn-primary">+ Add Supplier</button>
     </div>
-    @include('livewire.admin._tabs')
     @if(session('message'))<div class="boq-flash">{{ session('message') }}</div>@endif
 
     <div class="flex gap-3">

@@ -45,11 +45,22 @@ git push origin main
 ## Live server
 
 ```bash
-git pull origin main
+git fetch origin
+git checkout main
+git merge --ff-only origin/main   # fails safely if the server has local edits
+composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+php artisan migrate --force
 php artisan optimize:clear
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+php artisan queue:restart
 ```
 
 No `npm` command is needed on live if `public/build` is committed.
+
+If changes still do not appear:
+
+- Confirm `git log -1 --oneline` on the server matches the latest commit on GitHub.
+- Confirm the web server's document root points at this checkout's `public/` directory.
+- Restart PHP (cPanel: *MultiPHP Manager* / *Select PHP Version*, or `sudo systemctl reload php*-fpm`) to clear OPcache.

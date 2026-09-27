@@ -315,6 +315,40 @@ class Index extends Component
         );
     }
 
+    /**
+     * Bookmark a hardware price at its own location, or remove that bookmark.
+     */
+    public function toggleBookmark(int $priceId): void
+    {
+        $user = auth()->user();
+
+        $price = HardwarePrice::query()
+            ->where('organisation_id', $user->organisation_id)
+            ->findOrFail($priceId);
+
+        $location = $price->location ?: 'Any location';
+
+        $bookmark = $user->hardwareBookmarks()
+            ->where('hardware_price_id', $price->id)
+            ->where('location', $location)
+            ->first();
+
+        if ($bookmark) {
+            $bookmark->delete();
+
+            session()->flash('hardware-price-message', 'Bookmark removed.');
+
+            return;
+        }
+
+        $user->hardwareBookmarks()->create([
+            'hardware_price_id' => $price->id,
+            'location' => $location,
+        ]);
+
+        session()->flash('hardware-price-message', 'Hardware price bookmarked. View it under Profile → Hardware Bookmarks.');
+    }
+
     public function render()
     {
         $user =
@@ -490,6 +524,12 @@ class Index extends Component
 
                 'stats' =>
                     $stats,
+
+                'bookmarkedIds' =>
+                    $user->hardwareBookmarks()
+                        ->whereIn('hardware_price_id', $prices->pluck('id'))
+                        ->pluck('hardware_price_id')
+                        ->all(),
             ]
         );
     }

@@ -17,7 +17,6 @@
         </button>
     </div>
 
-    @include('livewire.admin._tabs')
 
     @if(session()->has('message'))
         <div class="boq-flash">

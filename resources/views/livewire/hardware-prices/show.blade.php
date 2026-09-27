@@ -47,28 +47,22 @@
     </div>
 
     {{-- Summary Stats --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <p class="text-sm text-gray-500">Lowest Price</p>
-            <p class="mt-1 text-2xl font-bold text-gray-900">{{ number_format((float) $hardwarePrice->lowest_price, 2) }}</p>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <p class="text-sm text-gray-500">Highest Price</p>
-            <p class="mt-1 text-2xl font-bold text-gray-900">{{ number_format((float) $hardwarePrice->highest_price, 2) }}</p>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <p class="text-sm text-gray-500">Average Price</p>
-            <p class="mt-1 text-2xl font-bold text-gray-900">{{ number_format((float) $hardwarePrice->average_price, 2) }}</p>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <p class="text-sm text-gray-500">Price Change</p>
-            <p class="mt-1 text-2xl font-bold {{ $hardwarePrice->price_change !== null && (float) $hardwarePrice->price_change < 0 ? 'text-green-600' : 'text-red-600' }}">
-                {{ $hardwarePrice->price_change !== null ? number_format((float) $hardwarePrice->price_change, 2) : '?' }}
-            </p>
-            @if($hardwarePrice->price_change_percent !== null)
-                <p class="mt-1 text-xs text-gray-500">{{ number_format((float) $hardwarePrice->price_change_percent, 2) }}%</p>
-            @endif
-        </div>
+    @php
+        $priceChange = $hardwarePrice->price_change;
+        $priceChangePercent = $hardwarePrice->price_change_percent;
+    @endphp
+
+    <div class="boq-stats-grid mb-6">
+        <x-stat-card label="Lowest Price" :value="number_format((float) $hardwarePrice->lowest_price, 2)" icon="fa-arrow-down" color="green" />
+        <x-stat-card label="Highest Price" :value="number_format((float) $hardwarePrice->highest_price, 2)" icon="fa-arrow-up" color="red" />
+        <x-stat-card label="Average Price" :value="number_format((float) $hardwarePrice->average_price, 2)" icon="fa-scale-balanced" color="blue" />
+        <x-stat-card
+            label="Price Change"
+            :value="$priceChange !== null ? number_format((float) $priceChange, 2) : '—'"
+            :hint="$priceChangePercent !== null ? number_format((float) $priceChangePercent, 2).'%' : null"
+            icon="fa-chart-line"
+            :color="$priceChange !== null && (float) $priceChange < 0 ? 'green' : 'amber'"
+        />
     </div>
 
     {{-- Price History --}}

@@ -95,17 +95,34 @@
             'show' => $authUser->hasPermission('subscriptions.view'),
             'icon' => 'fa-credit-card',
         ],
-        [
-            'label' => 'Administration',
-            'url' => url('/admin'),
-            'active' => request()->is('admin*'),
-            'show' => $authUser->isSuperAdmin(),
-            'icon' => 'fa-shield-halved',
-        ],
     ])
         ->where('show', true)
         ->values()
         ->all();
+
+    $adminNavigation = $authUser->isSuperAdmin()
+        ? collect([
+            ['label' => 'Overview', 'route' => 'admin.index', 'icon' => 'fa-gauge'],
+            ['label' => 'Plans', 'route' => 'admin.plans', 'icon' => 'fa-layer-group'],
+            ['label' => 'Top-ups', 'route' => 'admin.topups', 'icon' => 'fa-gift'],
+            ['label' => 'Versions', 'route' => 'admin.versions', 'icon' => 'fa-box-open'],
+            ['label' => 'Rate Library', 'route' => 'admin.rates', 'icon' => 'fa-book'],
+            ['label' => 'Suppliers', 'route' => 'admin.suppliers', 'icon' => 'fa-truck'],
+            ['label' => 'Quotations', 'route' => 'admin.quotations', 'icon' => 'fa-file-invoice'],
+            ['label' => 'Subscriptions', 'route' => 'admin.subscriptions', 'icon' => 'fa-receipt'],
+            ['label' => 'AI API Settings', 'route' => 'admin.ai-providers', 'icon' => 'fa-robot'],
+            ['label' => 'Payment Gateways', 'route' => 'admin.payment-gateways', 'icon' => 'fa-credit-card'],
+            ['label' => 'Users', 'route' => 'admin.users', 'icon' => 'fa-users'],
+            ['label' => 'Roles & Permissions', 'route' => 'admin.roles-permissions', 'icon' => 'fa-user-shield'],
+            ['label' => 'Hardware Scanner', 'route' => 'admin.hardware-scanner', 'icon' => 'fa-magnifying-glass-dollar'],
+            ['label' => 'Settings', 'route' => 'admin.settings', 'icon' => 'fa-gear'],
+        ])
+            ->map(fn (array $item) => $item + [
+                'url' => route($item['route']),
+                'active' => request()->routeIs($item['route']),
+            ])
+            ->all()
+        : [];
 @endphp
 
 <div
@@ -200,6 +217,67 @@
                 </a>
 
             @endforeach
+
+            @if($adminNavigation)
+
+                <div
+                    x-data="{ adminOpen: {{ request()->is('admin*') ? 'true' : 'false' }} }"
+                    class="pt-5"
+                >
+                    <button
+                        type="button"
+                        @click="adminOpen = ! adminOpen"
+                        class="mb-2 flex w-full items-center justify-between px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 hover:text-slate-300"
+                        :aria-expanded="adminOpen.toString()"
+                    >
+                        <span>
+                            <i class="fas fa-shield-halved mr-1.5"></i>
+                            Administration
+                        </span>
+
+                        <i
+                            class="fas fa-chevron-down text-[10px] transition-transform"
+                            :class="adminOpen ? 'rotate-180' : ''"
+                        ></i>
+                    </button>
+
+                    <div
+                        x-show="adminOpen"
+                        x-cloak
+                        class="space-y-1"
+                    >
+                        @foreach($adminNavigation as $item)
+
+                            <a
+                                href="{{ $item['url'] }}"
+                                class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition
+                                {{
+                                    $item['active']
+                                        ? 'bg-[#05645b] text-white shadow-lg'
+                                        : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                                }}"
+                            >
+                                <span
+                                    class="flex h-7 w-7 items-center justify-center rounded-lg
+                                    {{
+                                        $item['active']
+                                            ? 'bg-white/15 text-white'
+                                            : 'bg-white/5 text-slate-400'
+                                    }}"
+                                >
+                                    <i class="fas {{ $item['icon'] }}"></i>
+                                </span>
+
+                                <span>
+                                    {{ $item['label'] }}
+                                </span>
+                            </a>
+
+                        @endforeach
+                    </div>
+                </div>
+
+            @endif
         </nav>
 
         <div

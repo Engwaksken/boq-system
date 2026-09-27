@@ -8,25 +8,12 @@
         </div>
     </div>
 
-    @include('livewire.admin._tabs')
 
-    <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div class="boq-panel border-l-4 border-l-emerald-700 p-4">
-            <div class="text-xs font-semibold uppercase text-slate-500">Users</div>
-            <div class="mt-1 text-2xl font-bold">{{ number_format($stats['total_users']) }}</div>
-        </div>
-        <div class="boq-panel border-l-4 border-l-emerald-700 p-4">
-            <div class="text-xs font-semibold uppercase text-slate-500">Active subscriptions</div>
-            <div class="mt-1 text-2xl font-bold">{{ number_format($stats['active_subscriptions']) }}</div>
-        </div>
-        <div class="boq-panel border-l-4 border-l-lime-400 p-4">
-            <div class="text-xs font-semibold uppercase text-slate-500">Active plans</div>
-            <div class="mt-1 text-2xl font-bold">{{ number_format($stats['plans_count']) }}</div>
-        </div>
-        <div class="boq-panel border-l-4 border-l-lime-400 p-4">
-            <div class="text-xs font-semibold uppercase text-slate-500">Successful revenue</div>
-            <div class="mt-1 text-xl font-bold">UGX {{ number_format((float)$stats['total_revenue'], 0) }}</div>
-        </div>
+    <div class="boq-stats-grid">
+        <x-stat-card label="Users" :value="number_format($stats['total_users'])" icon="fa-users" color="green" />
+        <x-stat-card label="Active Subscriptions" :value="number_format($stats['active_subscriptions'])" icon="fa-receipt" color="blue" />
+        <x-stat-card label="Active Plans" :value="number_format($stats['plans_count'])" icon="fa-layer-group" color="purple" />
+        <x-stat-card label="Successful Revenue" :value="'UGX '.number_format((float) $stats['total_revenue'], 0)" icon="fa-sack-dollar" color="amber" />
     </div>
 
     <div class="boq-panel overflow-hidden">
@@ -94,11 +81,11 @@
             </div>
         @else
             <div class="p-5">
-                <div class="grid gap-4 md:grid-cols-2">
-                    <div class="rounded-xl border border-slate-200 p-4"><div class="text-sm text-slate-500">Total users</div><div class="text-3xl font-bold">{{ number_format($stats['total_users']) }}</div></div>
-                    <div class="rounded-xl border border-slate-200 p-4"><div class="text-sm text-slate-500">Active subscriptions</div><div class="text-3xl font-bold">{{ number_format($stats['active_subscriptions']) }}</div></div>
-                    <div class="rounded-xl border border-slate-200 p-4"><div class="text-sm text-slate-500">Plans</div><div class="text-3xl font-bold">{{ number_format($stats['plans_count']) }}</div></div>
-                    <div class="rounded-xl border border-slate-200 p-4"><div class="text-sm text-slate-500">Successful revenue</div><div class="text-2xl font-bold">UGX {{ number_format((float)$stats['total_revenue'],0) }}</div></div>
+                <div class="boq-stats-grid">
+                    <x-stat-card label="Total Users" :value="number_format($stats['total_users'])" icon="fa-users" color="green" />
+                    <x-stat-card label="Active Subscriptions" :value="number_format($stats['active_subscriptions'])" icon="fa-receipt" color="blue" />
+                    <x-stat-card label="Plans" :value="number_format($stats['plans_count'])" icon="fa-layer-group" color="purple" />
+                    <x-stat-card label="Successful Revenue" :value="'UGX '.number_format((float) $stats['total_revenue'], 0)" icon="fa-sack-dollar" color="amber" />
                 </div>
             </div>
         @endif

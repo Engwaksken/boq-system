@@ -95,20 +95,6 @@
             max-width: 460px;
         }
 
-        .auth-brand-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 46px;
-            height: 46px;
-            border-radius: 12px;
-            background: #05645b;
-            color: #fff;
-            box-shadow:
-                0 8px 22px
-                rgba(5, 100, 91, .18);
-        }
-
         .auth-card {
             border: 1px solid #e2e8f0;
             border-top: 4px solid #05645b;
@@ -237,7 +223,7 @@
         }
 
         .auth-link:hover {
-            text-decoration: underline;
+            color: #034f48;
         }
 
         .auth-error {
@@ -266,37 +252,6 @@
 
         <div class="auth-shell">
 
-            {{-- Brand --}}
-            <a
-                href="{{ url('/') }}"
-                class="mb-6 flex items-center justify-center gap-3"
-            >
-
-                @if($siteLogo)
-
-                    <img
-                        src="{{ asset('storage/'.$siteLogo) }}"
-                        alt="{{ $siteName }}"
-                        class="h-12 w-12 rounded-xl object-contain"
-                    >
-
-                @else
-
-                    <span class="auth-brand-icon">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                    </span>
-
-                @endif
-
-                <span
-                    class="text-2xl font-extrabold tracking-tight text-slate-900"
-                >
-                    {{ $siteName }}
-                </span>
-
-            </a>
-
-
             {{-- Card --}}
             <section
                 class="auth-card w-full p-6 sm:p-8"
@@ -319,4 +274,4 @@
     </main>
 
 </body>
-</html>
+</html>
