@@ -1,38 +1,82 @@
 
 <div class="space-y-5" x-data="{ confirmArchive: false, archiveId: null, archiveName: '' }">
-    <div class="flex flex-wrap items-end justify-between gap-3">
-        <div><h1 class="text-2xl font-bold text-slate-900">Subscription Plans</h1><p class="text-sm text-slate-500">Create and manage pricing, limits and trial eligibility.</p></div>
-        <button wire:click="create" class="boq-btn-primary">+ Add Plan</button>
-    </div>
-    @if(session('message'))<div class="boq-flash">{{ session('message') }}</div>@endif
-
-    <div class="flex gap-3">
-        <input wire:model.live.debounce.300ms="search" placeholder="Search plans..." class="w-full rounded-lg border-slate-300 text-sm md:w-96">
+    <div class="boq-page-header">
+        <div>
+            <h1 class="boq-page-title"><i class="fas fa-layer-group"></i> Subscription Plans</h1>
+            <p class="boq-page-subtitle">Create and manage pricing, limits and trial eligibility.</p>
+        </div>
+        <button type="button" wire:click="create" class="boq-btn-primary"><i class="fas fa-plus"></i> Add Plan</button>
     </div>
 
-    <div class="boq-panel overflow-x-auto">
-        <table class="boq-table min-w-full divide-y divide-slate-200">
-            <thead><tr>@foreach(['Plan','Price','Duration','Limits','Status','Actions'] as $h)<th class="px-4 py-3 text-left">{{ $h }}</th>@endforeach</tr></thead>
-            <tbody class="divide-y divide-slate-100">
-            @forelse($plans as $plan)
-                <tr>
-                    <td class="px-4 py-3"><div class="font-semibold">{{ $plan->name }}</div><div class="text-xs text-slate-500">{{ $plan->code }}</div></td>
-                    <td class="px-4 py-3">{{ $plan->currency }} {{ number_format((float)$plan->price,2) }}</td>
-                    <td class="px-4 py-3">{{ $plan->duration_days ?: '—' }} days</td>
-                    <td class="px-4 py-3 text-sm">{{ $plan->max_projects ?? '∞' }} projects · {{ $plan->max_boqs ?? '∞' }} BOQs · {{ $plan->max_ai_credits ?? '∞' }} AI</td>
-                    <td class="px-4 py-3"><span class="rounded-full px-2 py-1 text-xs {{ $plan->is_active ? 'bg-emerald-100 text-emerald-700':'bg-slate-100 text-slate-600' }}">{{ $plan->is_active?'Active':'Inactive' }}</span></td>
-                    <td class="px-4 py-3 whitespace-nowrap">
-                        <button wire:click="edit({{ $plan->id }})" class="mr-3 text-sm font-semibold text-emerald-700">Edit</button>
-                        <button wire:click="toggleActive({{ $plan->id }})" class="mr-3 text-sm text-slate-600">{{ $plan->is_active?'Deactivate':'Activate' }}</button>
-                        @unless($plan->is_archived)
-                        <button @click="archiveId={{$plan->id}}; archiveName=@js($plan->name); confirmArchive=true" class="text-sm font-semibold text-red-600">Archive</button>
-                        @endunless
-                    </td>
-                </tr>
-            @empty<tr><td colspan="6" class="p-8 text-center text-slate-500">No plans found.</td></tr>@endforelse
-            </tbody>
-        </table>
-        <div class="p-4">{{ $plans->links() }}</div>
+    @if(session('message'))<div class="boq-flash"><i class="fas fa-circle-check"></i> {{ session('message') }}</div>@endif
+
+    <div class="boq-stats-grid">
+        <x-stat-card label="Total Plans" :value="number_format($stats['total'])" icon="fa-layer-group" color="green" />
+        <x-stat-card label="Active Plans" :value="number_format($stats['active'])" icon="fa-circle-check" color="blue" />
+        <x-stat-card label="Trial Enabled" :value="number_format($stats['trial'])" icon="fa-hourglass-half" color="amber" />
+        <x-stat-card label="Active Subscribers" :value="number_format($stats['subscribers'])" icon="fa-users" color="purple" />
+    </div>
+
+    <div class="boq-panel overflow-hidden">
+        <div class="boq-admin-filter-row">
+            <div class="boq-input-icon-wrap">
+                <i class="fas fa-magnifying-glass boq-input-icon"></i>
+                <input wire:model.live.debounce.300ms="search" placeholder="Search plans..." class="boq-field boq-field-with-icon">
+            </div>
+        </div>
+
+        <x-bulk-bar :count="count($selected)">
+            <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> Activate</button>
+            <button type="button" wire:click="bulkSetActive(false)" class="boq-btn-secondary"><i class="fas fa-ban"></i> Deactivate</button>
+            <button type="button" wire:click="bulkArchive" wire:confirm="Archive the selected plans? Existing subscriptions are kept." class="boq-btn-danger"><i class="fas fa-box-archive"></i> Archive</button>
+        </x-bulk-bar>
+
+        <div class="boq-table-wrapper">
+            <table class="boq-table">
+                <thead>
+                    <tr>
+                        <th class="boq-check-col"><x-select-all :ids="$plans->pluck('id')" :selected="$selected" /></th>
+                        <th>Plan</th>
+                        <th>Price</th>
+                        <th>Duration</th>
+                        <th>Limits</th>
+                        <th>Status</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @forelse($plans as $plan)
+                    <tr wire:key="plan-{{ $plan->id }}">
+                        <td class="boq-check-col"><x-select-row :id="$plan->id" /></td>
+                        <td><div class="boq-table-title">{{ $plan->name }}</div><div class="boq-table-subtitle">{{ $plan->code }}</div></td>
+                        <td>{{ $plan->currency }} {{ number_format((float) $plan->price, 2) }}</td>
+                        <td>{{ $plan->duration_days ?: '—' }} days</td>
+                        <td class="text-sm">{{ $plan->max_projects ?? '∞' }} projects · {{ $plan->max_boqs ?? '∞' }} BOQs · {{ $plan->max_ai_credits ?? '∞' }} AI</td>
+                        <td>
+                            @if($plan->is_archived)
+                                <span class="boq-badge boq-badge-danger">Archived</span>
+                            @else
+                                <span class="boq-badge {{ $plan->is_active ? 'boq-badge-success' : 'boq-badge-warning' }}">{{ $plan->is_active ? 'Active' : 'Inactive' }}</span>
+                            @endif
+                        </td>
+                        <td>
+                            <div class="boq-table-actions justify-end">
+                                <button type="button" wire:click="edit({{ $plan->id }})" class="boq-icon-btn" title="Edit" aria-label="Edit"><i class="fas fa-pen"></i></button>
+                                <button type="button" wire:click="toggleActive({{ $plan->id }})" class="boq-icon-btn" title="{{ $plan->is_active ? 'Deactivate' : 'Activate' }}" aria-label="{{ $plan->is_active ? 'Deactivate' : 'Activate' }}"><i class="fas {{ $plan->is_active ? 'fa-ban' : 'fa-circle-check' }}"></i></button>
+                                @unless($plan->is_archived)
+                                    <button type="button" @click="archiveId={{ $plan->id }}; archiveName=@js($plan->name); confirmArchive=true" class="boq-icon-btn boq-icon-danger" title="Archive" aria-label="Archive"><i class="fas fa-box-archive"></i></button>
+                                @endunless
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="7" class="boq-table-empty">No plans found.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        @if($plans->hasPages())<div class="boq-pagination">{{ $plans->links() }}</div>@endif
     </div>
 
     @if($showForm)

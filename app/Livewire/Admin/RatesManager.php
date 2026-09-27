@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\WithBulkSelection;
 use App\Models\Rate;
 use App\Models\Supplier;
 use App\Services\RateLibraryService;
@@ -14,6 +15,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class RatesManager extends Component
 {
+    use WithBulkSelection;
     use WithPagination;
 
     public string $search = '';
@@ -22,6 +24,8 @@ class RatesManager extends Component
     public int $perPage = 10;
     public bool $showForm = false;
     public ?int $editingId = null;
+    public string $categoryChoice = '';
+    public string $itemChoice = '';
 
     public array $form = [
         'item' => '', 'description' => '', 'category' => '', 'unit' => 'NO', 'rate' => 0,
@@ -32,6 +36,33 @@ class RatesManager extends Component
 
     public function create(): void { $this->resetForm(); $this->showForm = true; }
 
+    public function updatedCategoryChoice(string $value): void
+    {
+        $this->form['category'] = $value === '__other__' ? '' : $value;
+        $this->itemChoice = '';
+        $this->form['item'] = '';
+    }
+
+    public function updatedItemChoice(string $value): void
+    {
+        $this->form['item'] = $value === '__other__' ? '' : $value;
+    }
+
+    /** @return list<string> */
+    private function categoryOptions(): array
+    {
+        return Rate::query()->whereNotNull('category')->where('category', '!=', '')
+            ->distinct()->orderBy('category')->pluck('category')->all();
+    }
+
+    /** @return list<string> */
+    private function itemOptions(string $category): array
+    {
+        return Rate::query()
+            ->when($category !== '', fn ($q) => $q->where('category', $category))
+            ->distinct()->orderBy('item')->pluck('item')->filter()->values()->all();
+    }
+
     public function edit(int $id): void
     {
         $rate = Rate::findOrFail($id);
@@ -40,6 +71,10 @@ class RatesManager extends Component
             $this->form[$key] = $rate->{$key} ?? $this->form[$key];
         }
         $this->form['rate'] = (string) (float) $rate->rate;
+        $category = (string) ($this->form['category'] ?? '');
+        $item = (string) ($this->form['item'] ?? '');
+        $this->categoryChoice = $category === '' ? '' : (in_array($category, $this->categoryOptions(), true) ? $category : '__other__');
+        $this->itemChoice = $item === '' ? '' : (in_array($item, $this->itemOptions($category), true) ? $item : '__other__');
         $this->showForm = true;
     }
 
@@ -83,6 +118,28 @@ class RatesManager extends Component
         $this->cancel();
     }
 
+    public function bulkApprove(RateLibraryService $library): void
+    {
+        $rates = Rate::whereKey($this->selectedIds())->get();
+
+        foreach ($rates as $rate) {
+            $library->approve($rate, auth()->user());
+        }
+
+        $this->finishBulkAction($rates->count(), 'approved');
+    }
+
+    public function bulkReject(RateLibraryService $library): void
+    {
+        $rates = Rate::whereKey($this->selectedIds())->get();
+
+        foreach ($rates as $rate) {
+            $library->reject($rate, auth()->user());
+        }
+
+        $this->finishBulkAction($rates->count(), 'rejected');
+    }
+
     public function approve(int $id, RateLibraryService $library): void
     {
         $library->approve(Rate::findOrFail($id), auth()->user());
@@ -96,7 +153,7 @@ class RatesManager extends Component
     }
 
     public function cancel(): void { $this->showForm = false; $this->resetForm(); }
-    private function resetForm(): void { $this->editingId = null; $this->reset('form'); $this->form['currency']='UGX'; $this->form['unit']='NO'; $this->form['source_type']='previous_boq'; $this->form['verification_status']='pending'; }
+    private function resetForm(): void { $this->editingId = null; $this->categoryChoice = ''; $this->itemChoice = ''; $this->reset('form'); $this->form['currency']='UGX'; $this->form['unit']='NO'; $this->form['source_type']='previous_boq'; $this->form['verification_status']='pending'; }
     public function updatedSearch(): void { $this->resetPage(); }
     public function updatedVerification(): void { $this->resetPage(); }
     public function updatedCurrency(): void { $this->resetPage(); }
@@ -119,6 +176,8 @@ class RatesManager extends Component
 
         return view('livewire.admin.rates-manager', [
             'rates' => $query->orderByDesc('verified_at')->orderBy('item')->paginate($this->perPage),
+            'categoryOptions' => $this->showForm ? $this->categoryOptions() : [],
+            'itemOptions' => $this->showForm ? $this->itemOptions((string) ($this->form['category'] ?? '')) : [],
         ]);
     }
 }

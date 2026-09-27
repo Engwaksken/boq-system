@@ -28,9 +28,20 @@
         content="noindex,nofollow"
     >
 
+    @php
+        $siteName = \App\Models\SiteSetting::get('system_name', 'BOQ System') ?: 'BOQ System';
+        $siteLogo = \App\Models\SiteSetting::get('logo', '');
+        $siteFavicon = \App\Models\SiteSetting::get('favicon', '');
+    @endphp
+
     <title>
-        {{ isset($title) ? $title.' | BOQ System' : 'BOQ System' }}
+        {{ isset($title) ? $title.' | '.$siteName : $siteName }}
     </title>
+
+    <link
+        rel="icon"
+        href="{{ $siteFavicon ? asset('storage/'.$siteFavicon) : asset('favicon.ico') }}"
+    >
 
     @vite([
         'resources/css/app.css',
@@ -149,17 +160,25 @@
                 href="{{ url('/dashboard') }}"
                 class="flex items-center gap-3"
             >
-                <span
-                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#05645b] shadow-lg"
-                >
-                    <i class="fas fa-file-invoice-dollar"></i>
-                </span>
-
-                <span>
-                    <span
-                        class="block text-base font-bold tracking-wide"
+                @if($siteLogo)
+                    <img
+                        src="{{ asset('storage/'.$siteLogo) }}"
+                        alt="{{ $siteName }}"
+                        class="h-10 w-10 shrink-0 rounded-xl bg-white object-contain p-1"
                     >
-                        BOQ System
+                @else
+                    <span
+                        class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#05645b] shadow-lg"
+                    >
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </span>
+                @endif
+
+                <span class="min-w-0">
+                    <span
+                        class="block truncate text-base font-bold tracking-wide"
+                    >
+                        {{ $siteName }}
                     </span>
 
                     <span
@@ -362,10 +381,18 @@
                 <i class="fas fa-bars"></i>
             </button>
 
+            @if($siteLogo)
+                <img
+                    src="{{ asset('storage/'.$siteLogo) }}"
+                    alt=""
+                    class="ml-3 h-8 w-8 rounded-lg object-contain"
+                >
+            @endif
+
             <span
                 class="ml-3 font-bold text-slate-900"
             >
-                BOQ System
+                {{ $siteName }}
             </span>
         </header>
 

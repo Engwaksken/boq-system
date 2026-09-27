@@ -158,16 +158,7 @@
     ====================================================== --}}
     <div class="boq-panel">
 
-        <div
-            style="
-                display:grid;
-                grid-template-columns:minmax(280px,1fr) 120px minmax(300px,auto);
-                gap:.75rem;
-                align-items:end;
-                padding:1rem;
-            "
-            class="project-filter-grid"
-        >
+        <div class="project-filter-grid">
 
             {{-- Search --}}
             <div>
@@ -323,6 +314,10 @@
     ====================================================== --}}
     <div class="boq-panel">
 
+        <x-bulk-bar :count="count($selected)">
+            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected projects?" class="boq-btn-danger"><i class="fas fa-trash"></i> Delete</button>
+        </x-bulk-bar>
+
         <div class="boq-table-wrapper">
 
             <table class="boq-table">
@@ -330,6 +325,8 @@
                 <thead>
 
                     <tr>
+
+                        <th class="boq-check-col"><x-select-all :ids="$projects->pluck('id')" :selected="$selected" /></th>
 
                         {{-- Name --}}
                         <th
@@ -450,6 +447,8 @@
                     @forelse($projects as $project)
 
                         <tr wire:key="project-{{ $project->id }}">
+
+                            <td class="boq-check-col"><x-select-row :id="$project->id" /></td>
 
                             {{-- Project --}}
                             <td>
@@ -737,7 +736,7 @@
                         <tr>
 
                             <td
-                                colspan="8"
+                                colspan="9"
                                 class="boq-empty-table"
                             >
 
@@ -788,41 +787,3 @@
     </div>
 
 </div>
-
-
-{{-- =========================================================
-     RESPONSIVE FILTER LAYOUT
-========================================================= --}}
-<style>
-
-    @media (max-width: 1100px) {
-
-        .project-filter-grid {
-            grid-template-columns:
-                minmax(250px, 1fr)
-                110px !important;
-        }
-
-        .project-filter-grid > div:last-child {
-            grid-column:
-                1 / -1;
-        }
-
-    }
-
-
-    @media (max-width: 700px) {
-
-        .project-filter-grid {
-            grid-template-columns:
-                1fr !important;
-        }
-
-        .project-filter-grid > div:last-child {
-            grid-column:
-                auto;
-        }
-
-    }
-
-</style>

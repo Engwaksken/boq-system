@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\WithBulkSelection;
 use App\Models\PaymentGateway;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -12,6 +13,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class PaymentGateways extends Component
 {
+    use WithBulkSelection;
     use WithPagination;
 
     private const SECRET_MASK = '***stored***';
@@ -120,6 +122,13 @@ class PaymentGateways extends Component
         $gateway = PaymentGateway::findOrFail($id);
         $gateway->update(['is_active' => ! $gateway->is_active]);
         session()->flash('message', 'Payment gateway status updated.');
+    }
+
+    public function bulkSetActive(bool $active): void
+    {
+        $count = PaymentGateway::whereKey($this->selectedIds())->update(['is_active' => $active]);
+
+        $this->finishBulkAction($count, $active ? 'activated' : 'deactivated');
     }
 
     public function setDefault(int $id): void

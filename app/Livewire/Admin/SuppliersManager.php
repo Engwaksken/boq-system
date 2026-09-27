@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Supplier;
 use Illuminate\Support\Str;
+use App\Livewire\Concerns\WithBulkSelection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -11,6 +12,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class SuppliersManager extends Component
 {
+    use WithBulkSelection;
     use WithPagination;
 
     public string $search = '';
@@ -74,6 +76,13 @@ class SuppliersManager extends Component
         }
         session()->flash('message', $this->editingId ? 'Supplier updated.' : 'Supplier created.');
         $this->cancel();
+    }
+
+    public function bulkSetActive(bool $active): void
+    {
+        $count = Supplier::whereKey($this->selectedIds())->update(['is_active' => $active]);
+
+        $this->finishBulkAction($count, $active ? 'activated' : 'deactivated');
     }
 
     public function toggleActive(int $id): void

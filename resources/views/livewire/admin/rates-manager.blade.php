@@ -143,12 +143,18 @@
 
     <div class="boq-panel">
 
+        <x-bulk-bar :count="count($selected)">
+            <button type="button" wire:click="bulkApprove" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> Approve</button>
+            <button type="button" wire:click="bulkReject" wire:confirm="Reject the selected rates?" class="boq-btn-danger"><i class="fas fa-circle-xmark"></i> Reject</button>
+        </x-bulk-bar>
+
         <div class="boq-table-wrapper">
 
             <table class="boq-table">
 
                 <thead>
                     <tr>
+                        <th class="boq-check-col"><x-select-all :ids="$rates->pluck('id')" :selected="$selected" /></th>
                         <th>Item</th>
                         <th>Unit</th>
                         <th class="text-right">Rate</th>
@@ -184,6 +190,8 @@
                         @endphp
 
                         <tr wire:key="rate-{{ $rate->id }}">
+
+                            <td class="boq-check-col"><x-select-row :id="$rate->id" /></td>
 
                             <td>
                                 <div class="boq-table-title">
@@ -316,7 +324,7 @@
 
                         <tr>
                             <td
-                                colspan="8"
+                                colspan="9"
                                 class="boq-empty-table"
                             >
                                 <i class="fas fa-book"></i>
@@ -393,32 +401,30 @@
 
                         <div class="boq-form-grid">
 
-                            <div class="boq-form-span-2">
-
-                                <label class="boq-field-label">
-                                    Item
-                                </label>
-
-                                <input
-                                    wire:model="form.item"
-                                    class="boq-field"
-                                >
-
-                            </div>
+                            <x-select-with-other
+                                label="Category"
+                                choice="categoryChoice"
+                                value="form.category"
+                                :current="$categoryChoice"
+                                :options="$categoryOptions"
+                                placeholder="Select category..."
+                                other-placeholder="Type a new category"
+                                error="form.category"
+                            />
 
 
-                            <div>
-
-                                <label class="boq-field-label">
-                                    Category
-                                </label>
-
-                                <input
-                                    wire:model="form.category"
-                                    class="boq-field"
-                                >
-
-                            </div>
+                            <x-select-with-other
+                                class="boq-form-span-2"
+                                label="Item"
+                                choice="itemChoice"
+                                value="form.item"
+                                :current="$itemChoice"
+                                :options="$itemOptions"
+                                placeholder="Select item..."
+                                other-placeholder="Type a new item"
+                                error="form.item"
+                                required
+                            />
 
 
                             <div class="boq-form-span-2">

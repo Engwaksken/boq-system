@@ -6,15 +6,22 @@
     @if(session('message'))<div class="boq-flash">{{ session('message') }}</div>@endif
 
     <div class="flex gap-3">
-        <input wire:model.live.debounce.300ms="search" placeholder="Search versions..." class="w-full rounded-lg border-slate-300 text-sm md:w-96">
+        <input wire:model.live.debounce.300ms="search" placeholder="Search versions..." class="boq-field md:max-w-md">
     </div>
+
+    <x-bulk-bar :count="count($selected)">
+            <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> Activate</button>
+            <button type="button" wire:click="bulkSetActive(false)" class="boq-btn-secondary"><i class="fas fa-ban"></i> Deactivate</button>
+            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected versions? Versions in use are deactivated instead." class="boq-btn-danger"><i class="fas fa-trash"></i> Delete</button>
+    </x-bulk-bar>
 
     <div class="boq-panel overflow-x-auto">
         <table class="boq-table min-w-full divide-y divide-slate-200">
-            <thead><tr>@foreach(['Version','Name','Released','Classification','New Features','Top-up','Status','Actions'] as $h)<th class="px-4 py-3 text-left">{{ $h }}</th>@endforeach</tr></thead>
+            <thead><tr><th class="boq-check-col"><x-select-all :ids="$versions->pluck('id')" :selected="$selected" /></th>@foreach(['Version','Name','Released','Classification','New Features','Top-up','Status','Actions'] as $h)<th class="px-4 py-3 text-left">{{ $h }}</th>@endforeach</tr></thead>
             <tbody class="divide-y divide-slate-100">
             @forelse($versions as $version)
-                <tr>
+                <tr wire:key="version-{{ $version->id }}">
+                    <td class="boq-check-col"><x-select-row :id="$version->id" /></td>
                     <td class="px-4 py-3"><div class="font-semibold">v{{ $version->version_number }}</div></td>
                     <td class="px-4 py-3"><div>{{ $version->name }}</div><div class="text-xs text-slate-500">{{ Str::limit($version->release_notes, 70) }}</div></td>
                     <td class="px-4 py-3 text-sm">{{ $version->release_date?->toDateString() ?? '—' }}</td>
@@ -28,7 +35,7 @@
                         <button @click="deleteId={{$version->id}}; deleteName=@js($version->name); confirmDelete=true" class="text-sm font-semibold text-red-600">Delete</button>
                     </td>
                 </tr>
-            @empty<tr><td colspan="8" class="p-8 text-center text-slate-500">No product versions found.</td></tr>@endforelse
+            @empty<tr><td colspan="9" class="p-8 text-center text-slate-500">No product versions found.</td></tr>@endforelse
             </tbody>
         </table>
         <div class="p-4">{{ $versions->links() }}</div>

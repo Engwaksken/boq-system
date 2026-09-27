@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Models\Topup;
 use App\Models\TopupPurchase;
 use Illuminate\Support\Str;
+use App\Livewire\Concerns\WithBulkSelection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -12,6 +13,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class TopupsManager extends Component
 {
+    use WithBulkSelection;
     use WithPagination;
 
     public string $search = '';
@@ -81,6 +83,22 @@ class TopupsManager extends Component
         Topup::updateOrCreate(['id' => $this->editingId], $data);
         session()->flash('message', $this->editingId ? 'Top-up updated successfully.' : 'Top-up created successfully.');
         $this->cancel();
+    }
+
+    public function bulkSetActive(bool $active): void
+    {
+        $count = Topup::whereKey($this->selectedIds())
+            ->when($active, fn ($q) => $q->where('is_archived', false))
+            ->update(['is_active' => $active]);
+
+        $this->finishBulkAction($count, $active ? 'activated' : 'deactivated');
+    }
+
+    public function bulkArchive(): void
+    {
+        $count = Topup::whereKey($this->selectedIds())->update(['is_archived' => true, 'is_active' => false]);
+
+        $this->finishBulkAction($count, 'archived');
     }
 
     public function toggleActive(int $id): void

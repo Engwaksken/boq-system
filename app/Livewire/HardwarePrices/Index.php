@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\HardwarePrices;
 
+use App\Livewire\Concerns\WithBulkSelection;
+use App\Models\HardwareCategory;
 use App\Models\HardwarePrice;
 use App\Services\HardwarePriceCsvImporter;
 use App\Services\HardwarePriceManager;
@@ -17,6 +19,7 @@ use RuntimeException;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use WithBulkSelection;
     use WithFileUploads;
     use WithPagination;
 
@@ -41,6 +44,12 @@ class Index extends Component
     public $csvFile;
 
     public ?array $importSummary = null;
+
+    public string $categoryChoice = '';
+
+    public string $itemChoice = '';
+
+    private const OTHER = '__other__';
 
     public function mount(): void
     {
@@ -75,6 +84,90 @@ class Index extends Component
     public function updatedStatus(): void
     {
         $this->resetPage();
+    }
+
+    public function updatedCategoryChoice(string $value): void
+    {
+        $this->form['category'] = $value === self::OTHER ? '' : $value;
+        $this->itemChoice = '';
+        $this->form['item_name'] = '';
+    }
+
+    public function updatedItemChoice(string $value): void
+    {
+        $this->form['item_name'] = $value === self::OTHER ? '' : $value;
+    }
+
+    /**
+     * Categories offered in the price form: managed categories plus any already in use.
+     *
+     * @return list<string>
+     */
+    private function categoryOptions(?int $organisationId): array
+    {
+        return HardwareCategory::active()
+            ->where(fn ($q) => $q->whereNull('organisation_id')->orWhere('organisation_id', $organisationId))
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->pluck('name')
+            ->merge(
+                HardwarePrice::query()
+                    ->where('organisation_id', $organisationId)
+                    ->distinct()
+                    ->pluck('category')
+            )
+            ->filter()
+            ->unique(fn ($name) => mb_strtolower(trim($name)))
+            ->sort(SORT_NATURAL | SORT_FLAG_CASE)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Items offered for a category: the category's default items plus recorded items.
+     *
+     * @return list<string>
+     */
+    private function itemOptions(?int $organisationId, string $category): array
+    {
+        if ($category === '') {
+            return [];
+        }
+
+        $defaults = HardwareCategory::query()
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($category)])
+            ->where(fn ($q) => $q->whereNull('organisation_id')->orWhere('organisation_id', $organisationId))
+            ->pluck('default_items')
+            ->filter(fn ($items) => is_array($items))
+            ->flatten();
+
+        return $defaults
+            ->merge(
+                HardwarePrice::query()
+                    ->where('organisation_id', $organisationId)
+                    ->where('category', $category)
+                    ->distinct()
+                    ->pluck('item_name')
+            )
+            ->filter(fn ($name) => is_string($name) && trim($name) !== '')
+            ->unique(fn ($name) => mb_strtolower(trim($name)))
+            ->sort(SORT_NATURAL | SORT_FLAG_CASE)
+            ->values()
+            ->all();
+    }
+
+    private function syncChoicesFromForm(?int $organisationId): void
+    {
+        $category = (string) ($this->form['category'] ?? '');
+        $item = (string) ($this->form['item_name'] ?? '');
+
+        $this->categoryChoice = $category === ''
+            ? ''
+            : (in_array($category, $this->categoryOptions($organisationId), true) ? $category : self::OTHER);
+
+        $this->itemChoice = $item === ''
+            ? ''
+            : (in_array($item, $this->itemOptions($organisationId, $category), true) ? $item : self::OTHER);
     }
 
     public function createPrice(): void
@@ -152,6 +245,8 @@ class Index extends Component
                 $price->is_active,
         ];
 
+        $this->syncChoicesFromForm($user->organisation_id);
+
         $this->resetValidation();
 
         $this->showForm = true;
@@ -222,6 +317,46 @@ class Index extends Component
         $this->resetForm();
 
         $this->resetValidation();
+    }
+
+    public function bulkSetActive(
+        bool $active,
+        HardwarePriceManager $manager
+    ): void {
+        $user = $this->managementUser();
+
+        $prices = HardwarePrice::query()
+            ->where('organisation_id', $user->organisation_id)
+            ->whereKey($this->selectedIds())
+            ->where('is_active', ! $active)
+            ->get();
+
+        foreach ($prices as $price) {
+            $active
+                ? $manager->activate($user->organisation_id, $price)
+                : $manager->deactivate($user->organisation_id, $price);
+        }
+
+        $this->finishBulkAction($prices->count(), $active ? 'activated' : 'deactivated', 'hardware-price-message');
+    }
+
+    public function bulkBookmark(): void
+    {
+        $user = auth()->user();
+
+        $prices = HardwarePrice::query()
+            ->where('organisation_id', $user->organisation_id)
+            ->whereKey($this->selectedIds())
+            ->get();
+
+        foreach ($prices as $price) {
+            $user->hardwareBookmarks()->firstOrCreate([
+                'hardware_price_id' => $price->id,
+                'location' => $price->location ?: 'Any location',
+            ]);
+        }
+
+        $this->finishBulkAction($prices->count(), 'bookmarked', 'hardware-price-message');
     }
 
     public function toggleActive(
@@ -525,6 +660,16 @@ class Index extends Component
                 'stats' =>
                     $stats,
 
+                'categoryOptions' =>
+                    $this->showForm
+                        ? $this->categoryOptions($organisationId)
+                        : [],
+
+                'itemOptions' =>
+                    $this->showForm
+                        ? $this->itemOptions($organisationId, (string) ($this->form['category'] ?? ''))
+                        : [],
+
                 'bookmarkedIds' =>
                     $user->hardwareBookmarks()
                         ->whereIn('hardware_price_id', $prices->pluck('id'))
@@ -556,6 +701,10 @@ class Index extends Component
     private function resetForm(): void
     {
         $this->editingId = null;
+
+        $this->categoryChoice = '';
+
+        $this->itemChoice = '';
 
         $this->form = [
             'item_name' => '',

@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Models\Organisation;
 use App\Models\Role;
 use App\Models\User;
+use App\Livewire\Concerns\WithBulkSelection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -12,6 +13,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class UsersManager extends Component
 {
+    use WithBulkSelection;
     use WithPagination;
 
     public string $search='';
@@ -66,6 +68,32 @@ class UsersManager extends Component
         }
 
         $this->reset(['showCreate','newName','newEmail','newPassword','newPhone','newRoleId']);
+    }
+
+    public function bulkSetActive(bool $active): void
+    {
+        // Never let an administrator disable their own account in bulk.
+        $count = User::whereKey($this->selectedIds())
+            ->whereKeyNot(auth()->id())
+            ->update(['is_active' => $active]);
+
+        $this->finishBulkAction($count, $active ? 'enabled' : 'disabled');
+    }
+
+    public function bulkAssignRole(string $roleId): void
+    {
+        if ($roleId === '') {
+            return;
+        }
+
+        $role = Role::findOrFail((int) $roleId);
+        $users = User::whereKey($this->selectedIds())->get();
+
+        foreach ($users as $user) {
+            $user->roles()->syncWithoutDetaching([$role->id => ['organisation_id' => $user->organisation_id]]);
+        }
+
+        $this->finishBulkAction($users->count(), "given the {$role->name} role");
     }
 
     public function toggleActive(int $id): void

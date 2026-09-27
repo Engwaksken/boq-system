@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Models\ProductVersion;
+use App\Livewire\Concerns\WithBulkSelection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -10,6 +11,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class VersionsManager extends Component
 {
+    use WithBulkSelection;
     use WithPagination;
 
     public string $search = '';
@@ -73,6 +75,28 @@ class VersionsManager extends Component
         ProductVersion::updateOrCreate(['id' => $this->editingId], $data);
         session()->flash('message', $this->editingId ? 'Product version updated successfully.' : 'Product version created successfully.');
         $this->cancel();
+    }
+
+    public function bulkSetActive(bool $active): void
+    {
+        $count = ProductVersion::whereKey($this->selectedIds())->update(['is_active' => $active]);
+
+        $this->finishBulkAction($count, $active ? 'activated' : 'deactivated');
+    }
+
+    public function bulkDelete(): void
+    {
+        $versions = ProductVersion::whereKey($this->selectedIds())->withExists('subscriptions')->get();
+        $inUse = $versions->where('subscriptions_exists', true);
+
+        ProductVersion::whereKey($inUse->modelKeys())->update(['is_active' => false]);
+        ProductVersion::whereKey($versions->where('subscriptions_exists', false)->modelKeys())->delete();
+
+        $this->clearSelection();
+
+        session()->flash('message', $inUse->isEmpty()
+            ? $versions->count().' version(s) deleted.'
+            : ($versions->count() - $inUse->count()).' version(s) deleted; '.$inUse->count().' in use and deactivated instead.');
     }
 
     public function toggleActive(int $id): void

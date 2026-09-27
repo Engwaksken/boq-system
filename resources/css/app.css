@@ -2356,3 +2356,408 @@ a:visited {
         grid-template-columns: 1fr;
     }
 }
+
+
+/* ============================================================
+   AUTHENTICATION PAGES (login, register, password, legal)
+   ============================================================ */
+
+.boq-auth-shell {
+    background:
+        radial-gradient(
+            circle at top left,
+            rgba(5, 100, 91, .12),
+            transparent 36%
+        ),
+        linear-gradient(
+            135deg,
+            #f8fafc 0%,
+            #f1f5f9 100%
+        );
+}
+
+.auth-shell {
+    width: 100%;
+    max-width: 460px;
+}
+
+.auth-card {
+    border: 1px solid #e2e8f0;
+    border-top: 4px solid #05645b;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .98);
+    box-shadow:
+        0 18px 45px
+        rgba(15, 23, 42, .08);
+}
+
+.auth-field {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #fff;
+    padding: 0 14px;
+    color: #0f172a;
+    font-size: 14px;
+    transition:
+        border-color .2s ease,
+        box-shadow .2s ease,
+        background .2s ease;
+}
+
+.auth-field::placeholder {
+    color: #94a3b8;
+}
+
+.auth-field:focus {
+    outline: none;
+    border-color: #05645b;
+    box-shadow:
+        0 0 0 3px
+        rgba(5, 100, 91, .12);
+}
+
+.auth-field.has-error {
+    border-color: #dc2626;
+}
+
+.auth-field.has-error:focus {
+    box-shadow:
+        0 0 0 3px
+        rgba(220, 38, 38, .10);
+}
+
+.auth-input-wrap {
+    position: relative;
+}
+
+.auth-input-wrap .auth-field {
+    padding-left: 42px;
+}
+
+.auth-input-wrap.has-toggle .auth-field {
+    padding-right: 46px;
+}
+
+.auth-input-icon {
+    position: absolute;
+    top: 50%;
+    left: 14px;
+    transform: translateY(-50%);
+    color: #64748b;
+    pointer-events: none;
+}
+
+.auth-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    display: inline-flex;
+    width: 34px;
+    height: 34px;
+    transform: translateY(-50%);
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: #64748b;
+    transition:
+        background .2s ease,
+        color .2s ease;
+}
+
+.auth-password-toggle:hover {
+    background: #f1f5f9;
+    color: #05645b;
+}
+
+.auth-primary {
+    display: inline-flex;
+    width: 100%;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 10px;
+    background: #05645b;
+    padding: 0 18px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    transition:
+        background .2s ease,
+        transform .2s ease,
+        box-shadow .2s ease;
+}
+
+.auth-primary:hover {
+    background: #034f48;
+    box-shadow:
+        0 8px 20px
+        rgba(5, 100, 91, .18);
+}
+
+.auth-primary:focus-visible {
+    outline: 3px solid
+        rgba(215, 223, 33, .45);
+    outline-offset: 2px;
+}
+
+.auth-link {
+    color: #05645b;
+    font-weight: 600;
+}
+
+.auth-link:hover {
+    color: #034f48;
+}
+
+.auth-error {
+    margin-top: 6px;
+    color: #dc2626;
+    font-size: 12px;
+}
+
+.auth-status {
+    margin-bottom: 18px;
+    border: 1px solid #a7f3d0;
+    border-radius: 10px;
+    background: #ecfdf5;
+    padding: 12px 14px;
+    color: #047857;
+    font-size: 13px;
+}
+
+
+/* ============================================================
+   BASE FORM FIELDS
+   Fields written for the old @tailwindcss/forms plugin get a
+   real border and padding. Kept in the base layer so utility
+   classes on a field still win.
+   ============================================================ */
+
+@layer base {
+    .boq-app-shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="hidden"]):not([type="color"]),
+    .boq-app-shell select,
+    .boq-app-shell textarea {
+        min-height: var(--boq-field-height);
+        border: 1px solid var(--boq-border-dark);
+        border-radius: var(--boq-radius);
+        background-color: #fff;
+        padding: .5rem .75rem;
+        color: var(--boq-text);
+        font-size: .875rem;
+        line-height: 1.4;
+    }
+
+    .boq-app-shell textarea {
+        min-height: 96px;
+    }
+
+    .boq-app-shell select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right .6rem center;
+        background-repeat: no-repeat;
+        background-size: 1.1rem;
+        padding-right: 2.2rem;
+    }
+
+    .boq-app-shell input:focus,
+    .boq-app-shell select:focus,
+    .boq-app-shell textarea:focus {
+        outline: none;
+        border-color: var(--boq-primary);
+        box-shadow: 0 0 0 3px rgba(5, 100, 91, .12);
+    }
+
+    .boq-app-shell input[type="checkbox"],
+    .boq-app-shell input[type="radio"] {
+        width: 1rem;
+        height: 1rem;
+        accent-color: var(--boq-primary);
+        cursor: pointer;
+    }
+}
+
+
+/* ============================================================
+   SHARED COMPONENTS: CHECKBOXES, BULK ACTIONS, UPLOADS, PANELS
+   ============================================================ */
+
+.boq-app-shell .boq-check {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    color: #334155;
+    font-size: .85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.boq-app-shell .boq-check-col {
+    width: 44px;
+    text-align: center;
+}
+
+.boq-app-shell .boq-checkbox {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--boq-primary);
+    cursor: pointer;
+}
+
+.boq-app-shell .boq-bulk-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .6rem;
+    border: 1px solid #a7f3d0;
+    border-radius: var(--boq-radius);
+    background: var(--boq-primary-soft);
+    padding: .6rem 1rem;
+}
+
+.boq-app-shell .boq-panel > .boq-bulk-bar {
+    border-width: 0 0 1px;
+    border-radius: 0;
+}
+
+.boq-app-shell .boq-bulk-count {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    color: var(--boq-primary);
+    font-size: .8rem;
+    font-weight: 800;
+}
+
+.boq-app-shell .boq-bulk-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .45rem;
+}
+
+.boq-app-shell .boq-bulk-buttons .boq-btn-primary,
+.boq-app-shell .boq-bulk-buttons .boq-btn-secondary,
+.boq-app-shell .boq-bulk-buttons .boq-btn-danger {
+    min-height: 32px;
+    padding: .3rem .7rem;
+    font-size: .76rem;
+}
+
+.boq-app-shell .boq-bulk-clear-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    margin-left: auto;
+    border: 0;
+    background: transparent;
+    color: #475569;
+    font-size: .76rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.boq-app-shell .boq-bulk-clear-btn:hover {
+    color: var(--boq-danger);
+}
+
+.boq-app-shell .boq-field-sm {
+    width: auto;
+    height: 32px;
+    min-height: 32px;
+    padding-top: .2rem;
+    padding-bottom: .2rem;
+    font-size: .76rem;
+}
+
+.boq-app-shell .boq-upload-row {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    margin-bottom: .4rem;
+}
+
+.boq-app-shell .boq-upload-preview {
+    display: inline-flex;
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--boq-border);
+    border-radius: var(--boq-radius);
+    background: #fff;
+    object-fit: contain;
+    padding: .3rem;
+    color: var(--boq-text-soft);
+    font-size: .7rem;
+}
+
+.boq-app-shell .boq-upload-preview.is-small {
+    width: 48px;
+    height: 48px;
+}
+
+.boq-app-shell .boq-upload-preview.is-empty {
+    border-style: dashed;
+    background: var(--boq-surface-soft);
+}
+
+.boq-app-shell .boq-panel-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .75rem;
+    border-top: 1px solid var(--boq-border);
+    background: var(--boq-surface-soft);
+    padding: .85rem 1rem;
+}
+
+.boq-app-shell .boq-fieldset {
+    border: 1px solid var(--boq-border);
+    border-radius: var(--boq-radius);
+    padding: .75rem 1rem 1rem;
+}
+
+.boq-app-shell .boq-fieldset legend {
+    padding: 0 .35rem;
+    color: #334155;
+    font-size: .78rem;
+    font-weight: 800;
+}
+
+.boq-app-shell .project-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) 120px minmax(300px, auto);
+    gap: .75rem;
+    align-items: end;
+    padding: 1rem;
+}
+
+@media (max-width: 1100px) {
+    .boq-app-shell .project-filter-grid {
+        grid-template-columns: minmax(250px, 1fr) 110px;
+    }
+
+    .boq-app-shell .project-filter-grid > div:last-child {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 700px) {
+    .boq-app-shell .project-filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .boq-app-shell .project-filter-grid > div:last-child {
+        grid-column: auto;
+    }
+
+    .boq-app-shell .boq-bulk-clear-btn {
+        margin-left: 0;
+    }
+}

@@ -2,7 +2,9 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\WithBulkSelection;
 use App\Models\Plan;
+use App\Models\Subscription;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -11,6 +13,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class PlansManager extends Component
 {
+    use WithBulkSelection;
     use WithPagination;
 
     public string $search = '';
@@ -77,6 +80,22 @@ class PlansManager extends Component
         session()->flash('message', 'Plan archived. Existing subscriptions were preserved.');
     }
 
+    public function bulkSetActive(bool $active): void
+    {
+        $count = Plan::whereKey($this->selectedIds())
+            ->when($active, fn ($q) => $q->where('is_archived', false))
+            ->update(['is_active' => $active]);
+
+        $this->finishBulkAction($count, $active ? 'activated' : 'deactivated');
+    }
+
+    public function bulkArchive(): void
+    {
+        $count = Plan::whereKey($this->selectedIds())->update(['is_archived' => true, 'is_active' => false]);
+
+        $this->finishBulkAction($count, 'archived');
+    }
+
     public function cancel(): void { $this->showForm = false; $this->resetForm(); }
     private function resetForm(): void { $this->editingId = null; $this->reset('form'); $this->form['currency']='UGX'; $this->form['type']='monthly'; $this->form['duration_days']=30; $this->form['trial_days']=7; $this->form['is_active']=true; }
     public function updatedSearch(): void { $this->resetPage(); }
@@ -84,7 +103,13 @@ class PlansManager extends Component
     public function render()
     {
         return view('livewire.admin.plans-manager', [
-            'plans' => Plan::query()->when($this->search, fn($q) => $q->where('name','like','%'.$this->search.'%')->orWhere('code','like','%'.$this->search.'%'))->orderBy('display_order')->orderBy('price')->paginate($this->perPage),
+            'plans' => Plan::query()->when($this->search, fn($q) => $q->where(fn ($w) => $w->where('name','like','%'.$this->search.'%')->orWhere('code','like','%'.$this->search.'%')))->orderBy('display_order')->orderBy('price')->paginate($this->perPage),
+            'stats' => [
+                'total' => Plan::count(),
+                'active' => Plan::where('is_active', true)->count(),
+                'trial' => Plan::where('has_trial', true)->count(),
+                'subscribers' => Subscription::where('status', 'active')->count(),
+            ],
         ]);
     }
 }

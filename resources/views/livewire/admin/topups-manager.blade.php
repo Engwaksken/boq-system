@@ -6,15 +6,22 @@
     @if(session('message'))<div class="boq-flash">{{ session('message') }}</div>@endif
 
     <div class="flex gap-3">
-        <input wire:model.live.debounce.300ms="search" placeholder="Search top-ups..." class="w-full rounded-lg border-slate-300 text-sm md:w-96">
+        <input wire:model.live.debounce.300ms="search" placeholder="Search top-ups..." class="boq-field md:max-w-md">
     </div>
+
+    <x-bulk-bar :count="count($selected)">
+            <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> Activate</button>
+            <button type="button" wire:click="bulkSetActive(false)" class="boq-btn-secondary"><i class="fas fa-ban"></i> Deactivate</button>
+            <button type="button" wire:click="bulkArchive" wire:confirm="Archive the selected top-ups? Existing purchases stay active." class="boq-btn-danger"><i class="fas fa-box-archive"></i> Archive</button>
+    </x-bulk-bar>
 
     <div class="boq-panel overflow-x-auto">
         <table class="boq-table min-w-full divide-y divide-slate-200">
-            <thead><tr>@foreach(['Top-up','Type','Price','Credits','Availability','Status','Actions'] as $h)<th class="px-4 py-3 text-left">{{ $h }}</th>@endforeach</tr></thead>
+            <thead><tr><th class="boq-check-col"><x-select-all :ids="$topups->pluck('id')" :selected="$selected" /></th>@foreach(['Top-up','Type','Price','Credits','Availability','Status','Actions'] as $h)<th class="px-4 py-3 text-left">{{ $h }}</th>@endforeach</tr></thead>
             <tbody class="divide-y divide-slate-100">
             @forelse($topups as $topup)
-                <tr>
+                <tr wire:key="topup-{{ $topup->id }}">
+                    <td class="boq-check-col"><x-select-row :id="$topup->id" /></td>
                     <td class="px-4 py-3">
                         <div class="font-semibold">{{ $topup->name }}</div>
                         <div class="text-xs text-slate-500">{{ $topup->code }}</div>
@@ -44,7 +51,7 @@
                         @endunless
                     </td>
                 </tr>
-            @empty<tr><td colspan="7" class="p-8 text-center text-slate-500">No top-ups found.</td></tr>@endforelse
+            @empty<tr><td colspan="8" class="p-8 text-center text-slate-500">No top-ups found.</td></tr>@endforelse
             </tbody>
         </table>
         <div class="p-4">{{ $topups->links() }}</div>

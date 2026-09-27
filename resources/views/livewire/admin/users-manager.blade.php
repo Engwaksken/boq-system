@@ -9,12 +9,22 @@
         <button @click="showCreate=true" class="boq-btn-primary">Add user</button>
     </div>
 
+    <x-bulk-bar :count="count($selected)">
+        <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-user-check"></i> Enable</button>
+        <button type="button" wire:click="bulkSetActive(false)" wire:confirm="Disable the selected users? Your own account is skipped." class="boq-btn-secondary"><i class="fas fa-user-slash"></i> Disable</button>
+        <select wire:change="bulkAssignRole($event.target.value)" class="boq-field boq-field-sm" aria-label="Assign role to selected users">
+            <option value="">Assign role...</option>
+            @foreach($roles as $role)<option value="{{ $role->id }}">{{ $role->name }}</option>@endforeach
+        </select>
+    </x-bulk-bar>
+
     <div class="boq-panel overflow-x-auto">
         <table class="boq-table min-w-full divide-y divide-slate-200">
-            <thead><tr>@foreach(['User','Organisation','Roles','Subscription','Status','Actions'] as $h)<th class="px-4 py-3 text-left">{{$h}}</th>@endforeach</tr></thead>
+            <thead><tr><th class="boq-check-col"><x-select-all :ids="$users->pluck('id')" :selected="$selected" /></th>@foreach(['User','Organisation','Roles','Subscription','Status','Actions'] as $h)<th class="px-4 py-3 text-left">{{$h}}</th>@endforeach</tr></thead>
             <tbody class="divide-y divide-slate-100">
-            @foreach($users as $user)
-            <tr>
+            @forelse($users as $user)
+            <tr wire:key="user-{{ $user->id }}">
+                <td class="boq-check-col"><x-select-row :id="$user->id" /></td>
                 <td class="px-4 py-3"><div class="font-semibold">{{$user->name}}</div><div class="text-xs text-slate-500">{{$user->email}}</div></td>
                 <td class="px-4 py-3 text-sm">{{$user->organisation?->name ?? '—'}}</td>
                 <td class="px-4 py-3"><div class="flex flex-wrap gap-1">@foreach($user->roles as $role)<button @click="roleUserId={{$user->id}}; roleId={{$role->id}}; roleName=@js($role->name); roleUserName=@js($user->name); confirmRole=true" class="rounded-full bg-emerald-50 px-2 py-1 text-xs text-emerald-700">{{$role->name}} ×</button>@endforeach</div><select wire:change="assignRole({{$user->id}}, $event.target.value)" class="mt-2 rounded border-slate-300 text-xs"><option value="">Add role...</option>@foreach($roles as $role)<option value="{{$role->id}}">{{$role->name}}</option>@endforeach</select></td>
@@ -22,7 +32,9 @@
                 <td class="px-4 py-3"><span class="rounded-full px-2 py-1 text-xs {{$user->is_active?'bg-emerald-100 text-emerald-700':'bg-red-100 text-red-700'}}">{{$user->is_active?'Active':'Inactive'}}</span></td>
                 <td class="px-4 py-3"><button @click="statusId={{$user->id}}; statusName=@js($user->name); statusAction=@js($user->is_active?'Disable':'Enable'); confirmStatus=true" class="text-sm font-semibold {{$user->is_active?'text-red-600':'text-emerald-700'}}">{{$user->is_active?'Disable':'Enable'}}</button></td>
             </tr>
-            @endforeach
+            @empty
+            <tr><td colspan="7" class="p-8 text-center text-slate-500">No users found.</td></tr>
+            @endforelse
             </tbody>
         </table>
         <div class="p-4">{{$users->links()}}</div>

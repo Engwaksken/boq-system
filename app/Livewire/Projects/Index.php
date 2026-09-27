@@ -3,6 +3,7 @@
 namespace App\Livewire\Projects;
 
 use App\Models\Project;
+use App\Livewire\Concerns\WithBulkSelection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -10,6 +11,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use WithBulkSelection;
     use WithPagination;
 
     public string $search = '';
@@ -44,6 +46,27 @@ class Index extends Component
         }
 
         $this->resetPage();
+    }
+
+    public function bulkDelete(): void
+    {
+        $user = auth()->user();
+
+        // Only projects the user owns or that belong to their organisation.
+        $count = Project::query()
+            ->whereKey($this->selectedIds())
+            ->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+
+                if ($user->organisation_id !== null) {
+                    $q->orWhere('organisation_id', $user->organisation_id);
+                }
+            })
+            ->get()
+            ->each->delete()
+            ->count();
+
+        $this->finishBulkAction($count, 'deleted', 'status');
     }
 
     public function delete(int $id): void

@@ -6,15 +6,21 @@
     @if(session('message'))<div class="boq-flash">{{ session('message') }}</div>@endif
 
     <div class="flex gap-3">
-        <input wire:model.live.debounce.300ms="search" placeholder="Search name, contact or phone..." class="w-full rounded-lg border-slate-300 text-sm md:w-96">
+        <input wire:model.live.debounce.300ms="search" placeholder="Search name, contact or phone..." class="boq-field md:max-w-md">
     </div>
+
+    <x-bulk-bar :count="count($selected)">
+            <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> Activate</button>
+            <button type="button" wire:click="bulkSetActive(false)" wire:confirm="Deactivate the selected suppliers? Historical quotations are kept." class="boq-btn-secondary"><i class="fas fa-ban"></i> Deactivate</button>
+    </x-bulk-bar>
 
     <div class="boq-panel overflow-x-auto">
         <table class="boq-table min-w-full divide-y divide-slate-200">
-            <thead><tr>@foreach(['Supplier','Contact','Location','Currency','Rates','Status','Actions'] as $h)<th class="px-4 py-3 text-left">{{ $h }}</th>@endforeach</tr></thead>
+            <thead><tr><th class="boq-check-col"><x-select-all :ids="$suppliers->pluck('id')" :selected="$selected" /></th>@foreach(['Supplier','Contact','Location','Currency','Rates','Status','Actions'] as $h)<th class="px-4 py-3 text-left">{{ $h }}</th>@endforeach</tr></thead>
             <tbody class="divide-y divide-slate-100">
             @forelse($suppliers as $supplier)
-                <tr>
+                <tr wire:key="supplier-{{ $supplier->id }}">
+                    <td class="boq-check-col"><x-select-row :id="$supplier->id" /></td>
                     <td class="px-4 py-3"><div class="font-semibold">{{ $supplier->name }}</div><div class="text-[11px] text-slate-400">{{ $supplier->code }}</div></td>
                     <td class="px-4 py-3 text-sm"><div>{{ $supplier->contact_name ?: '—' }}</div><div class="text-xs text-slate-500">{{ $supplier->phone }}{{ $supplier->phone && $supplier->email ? ' · ' : '' }}{{ $supplier->email }}</div></td>
                     <td class="px-4 py-3 text-sm">{{ $supplier->location ?: $supplier->region ?: '—' }}</td>
@@ -29,7 +35,7 @@
                         @endif
                     </td>
                 </tr>
-            @empty<tr><td colspan="7" class="p-8 text-center text-slate-500">No suppliers found.</td></tr>@endforelse
+            @empty<tr><td colspan="8" class="p-8 text-center text-slate-500">No suppliers found.</td></tr>@endforelse
             </tbody>
         </table>
         <div class="p-4">{{ $suppliers->links() }}</div>

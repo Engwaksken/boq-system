@@ -322,12 +322,21 @@
 
     <div class="boq-panel overflow-hidden">
 
+        <x-bulk-bar :count="count($selected)">
+            <button type="button" wire:click="bulkBookmark" class="boq-btn-secondary"><i class="fas fa-bookmark"></i> Bookmark</button>
+            @if($canManage)
+                <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> Activate</button>
+                <button type="button" wire:click="bulkSetActive(false)" wire:confirm="Deactivate the selected prices?" class="boq-btn-secondary"><i class="fas fa-ban"></i> Deactivate</button>
+            @endif
+        </x-bulk-bar>
+
         <div class="boq-table-wrapper">
 
             <table class="boq-table">
 
                 <thead>
                     <tr>
+                        <th class="boq-check-col"><x-select-all :ids="$prices->pluck('id')" :selected="$selected" /></th>
                         <th>Item</th>
                         <th>Price Type</th>
                         <th>Category</th>
@@ -352,6 +361,8 @@
                         <tr
                             wire:key="price-{{ $price->id }}"
                         >
+
+                            <td class="boq-check-col"><x-select-row :id="$price->id" /></td>
 
                             <td>
 
@@ -524,7 +535,7 @@
 
                         <tr>
                             <td
-                                colspan="9"
+                                colspan="10"
                                 class="boq-empty-table"
                             >
                                 <i class="fas fa-box-open"></i>
@@ -635,45 +646,30 @@
 
                             </div>
 
-                            <div>
+                            <x-select-with-other
+                                label="Category"
+                                choice="categoryChoice"
+                                value="form.category"
+                                :current="$categoryChoice"
+                                :options="$categoryOptions"
+                                placeholder="Select category..."
+                                other-placeholder="e.g. Cement, Steel, Roofing"
+                                error="form.category"
+                                required
+                            />
 
-                                <label class="boq-field-label">
-                                    Category *
-                                </label>
-
-                                <input
-                                    wire:model="form.category"
-                                    class="boq-field"
-                                    placeholder="e.g. Cement, Steel, Roofing"
-                                >
-
-                                @error('form.category')
-                                    <p class="boq-field-error">
-                                        {{ $message }}
-                                    </p>
-                                @enderror
-
-                            </div>
-
-                            <div class="boq-form-span-2">
-
-                                <label class="boq-field-label">
-                                    Item Name *
-                                </label>
-
-                                <input
-                                    wire:model="form.item_name"
-                                    class="boq-field"
-                                    placeholder="e.g. Portland Cement 50kg"
-                                >
-
-                                @error('form.item_name')
-                                    <p class="boq-field-error">
-                                        {{ $message }}
-                                    </p>
-                                @enderror
-
-                            </div>
+                            <x-select-with-other
+                                class="boq-form-span-2"
+                                label="Item Name"
+                                choice="itemChoice"
+                                value="form.item_name"
+                                :current="$itemChoice"
+                                :options="$itemOptions"
+                                :placeholder="$categoryChoice === '' ? 'Select a category first...' : 'Select item...'"
+                                other-placeholder="e.g. Portland Cement 50kg"
+                                error="form.item_name"
+                                required
+                            />
 
                             <div>
 
