@@ -592,7 +592,7 @@
 
                                                 <i class="fas fa-calendar-day"></i>
 
-                                                {{ $item->start_date?->format('d M Y')
+                                                {{ \App\Support\Format::date($item->start_date, false)
                                                     ?? 'Not started'
                                                 }}
 
@@ -602,7 +602,7 @@
 
                                                 Until
 
-                                                {{ $item->end_date?->format('d M Y')
+                                                {{ \App\Support\Format::date($item->end_date, false)
                                                     ?? 'Ongoing'
                                                 }}
 
@@ -620,10 +620,7 @@
 
                                             {{ $item->plan?->currency ?? \App\Support\Regional::currency() }}
 
-                                            {{ number_format(
-                                                (float) ($item->plan?->price ?? 0),
-                                                0
-                                            ) }}
+                                            {{ \App\Support\Format::number((float) ($item->plan?->price ?? 0), 0) }}
 
                                         </strong>
 
@@ -632,6 +629,17 @@
 
                                     {{-- Actions --}}
                                     <td class="text-right">
+
+                                        @if(in_array($item->status, ['pending', 'past_due'], true))
+                                            <a
+                                                href="{{ route('checkout', ['type' => 'plan', 'id' => $item->id]) }}"
+                                                class="boq-icon-btn boq-icon-success"
+                                                title="Pay now"
+                                                aria-label="Pay now"
+                                            >
+                                                <i class="fas fa-credit-card"></i>
+                                            </a>
+                                        @endif
 
                                         @unless(
                                             in_array(
@@ -924,10 +932,7 @@
                                 </span>
 
                                 <span class="boq-plan-price-value">
-                                    {{ number_format(
-                                        (float) $plan->price,
-                                        0
-                                    ) }}
+                                    {{ \App\Support\Format::number((float) $plan->price, 0) }}
                                 </span>
 
                             </div>
@@ -1059,12 +1064,9 @@
                                         <div>
                                             <i class="fas fa-database"></i>
 
-                                            {{ number_format(
-                                                $plan->max_storage_bytes
+                                            {{ \App\Support\Format::number($plan->max_storage_bytes
                                                 / 1024
-                                                / 1024,
-                                                0
-                                            ) }}
+                                                / 1024, 0) }}
                                             MB storage
                                         </div>
 

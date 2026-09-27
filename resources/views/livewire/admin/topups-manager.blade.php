@@ -29,7 +29,7 @@
                         @if($topup->release_version)<div class="text-xs text-slate-400">v{{ $topup->release_version }}</div>@endif
                     </td>
                     <td class="px-4 py-3"><span class="rounded-full bg-slate-100 px-2 py-1 text-xs">{{ str_replace('_', ' ', $topup->type) }}</span></td>
-                    <td class="px-4 py-3">{{ $topup->currency }} {{ number_format((float)$topup->price,2) }}</td>
+                    <td class="px-4 py-3">{{ $topup->currency }} {{ \App\Support\Format::number((float)$topup->price, 2) }}</td>
                     <td class="px-4 py-3 text-sm">
                         @if($topup->isUsageTopup())
                             @foreach(($topup->usage_credits ?? []) as $key=>$value)<span class="mr-1 inline-block rounded bg-indigo-50 px-1.5 py-0.5 text-xs">{{ $key }}: {{ $value }}</span>@endforeach

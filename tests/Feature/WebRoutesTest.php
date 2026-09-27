@@ -25,6 +25,21 @@ class WebRoutesTest extends TestCase
         return $user;
     }
 
+    private function subscribedUser(): User
+    {
+        $user = User::factory()->create();
+
+        \App\Models\Entitlement::factory()->create([
+            'user_id' => $user->id,
+            'organisation_id' => $user->organisation_id,
+            'feature_id' => \App\Models\Feature::firstOrCreate(['code' => 'boq.management'], ['name' => 'BOQ management'])->id,
+            'status' => 'active',
+            'expires_at' => now()->addMonth(),
+        ]);
+
+        return $user;
+    }
+
     private function createHardwarePrice(User $user): HardwarePrice
     {
         return HardwarePrice::create([
@@ -151,21 +166,29 @@ class WebRoutesTest extends TestCase
 
     public function test_boqs_index_loads_for_authenticated_user(): void
     {
-        $user = User::factory()->create();
+        $user = $this->subscribedUser();
 
         $this->actingAs($user)->get('/boqs')->assertOk();
     }
 
-    public function test_boqs_create_loads_for_authenticated_user(): void
+    public function test_boqs_pages_redirect_to_subscriptions_without_an_active_plan(): void
     {
         $user = User::factory()->create();
+
+        $this->actingAs($user)->get('/boqs')->assertRedirect(route('subscriptions.index'));
+        $this->actingAs($user)->get('/boqs/create')->assertRedirect(route('subscriptions.index'));
+    }
+
+    public function test_boqs_create_loads_for_authenticated_user(): void
+    {
+        $user = $this->subscribedUser();
 
         $this->actingAs($user)->get('/boqs/create')->assertOk();
     }
 
     public function test_boqs_show_loads_for_owner(): void
     {
-        $user = User::factory()->create();
+        $user = $this->subscribedUser();
         $project = Project::factory()->create([
             'user_id' => $user->id,
             'organisation_id' => $user->organisation_id,
@@ -180,7 +203,7 @@ class WebRoutesTest extends TestCase
 
     public function test_boqs_show_is_forbidden_for_non_owner(): void
     {
-        $user = User::factory()->create();
+        $user = $this->subscribedUser();
         $other = User::factory()->create();
         $project = Project::factory()->create([
             'user_id' => $other->id,
@@ -196,7 +219,7 @@ class WebRoutesTest extends TestCase
 
     public function test_boqs_pdf_downloads_for_owner(): void
     {
-        $user = User::factory()->create();
+        $user = $this->subscribedUser();
         $project = Project::factory()->create([
             'user_id' => $user->id,
             'organisation_id' => $user->organisation_id,

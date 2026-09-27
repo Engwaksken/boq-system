@@ -68,7 +68,8 @@ class SubscriptionService
         $plan = $subscription->plan;
         $limits ??= $plan->features()->where('features.id', $feature->id)->first()?->pivot?->limits;
 
-        $expiresAt = $subscription->end_date;
+        // Access continues through the grace period, when the plan has one.
+        $expiresAt = $subscription->grace_period_end_date ?? $subscription->end_date;
         $isPermanent = $plan->type === 'lifetime';
 
         return Entitlement::updateOrCreate(

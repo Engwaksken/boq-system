@@ -27,7 +27,7 @@
                         <input type="checkbox" wire:model="selectedIds" value="{{ $item->id }}" class="mt-0.5 rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
                         <span class="min-w-0">
                             <span class="block text-sm font-medium text-gray-900 truncate">{{ $item->item_name }}</span>
-                            <span class="block text-xs text-gray-500">{{ number_format((float) $item->price, 2) }} {{ $item->currency }} ? {{ $item->supplier }}</span>
+                            <span class="block text-xs text-gray-500">{{ \App\Support\Format::number((float) $item->price, 2) }} {{ $item->currency }} ? {{ $item->supplier }}</span>
                         </span>
                     </label>
                 @endforeach
@@ -96,7 +96,7 @@
                         <tr class="bg-gray-50">
                             <td class="px-4 py-3 text-sm font-medium text-gray-500">Price</td>
                             @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm font-bold text-gray-900">{{ number_format((float) $item['price'], 2) }} {{ $item['currency'] }}</td>
+                                <td class="px-4 py-3 text-sm font-bold text-gray-900">{{ \App\Support\Format::number((float) $item['price'], 2) }} {{ $item['currency'] }}</td>
                             @endforeach
                         </tr>
                         <tr>
@@ -120,31 +120,31 @@
                         <tr>
                             <td class="px-4 py-3 text-sm font-medium text-gray-500">Lowest</td>
                             @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['lowest']) ? number_format((float) $item['price_history']['lowest'], 2) : '?' }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['lowest']) ? \App\Support\Format::number((float) $item['price_history']['lowest'], 2) : '?' }}</td>
                             @endforeach
                         </tr>
                         <tr>
                             <td class="px-4 py-3 text-sm font-medium text-gray-500">Highest</td>
                             @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['highest']) ? number_format((float) $item['price_history']['highest'], 2) : '?' }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['highest']) ? \App\Support\Format::number((float) $item['price_history']['highest'], 2) : '?' }}</td>
                             @endforeach
                         </tr>
                         <tr>
                             <td class="px-4 py-3 text-sm font-medium text-gray-500">Average</td>
                             @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['average']) ? number_format((float) $item['price_history']['average'], 2) : '?' }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['average']) ? \App\Support\Format::number((float) $item['price_history']['average'], 2) : '?' }}</td>
                             @endforeach
                         </tr>
                         <tr>
                             <td class="px-4 py-3 text-sm font-medium text-gray-500">Change</td>
                             @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['change']) ? number_format((float) $item['price_history']['change'], 2) : '?' }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['change']) ? \App\Support\Format::number((float) $item['price_history']['change'], 2) : '?' }}</td>
                             @endforeach
                         </tr>
                         <tr>
                             <td class="px-4 py-3 text-sm font-medium text-gray-500">Change %</td>
                             @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['change_percent']) ? number_format((float) $item['price_history']['change_percent'], 2) . '%' : '?' }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['change_percent']) ? \App\Support\Format::number((float) $item['price_history']['change_percent'], 2) . '%' : '?' }}</td>
                             @endforeach
                         </tr>
                         <tr class="bg-gray-50">

@@ -11,10 +11,10 @@
     @if(session('message'))<div class="boq-flash"><i class="fas fa-circle-check"></i> {{ session('message') }}</div>@endif
 
     <div class="boq-stats-grid">
-        <x-stat-card label="Total Plans" :value="number_format($stats['total'])" icon="fa-layer-group" color="green" />
-        <x-stat-card label="Active Plans" :value="number_format($stats['active'])" icon="fa-circle-check" color="blue" />
-        <x-stat-card label="Trial Enabled" :value="number_format($stats['trial'])" icon="fa-hourglass-half" color="amber" />
-        <x-stat-card label="Active Subscribers" :value="number_format($stats['subscribers'])" icon="fa-users" color="purple" />
+        <x-stat-card label="Total Plans" :value="\App\Support\Format::number($stats['total'], 0)" icon="fa-layer-group" color="green" />
+        <x-stat-card label="Active Plans" :value="\App\Support\Format::number($stats['active'], 0)" icon="fa-circle-check" color="blue" />
+        <x-stat-card label="Trial Enabled" :value="\App\Support\Format::number($stats['trial'], 0)" icon="fa-hourglass-half" color="amber" />
+        <x-stat-card label="Active Subscribers" :value="\App\Support\Format::number($stats['subscribers'], 0)" icon="fa-users" color="purple" />
     </div>
 
     <div class="boq-panel overflow-hidden">
@@ -50,7 +50,7 @@
                     <tr wire:key="plan-{{ $plan->id }}">
                         <td class="boq-check-col"><x-select-row :id="$plan->id" /></td>
                         <td><div class="boq-table-title">{{ $plan->name }}</div><div class="boq-table-subtitle">{{ $plan->code }}</div></td>
-                        <td>{{ $plan->currency }} {{ number_format((float) $plan->price, 2) }}</td>
+                        <td>{{ $plan->currency }} {{ \App\Support\Format::number((float) $plan->price, 2) }}</td>
                         <td>{{ $plan->duration_days ?: '—' }} days</td>
                         <td class="text-sm">{{ $plan->max_projects ?? '∞' }} projects · {{ $plan->max_boqs ?? '∞' }} BOQs · {{ $plan->max_ai_credits ?? '∞' }} AI</td>
                         <td>

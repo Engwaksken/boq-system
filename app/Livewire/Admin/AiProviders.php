@@ -18,6 +18,7 @@ use Throwable;
 #[Layout('layouts.app')]
 class AiProviders extends Component
 {
+    use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithPagination;
 
     /**

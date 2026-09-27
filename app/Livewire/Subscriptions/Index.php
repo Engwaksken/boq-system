@@ -17,6 +17,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithPagination;
 
     /*
@@ -592,11 +593,11 @@ class Index extends Component
             return;
         }
 
-        DB::transaction(
+        $subscription = DB::transaction(
             function () use (
                 $user,
                 $plan
-            ): void {
+            ): Subscription {
                 $subscription =
                     new Subscription();
 
@@ -622,20 +623,22 @@ class Index extends Component
                     (bool) $plan->auto_renewal;
 
                 $subscription->save();
+
+                return $subscription;
             }
         );
 
-        $this->showSubscriptions();
+        // Free plans need no payment.
+        if ((float) $plan->price <= 0) {
+            app(\App\Services\SubscriptionService::class)->activate($subscription);
 
-        $this->resetPage(
-            'subscriptionsPage'
-        );
+            session()->flash('message', $plan->name.' activated.');
+            $this->showSubscriptions();
 
-        session()->flash(
-            'message',
-            $plan->name
-            .' selected. Complete payment to activate your subscription.'
-        );
+            return;
+        }
+
+        $this->redirectRoute('checkout', ['type' => 'plan', 'id' => $subscription->id]);
     }
 
     /*

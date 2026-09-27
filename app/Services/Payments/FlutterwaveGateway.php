@@ -16,7 +16,7 @@ class FlutterwaveGateway implements PaymentGatewayInterface
             'tx_ref' => $transaction->reference,
             'amount' => (float) $transaction->amount,
             'currency' => $transaction->currency,
-            'redirect_url' => $this->config['redirect_url'] ?? url('/'),
+            'redirect_url' => $transaction->metadata['return_url'] ?? $this->config['redirect_url'] ?? url('/'),
             'payment_options' => $this->config['payment_options'] ?? 'card,mobilemoneyuganda',
             'customer' => [
                 'email' => $transaction->user?->email,

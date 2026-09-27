@@ -110,34 +110,22 @@
                     @if($totalValue >= 1000000000)
 
                         UGX
-                        {{ number_format(
-                            $totalValue / 1000000000,
-                            1
-                        ) }}B
+                        {{ \App\Support\Format::number($totalValue / 1000000000, 1) }}B
 
                     @elseif($totalValue >= 1000000)
 
                         UGX
-                        {{ number_format(
-                            $totalValue / 1000000,
-                            1
-                        ) }}M
+                        {{ \App\Support\Format::number($totalValue / 1000000, 1) }}M
 
                     @elseif($totalValue >= 1000)
 
                         UGX
-                        {{ number_format(
-                            $totalValue / 1000,
-                            1
-                        ) }}K
+                        {{ \App\Support\Format::number($totalValue / 1000, 1) }}K
 
                     @else
 
                         UGX
-                        {{ number_format(
-                            $totalValue,
-                            0
-                        ) }}
+                        {{ \App\Support\Format::number($totalValue, 0) }}
 
                     @endif
 
@@ -575,10 +563,7 @@
 
                                     {{ $project->currency ?? \App\Support\Regional::currency() }}
 
-                                    {{ number_format(
-                                        (float) ($project->contract_value ?? 0),
-                                        0
-                                    ) }}
+                                    {{ \App\Support\Format::number((float) ($project->contract_value ?? 0), 0) }}
 
                                 </strong>
 

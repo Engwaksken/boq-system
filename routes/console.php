@@ -18,6 +18,11 @@ Schedule::command('subscriptions:expire')
     ->hourly()
     ->withoutOverlapping();
 
+Schedule::command('subscriptions:remind')
+    ->dailyAt('08:00')
+    ->timezone(App\Support\Regional::timezone())
+    ->withoutOverlapping();
+
 Schedule::command('payments:reconcile')
     ->everyFiveMinutes()
     ->withoutOverlapping();

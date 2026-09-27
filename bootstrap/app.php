@@ -24,6 +24,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->appendToGroup('web', \App\Http\Middleware\EnsureUserIsActive::class);
         $middleware->appendToGroup('api', \App\Http\Middleware\EnsureUserIsActive::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\EnforceMaintenanceMode::class);
+        $middleware->appendToGroup('api', \App\Http\Middleware\EnforceMaintenanceMode::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {

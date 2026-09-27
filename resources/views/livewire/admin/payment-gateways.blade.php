@@ -22,9 +22,9 @@
     @endif
 
     <div class="boq-stats-grid">
-        <x-stat-card label="Gateways" :value="number_format($stats['gateways'])" icon="fa-credit-card" color="green" />
-        <x-stat-card label="Active" :value="number_format($stats['active'])" icon="fa-circle-check" color="blue" />
-        <x-stat-card label="Aggregators" :value="number_format($stats['aggregators'])" icon="fa-network-wired" color="purple" />
+        <x-stat-card label="Gateways" :value="\App\Support\Format::number($stats['gateways'], 0)" icon="fa-credit-card" color="green" />
+        <x-stat-card label="Active" :value="\App\Support\Format::number($stats['active'], 0)" icon="fa-circle-check" color="blue" />
+        <x-stat-card label="Aggregators" :value="\App\Support\Format::number($stats['aggregators'], 0)" icon="fa-network-wired" color="purple" />
         <x-stat-card label="Default Gateway" :value="$stats['default']" icon="fa-star" color="amber" />
     </div>
 

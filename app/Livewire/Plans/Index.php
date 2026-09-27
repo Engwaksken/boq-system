@@ -11,6 +11,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithPagination;
 
     public string $search = '';

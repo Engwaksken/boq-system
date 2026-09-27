@@ -25,6 +25,7 @@ use App\Livewire\Boqs\Create as BoqsCreate;
 use App\Livewire\Boqs\Index as BoqsIndex;
 use App\Livewire\Boqs\Show as BoqsShow;
 
+use App\Livewire\Checkout;
 use App\Livewire\Dashboard;
 
 use App\Livewire\HardwarePrices\Compare as HardwarePricesCompare;
@@ -66,6 +67,9 @@ Route::get('/', function () {
 // Biometric (WebAuthn passkey) sign-in and device registration.
 WebAuthnRoutes::register()->middleware('throttle:20,1');
 
+// Readiness probe for uptime monitoring (database, cache, storage, queue).
+Route::get('/health', \App\Http\Controllers\HealthController::class)->middleware('throttle:30,1')->name('health');
+
 Route::get('/privacy-policy', [LegalPageController::class, 'privacy'])->name('legal.privacy');
 Route::get('/terms-of-use', [LegalPageController::class, 'terms'])->name('legal.terms');
 
@@ -88,6 +92,18 @@ Route::middleware('auth')->group(function (): void {
         '/dashboard',
         Dashboard::class
     )->name('dashboard');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Web checkout (plans and top-ups)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/checkout/{type}/{id}', Checkout::class)
+        ->whereIn('type', ['plan', 'topup'])
+        ->whereNumber('id')
+        ->name('checkout');
 
 
     /*
@@ -147,19 +163,25 @@ Route::middleware('auth')->group(function (): void {
     Route::get(
         '/boqs',
         BoqsIndex::class
-    )->name('boqs.index');
+    )
+        ->middleware('entitlement:boq.management')
+        ->name('boqs.index');
 
 
     Route::get(
         '/boqs/create',
         BoqsCreate::class
-    )->name('boqs.create');
+    )
+        ->middleware('entitlement:boq.management')
+        ->name('boqs.create');
 
 
     Route::get(
         '/boqs/{boq}',
         BoqsShow::class
-    )->name('boqs.show');
+    )
+        ->middleware('entitlement:boq.management')
+        ->name('boqs.show');
 
 
     /*
@@ -198,7 +220,9 @@ Route::middleware('auth')->group(function (): void {
                 $boq
             );
         }
-    )->name('boqs.pdf');
+    )
+        ->middleware('entitlement:boq.management')
+        ->name('boqs.pdf');
 
 
     /*

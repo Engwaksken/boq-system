@@ -33,7 +33,7 @@ class GenericAggregatorGateway implements PaymentGatewayInterface
             $this->field('email', 'email') => $transaction->user?->email,
             $this->field('name', 'name') => $transaction->user?->name,
             $this->field('callback', 'callback_url') => $this->config['callback_url'] ?? $this->config['_webhook_url'] ?? null,
-            $this->field('redirect', 'redirect_url') => $this->config['redirect_url'] ?? null,
+            $this->field('redirect', 'redirect_url') => $transaction->metadata['return_url'] ?? $this->config['redirect_url'] ?? null,
         ];
 
         $extra = is_array($this->config['initiate_extra'] ?? null) ? $this->config['initiate_extra'] : [];

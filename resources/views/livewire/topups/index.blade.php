@@ -65,14 +65,20 @@
                     </div>
 
                     <div style="width:100%;display:flex;justify-content:space-between;align-items:center;margin-top:.25rem">
-                        <strong>{{ $item['currency'] }} {{ number_format((float) $item['price'], 0) }}</strong>
+                        <strong><x-money :amount="$item['price']" :currency="$item['currency']" /></strong>
                         <span style="font-size:.78rem;color:#64748b">
                             {{ $item['is_permanent'] || ! $item['duration_days'] ? 'One-time' : $item['duration_days'].' days' }}
                         </span>
                     </div>
-                    @unless($planCode)
+                    @if($item['purchasable'])
+                        <a href="{{ route('checkout', ['type' => 'topup', 'id' => $item['id']]) }}" class="boq-btn-primary w-full justify-center">
+                            <i class="fas fa-cart-shopping"></i> Buy
+                        </a>
+                    @elseif(! $planCode)
                         <p style="font-size:.72rem;color:#b45309">Subscribe to a plan before buying top-ups.</p>
-                    @endunless
+                    @else
+                        <p style="font-size:.72rem;color:#64748b">Not available for your plan or purchase limit reached.</p>
+                    @endif
                 </div>
             @endforeach
         </div>
@@ -101,8 +107,8 @@
                                     {{ $purchase->status }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-sm">{{ $purchase->purchased_at?->toDateString() ?? '—' }}</td>
-                            <td class="px-4 py-3 text-sm">{{ $purchase->expires_at?->toDateString() ?? ($purchase->is_permanent ? 'Permanent' : '—') }}</td>
+                            <td class="px-4 py-3 text-sm"><x-date :value="$purchase->purchased_at" /></td>
+                            <td class="px-4 py-3 text-sm">@if($purchase->expires_at)<x-date :value="$purchase->expires_at" />@else{{ $purchase->is_permanent ? 'Permanent' : '—' }}@endif</td>
                             <td class="px-4 py-3 text-xs text-slate-500">{{ $purchase->transaction?->reference ?? '—' }}</td>
                         </tr>
                     @endforeach

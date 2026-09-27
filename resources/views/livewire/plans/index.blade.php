@@ -291,10 +291,7 @@
                         </span>
 
                         <span class="boq-plan-price-value">
-                            {{ number_format(
-                                (float) $plan->price,
-                                0
-                            ) }}
+                            {{ \App\Support\Format::number((float) $plan->price, 0) }}
                         </span>
 
                     </div>

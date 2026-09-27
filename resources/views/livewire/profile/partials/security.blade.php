@@ -71,7 +71,7 @@
                                 <i class="fas fa-laptop mr-1 text-slate-400"></i>
                                 {{ $device->alias ?: 'Registered device' }}
                             </div>
-                            <div class="text-xs text-slate-500">Added {{ $device->created_at?->format('d M Y') }}</div>
+                            <div class="text-xs text-slate-500">Added {{ \App\Support\Format::date($device->created_at, false) }}</div>
                         </div>
                         <button
                             type="button"

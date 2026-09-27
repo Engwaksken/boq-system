@@ -585,16 +585,13 @@
                                 </td>
 
                                 <td class="text-right">
-                                    {{ number_format((float) $item->quantity, 2) }}
+                                    {{ \App\Support\Format::number((float) $item->quantity, 2) }}
                                 </td>
 
                                 <td class="text-right">
                                     {{
                                         $item->original_rate !== null
-                                            ? number_format(
-                                                (float) $item->original_rate,
-                                                2
-                                            )
+                                            ? \App\Support\Format::number((float) $item->original_rate, 2)
                                             : '-'
                                     }}
                                 </td>
@@ -604,10 +601,7 @@
                                     <div style="color:#4338ca">
                                         {{
                                             $item->ai_suggested_rate !== null
-                                                ? number_format(
-                                                    (float) $item->ai_suggested_rate,
-                                                    2
-                                                )
+                                                ? \App\Support\Format::number((float) $item->ai_suggested_rate, 2)
                                                 : '-'
                                         }}
                                     </div>
@@ -618,10 +612,7 @@
 
                                             {{
                                                 $item->ai_confidence !== null
-                                                    ? number_format(
-                                                        (float) $item->ai_confidence,
-                                                        0
-                                                    ).'%'
+                                                    ? \App\Support\Format::number((float) $item->ai_confidence, 0).'%'
                                                     : 'No confidence'
                                             }}
 
@@ -657,10 +648,7 @@
                                 <td class="text-right">
                                     {{
                                         $item->reviewed_rate !== null
-                                            ? number_format(
-                                                (float) $item->reviewed_rate,
-                                                2
-                                            )
+                                            ? \App\Support\Format::number((float) $item->reviewed_rate, 2)
                                             : '-'
                                     }}
                                 </td>
@@ -668,16 +656,13 @@
                                 <td class="text-right">
                                     {{
                                         $item->approved_rate !== null
-                                            ? number_format(
-                                                (float) $item->approved_rate,
-                                                2
-                                            )
+                                            ? \App\Support\Format::number((float) $item->approved_rate, 2)
                                             : '-'
                                     }}
                                 </td>
 
                                 <td class="text-right">
-                                    {{ number_format((float) $item->amount, 2) }}
+                                    {{ \App\Support\Format::number((float) $item->amount, 2) }}
                                 </td>
 
                                 <td>
@@ -709,7 +694,7 @@
                                             Approved by
                                             {{ $item->approvedBy->name }}
                                             <br>
-                                            {{ $item->approved_at?->format('M j, Y H:i') }}
+                                            {{ \App\Support\Format::date($item->approved_at, true) }}
                                         </div>
 
                                     @elseif(
@@ -721,7 +706,7 @@
                                             Reviewed by
                                             {{ $item->reviewedBy->name }}
                                             <br>
-                                            {{ $item->reviewed_at?->format('M j, Y H:i') }}
+                                            {{ \App\Support\Format::date($item->reviewed_at, true) }}
                                         </div>
 
                                     @elseif($item->status === 'rejected')
@@ -918,7 +903,7 @@
 
                                                                     <strong>
                                                                         {{ $candidate['currency'] }}
-                                                                        {{ number_format((float) $candidate['price'], 2) }}
+                                                                        {{ \App\Support\Format::number((float) $candidate['price'], 2) }}
                                                                     </strong>
 
                                                                     <button
@@ -1031,7 +1016,7 @@
 
                                                             <strong>
                                                                 {{ $candidate['currency'] }}
-                                                                {{ number_format((float) $candidate['price'], 2) }}
+                                                                {{ \App\Support\Format::number((float) $candidate['price'], 2) }}
                                                             </strong>
 
                                                             <button

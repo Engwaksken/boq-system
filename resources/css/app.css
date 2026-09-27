@@ -2989,3 +2989,18 @@ a:visited {
     border-color: var(--boq-primary);
     background: var(--boq-primary-lighter);
 }
+
+/* ---------- web checkout ---------- */
+
+.boq-app-shell .boq-checkout-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .boq-app-shell .boq-checkout-grid {
+        grid-template-columns: 1fr;
+    }
+}

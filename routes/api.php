@@ -91,10 +91,13 @@ Route::prefix('v1')->group(function () {
                     ->middleware('throttle:5,1')
                     ->name('api.v1.boqs.process');
             });
-        Route::post('boqs/{boq}/price-all', [BoqController::class, 'priceAll']);
-        Route::post('boqs/{boq}/pricing-batches', [BoqController::class, 'startPricingBatch']);
+        // AI pricing spends provider credit: paid feature, rate limited.
+        Route::middleware(['permission:boq.edit', 'entitlement:boq.management'])->group(function () {
+            Route::post('boqs/{boq}/price-all', [BoqController::class, 'priceAll'])->middleware('throttle:5,1');
+            Route::post('boqs/{boq}/pricing-batches', [BoqController::class, 'startPricingBatch'])->middleware('throttle:5,1');
+            Route::post('boq-items/{boqItem}/price', [BoqController::class, 'price'])->middleware('throttle:30,1');
+        });
         Route::get('pricing-batches/{batch}', [BoqController::class, 'pricingBatch']);
-        Route::post('boq-items/{boqItem}/price', [BoqController::class, 'price']);
         Route::get('boqs/{boq}/pricing-history/{location}', [BoqController::class, 'pricingHistory']);
         Route::get('boqs/{boq}/pricing-history', [BoqController::class, 'pricingHistory']);
 

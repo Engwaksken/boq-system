@@ -6,9 +6,9 @@
     </div>
 
     <div class="boq-stats-grid">
-        <x-stat-card label="Projects" :value="number_format($projectsCount ?? 0)" icon="fa-folder-open" color="green" />
-        <x-stat-card label="BOQs" :value="number_format($boqsCount ?? 0)" icon="fa-file-invoice-dollar" color="blue" />
-        <x-stat-card label="Hardware Prices" :value="number_format($hardwarePricesCount ?? 0)" icon="fa-tags" color="amber" />
+        <x-stat-card label="Projects" :value="\App\Support\Format::number($projectsCount ?? 0, 0)" icon="fa-folder-open" color="green" />
+        <x-stat-card label="BOQs" :value="\App\Support\Format::number($boqsCount ?? 0, 0)" icon="fa-file-invoice-dollar" color="blue" />
+        <x-stat-card label="Hardware Prices" :value="\App\Support\Format::number($hardwarePricesCount ?? 0, 0)" icon="fa-tags" color="amber" />
         <x-stat-card label="Subscription" :value="isset($subscription) && $subscription ? ($subscription->plan?->name ?? 'Active') : 'Free'" icon="fa-credit-card" color="purple" />
     </div>
 
@@ -23,7 +23,7 @@
 
         <div x-show="dashboardTab==='projects'">
             @if(isset($recentProjects) && $recentProjects->isNotEmpty())
-            <div class="overflow-x-auto"><table class="boq-table min-w-full divide-y divide-slate-200"><thead><tr><th class="px-4 py-3 text-left">Name</th><th class="px-4 py-3 text-left">Code</th><th class="px-4 py-3 text-left">Status</th><th class="px-4 py-3 text-left">Contract Value</th></tr></thead><tbody class="divide-y divide-slate-100">@foreach($recentProjects as $project)<tr><td class="px-4 py-3"><a href="{{ url('/projects/'.$project->id) }}" class="font-semibold text-emerald-700">{{ $project->name }}</a></td><td class="px-4 py-3 text-sm">{{ $project->code }}</td><td class="px-4 py-3 text-sm">{{ ucfirst($project->status) }}</td><td class="px-4 py-3 text-sm">{{ number_format((float)$project->contract_value,2) }} {{ $project->currency }}</td></tr>@endforeach</tbody></table></div>
+            <div class="overflow-x-auto"><table class="boq-table min-w-full divide-y divide-slate-200"><thead><tr><th class="px-4 py-3 text-left">Name</th><th class="px-4 py-3 text-left">Code</th><th class="px-4 py-3 text-left">Status</th><th class="px-4 py-3 text-left">Contract Value</th></tr></thead><tbody class="divide-y divide-slate-100">@foreach($recentProjects as $project)<tr><td class="px-4 py-3"><a href="{{ url('/projects/'.$project->id) }}" class="font-semibold text-emerald-700">{{ $project->name }}</a></td><td class="px-4 py-3 text-sm">{{ $project->code }}</td><td class="px-4 py-3 text-sm">{{ ucfirst($project->status) }}</td><td class="px-4 py-3 text-sm">{{ \App\Support\Format::number((float)$project->contract_value, 2) }} {{ $project->currency }}</td></tr>@endforeach</tbody></table></div>
             @else<div class="p-8 text-center text-slate-500">No projects yet.</div>@endif
         </div>
 

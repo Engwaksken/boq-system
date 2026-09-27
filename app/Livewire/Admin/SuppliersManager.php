@@ -12,6 +12,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class SuppliersManager extends Component
 {
+    use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithBulkSelection;
     use WithPagination;
 

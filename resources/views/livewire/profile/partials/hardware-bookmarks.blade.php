@@ -53,7 +53,7 @@
                             <td class="text-right font-semibold">
                                 @if($bookmark->hardwarePrice)
                                     {{ $bookmark->hardwarePrice->currency }}
-                                    {{ number_format((float) $bookmark->hardwarePrice->price, 2) }}
+                                    {{ \App\Support\Format::number((float) $bookmark->hardwarePrice->price, 2) }}
                                 @else
                                     —
                                 @endif
@@ -111,7 +111,7 @@
                             <option value="">Select hardware price...</option>
                             @foreach($bookmarkablePrices as $price)
                                 <option value="{{ $price->id }}">
-                                    {{ $price->item_name }} · {{ ucfirst($price->price_type ?? 'hardware') }} · {{ $price->category }}{{ $price->location ? ' · '.$price->location : '' }} · {{ $price->currency }} {{ number_format((float) $price->price, 2) }}
+                                    {{ $price->item_name }} · {{ ucfirst($price->price_type ?? 'hardware') }} · {{ $price->category }}{{ $price->location ? ' · '.$price->location : '' }} · {{ $price->currency }} {{ \App\Support\Format::number((float) $price->price, 2) }}
                                 </option>
                             @endforeach
                         </select>

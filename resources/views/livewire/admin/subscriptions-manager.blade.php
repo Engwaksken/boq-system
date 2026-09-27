@@ -112,9 +112,7 @@
                     style="font-size: 1.1rem;"
                 >
                     UGX
-                    {{ number_format(
-                        (float) ($stats['revenue'] ?? 0)
-                    ) }}
+                    {{ \App\Support\Format::number((float) ($stats['revenue'] ?? 0), 0) }}
                 </p>
             </div>
 
@@ -333,12 +331,9 @@
                                 <strong>
                                     {{ $sub->plan?->currency ?? \App\Support\Regional::currency() }}
 
-                                    {{ number_format(
-                                        (float) (
+                                    {{ \App\Support\Format::number((float) (
                                             $sub->plan?->price ?? 0
-                                        ),
-                                        0
-                                    ) }}
+                                        ), 0) }}
                                 </strong>
                             </td>
 
@@ -347,7 +342,7 @@
                                 <span class="boq-cell-with-icon">
                                     <i class="fas fa-calendar-day"></i>
 
-                                    {{ $sub->start_date?->format('d M Y')
+                                    {{ \App\Support\Format::date($sub->start_date, false)
                                         ?? 'Not started'
                                     }}
                                 </span>
@@ -358,7 +353,7 @@
                                 <span class="boq-cell-with-icon">
                                     <i class="fas fa-calendar-check"></i>
 
-                                    {{ $sub->end_date?->format('d M Y')
+                                    {{ \App\Support\Format::date($sub->end_date, false)
                                         ?? 'Ongoing'
                                     }}
                                 </span>

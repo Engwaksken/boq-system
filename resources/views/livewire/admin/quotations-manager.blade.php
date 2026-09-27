@@ -26,9 +26,9 @@
                 <tr>
                     <td class="px-4 py-3 font-mono text-sm font-semibold">{{ $quotation->quote_number }}</td>
                     <td class="px-4 py-3 font-semibold">{{ $quotation->supplier?->name }}</td>
-                    <td class="px-4 py-3 text-sm">{{ $quotation->quotation_date?->format('Y-m-d') }}</td>
-                    <td class="px-4 py-3 text-sm">{{ $quotation->valid_until?->format('Y-m-d') ?: '—' }}</td>
-                    <td class="px-4 py-3 font-semibold">{{ $quotation->currency }} {{ number_format((float)$quotation->total_amount, 2) }}</td>
+                    <td class="px-4 py-3 text-sm">{{ \App\Support\Format::date($quotation->quotation_date, false) }}</td>
+                    <td class="px-4 py-3 text-sm">{{ \App\Support\Format::date($quotation->valid_until, false) ?: '—' }}</td>
+                    <td class="px-4 py-3 font-semibold">{{ $quotation->currency }} {{ \App\Support\Format::number((float)$quotation->total_amount, 2) }}</td>
                     <td class="px-4 py-3"><span class="rounded-full px-2 py-1 text-xs {{ match($quotation->status) { 'accepted' => 'bg-emerald-100 text-emerald-700', 'rejected' => 'bg-red-100 text-red-700', 'reviewed' => 'bg-sky-100 text-sky-700', 'expired' => 'bg-slate-100 text-slate-600', default => 'bg-amber-100 text-amber-700' } }}">{{ ucfirst($quotation->status) }}</span></td>
                     <td class="px-4 py-3 whitespace-nowrap">
                         <button wire:click="view({{ $quotation->id }})" class="mr-3 text-sm font-semibold text-emerald-700">Review</button>
@@ -48,7 +48,7 @@
     <div class="boq-modal-backdrop" x-data @keydown.escape.window="$wire.close()">
         <div class="boq-modal boq-modal-xl" @click.stop>
             <div class="boq-modal-head">
-                <div><h2 class="text-lg font-bold">{{ $viewing->quote_number }}</h2><p class="text-xs text-slate-500">From {{ $viewing->supplier?->name }} · {{ $viewing->currency }} · {{ $viewing->total_amount ? number_format((float)$viewing->total_amount, 2) : '—' }}</p></div>
+                <div><h2 class="text-lg font-bold">{{ $viewing->quote_number }}</h2><p class="text-xs text-slate-500">From {{ $viewing->supplier?->name }} · {{ $viewing->currency }} · {{ $viewing->total_amount ? \App\Support\Format::number((float)$viewing->total_amount, 2) : '—' }}</p></div>
                 <button type="button" wire:click="close" class="text-2xl leading-none text-slate-400 hover:text-slate-700">&times;</button>
             </div>
             <div class="boq-modal-body">
@@ -59,10 +59,10 @@
                         <tr>
                             <td class="px-3 py-2 text-sm font-semibold">{{ $item->product }}</td>
                             <td class="px-3 py-2 text-xs text-slate-500 max-w-xs truncated">{{ $item->description }}</td>
-                            <td class="px-3 py-2 text-sm">{{ number_format((float)$item->quantity, 2) }}</td>
+                            <td class="px-3 py-2 text-sm">{{ \App\Support\Format::number((float)$item->quantity, 2) }}</td>
                             <td class="px-3 py-2 text-sm">{{ $item->unit }}</td>
-                            <td class="px-3 py-2 text-sm">{{ number_format((float)$item->unit_price, 2) }}</td>
-                            <td class="px-3 py-2 text-sm font-semibold">{{ number_format((float)$item->line_total, 2) }}</td>
+                            <td class="px-3 py-2 text-sm">{{ \App\Support\Format::number((float)$item->unit_price, 2) }}</td>
+                            <td class="px-3 py-2 text-sm font-semibold">{{ \App\Support\Format::number((float)$item->line_total, 2) }}</td>
                             <td class="px-3 py-2"><input type="checkbox" @checked($item->approved) wire:change="preapproveLine({{ $item->id }})" @disabled(in_array($viewing->status, ['accepted','rejected']))></td>
                         </tr>
                     @endforeach

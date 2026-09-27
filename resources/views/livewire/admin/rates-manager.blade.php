@@ -213,10 +213,7 @@
 
                             <td class="text-right">
                                 <strong>
-                                    {{ number_format(
-                                        (float) $rate->rate,
-                                        2
-                                    ) }}
+                                    {{ \App\Support\Format::number((float) $rate->rate, 2) }}
                                 </strong>
                             </td>
 

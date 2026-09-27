@@ -441,10 +441,7 @@
                                 {{ $price->currency }}
 
                                 {{
-                                    number_format(
-                                        (float) $price->price,
-                                        0
-                                    )
+                                    \App\Support\Format::number((float) $price->price, 0)
                                 }}
                             </td>
 

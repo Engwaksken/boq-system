@@ -24,7 +24,7 @@
                     <td class="boq-check-col"><x-select-row :id="$version->id" /></td>
                     <td class="px-4 py-3"><div class="font-semibold">v{{ $version->version_number }}</div></td>
                     <td class="px-4 py-3"><div>{{ $version->name }}</div><div class="text-xs text-slate-500">{{ Str::limit($version->release_notes, 70) }}</div></td>
-                    <td class="px-4 py-3 text-sm">{{ $version->release_date?->toDateString() ?? '—' }}</td>
+                    <td class="px-4 py-3 text-sm">{{ \App\Support\Format::date($version->release_date) ?? '—' }}</td>
                     <td class="px-4 py-3"><span class="rounded-full px-2 py-1 text-xs {{ $version->classification === 'major' ? 'bg-amber-100 text-amber-700' : ($version->classification === 'minor' ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-600') }}">{{ ucfirst($version->classification) }}</span></td>
                     <td class="px-4 py-3 text-xs text-slate-600">{{ count($version->included_features ?? []) ? implode(', ', array_slice($version->included_features, 0, 3)).(count($version->included_features) > 3 ? '…' : '') : '—' }}</td>
                     <td class="px-4 py-3">{{ $version->requires_topup ? 'Top-up' : 'Included' }}</td>

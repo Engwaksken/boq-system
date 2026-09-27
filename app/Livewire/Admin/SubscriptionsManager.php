@@ -16,6 +16,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class SubscriptionsManager extends Component
 {
+    use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithBulkSelection;
     use WithPagination;
 
@@ -122,9 +123,19 @@ class SubscriptionsManager extends Component
                 'status' => $subscription->status === 'expired' ? 'active' : $subscription->status,
             ]);
 
+            $subscription->refresh();
+
+            // Entitlements carry their own expiry; keep them in step with the new period.
+            $changes = ['expires_at' => $subscription->grace_period_end_date ?? $subscription->end_date];
+
             if ($subscription->status === 'active') {
-                $subscription->entitlements()->where('status', 'expired')->update(['status' => 'active']);
+                $changes['status'] = 'active';
             }
+
+            $subscription->entitlements()
+                ->where('is_permanent', false)
+                ->whereIn('status', ['active', 'expired'])
+                ->update($changes);
         });
 
         session()->flash('message', "Subscription extended by {$this->extendDays} day(s).");

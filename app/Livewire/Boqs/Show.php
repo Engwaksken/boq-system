@@ -117,6 +117,17 @@ class Show extends Component
             'boq.edit'
         );
 
+        $gate = app(\App\Services\EntitlementGate::class);
+        $allowance = $gate->find($user, 'boq.import.excel', 'boq_imports');
+
+        if (! $user->isSuperAdmin() && ! $allowance) {
+            session()->flash('message', 'Your plan has no BOQ imports left. Upgrade or buy a top-up to generate this BOQ.');
+
+            $this->redirectRoute('subscriptions.index');
+
+            return;
+        }
+
         $batch = $processor->start(
             $boq,
             $user->id,
@@ -144,6 +155,10 @@ class Show extends Component
                 'location' =>
                     $batch->location,
             ];
+        }
+
+        if ($allowance && $batch->status !== 'failed') {
+            $gate->consume($allowance, 'boq_imports');
         }
 
         $this->refreshBoq();

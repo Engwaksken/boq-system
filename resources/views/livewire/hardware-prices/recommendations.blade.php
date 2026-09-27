@@ -54,25 +54,25 @@
 
                     <p class="mt-3 text-sm text-gray-500 line-clamp-2">{{ $rec['specification'] ?? '' }}</p>
 
-                    <p class="mt-4 text-xl font-bold text-gray-900">{{ number_format((float) $rec['price'], 2) }} {{ $rec['currency'] }}</p>
+                    <p class="mt-4 text-xl font-bold text-gray-900">{{ \App\Support\Format::number((float) $rec['price'], 2) }} {{ $rec['currency'] }}</p>
                     <p class="text-sm text-gray-500">{{ $rec['supplier'] ?? '' }} ? {{ $rec['location'] ?? '' }}</p>
 
                     <div class="mt-4 grid grid-cols-2 gap-2 text-xs border-t border-gray-100 pt-4">
                         <div>
                             <p class="text-gray-500">Lowest</p>
-                            <p class="font-medium text-gray-900">{{ isset($rec['price_history']['lowest']) ? number_format((float) $rec['price_history']['lowest'], 2) : '?' }}</p>
+                            <p class="font-medium text-gray-900">{{ isset($rec['price_history']['lowest']) ? \App\Support\Format::number((float) $rec['price_history']['lowest'], 2) : '?' }}</p>
                         </div>
                         <div>
                             <p class="text-gray-500">Highest</p>
-                            <p class="font-medium text-gray-900">{{ isset($rec['price_history']['highest']) ? number_format((float) $rec['price_history']['highest'], 2) : '?' }}</p>
+                            <p class="font-medium text-gray-900">{{ isset($rec['price_history']['highest']) ? \App\Support\Format::number((float) $rec['price_history']['highest'], 2) : '?' }}</p>
                         </div>
                         <div>
                             <p class="text-gray-500">Average</p>
-                            <p class="font-medium text-gray-900">{{ isset($rec['price_history']['average']) ? number_format((float) $rec['price_history']['average'], 2) : '?' }}</p>
+                            <p class="font-medium text-gray-900">{{ isset($rec['price_history']['average']) ? \App\Support\Format::number((float) $rec['price_history']['average'], 2) : '?' }}</p>
                         </div>
                         <div>
                             <p class="text-gray-500">Change</p>
-                            <p class="font-medium text-gray-900">{{ isset($rec['price_history']['change']) ? number_format((float) $rec['price_history']['change'], 2) : '?' }}</p>
+                            <p class="font-medium text-gray-900">{{ isset($rec['price_history']['change']) ? \App\Support\Format::number((float) $rec['price_history']['change'], 2) : '?' }}</p>
                         </div>
                     </div>
 

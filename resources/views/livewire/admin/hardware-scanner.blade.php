@@ -414,10 +414,7 @@
                                         }}
 
                                         {{
-                                            number_format(
-                                                $result['price'],
-                                                0
-                                            )
+                                            \App\Support\Format::number($result['price'], 0)
                                         }}
                                     </td>
 

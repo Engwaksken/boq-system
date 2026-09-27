@@ -10,10 +10,10 @@
 
 
     <div class="boq-stats-grid">
-        <x-stat-card label="Users" :value="number_format($stats['total_users'])" icon="fa-users" color="green" />
-        <x-stat-card label="Active Subscriptions" :value="number_format($stats['active_subscriptions'])" icon="fa-receipt" color="blue" />
-        <x-stat-card label="Active Plans" :value="number_format($stats['plans_count'])" icon="fa-layer-group" color="purple" />
-        <x-stat-card label="Successful Revenue" :value="'UGX '.number_format((float) $stats['total_revenue'], 0)" icon="fa-sack-dollar" color="amber" />
+        <x-stat-card label="Users" :value="\App\Support\Format::number($stats['total_users'], 0)" icon="fa-users" color="green" />
+        <x-stat-card label="Active Subscriptions" :value="\App\Support\Format::number($stats['active_subscriptions'], 0)" icon="fa-receipt" color="blue" />
+        <x-stat-card label="Active Plans" :value="\App\Support\Format::number($stats['plans_count'], 0)" icon="fa-layer-group" color="purple" />
+        <x-stat-card label="Successful Revenue" :value="'UGX '.\App\Support\Format::number((float) $stats['total_revenue'], 0)" icon="fa-sack-dollar" color="amber" />
     </div>
 
     <div class="boq-panel overflow-hidden">
@@ -42,7 +42,7 @@
                             <td class="px-4 py-3"><div class="font-semibold">{{ $sub->user?->name ?? 'Deleted user' }}</div><div class="text-xs text-slate-500">{{ $sub->user?->email }}</div></td>
                             <td class="px-4 py-3 text-sm">{{ $sub->plan?->name ?? '—' }}</td>
                             <td class="px-4 py-3 text-sm">{{ ucwords(str_replace('_',' ',$sub->status)) }}</td>
-                            <td class="px-4 py-3 text-sm text-slate-500">{{ $sub->start_date?->format('d M Y') ?? '—' }} – {{ $sub->end_date?->format('d M Y') ?? 'Ongoing' }}</td>
+                            <td class="px-4 py-3 text-sm text-slate-500">{{ \App\Support\Format::date($sub->start_date, false) ?? '—' }} – {{ \App\Support\Format::date($sub->end_date, false) ?? 'Ongoing' }}</td>
                         </tr>
                         @empty<tr><td colspan="4" class="p-8 text-center text-slate-500">No subscriptions found.</td></tr>@endforelse
                     </tbody>
@@ -56,7 +56,7 @@
                     <tbody class="divide-y divide-slate-100">
                     @forelse($plans as $plan)<tr>
                         <td class="px-4 py-3"><div class="font-semibold">{{ $plan->name }}</div><div class="text-xs text-slate-500">{{ $plan->code }}</div></td>
-                        <td class="px-4 py-3">{{ $plan->currency }} {{ number_format((float)$plan->price, 2) }}</td>
+                        <td class="px-4 py-3">{{ $plan->currency }} {{ \App\Support\Format::number((float)$plan->price, 2) }}</td>
                         <td class="px-4 py-3">{{ $plan->is_active ? 'Active' : 'Inactive' }}</td>
                     </tr>@empty<tr><td colspan="3" class="p-8 text-center text-slate-500">No plans found.</td></tr>@endforelse
                     </tbody>

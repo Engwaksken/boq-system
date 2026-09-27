@@ -206,14 +206,19 @@ class BoqController extends Controller
         abort_unless($this->canAccess($boq, $user->id, $user->organisation_id), 403);
         abort_unless($user->hasPermission('boq.edit'), 403);
         $location = $request->validate(['location' => ['required', 'string', 'max:255']])['location'];
-        foreach ($boq->items as $item) {
+        set_time_limit(300);
+
+        // Never overwrite rates a reviewer has already approved.
+        $items = $boq->items()->whereNull('approved_rate')->where('status', '!=', 'approved')->get();
+
+        foreach ($items as $item) {
             $result = $gemini->suggest(['description' => $item->description, 'unit' => $item->unit], $location, $item->currency);
             $item->update(['ai_suggested_rate' => $result['suggested_rate'], 'reviewed_rate' => null, 'approved_rate' => null, 'location' => $location, 'ai_confidence' => $result['confidence'] ?? null, 'pricing_source' => config('services.ai_provider'), 'pricing_date' => now(), 'status' => 'pending', 'reviewed_by' => null, 'reviewed_at' => null, 'approved_by' => null, 'approved_at' => null, 'rejected_by' => null, 'rejected_at' => null, 'rejection_reason' => null]);
             BoqItemPriceSuggestion::create(['boq_item_id' => $item->id, 'location' => $location, 'suggested_rate' => $result['suggested_rate'], 'confidence' => $result['confidence'] ?? null, 'explanation' => $result['explanation'] ?? null, 'currency' => $item->currency]);
         }
         $boq->update(['status' => 'under_review']);
 
-        return response()->json(['success' => true, 'data' => ['items_priced' => $boq->items->count()]]);
+        return response()->json(['success' => true, 'data' => ['items_priced' => $items->count()]]);
     }
 
     public function price(Request $request, BoqItem $boqItem, GeminiPricingService $gemini): JsonResponse

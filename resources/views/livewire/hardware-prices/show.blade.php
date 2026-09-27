@@ -18,7 +18,7 @@
         <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
             <div>
                 <p class="text-sm text-gray-500">{{ $hardwarePrice->brand }}</p>
-                <p class="mt-1 text-3xl font-bold text-gray-900">{{ number_format((float) $hardwarePrice->price, 2) }} {{ $hardwarePrice->currency }}</p>
+                <p class="mt-1 text-3xl font-bold text-gray-900">{{ \App\Support\Format::number((float) $hardwarePrice->price, 2) }} {{ $hardwarePrice->currency }}</p>
                 <p class="mt-1 text-sm text-gray-500">per {{ $hardwarePrice->unit }}</p>
             </div>
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
@@ -40,7 +40,7 @@
                 </div>
                 <div>
                     <dt class="font-medium text-gray-500">Fetched At</dt>
-                    <dd class="mt-1 text-gray-900">{{ $hardwarePrice->fetched_at?->format('M d, Y H:i') }}</dd>
+                    <dd class="mt-1 text-gray-900">{{ \App\Support\Format::date($hardwarePrice->fetched_at, true) }}</dd>
                 </div>
             </dl>
         </div>
@@ -53,13 +53,13 @@
     @endphp
 
     <div class="boq-stats-grid mb-6">
-        <x-stat-card label="Lowest Price" :value="number_format((float) $hardwarePrice->lowest_price, 2)" icon="fa-arrow-down" color="green" />
-        <x-stat-card label="Highest Price" :value="number_format((float) $hardwarePrice->highest_price, 2)" icon="fa-arrow-up" color="red" />
-        <x-stat-card label="Average Price" :value="number_format((float) $hardwarePrice->average_price, 2)" icon="fa-scale-balanced" color="blue" />
+        <x-stat-card label="Lowest Price" :value="\App\Support\Format::number((float) $hardwarePrice->lowest_price, 2)" icon="fa-arrow-down" color="green" />
+        <x-stat-card label="Highest Price" :value="\App\Support\Format::number((float) $hardwarePrice->highest_price, 2)" icon="fa-arrow-up" color="red" />
+        <x-stat-card label="Average Price" :value="\App\Support\Format::number((float) $hardwarePrice->average_price, 2)" icon="fa-scale-balanced" color="blue" />
         <x-stat-card
             label="Price Change"
-            :value="$priceChange !== null ? number_format((float) $priceChange, 2) : '—'"
-            :hint="$priceChangePercent !== null ? number_format((float) $priceChangePercent, 2).'%' : null"
+            :value="$priceChange !== null ? \App\Support\Format::number((float) $priceChange, 2) : '—'"
+            :hint="$priceChangePercent !== null ? \App\Support\Format::number((float) $priceChangePercent, 2).'%' : null"
             icon="fa-chart-line"
             :color="$priceChange !== null && (float) $priceChange < 0 ? 'green' : 'amber'"
         />
@@ -85,8 +85,8 @@
                 <tbody class="divide-y divide-gray-200 bg-white">
                     @foreach($hardwarePrice->priceHistories as $history)
                         <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3 text-sm text-gray-700">{{ $history->recorded_at?->format('M d, Y H:i') }}</td>
-                            <td class="px-4 py-3 text-sm text-right font-medium text-gray-900">{{ number_format((float) $history->price, 2) }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-700">{{ \App\Support\Format::date($history->recorded_at, true) }}</td>
+                            <td class="px-4 py-3 text-sm text-right font-medium text-gray-900">{{ \App\Support\Format::number((float) $history->price, 2) }}</td>
                             <td class="px-4 py-3 text-sm text-gray-700">{{ $history->currency }}</td>
                             <td class="px-4 py-3 text-sm text-gray-700">{{ $history->supplier }}</td>
                             <td class="px-4 py-3 text-sm text-gray-700">{{ $history->location }}</td>

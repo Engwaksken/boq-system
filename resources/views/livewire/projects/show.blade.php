@@ -71,15 +71,15 @@
                 </div>
                 <div>
                     <dt class="text-sm font-medium text-gray-500">Start Date</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $project->start_date?->format('M d, Y') ?? '?' }}</dd>
+                    <dd class="mt-1 text-sm text-gray-900">{{ \App\Support\Format::date($project->start_date, false) ?? '?' }}</dd>
                 </div>
                 <div>
                     <dt class="text-sm font-medium text-gray-500">Expected Completion</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $project->expected_completion_date?->format('M d, Y') ?? '?' }}</dd>
+                    <dd class="mt-1 text-sm text-gray-900">{{ \App\Support\Format::date($project->expected_completion_date, false) ?? '?' }}</dd>
                 </div>
                 <div>
                     <dt class="text-sm font-medium text-gray-500">Contract Value</dt>
-                    <dd class="mt-1 text-sm font-semibold text-gray-900">{{ number_format((float) $project->contract_value, 2) }} {{ $project->currency }}</dd>
+                    <dd class="mt-1 text-sm font-semibold text-gray-900">{{ \App\Support\Format::number((float) $project->contract_value, 2) }} {{ $project->currency }}</dd>
                 </div>
                 <div>
                     <dt class="text-sm font-medium text-gray-500">Currency</dt>

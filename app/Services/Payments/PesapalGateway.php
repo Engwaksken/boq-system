@@ -21,7 +21,7 @@ class PesapalGateway implements PaymentGatewayInterface
                 'currency' => $transaction->currency,
                 'amount' => (float) $transaction->amount,
                 'description' => 'BOQ subscription payment',
-                'callback_url' => $this->config['callback_url'] ?? url('/'),
+                'callback_url' => $transaction->metadata['return_url'] ?? $this->config['callback_url'] ?? url('/'),
                 'notification_id' => $notificationId,
                 'branch' => $this->config['branch'] ?? 'Online',
                 'billing_address' => [

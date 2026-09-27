@@ -36,7 +36,7 @@ class IoTecPayGateway implements PaymentGatewayInterface
             'payeeNote' => (string) ($this->config['payee_note'] ?? $transaction->reference),
             'channel' => (string) ($this->config['channel'] ?? 'BOQ'),
             'transactionChargesCategory' => (string) ($this->config['transaction_charges_category'] ?? 'ChargeWallet'),
-            'redirectUrl' => $this->redirectUrl(),
+            'redirectUrl' => $transaction->metadata['return_url'] ?? $this->redirectUrl(),
         ];
 
         // Mobile collection can optionally carry a network/channel hint supplied by the app.
