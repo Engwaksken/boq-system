@@ -14,6 +14,14 @@ Schedule::command('hardware:fetch-daily --limit=3')
     ->timezone(App\Support\Regional::timezone())
     ->withoutOverlapping();
 
+// Works on hosting without a supervisor-managed worker: the per-minute cron drains
+// the queue (BOQ generation, pricing jobs). A dedicated `queue:work` process is still
+// preferred when available.
+Schedule::command('queue:work --stop-when-empty --max-time=55 --tries=3')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground();
+
 Schedule::command('subscriptions:expire')
     ->hourly()
     ->withoutOverlapping();

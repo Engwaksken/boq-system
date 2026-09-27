@@ -69,9 +69,50 @@ class Create extends Component
             'source_file_path' => $path,
         ]);
 
-        session()->flash('status', 'BOQ uploaded successfully.');
+        session()->flash('status', $this->importNow($boq, $user));
 
         $this->redirectRoute('boqs.show', $boq);
+    }
+
+    /**
+     * Excel/CSV rows are imported immediately (no AI needed), using one BOQ import
+     * from the plan, the same as the API's process endpoint. PDFs and scans are
+     * extracted later with "Generate BOQ".
+     */
+    private function importNow(Boq $boq, $user): string
+    {
+        if ($boq->source_type !== 'excel') {
+            return 'BOQ uploaded. Press "Generate BOQ" to extract the items from this document.';
+        }
+
+        $gate = app(\App\Services\EntitlementGate::class);
+        $allowance = $gate->find($user, 'boq.import.excel', 'boq_imports');
+
+        if (! $user->isSuperAdmin() && ! $allowance) {
+            return 'BOQ uploaded, but your plan has no BOQ imports left. Upgrade or buy a top-up, then press "Generate BOQ".';
+        }
+
+        try {
+            $count = app(\App\Services\BoqSpreadsheetImporter::class)->import($boq);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return 'BOQ uploaded, but the items could not be read: '.collect($e->errors())->flatten()->first();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return 'BOQ uploaded, but the items could not be read. Check the file layout and try "Generate BOQ".';
+        }
+
+        if ($count === 0) {
+            return 'BOQ uploaded, but no item rows were found. Check that the sheet has Description, Unit, Quantity and Rate columns.';
+        }
+
+        $boq->update(['status' => 'under_review']);
+
+        if ($allowance) {
+            $gate->consume($allowance, 'boq_imports');
+        }
+
+        return "BOQ uploaded and {$count} item(s) imported. Press \"Generate BOQ\" to price them.";
     }
 
     public function render()

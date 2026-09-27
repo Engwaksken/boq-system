@@ -460,6 +460,7 @@
     "Prices": "Prices",
     "Pricing Location": "Pricing Location",
     "Privacy Policy": "Privacy Policy",
+    "Processing has not started yet. The server processes queued work every minute; if this stays for more than a few minutes, ask your administrator to check the scheduler/queue (see /health).": "Processing has not started yet. The server processes queued work every minute; if this stays for more than a few minutes, ask your administrator to check the scheduler/queue (see /health).",
     "Processing...": "Processing...",
     "Product Versions": "Product Versions",
     "Profile": "Profile",

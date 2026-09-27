@@ -119,6 +119,22 @@
     @enderror
 
 
+    @foreach(['status' => 'boq-flash', 'message' => 'boq-flash boq-flash-warning'] as $flashKey => $flashClass)
+        @if(session($flashKey))
+            <div class="{{ $flashClass }} mb-4">
+                <i class="fas fa-circle-info"></i>
+                {{ session($flashKey) }}
+            </div>
+        @endif
+    @endforeach
+
+    @if($isProcessing && $processingBatch && $processingBatch->status === 'queued' && $processingBatch->created_at?->lt(now()->subMinutes(2)))
+        <div class="boq-flash boq-flash-warning mb-4" role="alert">
+            <i class="fas fa-triangle-exclamation"></i>
+            {{ __('Processing has not started yet. The server processes queued work every minute; if this stays for more than a few minutes, ask your administrator to check the scheduler/queue (see /health).') }}
+        </div>
+    @endif
+
     @if($isProcessing && $processingBatch)
 
         <div class="mb-6 rounded-xl border border-indigo-200 bg-indigo-50 p-4">

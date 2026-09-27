@@ -118,9 +118,11 @@ class Show extends Component
         );
 
         $gate = app(\App\Services\EntitlementGate::class);
-        $allowance = $gate->find($user, 'boq.import.excel', 'boq_imports');
+        // Items already imported (e.g. a spreadsheet on upload) cost no further import.
+        $needsExtraction = ! $boq->items()->exists();
+        $allowance = $needsExtraction ? $gate->find($user, 'boq.import.excel', 'boq_imports') : null;
 
-        if (! $user->isSuperAdmin() && ! $allowance) {
+        if ($needsExtraction && ! $user->isSuperAdmin() && ! $allowance) {
             session()->flash('message', 'Your plan has no BOQ imports left. Upgrade or buy a top-up to generate this BOQ.');
 
             $this->redirectRoute('subscriptions.index');
