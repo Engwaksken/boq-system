@@ -7,9 +7,9 @@
         <div class="flex items-center gap-2">
             <a href="{{ url('/hardware-prices') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition">
                 <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-                Back
+                {{ __('Back') }}
             </a>
-            <a href="{{ url('/hardware-prices/compare') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition">Compare</a>
+            <a href="{{ url('/hardware-prices/compare') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition">{{ __('Compare') }}</a>
         </div>
     </div>
 
@@ -23,23 +23,23 @@
             </div>
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                 <div>
-                    <dt class="font-medium text-gray-500">Specification</dt>
+                    <dt class="font-medium text-gray-500">{{ __('Specification') }}</dt>
                     <dd class="mt-1 text-gray-900">{{ $hardwarePrice->specification ?? '?' }}</dd>
                 </div>
                 <div>
-                    <dt class="font-medium text-gray-500">Supplier</dt>
+                    <dt class="font-medium text-gray-500">{{ __('Supplier') }}</dt>
                     <dd class="mt-1 text-gray-900">{{ $hardwarePrice->supplier ?? '?' }}</dd>
                 </div>
                 <div>
-                    <dt class="font-medium text-gray-500">Location</dt>
+                    <dt class="font-medium text-gray-500">{{ __('Location') }}</dt>
                     <dd class="mt-1 text-gray-900">{{ $hardwarePrice->location ?? '?' }}</dd>
                 </div>
                 <div>
-                    <dt class="font-medium text-gray-500">Source Reference</dt>
+                    <dt class="font-medium text-gray-500">{{ __('Source Reference') }}</dt>
                     <dd class="mt-1 text-gray-900">{{ $hardwarePrice->source_reference ?? '?' }}</dd>
                 </div>
                 <div>
-                    <dt class="font-medium text-gray-500">Fetched At</dt>
+                    <dt class="font-medium text-gray-500">{{ __('Fetched At') }}</dt>
                     <dd class="mt-1 text-gray-900">{{ \App\Support\Format::date($hardwarePrice->fetched_at, true) }}</dd>
                 </div>
             </dl>
@@ -68,18 +68,18 @@
     {{-- Price History --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900">Price History</h2>
+            <h2 class="text-lg font-semibold text-gray-900">{{ __('Price History') }}</h2>
         </div>
 
         @if($hardwarePrice->priceHistories->isNotEmpty())
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Recorded At</th>
-                        <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Currency</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Supplier</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Recorded At') }}</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Price') }}</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Currency') }}</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Supplier') }}</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Location') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">
@@ -96,7 +96,7 @@
             </table>
         @else
             <div class="text-center py-12">
-                <p class="text-gray-500">No price history recorded yet.</p>
+                <p class="text-gray-500">{{ __('No price history recorded yet.') }}</p>
             </div>
         @endif
     </div>

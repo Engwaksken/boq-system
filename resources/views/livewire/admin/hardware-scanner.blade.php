@@ -6,11 +6,11 @@
 
             <h1 class="boq-page-title">
                 <i class="fas fa-magnifying-glass-dollar"></i>
-                Price Scanner
+                {{ __('Price Scanner') }}
             </h1>
 
             <p class="boq-page-subtitle">
-                Scan hardware market prices or factory/manufacturer prices for any construction category.
+                {{ __('Scan hardware market prices or factory/manufacturer prices for any construction category.') }}
             </p>
 
         </div>
@@ -23,7 +23,7 @@
                 class="boq-btn-secondary"
             >
                 <i class="fas fa-folder-plus"></i>
-                Add Category
+                {{ __('Add Category') }}
             </button>
 
             <button
@@ -32,7 +32,7 @@
                 class="boq-btn-secondary"
             >
                 <i class="fas fa-file-arrow-down"></i>
-                CSV Template
+                {{ __('CSV Template') }}
             </button>
 
         </div>
@@ -96,7 +96,7 @@
 
             <div>
                 <p class="boq-stat-label">
-                    Categories
+                    {{ __('Categories') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -114,7 +114,7 @@
 
             <div>
                 <p class="boq-stat-label">
-                    Hardware Prices
+                    {{ __('Hardware Prices') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -132,7 +132,7 @@
 
             <div>
                 <p class="boq-stat-label">
-                    Factory Prices
+                    {{ __('Factory Prices') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -150,7 +150,7 @@
 
             <div>
                 <p class="boq-stat-label">
-                    Active Prices
+                    {{ __('Active Prices') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -176,11 +176,11 @@
 
                 <h2>
                     <i class="fas fa-robot"></i>
-                    AI Price Scanner
+                    {{ __('AI Price Scanner') }}
                 </h2>
 
                 <p>
-                    Select whether the AI should research hardware supplier prices or direct factory/manufacturer prices.
+                    {{ __('Select whether the AI should research hardware supplier prices or direct factory/manufacturer prices.') }}
                 </p>
 
             </div>
@@ -196,7 +196,7 @@
                 <div>
 
                     <label class="boq-field-label">
-                        Price Type
+                        {{ __('Price Type') }}
                     </label>
 
                     <select
@@ -204,11 +204,11 @@
                         class="boq-field"
                     >
                         <option value="hardware">
-                            Hardware Prices
+                            {{ __('Hardware Prices') }}
                         </option>
 
                         <option value="factory">
-                            Factory Prices
+                            {{ __('Factory Prices') }}
                         </option>
                     </select>
 
@@ -223,7 +223,7 @@
                 <div>
 
                     <label class="boq-field-label">
-                        Category
+                        {{ __('Category') }}
                     </label>
 
                     <select
@@ -231,7 +231,7 @@
                         class="boq-field"
                     >
                         <option value="">
-                            Select category...
+                            {{ __('Select category...') }}
                         </option>
 
                         @foreach(
@@ -259,13 +259,13 @@
                 <div>
 
                     <label class="boq-field-label">
-                        Location
+                        {{ __('Location') }}
                     </label>
 
                     <input
                         wire:model="scanForm.location"
                         class="boq-field"
-                        placeholder="e.g. city, town or market"
+                        placeholder="{{ __('e.g. city, town or market') }}"
                     >
 
                     @error('scanForm.location')
@@ -279,7 +279,7 @@
                 <div>
 
                     <label class="boq-field-label">
-                        Items to Scan
+                        {{ __('Items to Scan') }}
                     </label>
 
                     <input placeholder="e.g. 10"
@@ -325,14 +325,14 @@
                         wire:loading.remove
                         wire:target="scanPrices"
                     >
-                        Scan Prices
+                        {{ __('Scan Prices') }}
                     </span>
 
                     <span
                         wire:loading
                         wire:target="scanPrices"
                     >
-                        Scanning...
+                        {{ __('Scanning...') }}
                     </span>
 
                 </button>
@@ -356,11 +356,11 @@
 
                         <thead>
                             <tr>
-                                <th>Item</th>
-                                <th>Type</th>
-                                <th>Supplier / Factory</th>
-                                <th>Price</th>
-                                <th>Status</th>
+                                <th>{{ __('Item') }}</th>
+                                <th>{{ __('Type') }}</th>
+                                <th>{{ __('Supplier / Factory') }}</th>
+                                <th>{{ __('Price') }}</th>
+                                <th>{{ __('Status') }}</th>
                             </tr>
                         </thead>
 
@@ -460,11 +460,11 @@
 
                 <h2>
                     <i class="fas fa-folder-tree"></i>
-                    Price Categories
+                    {{ __('Price Categories') }}
                 </h2>
 
                 <p>
-                    Categories are shared by Hardware Prices and Factory Prices.
+                    {{ __('Categories are shared by Hardware Prices and Factory Prices.') }}
                 </p>
 
             </div>
@@ -475,7 +475,7 @@
                 class="boq-btn-primary"
             >
                 <i class="fas fa-plus"></i>
-                Add Category
+                {{ __('Add Category') }}
             </button>
 
         </div>
@@ -486,13 +486,13 @@
 
                 <thead>
                     <tr>
-                        <th>Category</th>
-                        <th>Default Items</th>
-                        <th>Prices</th>
-                        <th>Status</th>
-                        <th>Order</th>
+                        <th>{{ __('Category') }}</th>
+                        <th>{{ __('Default Items') }}</th>
+                        <th>{{ __('Prices') }}</th>
+                        <th>{{ __('Status') }}</th>
+                        <th>{{ __('Order') }}</th>
                         <th class="text-right">
-                            Actions
+                            {{ __('Actions') }}
                         </th>
                     </tr>
                 </thead>
@@ -565,7 +565,7 @@
                                         type="button"
                                         wire:click="editCategory({{ $category->id }})"
                                         class="boq-icon-btn"
-                                        title="Edit"
+                                        title="{{ __('Edit') }}"
                                     >
                                         <i class="fas fa-pen"></i>
                                     </button>
@@ -591,7 +591,7 @@
                                         type="button"
                                         wire:click="confirmDeleteCategory({{ $category->id }})"
                                         class="boq-icon-btn boq-icon-danger"
-                                        title="Delete"
+                                        title="{{ __('Delete') }}"
                                     >
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -610,7 +610,7 @@
                                 class="boq-empty-table"
                             >
                                 <i class="fas fa-folder-open"></i>
-                                No price categories configured.
+                                {{ __('No price categories configured.') }}
                             </td>
                         </tr>
 
@@ -646,7 +646,7 @@
                         </h2>
 
                         <p class="boq-table-subtitle">
-                            Default items are used by both hardware and factory price scans.
+                            {{ __('Default items are used by both hardware and factory price scans.') }}
                         </p>
 
                     </div>
@@ -672,13 +672,13 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Category Name
+                                    {{ __('Category Name') }}
                                 </label>
 
                                 <input
                                     wire:model="categoryForm.name"
                                     class="boq-field"
-                                    placeholder="e.g. Doors & Windows"
+                                    placeholder="{{ __('e.g. Doors & Windows') }}"
                                 >
 
                                 @error('categoryForm.name')
@@ -692,7 +692,7 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Sort Order
+                                    {{ __('Sort Order') }}
                                 </label>
 
                                 <input placeholder="e.g. 10"
@@ -707,13 +707,13 @@
                             <div class="boq-form-span-2">
 
                                 <label class="boq-field-label">
-                                    Description
+                                    {{ __('Description') }}
                                 </label>
 
                                 <textarea
                                     wire:model="categoryForm.description"
                                     class="boq-field"
-                                    placeholder="Short description"
+                                    placeholder="{{ __('Short description') }}"
                                 ></textarea>
 
                             </div>
@@ -721,13 +721,13 @@
                             <div class="boq-form-span-2">
 
                                 <label class="boq-field-label">
-                                    Default Items
+                                    {{ __('Default Items') }}
                                 </label>
 
                                 <textarea
                                     wire:model="categoryForm.default_items"
                                     class="boq-field"
-                                    placeholder="Door frames, Timber doors, Aluminium windows"
+                                    placeholder="{{ __('Door frames, Timber doors, Aluminium windows') }}"
                                 ></textarea>
 
                             </div>
@@ -740,7 +740,7 @@
                                         wire:model="categoryForm.is_active"
                                     >
 
-                                    Active category
+                                    {{ __('Active category') }}
                                 </label>
 
                             </div>
@@ -756,7 +756,7 @@
                             wire:click="cancelCategory"
                             class="boq-btn-secondary"
                         >
-                            Cancel
+                            {{ __('Cancel') }}
                         </button>
 
                         <button
@@ -764,7 +764,7 @@
                             class="boq-btn-primary"
                         >
                             <i class="fas fa-save"></i>
-                            Save Category
+                            {{ __('Save Category') }}
                         </button>
 
                     </div>
@@ -790,14 +790,14 @@
 
                 <div class="boq-modal-head">
                     <h2>
-                        Delete price category?
+                        {{ __('Delete price category?') }}
                     </h2>
                 </div>
 
                 <div class="boq-modal-body">
 
                     <p class="boq-modal-message">
-                        This category can only be deleted when no hardware or factory prices use it. Otherwise deactivate it.
+                        {{ __('This category can only be deleted when no hardware or factory prices use it. Otherwise deactivate it.') }}
                     </p>
 
                 </div>
@@ -809,7 +809,7 @@
                         wire:click="$set('showDeleteCategoryModal', false)"
                         class="boq-btn-secondary"
                     >
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
 
                     <button
@@ -818,7 +818,7 @@
                         class="boq-btn-danger"
                     >
                         <i class="fas fa-trash"></i>
-                        Delete
+                        {{ __('Delete') }}
                     </button>
 
                 </div>

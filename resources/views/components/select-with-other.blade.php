@@ -24,7 +24,7 @@
         @foreach($options as $option)
             <option value="{{ $option }}">{{ $option }}</option>
         @endforeach
-        <option value="__other__">Other…</option>
+        <option value="__other__">{{ __('Other…') }}</option>
     </select>
 
     @if($current === '__other__')

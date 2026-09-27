@@ -33,7 +33,7 @@
                 class="boq-btn-secondary"
             >
                 <i class="fas fa-arrow-left"></i>
-                Back
+                {{ __('Back') }}
             </a>
 
             @if(isset($pdfUrl) && $pdfUrl)
@@ -43,7 +43,7 @@
                     class="boq-btn-secondary"
                 >
                     <i class="fas fa-file-pdf"></i>
-                    Download PDF
+                    {{ __('Download PDF') }}
                 </a>
             @endif
 
@@ -84,14 +84,14 @@
                         wire:loading.remove
                         wire:target="generateBoq"
                     >
-                        Generate BOQ
+                        {{ __('Generate BOQ') }}
                     </span>
 
                     <span
                         wire:loading
                         wire:target="generateBoq"
                     >
-                        Generating...
+                        {{ __('Generating...') }}
                     </span>
                 </button>
             @endif
@@ -206,7 +206,7 @@
 
         <div class="boq-flash mb-4">
 
-            BOQ generated using current prices for
+            {{ __('BOQ generated using current prices for') }}
 
             <strong>
                 {{ $generationSummary['location'] }}
@@ -230,7 +230,7 @@
 
             <div>
                 <dt class="text-sm font-medium text-gray-500">
-                    Project
+                    {{ __('Project') }}
                 </dt>
 
                 <dd class="mt-1 text-sm text-gray-900">
@@ -240,7 +240,7 @@
 
             <div>
                 <dt class="text-sm font-medium text-gray-500">
-                    Currency
+                    {{ __('Currency') }}
                 </dt>
 
                 <dd class="mt-1 text-sm text-gray-900">
@@ -250,7 +250,7 @@
 
             <div>
                 <dt class="text-sm font-medium text-gray-500">
-                    Version
+                    {{ __('Version') }}
                 </dt>
 
                 <dd class="mt-1 text-sm text-gray-900">
@@ -260,7 +260,7 @@
 
             <div>
                 <dt class="text-sm font-medium text-gray-500">
-                    Source Type
+                    {{ __('Source Type') }}
                 </dt>
 
                 <dd class="mt-1 text-sm text-gray-900">
@@ -270,7 +270,7 @@
 
             <div>
                 <dt class="text-sm font-medium text-gray-500">
-                    Pricing Location
+                    {{ __('Pricing Location') }}
                 </dt>
 
                 <dd class="mt-1 text-sm text-gray-900">
@@ -288,7 +288,7 @@
                 <div class="md:col-span-4">
 
                     <dt class="text-sm font-medium text-gray-500">
-                        Description
+                        {{ __('Description') }}
                     </dt>
 
                     <dd class="mt-1 text-sm text-gray-900">
@@ -371,7 +371,7 @@
             </div>
 
             <p class="text-xs text-gray-500">
-                Suggested rates require review before approval.
+                {{ __('Suggested rates require review before approval.') }}
             </p>
 
         </div>
@@ -393,7 +393,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Search Items
+                    {{ __('Search Items') }}
                 </label>
 
                 <div class="boq-input-icon-wrap">
@@ -404,7 +404,7 @@
                         type="search"
                         wire:model.live.debounce.300ms="itemSearch"
                         class="boq-field boq-field-with-icon"
-                        placeholder="Search item code, description or unit..."
+                        placeholder="{{ __('Search item code, description or unit...') }}"
                     >
 
                 </div>
@@ -415,7 +415,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Status
+                    {{ __('Status') }}
                 </label>
 
                 <select
@@ -424,31 +424,31 @@
                 >
 
                     <option value="all">
-                        All Items
+                        {{ __('All Items') }}
                     </option>
 
                     <option value="matched">
-                        Matched
+                        {{ __('Matched') }}
                     </option>
 
                     <option value="unmatched">
-                        Unmatched
+                        {{ __('Unmatched') }}
                     </option>
 
                     <option value="pending">
-                        Pending
+                        {{ __('Pending') }}
                     </option>
 
                     <option value="reviewed">
-                        Reviewed
+                        {{ __('Reviewed') }}
                     </option>
 
                     <option value="approved">
-                        Approved
+                        {{ __('Approved') }}
                     </option>
 
                     <option value="rejected">
-                        Rejected
+                        {{ __('Rejected') }}
                     </option>
 
                 </select>
@@ -459,7 +459,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Rows
+                    {{ __('Rows') }}
                 </label>
 
                 <select
@@ -496,7 +496,7 @@
                         class="boq-btn-secondary"
                     >
                         <i class="fas fa-filter-circle-xmark"></i>
-                        Clear
+                        {{ __('Clear') }}
                     </button>
 
                 @endif
@@ -517,47 +517,47 @@
                         <tr>
 
                             <th>
-                                Item Code
+                                {{ __('Item Code') }}
                             </th>
 
                             <th>
-                                Description
+                                {{ __('Description') }}
                             </th>
 
                             <th>
-                                Unit
+                                {{ __('Unit') }}
                             </th>
 
                             <th class="text-right">
-                                Qty
+                                {{ __('Qty') }}
                             </th>
 
                             <th class="text-right">
-                                Original
+                                {{ __('Original') }}
                             </th>
 
                             <th class="text-right">
-                                Suggested
+                                {{ __('Suggested') }}
                             </th>
 
                             <th class="text-right">
-                                Reviewed
+                                {{ __('Reviewed') }}
                             </th>
 
                             <th class="text-right">
-                                Approved
+                                {{ __('Approved') }}
                             </th>
 
                             <th class="text-right">
-                                Amount
+                                {{ __('Amount') }}
                             </th>
 
                             <th>
-                                Status
+                                {{ __('Status') }}
                             </th>
 
                             <th class="text-right">
-                                Actions
+                                {{ __('Actions') }}
                             </th>
 
                         </tr>
@@ -744,7 +744,7 @@
                                                 wire:click="startReview({{ $item->id }})"
                                                 type="button"
                                                 class="boq-icon-btn"
-                                                title="Review"
+                                                title="{{ __('Review') }}"
                                             >
                                                 <i class="fas fa-pen"></i>
                                             </button>
@@ -753,7 +753,7 @@
                                                 wire:click="startReject({{ $item->id }})"
                                                 type="button"
                                                 class="boq-icon-btn boq-icon-danger"
-                                                title="Reject"
+                                                title="{{ __('Reject') }}"
                                             >
                                                 <i class="fas fa-xmark"></i>
                                             </button>
@@ -772,7 +772,7 @@
                                                 wire:target="approveItem({{ $item->id }})"
                                                 type="button"
                                                 class="boq-icon-btn"
-                                                title="Approve"
+                                                title="{{ __('Approve') }}"
                                             >
                                                 <i class="fas fa-check"></i>
                                             </button>
@@ -815,7 +815,7 @@
                                                             color:#0f172a;
                                                         "
                                                     >
-                                                        Match a current price
+                                                        {{ __('Match a current price') }}
                                                     </h3>
 
                                                     <p class="boq-table-subtitle">
@@ -831,7 +831,7 @@
                                                     type="button"
                                                     class="boq-btn-secondary"
                                                 >
-                                                    Close
+                                                    {{ __('Close') }}
                                                 </button>
 
                                             </div>
@@ -842,7 +842,7 @@
                                                 <div style="margin-top:1rem">
 
                                                     <div class="boq-field-label">
-                                                        Automatic Candidates
+                                                        {{ __('Automatic Candidates') }}
                                                     </div>
 
                                                     <div
@@ -912,7 +912,7 @@
                                                                         type="button"
                                                                         class="boq-btn-primary"
                                                                     >
-                                                                        Select
+                                                                        {{ __('Select') }}
                                                                     </button>
 
                                                                 </div>
@@ -940,7 +940,7 @@
                                                     for="price-search-{{ $item->id }}"
                                                     class="boq-field-label"
                                                 >
-                                                    Search Active Prices
+                                                    {{ __('Search Active Prices') }}
                                                 </label>
 
                                                 <input
@@ -949,7 +949,7 @@
                                                     type="search"
                                                     maxlength="100"
                                                     class="boq-field"
-                                                    placeholder="Search item, brand, specification, category or supplier"
+                                                    placeholder="{{ __('Search item, brand, specification, category or supplier') }}"
                                                 >
 
                                             </div>
@@ -1025,7 +1025,7 @@
                                                                 type="button"
                                                                 class="boq-btn-primary"
                                                             >
-                                                                Select
+                                                                {{ __('Select') }}
                                                             </button>
 
                                                         </div>
@@ -1042,7 +1042,7 @@
                                                             color:#64748b;
                                                         "
                                                     >
-                                                        No active prices match this search.
+                                                        {{ __('No active prices match this search.') }}
                                                     </div>
 
                                                 @endforelse
@@ -1081,7 +1081,7 @@
                                                     for="manual-rate-{{ $item->id }}"
                                                     class="boq-field-label"
                                                 >
-                                                    Reviewed Rate
+                                                    {{ __('Reviewed Rate') }}
                                                 </label>
 
                                                 <input placeholder="0.00"
@@ -1108,7 +1108,7 @@
                                                     for="review-notes-{{ $item->id }}"
                                                     class="boq-field-label"
                                                 >
-                                                    Review Notes
+                                                    {{ __('Review Notes') }}
                                                 </label>
 
                                                 <input
@@ -1117,7 +1117,7 @@
                                                     type="text"
                                                     maxlength="2000"
                                                     class="boq-field"
-                                                    placeholder="Reason or supporting context"
+                                                    placeholder="{{ __('Reason or supporting context') }}"
                                                 >
 
                                             </div>
@@ -1137,7 +1137,7 @@
                                                         type="button"
                                                         class="boq-btn-secondary"
                                                     >
-                                                        Use Suggested
+                                                        {{ __('Use Suggested') }}
                                                     </button>
 
                                                 @endif
@@ -1147,7 +1147,7 @@
                                                     type="button"
                                                     class="boq-btn-primary"
                                                 >
-                                                    Save Review
+                                                    {{ __('Save Review') }}
                                                 </button>
 
                                                 <button
@@ -1155,7 +1155,7 @@
                                                     type="button"
                                                     class="boq-btn-secondary"
                                                 >
-                                                    Cancel
+                                                    {{ __('Cancel') }}
                                                 </button>
 
                                             </div>
@@ -1182,7 +1182,7 @@
                                                 for="rejection-reason-{{ $item->id }}"
                                                 class="boq-field-label"
                                             >
-                                                Rejection Reason
+                                                {{ __('Rejection Reason') }}
                                             </label>
 
                                             <textarea
@@ -1191,7 +1191,7 @@
                                                 rows="2"
                                                 maxlength="2000"
                                                 class="boq-field boq-textarea"
-                                                placeholder="Explain why this item is rejected"
+                                                placeholder="{{ __('Explain why this item is rejected') }}"
                                             ></textarea>
 
                                             @error('rejectionReason')
@@ -1216,7 +1216,7 @@
                                                     type="button"
                                                     class="boq-btn-secondary"
                                                 >
-                                                    Cancel
+                                                    {{ __('Cancel') }}
                                                 </button>
 
                                                 <button
@@ -1224,7 +1224,7 @@
                                                     type="button"
                                                     class="boq-btn-danger"
                                                 >
-                                                    Reject Item
+                                                    {{ __('Reject Item') }}
                                                 </button>
 
                                             </div>
@@ -1263,11 +1263,11 @@
                 </div>
 
                 <p class="boq-empty-title">
-                    No BOQ items found
+                    {{ __('No BOQ items found') }}
                 </p>
 
                 <p class="boq-empty-description">
-                    Try changing the search or status filter.
+                    {{ __('Try changing the search or status filter.') }}
                 </p>
 
                 @if(
@@ -1281,7 +1281,7 @@
                         class="boq-btn-secondary"
                         style="margin-top:.8rem"
                     >
-                        Clear Filters
+                        {{ __('Clear Filters') }}
                     </button>
 
                 @endif

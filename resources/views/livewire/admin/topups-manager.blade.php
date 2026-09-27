@@ -1,19 +1,19 @@
 <div class="space-y-5" x-data="{ confirmArchive: false, archiveId: null, archiveName: '' }">
     <div class="flex flex-wrap items-end justify-between gap-3">
-        <div><h1 class="text-2xl font-bold text-slate-900">Top-ups &amp; Purchases</h1><p class="text-sm text-slate-500">Feature updates, usage credits and one-off unlocks users can buy.</p></div>
-        <button wire:click="create" class="boq-btn-primary">+ Add Top-up</button>
+        <div><h1 class="text-2xl font-bold text-slate-900">Top-ups &amp; Purchases</h1><p class="text-sm text-slate-500">{{ __('Feature updates, usage credits and one-off unlocks users can buy.') }}</p></div>
+        <button wire:click="create" class="boq-btn-primary">{{ __('+ Add Top-up') }}</button>
     </div>
     @if(session('message'))<div class="boq-flash">{{ session('message') }}</div>@endif
 
     <div class="flex gap-3">
-        <input wire:model.live.debounce.300ms="search" placeholder="Search top-ups..." class="boq-field md:max-w-md">
+        <input wire:model.live.debounce.300ms="search" placeholder="{{ __('Search top-ups...') }}" class="boq-field md:max-w-md">
     </div>
 
     <x-bulk-bar :count="count($selected)">
-            <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> Activate</button>
-            <button type="button" wire:click="bulkSetActive(false)" class="boq-btn-secondary"><i class="fas fa-ban"></i> Deactivate</button>
-            <button type="button" wire:click="bulkArchive" wire:confirm="Archive the selected top-ups? Existing purchases stay active." class="boq-btn-danger"><i class="fas fa-box-archive"></i> Archive</button>
-            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected top-ups? Top-ups that were purchased are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> Delete</button>
+            <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> {{ __('Activate') }}</button>
+            <button type="button" wire:click="bulkSetActive(false)" class="boq-btn-secondary"><i class="fas fa-ban"></i> {{ __('Deactivate') }}</button>
+            <button type="button" wire:click="bulkArchive" wire:confirm="Archive the selected top-ups? Existing purchases stay active." class="boq-btn-danger"><i class="fas fa-box-archive"></i> {{ __('Archive') }}</button>
+            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected top-ups? Top-ups that were purchased are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> {{ __('Delete') }}</button>
     </x-bulk-bar>
 
     <div class="boq-panel overflow-x-auto">
@@ -45,14 +45,14 @@
                     </td>
                     <td class="px-4 py-3"><span class="rounded-full px-2 py-1 text-xs {{ $topup->is_active ? 'bg-emerald-100 text-emerald-700':'bg-slate-100 text-slate-600' }}">{{ $topup->is_active ? 'Active':'Inactive' }}</span></td>
                     <td class="px-4 py-3 whitespace-nowrap">
-                        <button wire:click="edit({{ $topup->id }})" class="mr-3 text-sm font-semibold text-emerald-700">Edit</button>
+                        <button wire:click="edit({{ $topup->id }})" class="mr-3 text-sm font-semibold text-emerald-700">{{ __('Edit') }}</button>
                         <button wire:click="toggleActive({{ $topup->id }})" class="mr-3 text-sm text-slate-600">{{ $topup->is_active?'Deactivate':'Activate' }}</button>
                         @unless($topup->is_archived)
-                        <button @click="archiveId={{$topup->id}}; archiveName=@js($topup->name); confirmArchive=true" class="text-sm font-semibold text-red-600">Archive</button>
+                        <button @click="archiveId={{$topup->id}}; archiveName=@js($topup->name); confirmArchive=true" class="text-sm font-semibold text-red-600">{{ __('Archive') }}</button>
                         @endunless
                     </td>
                 </tr>
-            @empty<tr><td colspan="8" class="p-8 text-center text-slate-500">No top-ups found.</td></tr>@endforelse
+            @empty<tr><td colspan="8" class="p-8 text-center text-slate-500">{{ __('No top-ups found.') }}</td></tr>@endforelse
             </tbody>
         </table>
         <div class="p-4">{{ $topups->links() }}</div>
@@ -62,44 +62,44 @@
     <div class="boq-modal-backdrop" wire:key="topup-form-modal" x-data @keydown.escape.window="$wire.cancel()">
         <div class="boq-modal boq-modal-lg" @click.stop>
             <div class="boq-modal-head">
-                <div><h2 class="text-lg font-bold">{{ $editingId ? 'Edit Top-up' : 'Create Top-up' }}</h2><p class="text-xs text-slate-500">Changes are saved without leaving this page.</p></div>
+                <div><h2 class="text-lg font-bold">{{ $editingId ? 'Edit Top-up' : 'Create Top-up' }}</h2><p class="text-xs text-slate-500">{{ __('Changes are saved without leaving this page.') }}</p></div>
                 <button type="button" wire:click="cancel" class="text-2xl leading-none text-slate-400 hover:text-slate-700">&times;</button>
             </div>
             <form wire:submit="save">
                 <div class="boq-modal-body grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div><label class="text-sm font-medium">Name</label><input placeholder="Enter name" wire:model="form.name" class="mt-1 w-full rounded-lg border-slate-300"></div>
-                    <div><label class="text-sm font-medium">Code</label><input wire:model="form.code" class="mt-1 w-full rounded-lg border-slate-300" placeholder="auto-generated"></div>
-                    <div><label class="text-sm font-medium">Type</label>
+                    <div><label class="text-sm font-medium">{{ __('Name') }}</label><input placeholder="{{ __('Enter name') }}" wire:model="form.name" class="mt-1 w-full rounded-lg border-slate-300"></div>
+                    <div><label class="text-sm font-medium">{{ __('Code') }}</label><input wire:model="form.code" class="mt-1 w-full rounded-lg border-slate-300" placeholder="{{ __('auto-generated') }}"></div>
+                    <div><label class="text-sm font-medium">{{ __('Type') }}</label>
                         <select wire:model="form.type" class="mt-1 w-full rounded-lg border-slate-300">
-                            <option value="feature_unlock">Feature Unlock</option>
-                            <option value="version_update">Version Update</option>
-                            <option value="bundle">Bundle</option>
-                            <option value="ai_credit_topup">AI Credit Top-up</option>
-                            <option value="ocr_credit_topup">OCR Credit Top-up</option>
-                            <option value="translation_credit_topup">Translation Credit Top-up</option>
-                            <option value="storage_topup">Storage Top-up</option>
-                            <option value="user_seat_topup">User Seat Top-up</option>
-                            <option value="project_limit_topup">Project Limit Top-up</option>
-                            <option value="boq_limit_topup">BOQ Limit Top-up</option>
-                            <option value="report_export_topup">Report Export Top-up</option>
+                            <option value="feature_unlock">{{ __('Feature Unlock') }}</option>
+                            <option value="version_update">{{ __('Version Update') }}</option>
+                            <option value="bundle">{{ __('Bundle') }}</option>
+                            <option value="ai_credit_topup">{{ __('AI Credit Top-up') }}</option>
+                            <option value="ocr_credit_topup">{{ __('OCR Credit Top-up') }}</option>
+                            <option value="translation_credit_topup">{{ __('Translation Credit Top-up') }}</option>
+                            <option value="storage_topup">{{ __('Storage Top-up') }}</option>
+                            <option value="user_seat_topup">{{ __('User Seat Top-up') }}</option>
+                            <option value="project_limit_topup">{{ __('Project Limit Top-up') }}</option>
+                            <option value="boq_limit_topup">{{ __('BOQ Limit Top-up') }}</option>
+                            <option value="report_export_topup">{{ __('Report Export Top-up') }}</option>
                         </select>
                     </div>
-                    <div class="md:col-span-3"><label class="text-sm font-medium">Description</label><textarea placeholder="Add description..." wire:model="form.description" rows="2" class="mt-1 w-full rounded-lg border-slate-300"></textarea></div>
-                    <div><label class="text-sm font-medium">Currency</label><x-currency-select wire:model="form.currency" :current="$form['currency'] ?? null" class="mt-1" /></div>
+                    <div class="md:col-span-3"><label class="text-sm font-medium">{{ __('Description') }}</label><textarea placeholder="{{ __('Add description...') }}" wire:model="form.description" rows="2" class="mt-1 w-full rounded-lg border-slate-300"></textarea></div>
+                    <div><label class="text-sm font-medium">{{ __('Currency') }}</label><x-currency-select wire:model="form.currency" :current="$form['currency'] ?? null" class="mt-1" /></div>
                     @foreach(['price'=>'Price','duration_days'=>'Duration Days','release_version'=>'Release Version','purchase_limit'=>'Purchase Limit','display_order'=>'Display Order'] as $field=>$label)
                     <div><label class="text-sm font-medium">{{ $label }}</label><input placeholder="{{ \Illuminate\Support\Str::headline($field) }}" wire:model="form.{{ $field }}" class="mt-1 w-full rounded-lg border-slate-300" type="{{ in_array($field,['duration_days','purchase_limit','display_order'],true) ? 'number' : 'text' }}"></div>
                     @endforeach
-                    <div class="md:col-span-3"><label class="text-sm font-medium">Included features (comma separated codes)</label><input wire:model="form.included_features" class="mt-1 w-full rounded-lg border-slate-300" placeholder="variations,cost.tracking"></div>
+                    <div class="md:col-span-3"><label class="text-sm font-medium">Included features (comma separated codes)</label><input wire:model="form.included_features" class="mt-1 w-full rounded-lg border-slate-300" placeholder="{{ __('variations,cost.tracking') }}"></div>
                     <div class="md:col-span-3"><label class="text-sm font-medium">Usage credits (JSON, e.g. {"ai_credits":50,"ocr_pages":100})</label><textarea wire:model="form.usage_credits" rows="2" class="mt-1 w-full rounded-lg border-slate-300" placeholder='{"ai_credits":50}'></textarea></div>
-                    <div class="md:col-span-3"><label class="text-sm font-medium">Applicable plans (comma separated codes, blank = all)</label><input wire:model="form.applicable_plans" class="mt-1 w-full rounded-lg border-slate-300" placeholder="monthly-professional,one-time"></div>
+                    <div class="md:col-span-3"><label class="text-sm font-medium">Applicable plans (comma separated codes, blank = all)</label><input wire:model="form.applicable_plans" class="mt-1 w-full rounded-lg border-slate-300" placeholder="{{ __('monthly-professional,one-time') }}"></div>
                     <div class="flex flex-wrap items-center gap-5 md:col-span-3">
-                        <label><input type="checkbox" wire:model="form.is_active"> Active</label>
+                        <label><input type="checkbox" wire:model="form.is_active"> {{ __('Active') }}</label>
                         <label><input type="checkbox" wire:model="form.is_permanent"> Permanent (no expiry)</label>
-                        <label><input type="checkbox" wire:model="form.requires_confirmation"> Requires payment confirmation</label>
+                        <label><input type="checkbox" wire:model="form.requires_confirmation"> {{ __('Requires payment confirmation') }}</label>
                     </div>
                     @if($errors->any())<div class="md:col-span-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ $errors->first() }}</div>@endif
                 </div>
-                <div class="boq-modal-foot"><button type="button" wire:click="cancel" class="boq-btn-secondary">Cancel</button><button class="boq-btn-primary">Save Top-up</button></div>
+                <div class="boq-modal-foot"><button type="button" wire:click="cancel" class="boq-btn-secondary">{{ __('Cancel') }}</button><button class="boq-btn-primary">{{ __('Save Top-up') }}</button></div>
             </form>
         </div>
     </div>
@@ -107,9 +107,9 @@
 
     <div x-show="confirmArchive" x-cloak class="boq-modal-backdrop" @keydown.escape.window="confirmArchive=false">
         <div class="boq-modal boq-modal-sm" @click.stop>
-            <div class="boq-modal-head"><h2 class="text-lg font-bold">Archive top-up?</h2><button @click="confirmArchive=false" class="text-2xl text-slate-400">&times;</button></div>
-            <div class="boq-modal-body text-sm text-slate-600">Archive <strong x-text="archiveName"></strong>? Existing purchases will remain valid until they expire.</div>
-            <div class="boq-modal-foot"><button @click="confirmArchive=false" class="boq-btn-secondary">Cancel</button><button @click="$wire.archive(archiveId); confirmArchive=false" class="boq-btn-danger">Archive</button></div>
+            <div class="boq-modal-head"><h2 class="text-lg font-bold">{{ __('Archive top-up?') }}</h2><button @click="confirmArchive=false" class="text-2xl text-slate-400">&times;</button></div>
+            <div class="boq-modal-body text-sm text-slate-600">{{ __('Archive') }} <strong x-text="archiveName"></strong>{{ __('? Existing purchases will remain valid until they expire.') }}</div>
+            <div class="boq-modal-foot"><button @click="confirmArchive=false" class="boq-btn-secondary">{{ __('Cancel') }}</button><button @click="$wire.archive(archiveId); confirmArchive=false" class="boq-btn-danger">{{ __('Archive') }}</button></div>
         </div>
     </div>
 </div>

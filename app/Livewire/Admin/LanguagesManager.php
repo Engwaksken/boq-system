@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Livewire\Concerns\WithBulkSelection;
 use App\Models\Language;
 use App\Models\SiteSetting;
+use App\Models\Translation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -19,6 +20,20 @@ class LanguagesManager extends Component
     public ?int $editingId = null;
 
     public array $form = [];
+
+    /** Language code being translated, or null when the editor is closed. */
+    public ?string $translating = null;
+
+    public string $translationSearch = '';
+
+    public bool $untranslatedOnly = false;
+
+    public int $translationPage = 1;
+
+    /** @var array<string, string> sha1(key) => edited value for the visible page */
+    public array $drafts = [];
+
+    private const TRANSLATIONS_PER_PAGE = 25;
 
     public function boot(): void
     {
@@ -107,6 +122,115 @@ class LanguagesManager extends Component
         $this->finishBulkAction($count, 'deleted (the default language is never deleted)', 'language-message');
     }
 
+    public function openTranslations(int $id): void
+    {
+        $this->translating = Language::findOrFail($id)->code;
+        $this->translationSearch = '';
+        $this->untranslatedOnly = false;
+        $this->translationPage = 1;
+        $this->loadDrafts();
+    }
+
+    public function closeTranslations(): void
+    {
+        $this->translating = null;
+        $this->drafts = [];
+    }
+
+    public function updatedTranslationSearch(): void
+    {
+        $this->translationPage = 1;
+        $this->loadDrafts();
+    }
+
+    public function updatedUntranslatedOnly(): void
+    {
+        $this->translationPage = 1;
+        $this->loadDrafts();
+    }
+
+    public function translationPageTo(int $page): void
+    {
+        $this->translationPage = max(1, $page);
+        $this->loadDrafts();
+    }
+
+    public function saveTranslations(): void
+    {
+        abort_unless($this->translating !== null, 404);
+
+        $count = 0;
+        foreach ($this->visibleKeys() as $key) {
+            $hash = sha1($key);
+            if (! array_key_exists($hash, $this->drafts)) {
+                continue;
+            }
+
+            $new = trim((string) $this->drafts[$hash]);
+            $current = $this->currentValue($key);
+
+            if ($new !== $current) {
+                // Saving the file's own value (or blank) removes the override.
+                Translation::put($this->translating, $key, $new === $this->fileValue($key) ? '' : $new);
+                $count++;
+            }
+        }
+
+        session()->flash('language-message', "{$count} translation(s) saved.");
+        $this->loadDrafts();
+    }
+
+    /** @return array<string, string> English source strings (lang/en.json). */
+    private function sourceStrings(): array
+    {
+        static $source = null;
+
+        return $source ??= (array) json_decode((string) @file_get_contents(lang_path('en.json')), true);
+    }
+
+    /** @return array<string, string> */
+    private function fileStrings(): array
+    {
+        static $cache = [];
+
+        return $cache[$this->translating] ??= (array) json_decode((string) @file_get_contents(lang_path($this->translating.'.json')), true);
+    }
+
+    private function fileValue(string $key): string
+    {
+        return (string) ($this->fileStrings()[$key] ?? '');
+    }
+
+    private function currentValue(string $key): string
+    {
+        return (string) (Translation::linesFor($this->translating)[$key] ?? $this->fileValue($key));
+    }
+
+    /** @return list<string> */
+    private function filteredKeys(): array
+    {
+        $search = mb_strtolower(trim($this->translationSearch));
+
+        return collect(array_keys($this->sourceStrings()))
+            ->filter(fn (string $key) => $search === '' || str_contains(mb_strtolower($key), $search) || str_contains(mb_strtolower($this->currentValue($key)), $search))
+            ->when($this->untranslatedOnly, fn ($keys) => $keys->filter(fn (string $key) => $this->currentValue($key) === '' || ($this->translating !== 'en' && $this->currentValue($key) === $key)))
+            ->values()
+            ->all();
+    }
+
+    /** @return list<string> */
+    private function visibleKeys(): array
+    {
+        return array_slice($this->filteredKeys(), ($this->translationPage - 1) * self::TRANSLATIONS_PER_PAGE, self::TRANSLATIONS_PER_PAGE);
+    }
+
+    private function loadDrafts(): void
+    {
+        $this->drafts = collect($this->visibleKeys())
+            ->mapWithKeys(fn (string $key) => [sha1($key) => $this->currentValue($key)])
+            ->all();
+    }
+
     public function cancel(): void
     {
         $this->showForm = false;
@@ -122,8 +246,19 @@ class LanguagesManager extends Component
 
     public function render()
     {
+        $translationRows = [];
+        $translationPages = 1;
+
+        if ($this->translating !== null) {
+            $total = count($this->filteredKeys());
+            $translationPages = max(1, (int) ceil($total / self::TRANSLATIONS_PER_PAGE));
+            $translationRows = array_map(fn (string $key) => ['key' => $key, 'hash' => sha1($key)], $this->visibleKeys());
+        }
+
         return view('livewire.admin.languages-manager', [
             'languages' => Language::orderByDesc('is_default')->orderBy('name')->paginate(10, pageName: 'languages'),
+            'translationRows' => $translationRows,
+            'translationPages' => $translationPages,
         ]);
     }
 }

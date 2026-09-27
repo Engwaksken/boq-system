@@ -1,18 +1,18 @@
 <div class="space-y-5" x-data="{ confirmDelete: false, deleteId: null, deleteName: '' }">
     <div class="flex flex-wrap items-end justify-between gap-3">
-        <div><h1 class="text-2xl font-bold text-slate-900">Product Versions</h1><p class="text-sm text-slate-500">Manage app releases and the features each version introduces.</p></div>
-        <button wire:click="create" class="boq-btn-primary">+ Add Version</button>
+        <div><h1 class="text-2xl font-bold text-slate-900">{{ __('Product Versions') }}</h1><p class="text-sm text-slate-500">{{ __('Manage app releases and the features each version introduces.') }}</p></div>
+        <button wire:click="create" class="boq-btn-primary">{{ __('+ Add Version') }}</button>
     </div>
     @if(session('message'))<div class="boq-flash">{{ session('message') }}</div>@endif
 
     <div class="flex gap-3">
-        <input wire:model.live.debounce.300ms="search" placeholder="Search versions..." class="boq-field md:max-w-md">
+        <input wire:model.live.debounce.300ms="search" placeholder="{{ __('Search versions...') }}" class="boq-field md:max-w-md">
     </div>
 
     <x-bulk-bar :count="count($selected)">
-            <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> Activate</button>
-            <button type="button" wire:click="bulkSetActive(false)" class="boq-btn-secondary"><i class="fas fa-ban"></i> Deactivate</button>
-            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected versions? Versions in use are deactivated instead." class="boq-btn-danger"><i class="fas fa-trash"></i> Delete</button>
+            <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> {{ __('Activate') }}</button>
+            <button type="button" wire:click="bulkSetActive(false)" class="boq-btn-secondary"><i class="fas fa-ban"></i> {{ __('Deactivate') }}</button>
+            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected versions? Versions in use are deactivated instead." class="boq-btn-danger"><i class="fas fa-trash"></i> {{ __('Delete') }}</button>
     </x-bulk-bar>
 
     <div class="boq-panel overflow-x-auto">
@@ -30,12 +30,12 @@
                     <td class="px-4 py-3">{{ $version->requires_topup ? 'Top-up' : 'Included' }}</td>
                     <td class="px-4 py-3"><span class="rounded-full px-2 py-1 text-xs {{ $version->is_active ? 'bg-emerald-100 text-emerald-700':'bg-slate-100 text-slate-600' }}">{{ $version->is_active?'Active':'Inactive' }}</span></td>
                     <td class="px-4 py-3 whitespace-nowrap">
-                        <button wire:click="edit({{ $version->id }})" class="mr-3 text-sm font-semibold text-emerald-700">Edit</button>
+                        <button wire:click="edit({{ $version->id }})" class="mr-3 text-sm font-semibold text-emerald-700">{{ __('Edit') }}</button>
                         <button wire:click="toggleActive({{ $version->id }})" class="mr-3 text-sm text-slate-600">{{ $version->is_active?'Deactivate':'Activate' }}</button>
-                        <button @click="deleteId={{$version->id}}; deleteName=@js($version->name); confirmDelete=true" class="text-sm font-semibold text-red-600">Delete</button>
+                        <button @click="deleteId={{$version->id}}; deleteName=@js($version->name); confirmDelete=true" class="text-sm font-semibold text-red-600">{{ __('Delete') }}</button>
                     </td>
                 </tr>
-            @empty<tr><td colspan="9" class="p-8 text-center text-slate-500">No product versions found.</td></tr>@endforelse
+            @empty<tr><td colspan="9" class="p-8 text-center text-slate-500">{{ __('No product versions found.') }}</td></tr>@endforelse
             </tbody>
         </table>
         <div class="p-4">{{ $versions->links() }}</div>
@@ -45,34 +45,34 @@
     <div class="boq-modal-backdrop" wire:key="version-form-modal" x-data @keydown.escape.window="$wire.cancel()">
         <div class="boq-modal boq-modal-lg" @click.stop>
             <div class="boq-modal-head">
-                <div><h2 class="text-lg font-bold">{{ $editingId ? 'Edit Version' : 'Create Version' }}</h2><p class="text-xs text-slate-500">Changes are saved without leaving this page.</p></div>
+                <div><h2 class="text-lg font-bold">{{ $editingId ? 'Edit Version' : 'Create Version' }}</h2><p class="text-xs text-slate-500">{{ __('Changes are saved without leaving this page.') }}</p></div>
                 <button type="button" wire:click="cancel" class="text-2xl leading-none text-slate-400 hover:text-slate-700">&times;</button>
             </div>
             <form wire:submit="save">
                 <div class="boq-modal-body grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div><label class="text-sm font-medium">Version number</label><input wire:model="form.version_number" class="mt-1 w-full rounded-lg border-slate-300" placeholder="2.0"></div>
-                    <div><label class="text-sm font-medium">Name</label><input placeholder="Enter name" wire:model="form.name" class="mt-1 w-full rounded-lg border-slate-300"></div>
-                    <div><label class="text-sm font-medium">Classification</label>
+                    <div><label class="text-sm font-medium">{{ __('Version number') }}</label><input wire:model="form.version_number" class="mt-1 w-full rounded-lg border-slate-300" placeholder="2.0"></div>
+                    <div><label class="text-sm font-medium">{{ __('Name') }}</label><input placeholder="{{ __('Enter name') }}" wire:model="form.name" class="mt-1 w-full rounded-lg border-slate-300"></div>
+                    <div><label class="text-sm font-medium">{{ __('Classification') }}</label>
                         <select wire:model="form.classification" class="mt-1 w-full rounded-lg border-slate-300">
-                            <option value="major">Major</option><option value="minor">Minor</option><option value="patch">Patch</option>
+                            <option value="major">{{ __('Major') }}</option><option value="minor">{{ __('Minor') }}</option><option value="patch">{{ __('Patch') }}</option>
                         </select>
                     </div>
-                    <div><label class="text-sm font-medium">Release date</label><input wire:model="form.release_date" type="date" class="mt-1 w-full rounded-lg border-slate-300"></div>
-                    <div><label class="text-sm font-medium">Minimum supported version</label><input wire:model="form.minimum_supported_version" class="mt-1 w-full rounded-lg border-slate-300" placeholder="1.0"></div>
-                    <div><label class="text-sm font-medium">Requires top-up</label>
+                    <div><label class="text-sm font-medium">{{ __('Release date') }}</label><input wire:model="form.release_date" type="date" class="mt-1 w-full rounded-lg border-slate-300"></div>
+                    <div><label class="text-sm font-medium">{{ __('Minimum supported version') }}</label><input wire:model="form.minimum_supported_version" class="mt-1 w-full rounded-lg border-slate-300" placeholder="1.0"></div>
+                    <div><label class="text-sm font-medium">{{ __('Requires top-up') }}</label>
                         <select wire:model="form.requires_topup" class="mt-1 w-full rounded-lg border-slate-300">
-                            <option value="1">Yes</option><option value="0">No</option>
+                            <option value="1">{{ __('Yes') }}</option><option value="0">{{ __('No') }}</option>
                         </select>
                     </div>
-                    <div class="md:col-span-3"><label class="text-sm font-medium">Release notes</label><textarea placeholder="Add release notes..." wire:model="form.release_notes" rows="3" class="mt-1 w-full rounded-lg border-slate-300"></textarea></div>
-                    <div class="md:col-span-3"><label class="text-sm font-medium">Included features (comma separated codes)</label><input wire:model="form.included_features" class="mt-1 w-full rounded-lg border-slate-300" placeholder="variations,cost.tracking"></div>
-                    <div class="md:col-span-3"><label class="text-sm font-medium">Eligible plans (comma separated codes, blank = all)</label><input wire:model="form.eligible_plans" class="mt-1 w-full rounded-lg border-slate-300" placeholder="monthly-professional,one-time"></div>
+                    <div class="md:col-span-3"><label class="text-sm font-medium">{{ __('Release notes') }}</label><textarea placeholder="{{ __('Add release notes...') }}" wire:model="form.release_notes" rows="3" class="mt-1 w-full rounded-lg border-slate-300"></textarea></div>
+                    <div class="md:col-span-3"><label class="text-sm font-medium">Included features (comma separated codes)</label><input wire:model="form.included_features" class="mt-1 w-full rounded-lg border-slate-300" placeholder="{{ __('variations,cost.tracking') }}"></div>
+                    <div class="md:col-span-3"><label class="text-sm font-medium">Eligible plans (comma separated codes, blank = all)</label><input wire:model="form.eligible_plans" class="mt-1 w-full rounded-lg border-slate-300" placeholder="{{ __('monthly-professional,one-time') }}"></div>
                     <div class="flex flex-wrap items-center gap-5 md:col-span-3">
-                        <label><input type="checkbox" wire:model="form.is_active"> Active</label>
+                        <label><input type="checkbox" wire:model="form.is_active"> {{ __('Active') }}</label>
                     </div>
                     @if($errors->any())<div class="md:col-span-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ $errors->first() }}</div>@endif
                 </div>
-                <div class="boq-modal-foot"><button type="button" wire:click="cancel" class="boq-btn-secondary">Cancel</button><button class="boq-btn-primary">Save Version</button></div>
+                <div class="boq-modal-foot"><button type="button" wire:click="cancel" class="boq-btn-secondary">{{ __('Cancel') }}</button><button class="boq-btn-primary">{{ __('Save Version') }}</button></div>
             </form>
         </div>
     </div>
@@ -80,9 +80,9 @@
 
     <div x-show="confirmDelete" x-cloak class="boq-modal-backdrop" @keydown.escape.window="confirmDelete=false">
         <div class="boq-modal boq-modal-sm" @click.stop>
-            <div class="boq-modal-head"><h2 class="text-lg font-bold">Delete version?</h2><button @click="confirmDelete=false" class="text-2xl text-slate-400">&times;</button></div>
-            <div class="boq-modal-body text-sm text-slate-600">Delete <strong x-text="deleteName"></strong>? Versions still referenced by active subscriptions are deactivated instead.</div>
-            <div class="boq-modal-foot"><button @click="confirmDelete=false" class="boq-btn-secondary">Cancel</button><button @click="$wire.destroy(deleteId); confirmDelete=false" class="boq-btn-danger">Delete</button></div>
+            <div class="boq-modal-head"><h2 class="text-lg font-bold">{{ __('Delete version?') }}</h2><button @click="confirmDelete=false" class="text-2xl text-slate-400">&times;</button></div>
+            <div class="boq-modal-body text-sm text-slate-600">{{ __('Delete') }} <strong x-text="deleteName"></strong>{{ __('? Versions still referenced by active subscriptions are deactivated instead.') }}</div>
+            <div class="boq-modal-foot"><button @click="confirmDelete=false" class="boq-btn-secondary">{{ __('Cancel') }}</button><button @click="$wire.destroy(deleteId); confirmDelete=false" class="boq-btn-danger">{{ __('Delete') }}</button></div>
         </div>
     </div>
 </div>

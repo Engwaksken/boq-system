@@ -8,7 +8,7 @@
 <input
     type="checkbox"
     class="boq-checkbox"
-    aria-label="Select all on this page"
+    aria-label="{{ __('Select all on this page') }}"
     @checked($allSelected)
     @disabled($ids === [])
     wire:click="togglePageSelection(@js($ids))"

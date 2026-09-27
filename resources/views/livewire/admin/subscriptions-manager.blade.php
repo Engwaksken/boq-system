@@ -8,11 +8,11 @@
         <div>
             <h1 class="boq-page-title">
                 <i class="fas fa-receipt"></i>
-                Subscriptions Management
+                {{ __('Subscriptions Management') }}
             </h1>
 
             <p class="boq-page-subtitle">
-                Manage user subscriptions, statuses and subscription revenue.
+                {{ __('Manage user subscriptions, statuses and subscription revenue.') }}
             </p>
         </div>
 
@@ -36,7 +36,7 @@
         <div class="boq-stat-card boq-stat-blue">
             <div>
                 <p class="boq-stat-label">
-                    Total Subscriptions
+                    {{ __('Total Subscriptions') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -53,7 +53,7 @@
         <div class="boq-stat-card boq-stat-green">
             <div>
                 <p class="boq-stat-label">
-                    Active
+                    {{ __('Active') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -70,7 +70,7 @@
         <div class="boq-stat-card boq-stat-red">
             <div>
                 <p class="boq-stat-label">
-                    Expired
+                    {{ __('Expired') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -87,7 +87,7 @@
         <div class="boq-stat-card boq-stat-amber">
             <div>
                 <p class="boq-stat-label">
-                    Cancelled
+                    {{ __('Cancelled') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -104,7 +104,7 @@
         <div class="boq-stat-card boq-stat-purple">
             <div>
                 <p class="boq-stat-label">
-                    Monthly Revenue
+                    {{ __('Monthly Revenue') }}
                 </p>
 
                 <p
@@ -134,7 +134,7 @@
             <div class="boq-admin-filter-search">
 
                 <label class="boq-field-label">
-                    Search
+                    {{ __('Search') }}
                 </label>
 
                 <div class="boq-input-icon-wrap">
@@ -145,7 +145,7 @@
                         type="search"
                         wire:model.live.debounce.300ms="search"
                         class="boq-field boq-field-with-icon"
-                        placeholder="Search user, email, plan or status..."
+                        placeholder="{{ __('Search user, email, plan or status...') }}"
                     >
 
                 </div>
@@ -156,7 +156,7 @@
             <div class="boq-admin-filter-small">
 
                 <label class="boq-field-label">
-                    Rows
+                    {{ __('Rows') }}
                 </label>
 
                 <select
@@ -183,9 +183,9 @@
     <div class="boq-panel">
 
         <x-bulk-bar :count="count($selected)">
-            <button type="button" wire:click="bulkActivate" wire:confirm="Activate the selected pending, overdue, failed or expired subscriptions?" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> Activate</button>
-            <button type="button" wire:click="bulkCancel" wire:confirm="Cancel the selected subscriptions and revoke their access?" class="boq-btn-secondary"><i class="fas fa-ban"></i> Cancel</button>
-            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected subscriptions? Active ones are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> Delete</button>
+            <button type="button" wire:click="bulkActivate" wire:confirm="Activate the selected pending, overdue, failed or expired subscriptions?" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> {{ __('Activate') }}</button>
+            <button type="button" wire:click="bulkCancel" wire:confirm="Cancel the selected subscriptions and revoke their access?" class="boq-btn-secondary"><i class="fas fa-ban"></i> {{ __('Cancel') }}</button>
+            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected subscriptions? Active ones are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> {{ __('Delete') }}</button>
         </x-bulk-bar>
 
         <div class="boq-table-wrapper">
@@ -246,7 +246,7 @@
 
 
                         <th class="text-right">
-                            Amount
+                            {{ __('Amount') }}
                         </th>
 
 
@@ -254,7 +254,7 @@
                             wire:click="sortBy('start_date')"
                             class="boq-sortable-header"
                         >
-                            Start Date
+                            {{ __('Start Date') }}
                         </th>
 
 
@@ -262,12 +262,12 @@
                             wire:click="sortBy('end_date')"
                             class="boq-sortable-header"
                         >
-                            End Date
+                            {{ __('End Date') }}
                         </th>
 
 
                         <th class="text-right">
-                            Actions
+                            {{ __('Actions') }}
                         </th>
 
                     </tr>
@@ -363,19 +363,19 @@
                             <td>
                                 <div class="boq-table-actions justify-end">
                                     @if(in_array($sub->status, ['pending', 'past_due', 'failed', 'expired'], true))
-                                        <button type="button" wire:click="activate({{ $sub->id }})" wire:confirm="Activate this subscription now? Use this for payments confirmed outside the system." class="boq-icon-btn boq-icon-success" title="Activate" aria-label="Activate">
+                                        <button type="button" wire:click="activate({{ $sub->id }})" wire:confirm="Activate this subscription now? Use this for payments confirmed outside the system." class="boq-icon-btn boq-icon-success" title="{{ __('Activate') }}" aria-label="{{ __('Activate') }}">
                                             <i class="fas fa-circle-check"></i>
                                         </button>
                                     @endif
 
                                     @if($sub->end_date && ! in_array($sub->status, ['cancelled'], true))
-                                        <button type="button" wire:click="openExtend({{ $sub->id }})" class="boq-icon-btn" title="Extend" aria-label="Extend">
+                                        <button type="button" wire:click="openExtend({{ $sub->id }})" class="boq-icon-btn" title="{{ __('Extend') }}" aria-label="{{ __('Extend') }}">
                                             <i class="fas fa-calendar-plus"></i>
                                         </button>
                                     @endif
 
                                     @unless(in_array($sub->status, ['cancelled', 'expired'], true))
-                                        <button type="button" wire:click="cancel({{ $sub->id }})" wire:confirm="Cancel this subscription and revoke its access?" class="boq-icon-btn boq-icon-danger" title="Cancel" aria-label="Cancel">
+                                        <button type="button" wire:click="cancel({{ $sub->id }})" wire:confirm="Cancel this subscription and revoke its access?" class="boq-icon-btn boq-icon-danger" title="{{ __('Cancel') }}" aria-label="{{ __('Cancel') }}">
                                             <i class="fas fa-ban"></i>
                                         </button>
                                     @endunless
@@ -395,7 +395,7 @@
                                 <i class="fas fa-receipt"></i>
 
                                 <span>
-                                    No subscriptions found.
+                                    {{ __('No subscriptions found.') }}
                                 </span>
                             </td>
                         </tr>
@@ -421,20 +421,20 @@
         <div class="boq-modal-backdrop" wire:key="extend-modal" role="dialog" aria-modal="true" aria-labelledby="extend-title">
             <form wire:submit="applyExtension" class="boq-modal boq-modal-sm">
                 <div class="boq-modal-head">
-                    <h2 id="extend-title"><i class="fas fa-calendar-plus"></i> Extend Subscription</h2>
-                    <button type="button" wire:click="closeExtend" class="boq-modal-close" aria-label="Close"><i class="fas fa-xmark"></i></button>
+                    <h2 id="extend-title"><i class="fas fa-calendar-plus"></i> {{ __('Extend Subscription') }}</h2>
+                    <button type="button" wire:click="closeExtend" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
                 </div>
 
                 <div class="boq-modal-body">
-                    <label for="extend-days" class="boq-field-label">Add days</label>
+                    <label for="extend-days" class="boq-field-label">{{ __('Add days') }}</label>
                     <input placeholder="e.g. 30" id="extend-days" type="number" min="1" max="3650" wire:model="extendDays" class="boq-field">
-                    <p class="boq-field-help">Counted from the current end date, or from today if it has already expired.</p>
+                    <p class="boq-field-help">{{ __('Counted from the current end date, or from today if it has already expired.') }}</p>
                     @error('extendDays') <p class="boq-field-error">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="boq-modal-foot">
-                    <button type="button" wire:click="closeExtend" class="boq-btn-secondary">Cancel</button>
-                    <button type="submit" class="boq-btn-primary"><i class="fas fa-calendar-check"></i> Extend</button>
+                    <button type="button" wire:click="closeExtend" class="boq-btn-secondary">{{ __('Cancel') }}</button>
+                    <button type="submit" class="boq-btn-primary"><i class="fas fa-calendar-check"></i> {{ __('Extend') }}</button>
                 </div>
             </form>
         </div>

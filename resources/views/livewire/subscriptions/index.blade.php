@@ -8,11 +8,11 @@
         <div>
             <h1 class="boq-page-title">
                 <i class="fas fa-credit-card"></i>
-                Subscriptions
+                {{ __('Subscriptions') }}
             </h1>
 
             <p class="boq-page-subtitle">
-                Manage your subscription history and choose an available plan.
+                {{ __('Manage your subscription history and choose an available plan.') }}
             </p>
         </div>
 
@@ -20,7 +20,7 @@
             <div class="boq-current-subscription">
 
                 <div class="boq-current-subscription-label">
-                    Current Subscription
+                    {{ __('Current Subscription') }}
                 </div>
 
                 <div class="boq-current-subscription-name">
@@ -54,7 +54,7 @@
                 type="button"
                 class="boq-flash-close"
                 x-on:click="visible = false"
-                aria-label="Close message"
+                aria-label="{{ __('Close message') }}"
             >
                 <i class="fas fa-xmark"></i>
             </button>
@@ -71,7 +71,7 @@
 
             <div>
                 <p class="boq-stat-label">
-                    Total Subscriptions
+                    {{ __('Total Subscriptions') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -90,7 +90,7 @@
 
             <div>
                 <p class="boq-stat-label">
-                    Active
+                    {{ __('Active') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -109,7 +109,7 @@
 
             <div>
                 <p class="boq-stat-label">
-                    Pending
+                    {{ __('Pending') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -128,7 +128,7 @@
 
             <div>
                 <p class="boq-stat-label">
-                    Available Plans
+                    {{ __('Available Plans') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -163,7 +163,7 @@
                 class="boq-tab {{ $activeTab === 'subscriptions' ? 'is-active' : '' }}"
             >
                 <i class="fas fa-credit-card"></i>
-                Subscriptions
+                {{ __('Subscriptions') }}
             </button>
 
 
@@ -175,7 +175,7 @@
                 class="boq-tab {{ $activeTab === 'plans' ? 'is-active' : '' }}"
             >
                 <i class="fas fa-layer-group"></i>
-                Available Plans
+                {{ __('Available Plans') }}
             </button>
 
         </div>
@@ -190,7 +190,7 @@
             class="boq-tab-loading"
         >
             <i class="fas fa-spinner fa-spin"></i>
-            Loading...
+            {{ __('Loading...') }}
         </div>
 
 
@@ -215,7 +215,7 @@
                                 for="subscription-search"
                                 class="boq-field-label"
                             >
-                                Search
+                                {{ __('Search') }}
                             </label>
 
                             <div class="boq-input-icon-wrap">
@@ -227,7 +227,7 @@
                                     type="search"
                                     wire:model.live.debounce.300ms="search"
                                     class="boq-field boq-field-with-icon"
-                                    placeholder="Search plan, status or payment..."
+                                    placeholder="{{ __('Search plan, status or payment...') }}"
                                     autocomplete="off"
                                 >
 
@@ -243,7 +243,7 @@
                                 for="subscription-status"
                                 class="boq-field-label"
                             >
-                                Status
+                                {{ __('Status') }}
                             </label>
 
                             <select
@@ -253,7 +253,7 @@
                             >
 
                                 <option value="all">
-                                    All statuses
+                                    {{ __('All statuses') }}
                                 </option>
 
                                 @foreach([
@@ -285,7 +285,7 @@
                                 for="subscription-period"
                                 class="boq-field-label"
                             >
-                                Period
+                                {{ __('Period') }}
                             </label>
 
                             <select
@@ -295,23 +295,23 @@
                             >
 
                                 <option value="all">
-                                    All periods
+                                    {{ __('All periods') }}
                                 </option>
 
                                 <option value="current">
-                                    Current
+                                    {{ __('Current') }}
                                 </option>
 
                                 <option value="ending_30">
-                                    Ending in 30 days
+                                    {{ __('Ending in 30 days') }}
                                 </option>
 
                                 <option value="expired">
-                                    Expired
+                                    {{ __('Expired') }}
                                 </option>
 
                                 <option value="this_year">
-                                    Created this year
+                                    {{ __('Created this year') }}
                                 </option>
 
                             </select>
@@ -326,7 +326,7 @@
                                 for="subscription-per-page"
                                 class="boq-field-label"
                             >
-                                Rows
+                                {{ __('Rows') }}
                             </label>
 
                             <select
@@ -368,7 +368,7 @@
                                 class="boq-bulk-danger"
                             >
                                 <i class="fas fa-ban"></i>
-                                Cancel selected
+                                {{ __('Cancel selected') }}
                             </button>
 
                             <button
@@ -376,7 +376,7 @@
                                 wire:click="clearSelection"
                                 class="boq-bulk-clear"
                             >
-                                Clear selection
+                                {{ __('Clear selection') }}
                             </button>
 
                         </div>
@@ -401,33 +401,33 @@
                                     <input
                                         type="checkbox"
                                         wire:model.live="selectPage"
-                                        aria-label="Select all subscriptions on this page"
+                                        aria-label="{{ __('Select all subscriptions on this page') }}"
                                     >
 
                                 </th>
 
                                 <th>
-                                    Plan
+                                    {{ __('Plan') }}
                                 </th>
 
                                 <th>
-                                    Status
+                                    {{ __('Status') }}
                                 </th>
 
                                 <th>
-                                    Payment
+                                    {{ __('Payment') }}
                                 </th>
 
                                 <th>
-                                    Period
+                                    {{ __('Period') }}
                                 </th>
 
                                 <th class="text-right">
-                                    Price
+                                    {{ __('Price') }}
                                 </th>
 
                                 <th class="text-right">
-                                    Actions
+                                    {{ __('Actions') }}
                                 </th>
 
                             </tr>
@@ -634,8 +634,8 @@
                                             <a
                                                 href="{{ route('checkout', ['type' => 'plan', 'id' => $item->id]) }}"
                                                 class="boq-icon-btn boq-icon-success"
-                                                title="Pay now"
-                                                aria-label="Pay now"
+                                                title="{{ __('Pay now') }}"
+                                                aria-label="{{ __('Pay now') }}"
                                             >
                                                 <i class="fas fa-credit-card"></i>
                                             </a>
@@ -658,8 +658,8 @@
                                                 wire:loading.attr="disabled"
                                                 wire:target="confirmCancel({{ $item->id }})"
                                                 class="boq-icon-btn boq-icon-danger"
-                                                title="Cancel subscription"
-                                                aria-label="Cancel subscription"
+                                                title="{{ __('Cancel subscription') }}"
+                                                aria-label="{{ __('Cancel subscription') }}"
                                             >
                                                 <i class="fas fa-ban"></i>
                                             </button>
@@ -667,7 +667,7 @@
                                         @else
 
                                             <span class="boq-no-action">
-                                                No action
+                                                {{ __('No action') }}
                                             </span>
 
                                         @endunless
@@ -689,7 +689,7 @@
                                         <i class="fas fa-receipt"></i>
 
                                         <span>
-                                            No subscriptions match your filters.
+                                            {{ __('No subscriptions match your filters.') }}
                                         </span>
 
                                     </td>
@@ -740,7 +740,7 @@
                                 for="plan-search"
                                 class="boq-field-label"
                             >
-                                Search Plans
+                                {{ __('Search Plans') }}
                             </label>
 
                             <div class="boq-input-icon-wrap">
@@ -752,7 +752,7 @@
                                     type="search"
                                     wire:model.live.debounce.300ms="planSearch"
                                     class="boq-field boq-field-with-icon"
-                                    placeholder="Search plan name, code or description..."
+                                    placeholder="{{ __('Search plan name, code or description...') }}"
                                     autocomplete="off"
                                 >
 
@@ -768,7 +768,7 @@
                                 for="plan-period"
                                 class="boq-field-label"
                             >
-                                Billing Period
+                                {{ __('Billing Period') }}
                             </label>
 
                             <select
@@ -778,27 +778,27 @@
                             >
 
                                 <option value="all">
-                                    All periods
+                                    {{ __('All periods') }}
                                 </option>
 
                                 <option value="monthly">
-                                    Monthly
+                                    {{ __('Monthly') }}
                                 </option>
 
                                 <option value="quarterly">
-                                    3 months
+                                    {{ __('3 months') }}
                                 </option>
 
                                 <option value="six_month">
-                                    6 months
+                                    {{ __('6 months') }}
                                 </option>
 
                                 <option value="annual">
-                                    Annual
+                                    {{ __('Annual') }}
                                 </option>
 
                                 <option value="lifetime">
-                                    Lifetime
+                                    {{ __('Lifetime') }}
                                 </option>
 
                             </select>
@@ -813,7 +813,7 @@
                                 for="plan-per-page"
                                 class="boq-field-label"
                             >
-                                Rows
+                                {{ __('Rows') }}
                             </label>
 
                             <select
@@ -948,7 +948,7 @@
                                 @if($plan->type === 'lifetime')
 
                                     <span>
-                                        Lifetime access
+                                        {{ __('Lifetime access') }}
                                     </span>
 
                                 @elseif($plan->duration_days)
@@ -960,7 +960,7 @@
                                 @else
 
                                     <span>
-                                        Duration based on plan
+                                        {{ __('Duration based on plan') }}
                                     </span>
 
                                 @endif
@@ -980,7 +980,7 @@
 
                                         <div class="boq-plan-limit-label">
                                             <i class="fas fa-folder-open"></i>
-                                            Projects
+                                            {{ __('Projects') }}
                                         </div>
 
                                         <div class="boq-plan-limit-value">
@@ -995,7 +995,7 @@
 
                                         <div class="boq-plan-limit-label">
                                             <i class="fas fa-file-invoice-dollar"></i>
-                                            BOQs
+                                            {{ __('BOQs') }}
                                         </div>
 
                                         <div class="boq-plan-limit-value">
@@ -1010,7 +1010,7 @@
 
                                         <div class="boq-plan-limit-label">
                                             <i class="fas fa-robot"></i>
-                                            AI
+                                            {{ __('AI') }}
                                         </div>
 
                                         <div class="boq-plan-limit-value">
@@ -1091,7 +1091,7 @@
 
                                         <i class="fas fa-list-check"></i>
 
-                                        Features
+                                        {{ __('Features') }}
 
                                     </p>
 
@@ -1172,7 +1172,7 @@
 
                                         <i class="fas fa-circle-check"></i>
 
-                                        Current Plan
+                                        {{ __('Current Plan') }}
 
                                     </span>
 
@@ -1202,14 +1202,14 @@
                                             wire:loading.remove
                                             wire:target="confirmSubscribe({{ $plan->id }})"
                                         >
-                                            Choose Plan
+                                            {{ __('Choose Plan') }}
                                         </span>
 
                                         <span
                                             wire:loading
                                             wire:target="confirmSubscribe({{ $plan->id }})"
                                         >
-                                            Processing...
+                                            {{ __('Processing...') }}
                                         </span>
 
                                     </button>
@@ -1228,7 +1228,7 @@
                             <i class="fas fa-layer-group"></i>
 
                             <p>
-                                No available plans match your search.
+                                {{ __('No available plans match your search.') }}
                             </p>
 
                         </div>
@@ -1282,7 +1282,7 @@
                         type="button"
                         wire:click="closeActionModal"
                         class="boq-modal-close"
-                        aria-label="Close"
+                        aria-label="{{ __('Close') }}"
                     >
                         <i class="fas fa-xmark"></i>
                     </button>
@@ -1311,7 +1311,7 @@
                         class="boq-btn-secondary"
                     >
                         <i class="fas fa-arrow-left"></i>
-                        Back
+                        {{ __('Back') }}
                     </button>
 
 
@@ -1362,14 +1362,14 @@
                             wire:loading.remove
                             wire:target="performAction"
                         >
-                            Confirm
+                            {{ __('Confirm') }}
                         </span>
 
                         <span
                             wire:loading
                             wire:target="performAction"
                         >
-                            Processing...
+                            {{ __('Processing...') }}
                         </span>
 
                     </button>

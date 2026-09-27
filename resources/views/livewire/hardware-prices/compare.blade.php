@@ -1,19 +1,19 @@
 <div>
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Compare Hardware Prices</h1>
-            <p class="mt-1 text-sm text-gray-500">Select 2 to 10 items to compare side by side</p>
+            <h1 class="text-2xl font-bold text-gray-900">{{ __('Compare Hardware Prices') }}</h1>
+            <p class="mt-1 text-sm text-gray-500">{{ __('Select 2 to 10 items to compare side by side') }}</p>
         </div>
         <a href="{{ url('/hardware-prices') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition">
             <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-            Back
+            {{ __('Back') }}
         </a>
     </div>
 
     {{-- Selection --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-gray-900">Select Items</h2>
+            <h2 class="text-lg font-semibold text-gray-900">{{ __('Select Items') }}</h2>
             <button type="button" wire:click="compare"
                     class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition">
                 Compare Selected ({{ isset($selectedIds) ? count($selectedIds) : 0 }})
@@ -33,7 +33,7 @@
                 @endforeach
             </div>
         @else
-            <p class="text-sm text-gray-500">No items available to compare.</p>
+            <p class="text-sm text-gray-500">{{ __('No items available to compare.') }}</p>
         @endif
     </div>
 
@@ -41,26 +41,26 @@
     @if(isset($comparison) && count($comparison) > 0)
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Comparison</h2>
+                <h2 class="text-lg font-semibold text-gray-900">{{ __('Comparison') }}</h2>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-40">Attribute</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-40">{{ __('Attribute') }}</th>
                             @foreach($comparison as $item)
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[180px]">
                                     <span class="block text-sm font-semibold text-gray-900">{{ $item['item_name'] }}</span>
                                     @if(isset($summary) && is_array($summary))
                                         <span class="mt-1 flex flex-wrap gap-1">
                                             @if(isset($summary['best_value']) && $summary['best_value'] === $item['id'])
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-800">Best Value</span>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-800">{{ __('Best Value') }}</span>
                                             @endif
                                             @if(isset($summary['lowest_price']) && $summary['lowest_price'] === $item['id'])
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-800">Lowest Price</span>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-800">{{ __('Lowest Price') }}</span>
                                             @endif
                                             @if(isset($summary['best_rated']) && $summary['best_rated'] === $item['id'])
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 text-purple-800">Best Rated</span>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 text-purple-800">{{ __('Best Rated') }}</span>
                                             @endif
                                         </span>
                                     @endif
@@ -70,85 +70,85 @@
                     </thead>
                     <tbody class="divide-y divide-gray-200 bg-white">
                         <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">Brand</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Brand') }}</td>
                             @foreach($comparison as $item)
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ $item['brand'] ?? '?' }}</td>
                             @endforeach
                         </tr>
                         <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">Category</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Category') }}</td>
                             @foreach($comparison as $item)
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ $item['category'] ?? '?' }}</td>
                             @endforeach
                         </tr>
                         <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">Specification</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Specification') }}</td>
                             @foreach($comparison as $item)
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ $item['specification'] ?? '?' }}</td>
                             @endforeach
                         </tr>
                         <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">Unit</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Unit') }}</td>
                             @foreach($comparison as $item)
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ $item['unit'] ?? '?' }}</td>
                             @endforeach
                         </tr>
                         <tr class="bg-gray-50">
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">Price</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Price') }}</td>
                             @foreach($comparison as $item)
                                 <td class="px-4 py-3 text-sm font-bold text-gray-900">{{ \App\Support\Format::number((float) $item['price'], 2) }} {{ $item['currency'] }}</td>
                             @endforeach
                         </tr>
                         <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">Supplier</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Supplier') }}</td>
                             @foreach($comparison as $item)
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ $item['supplier'] ?? '?' }}</td>
                             @endforeach
                         </tr>
                         <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">Location</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Location') }}</td>
                             @foreach($comparison as $item)
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ $item['location'] ?? '?' }}</td>
                             @endforeach
                         </tr>
                         <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">Fetched At</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Fetched At') }}</td>
                             @foreach($comparison as $item)
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ $item['fetched_at'] ?? '?' }}</td>
                             @endforeach
                         </tr>
                         <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">Lowest</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Lowest') }}</td>
                             @foreach($comparison as $item)
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['lowest']) ? \App\Support\Format::number((float) $item['price_history']['lowest'], 2) : '?' }}</td>
                             @endforeach
                         </tr>
                         <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">Highest</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Highest') }}</td>
                             @foreach($comparison as $item)
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['highest']) ? \App\Support\Format::number((float) $item['price_history']['highest'], 2) : '?' }}</td>
                             @endforeach
                         </tr>
                         <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">Average</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Average') }}</td>
                             @foreach($comparison as $item)
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['average']) ? \App\Support\Format::number((float) $item['price_history']['average'], 2) : '?' }}</td>
                             @endforeach
                         </tr>
                         <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">Change</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Change') }}</td>
                             @foreach($comparison as $item)
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['change']) ? \App\Support\Format::number((float) $item['price_history']['change'], 2) : '?' }}</td>
                             @endforeach
                         </tr>
                         <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">Change %</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Change %') }}</td>
                             @foreach($comparison as $item)
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['change_percent']) ? \App\Support\Format::number((float) $item['price_history']['change_percent'], 2) . '%' : '?' }}</td>
                             @endforeach
                         </tr>
                         <tr class="bg-gray-50">
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">AI Rating</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('AI Rating') }}</td>
                             @foreach($comparison as $item)
                                 <td class="px-4 py-3 text-sm">
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold {{ isset($item['rating']['overall']) && $item['rating']['overall'] >= 80 ? 'bg-green-100 text-green-800' : (isset($item['rating']['overall']) && $item['rating']['overall'] >= 60 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800') }}">
@@ -164,7 +164,7 @@
     @else
         <div class="bg-white rounded-xl shadow-sm border border-gray-200">
             <div class="text-center py-12">
-                <p class="text-gray-500">Select items above and click "Compare Selected" to see the side-by-side comparison.</p>
+                <p class="text-gray-500">{{ __('Select items above and click "Compare Selected" to see the side-by-side comparison.') }}</p>
             </div>
         </div>
     @endif

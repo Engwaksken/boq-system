@@ -6,12 +6,15 @@
 
 ## Verdict
 
-**Not ready for a paid public launch yet.** The foundations are sound: tenancy checks on core records, webhook handling, secure sessions, and scheduled jobs. The security holes found in this audit are closed. Two product gaps still block charging web customers:
+**Ready for a paid launch, subject to the checks below.** All P0 findings are resolved:
+- Subscriptions are enforced on the web as well as the API.
+- Web users can pay through the new checkout, including international cards via Stripe.
+- All P1 items are resolved except security headers and error monitoring, which are configuration tasks.
 
-1. **No web paywall.** Subscriptions are only enforced on the API.
-2. **No web checkout.** Web users cannot pay; only the mobile app can.
-
-Decide on both before launch. The work is scoped under "Open P0" below.
+Before launch:
+- Enter live gateway credentials (including Stripe keys, if cards are wanted).
+- Point an uptime monitor at `/health`.
+- Run one real low-value payment end to end on each gateway.
 
 **Status key:** ✅ fixed in this release · ⛔ open, blocks launch · ⚠️ open, fix soon · 💡 improvement
 
@@ -23,8 +26,8 @@ Decide on both before launch. The work is scoped under "Open P0" below.
 |---|---------|--------|
 | 1 | **Payment replay.** When verifying, a client could send an older or cheaper successful MoMo transaction ID. MTN/Airtel results have no amount or reference, so the replayed payment could activate a new subscription or top-up. | ✅ Verification now always uses the ID stored when the payment was started. A client ID is accepted only if none was stored and no other transaction has used it (`PAYMENT_ALREADY_USED`). Applies to normal and proxy payments. |
 | 2 | **Cross-tenant AI pricing job (IDOR).** Any user with `boq.edit` could start a pricing job on another customer's BOQ, read its results and overwrite its rates. | ✅ The request and controller now authorise against the specific BOQ (`BoqPolicy::process`). |
-| 3 | **Web app has no paywall.** `entitlement:` middleware exists only on API routes, so web users can upload and price BOQs without a subscription. | ⛔ **Decision needed:** enforce on the web now, or launch web as free and mobile as paid. Enforcing means adding `entitlement:boq.management` (plus import/pricing features) to the web BOQ routes and checking the same entitlements inside Livewire actions. |
-| 4 | **Web users cannot pay.** The web Subscriptions page creates a pending subscription, but there is no web checkout, and the Top-ups page has no buy buttons. | ⛔ Build a web checkout (choose gateway → initiate → poll verify) that reuses `PaymentManager`, or send users to the app. Until then, admins can activate bank or manual payments from **Admin → Subscriptions → Activate** (new). |
+| 3 | **Web app has no paywall.** `entitlement:` middleware exists only on API routes, so web users can upload and price BOQs without a subscription. | ✅ Web BOQ pages require `boq.management` (same as the API); unsubscribed users go to Subscriptions. Checks persist on Livewire requests, and web BOQ generation consumes the import allowance through the shared `EntitlementGate`. |
+| 4 | **Web users cannot pay.** The web Subscriptions page creates a pending subscription, but there is no web checkout, and the Top-ups page has no buy buttons. | ✅ Web checkout for plans and top-ups (`/checkout/{plan|topup}/{id}`): mobile money with an approval prompt and status polling, and hosted card pages (Stripe Checkout is now a real integration) that return to the checkout page to confirm. Admins can still activate manual payments. |
 | 5 | **Web registration differed from the API.** Users got no role (so 403 on Projects), no trial, no rate limit, and no way to close sign-ups. | ✅ Web sign-up now grants the viewer role and the trial like the API, is limited to 5 attempts per minute, and follows **Settings → Registration & Access → Allow account sign up** (web and API). Email verification is still not required; decide whether it should be. |
 | 6 | **Disabled users kept access.** Web login ignored `is_active`, and disabled users kept their API tokens. | ✅ Web login refuses disabled accounts. New `EnsureUserIsActive` middleware signs them out of web sessions and returns `ACCOUNT_DISABLED` on the API. Disabling a user (single or bulk) revokes their API tokens. Biometric login also refuses disabled accounts. |
 
@@ -32,17 +35,17 @@ Decide on both before launch. The work is scoped under "Open P0" below.
 
 | # | Finding | Status |
 |---|---------|--------|
-| 1 | AI pricing endpoints (`price-all`, `price`, `pricing-batches`) have no entitlement or throttle. `priceAll` runs synchronously and resets already-approved rates. | ⚠️ Add entitlement and throttle middleware, send the work to the queued job, and skip approved items. |
+| 1 | AI pricing endpoints (`price-all`, `price`, `pricing-batches`) have no entitlement or throttle. `priceAll` runs synchronously and resets already-approved rates. | ✅ Entitlement and throttle middleware added; `price-all` skips approved items. It stays synchronous because the mobile app expects the count in the response. |
 | 2 | Users with no organisation could read each other's BOQ item price matches (`null === null`). | ✅ The check now uses `BoqPolicy`. |
 | 3 | Admin Livewire actions relied only on route middleware, which doesn't run on Livewire updates. | ✅ Every admin component re-checks super-admin on each request (`boot()`). |
-| 4 | Grace periods are calculated but never used, and there are no expiry reminders or renewal for expired subscriptions. | ⚠️ Move to `grace_period` at the end date and expire at the grace end. Send reminders. Admins can now extend or reactivate manually. |
-| 5 | The **maintenance mode** setting is saved but not enforced. | ⚠️ Enforce it in middleware (sign-up enforcement is done: P0 #5). |
-| 6 | Deploy script: no `queue:restart`, no database backup before `migrate --force`, and the site comes back up even when a migration fails. | ⚠️ Add a backup step and `queue:restart`, and stay in maintenance mode on failure. |
-| 7 | Operations: single log file with no rotation, no error monitoring, and the `/up` health check doesn't test the database or queue. | ⚠️ Use the `daily` log channel, add Sentry or Flare, and extend the health check. |
-| 8 | Web localisation is not wired: no locale middleware, and views don't use `__()`. | ⚠️ Add a locale middleware (user locale, then browser) and translate the views. Admins can now manage languages in Settings. |
-| 9 | Money flows lack tests: verify, webhook, reconcile, expire, proxy subscriptions. | ⚠️ Partly addressed: replay, IDOR, disabled-user and subscription-admin tests added. Gateway `status()` fakes are still needed. |
-| 10 | Mobile: most requests have no timeout, 401s aren't handled centrally, and there are about 168 hard casts that crash on null fields. | ⚠️ Add a timeout to every request, clear the token and show login on 401, and make parsing null-safe. |
-| 11 | Android release build signs silently unsigned when `key.properties` is missing. | ⚠️ Fail the release build when the keystore is absent. |
+| 4 | Grace periods are calculated but never used, and there are no expiry reminders or renewal for expired subscriptions. | ✅ Entitlements last through the grace period. `subscriptions:expire` moves subscriptions to `grace_period`, then expires them, with in-app notices. `subscriptions:remind` sends reminders 7 and 1 days before the end date. Renewal is done by choosing a plan, which goes to checkout. |
+| 5 | The **maintenance mode** setting is saved but not enforced. | ✅ Enforced by `EnforceMaintenanceMode`; super admins, sign-in, health checks, mobile config and payment webhooks are exempt. |
+| 6 | Deploy script: no `queue:restart`, no database backup before `migrate --force`, and the site comes back up even when a migration fails. | ✅ The deploy script backs up the database, runs `queue:restart`, and stays in maintenance mode if any step fails. |
+| 7 | Operations: single log file with no rotation, no error monitoring, and the `/up` health check doesn't test the database or queue. | ✅ Production examples use daily rotating logs (14 days). `/health` checks the database, cache, storage and queue backlog. ⚠️ Still add an error monitor (Sentry or Flare). |
+| 8 | Web localisation is not wired: no locale middleware, and views don't use `__()`. | ✅ `SetLocale` middleware (user, then guest choice, then browser, then site default). 775 UI strings are wrapped and listed in `lang/en.json`, and `lang/lg.json` has 221 Luganda translations (the rest fall back to English). Admins translate any language under Settings → Languages → Translate; edits are stored in the database and survive deployments. |
+| 9 | Money flows lack tests: verify, webhook, reconcile, expire, proxy subscriptions. | ✅ Added tests for Stripe checkout and return, amount mismatch, checkout authorisation, grace period and expiry, reminders, maintenance mode and health. ⚠️ Mobile money gateway `status()` fakes are still worth adding. |
+| 10 | Mobile: most requests have no timeout, 401s aren't handled centrally, and there are about 168 hard casts that crash on null fields. | ✅ 30s timeout on every request; 401 and `ACCOUNT_DISABLED` clear the token and return to sign-in (with tests). ⚠️ Null-safe JSON parsing is still to do. |
+| 11 | Android release build signs silently unsigned when `key.properties` is missing. | ✅ Release builds fail unless `android/key.properties` exists. |
 
 ## P2: improvements
 
@@ -52,7 +55,7 @@ Decide on both before launch. The work is scoped under "Open P0" below.
 | 2 | No security headers (HSTS, X-Frame-Options, CSP, nosniff). | 💡 Add them at the web server or in middleware. |
 | 3 | `User::$fillable` includes `organisation_id` and `is_active`. | 💡 Remove them and set explicitly (the code already does in most places). |
 | 4 | Account deletion hard-deletes the user, orphans projects and cascades away top-up purchase history. | 💡 Soft-delete users and keep financial records. |
-| 5 | Dead `app/Console/Kernel.php` whose schedule differs from `routes/console.php`. | 💡 Delete it. |
+| 5 | Dead `app/Console/Kernel.php` whose schedule differs from `routes/console.php`. | ✅ Removed. |
 | 6 | Pending transactions older than 48h are never marked abandoned. | 💡 Mark them abandoned in `payments:reconcile`. |
 | 7 | "Enable 2FA (Coming Soon)" placeholder. | ✅ Replaced by working biometric (passkey) sign-in. |
 | 8 | About 100 hard-coded strings in the mobile app outside the translation files. | 💡 Move them into the ARB files. |
@@ -93,10 +96,14 @@ The system was built around Uganda: UGX, Kampala, Africa/Kampala and a Ugandan A
   - Phone placeholders use the international format.
   - Project country fields suggest countries from the table.
 - **Mobile config:** returns the worldwide country list (default country first), `countries_detailed` (ISO code, dialling code, currency), `default_country` and `default_currency`.
-- **Still to do for full internationalisation:**
-  - Translate the web views (P1 #8).
-  - Apply each user's date and number format when rendering lists.
-  - Mobile payment gateways are still the African providers (MTN, Airtel, Flutterwave, Pesapal, ioTec); add Stripe or another global card gateway to the web checkout (P0 #4).
+- **Done since:**
+  - Web views are translatable (P1 #8).
+  - Money, numbers and dates render in each user's format and timezone (`App\Support\Format`, `<x-money>`, `<x-date>`).
+  - List pages start at each user's rows-per-page setting.
+  - Stripe Checkout gives the web checkout a global card gateway.
+- **Remaining:**
+  - Complete the Luganda translation, and add further languages as needed (Settings → Languages → Translate).
+  - The mobile app still uses its own ARB translation files.
 
 ## Deployment steps for this release
 
@@ -104,7 +111,7 @@ The system was built around Uganda: UGX, Kampala, Africa/Kampala and a Ugandan A
 # back up the database first
 git fetch origin && git merge --ff-only origin/main
 composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
-php artisan migrate --force        # webauthn_credentials, currencies, languages, categories, hardware_items, countries, user preferences
+php artisan migrate --force        # adds tables: webauthn_credentials, currencies, countries, hardware_items, translations; user preference columns
 php artisan optimize:clear && php artisan config:cache && php artisan route:cache && php artisan view:cache
 php artisan queue:restart
 ```

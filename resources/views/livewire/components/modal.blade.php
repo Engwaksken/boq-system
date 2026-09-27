@@ -69,7 +69,7 @@
                         <button
                             type="button"
                             class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                            aria-label="Close modal"
+                            aria-label="{{ __('Close modal') }}"
                             @click="
                                 open = false;
                                 $wire.closeModal();
@@ -157,7 +157,7 @@
                                 role="alert"
                             >
                                 <div class="mb-1 font-semibold">
-                                    Please correct the following:
+                                    {{ __('Please correct the following:') }}
                                 </div>
 
                                 <ul class="list-inside list-disc space-y-1">

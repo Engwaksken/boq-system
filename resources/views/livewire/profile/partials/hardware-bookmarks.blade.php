@@ -1,13 +1,13 @@
 <div>
     <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h3 class="text-lg font-semibold text-slate-900">Hardware Price Bookmarks</h3>
-            <p class="mt-1 text-sm text-slate-500">Keep the hardware prices you check most often, by location.</p>
+            <h3 class="text-lg font-semibold text-slate-900">{{ __('Hardware Price Bookmarks') }}</h3>
+            <p class="mt-1 text-sm text-slate-500">{{ __('Keep the hardware prices you check most often, by location.') }}</p>
         </div>
 
         <button wire:click="bookmarkHardware" type="button" class="boq-btn-primary">
             <i class="fas fa-bookmark"></i>
-            Add Bookmark
+            {{ __('Add Bookmark') }}
         </button>
     </div>
 
@@ -16,11 +16,11 @@
             <span class="boq-empty-icon">
                 <i class="fas fa-bookmark"></i>
             </span>
-            <h4 class="boq-empty-title">No bookmarks yet</h4>
-            <p class="boq-empty-description">Bookmark hardware prices by location for quick access.</p>
+            <h4 class="boq-empty-title">{{ __('No bookmarks yet') }}</h4>
+            <p class="boq-empty-description">{{ __('Bookmark hardware prices by location for quick access.') }}</p>
             <button wire:click="bookmarkHardware" type="button" class="boq-btn-primary boq-empty-action">
                 <i class="fas fa-plus"></i>
-                Add Your First Bookmark
+                {{ __('Add Your First Bookmark') }}
             </button>
         </div>
     @else
@@ -28,12 +28,12 @@
             <table class="boq-table">
                 <thead>
                     <tr>
-                        <th>Hardware Item</th>
-                        <th>Category</th>
-                        <th>Location</th>
-                        <th class="text-right">Price</th>
-                        <th>Notes</th>
-                        <th class="text-right">Actions</th>
+                        <th>{{ __('Hardware Item') }}</th>
+                        <th>{{ __('Category') }}</th>
+                        <th>{{ __('Location') }}</th>
+                        <th class="text-right">{{ __('Price') }}</th>
+                        <th>{{ __('Notes') }}</th>
+                        <th class="text-right">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -45,7 +45,7 @@
                                         {{ $bookmark->hardwarePrice->item_name }}
                                     </a>
                                 @else
-                                    <span class="text-slate-400">Removed item</span>
+                                    <span class="text-slate-400">{{ __('Removed item') }}</span>
                                 @endif
                             </td>
                             <td>{{ $bookmark->hardwarePrice?->category ?? '—' }}</td>
@@ -61,7 +61,7 @@
                             <td class="max-w-xs truncate">{{ $bookmark->notes ?: '—' }}</td>
                             <td>
                                 <div class="boq-table-actions justify-end">
-                                    <button wire:click="editBookmark({{ $bookmark->id }})" type="button" class="boq-icon-btn" title="Edit bookmark" aria-label="Edit bookmark">
+                                    <button wire:click="editBookmark({{ $bookmark->id }})" type="button" class="boq-icon-btn" title="{{ __('Edit bookmark') }}" aria-label="{{ __('Edit bookmark') }}">
                                         <i class="fas fa-pen"></i>
                                     </button>
                                     <button
@@ -69,8 +69,8 @@
                                         wire:confirm="Remove this bookmark?"
                                         type="button"
                                         class="boq-icon-btn boq-icon-danger"
-                                        title="Remove bookmark"
-                                        aria-label="Remove bookmark"
+                                        title="{{ __('Remove bookmark') }}"
+                                        aria-label="{{ __('Remove bookmark') }}"
                                     >
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -99,16 +99,16 @@
                         {{ $editingBookmarkId ? 'Edit Bookmark' : 'Bookmark Hardware' }}
                     </h2>
 
-                    <button type="button" wire:click="closeBookmarkModal" class="boq-modal-close" aria-label="Close">
+                    <button type="button" wire:click="closeBookmarkModal" class="boq-modal-close" aria-label="{{ __('Close') }}">
                         <i class="fas fa-xmark"></i>
                     </button>
                 </div>
 
                 <div class="boq-modal-body space-y-4">
                     <div>
-                        <label for="bookmark-price" class="boq-field-label">Hardware price</label>
+                        <label for="bookmark-price" class="boq-field-label">{{ __('Hardware price') }}</label>
                         <select id="bookmark-price" wire:model.live="hardwareBookmarkForm.hardware_price_id" class="boq-field" required>
-                            <option value="">Select hardware price...</option>
+                            <option value="">{{ __('Select hardware price...') }}</option>
                             @foreach($bookmarkablePrices as $price)
                                 <option value="{{ $price->id }}">
                                     {{ $price->item_name }} · {{ ucfirst($price->price_type ?? 'hardware') }} · {{ $price->category }}{{ $price->location ? ' · '.$price->location : '' }} · {{ $price->currency }} {{ \App\Support\Format::number((float) $price->price, 2) }}
@@ -116,7 +116,7 @@
                             @endforeach
                         </select>
                         @if($bookmarkablePrices->isEmpty())
-                            <p class="boq-field-help">No active hardware prices are available yet.</p>
+                            <p class="boq-field-help">{{ __('No active hardware prices are available yet.') }}</p>
                         @endif
                         @error('hardwareBookmarkForm.hardware_price_id') <p class="boq-field-error">{{ $message }}</p> @enderror
                     </div>
@@ -132,18 +132,18 @@
                         error="hardwareBookmarkForm.location"
                         required
                     />
-                    <p class="boq-field-help -mt-2">Filled in from the selected price. Pick another location where this item is priced, or choose Other.</p>
+                    <p class="boq-field-help -mt-2">{{ __('Filled in from the selected price. Pick another location where this item is priced, or choose Other.') }}</p>
 
                     <div>
                         <label for="bookmark-notes" class="boq-field-label">Notes (optional)</label>
-                        <textarea id="bookmark-notes" wire:model="hardwareBookmarkForm.notes" rows="3" class="boq-field" maxlength="500" placeholder="Why did you bookmark this?"></textarea>
+                        <textarea id="bookmark-notes" wire:model="hardwareBookmarkForm.notes" rows="3" class="boq-field" maxlength="500" placeholder="{{ __('Why did you bookmark this?') }}"></textarea>
                         @error('hardwareBookmarkForm.notes') <p class="boq-field-error">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
                 <div class="boq-modal-foot">
                     <button type="button" wire:click="closeBookmarkModal" class="boq-btn-secondary">
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
 
                     <button type="submit" wire:loading.attr="disabled" wire:target="saveBookmark" class="boq-btn-primary">

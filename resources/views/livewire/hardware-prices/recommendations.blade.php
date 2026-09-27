@@ -1,12 +1,12 @@
 <div>
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">AI Recommendations</h1>
-            <p class="mt-1 text-sm text-gray-500">Best-value hardware picks based on price, stability and freshness</p>
+            <h1 class="text-2xl font-bold text-gray-900">{{ __('AI Recommendations') }}</h1>
+            <p class="mt-1 text-sm text-gray-500">{{ __('Best-value hardware picks based on price, stability and freshness') }}</p>
         </div>
         <a href="{{ url('/hardware-prices') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition">
             <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-            Back
+            {{ __('Back') }}
         </a>
     </div>
 
@@ -14,15 +14,15 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-                <label for="location" class="block text-xs font-medium text-gray-500 mb-1">Location</label>
-                <input type="text" wire:model.live.debounce.300ms="location" id="location" placeholder="e.g. city, town or market"
+                <label for="location" class="block text-xs font-medium text-gray-500 mb-1">{{ __('Location') }}</label>
+                <input type="text" wire:model.live.debounce.300ms="location" id="location" placeholder="{{ __('e.g. city, town or market') }}"
                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
             </div>
             <div class="flex items-end">
                 <button type="button" wire:click="load"
                         class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition">
                     <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                    Refresh Recommendations
+                    {{ __('Refresh Recommendations') }}
                 </button>
             </div>
         </div>
@@ -39,8 +39,8 @@
                                 {{ $rec['rating']['overall'] ?? '?' }}
                             </div>
                             <div>
-                                <p class="text-xs text-gray-500">AI Rating</p>
-                                <p class="text-xs font-medium text-gray-700">out of 100</p>
+                                <p class="text-xs text-gray-500">{{ __('AI Rating') }}</p>
+                                <p class="text-xs font-medium text-gray-700">{{ __('out of 100') }}</p>
                             </div>
                         </div>
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ isset($rec['price_history']['trend']) && $rec['price_history']['trend'] === 'rising' ? 'bg-red-100 text-red-800' : (isset($rec['price_history']['trend']) && $rec['price_history']['trend'] === 'falling' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800') }}">
@@ -59,26 +59,26 @@
 
                     <div class="mt-4 grid grid-cols-2 gap-2 text-xs border-t border-gray-100 pt-4">
                         <div>
-                            <p class="text-gray-500">Lowest</p>
+                            <p class="text-gray-500">{{ __('Lowest') }}</p>
                             <p class="font-medium text-gray-900">{{ isset($rec['price_history']['lowest']) ? \App\Support\Format::number((float) $rec['price_history']['lowest'], 2) : '?' }}</p>
                         </div>
                         <div>
-                            <p class="text-gray-500">Highest</p>
+                            <p class="text-gray-500">{{ __('Highest') }}</p>
                             <p class="font-medium text-gray-900">{{ isset($rec['price_history']['highest']) ? \App\Support\Format::number((float) $rec['price_history']['highest'], 2) : '?' }}</p>
                         </div>
                         <div>
-                            <p class="text-gray-500">Average</p>
+                            <p class="text-gray-500">{{ __('Average') }}</p>
                             <p class="font-medium text-gray-900">{{ isset($rec['price_history']['average']) ? \App\Support\Format::number((float) $rec['price_history']['average'], 2) : '?' }}</p>
                         </div>
                         <div>
-                            <p class="text-gray-500">Change</p>
+                            <p class="text-gray-500">{{ __('Change') }}</p>
                             <p class="font-medium text-gray-900">{{ isset($rec['price_history']['change']) ? \App\Support\Format::number((float) $rec['price_history']['change'], 2) : '?' }}</p>
                         </div>
                     </div>
 
                     <div class="mt-4 pt-4 border-t border-gray-100">
                         <a href="{{ url('/hardware-prices/' . $rec['id']) }}" class="inline-flex items-center justify-center w-full px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition">
-                            View Details
+                            {{ __('View Details') }}
                         </a>
                     </div>
                 </div>
@@ -87,7 +87,7 @@
     @else
         <div class="bg-white rounded-xl shadow-sm border border-gray-200">
             <div class="text-center py-12">
-                <p class="text-gray-500">No recommendations available yet.</p>
+                <p class="text-gray-500">{{ __('No recommendations available yet.') }}</p>
             </div>
         </div>
     @endif

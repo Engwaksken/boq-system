@@ -8,11 +8,11 @@
         <div>
             <h1 class="boq-page-title">
                 <i class="fas fa-folder-open"></i>
-                Projects
+                {{ __('Projects') }}
             </h1>
 
             <p class="boq-page-subtitle">
-                Manage your construction projects.
+                {{ __('Manage your construction projects.') }}
             </p>
         </div>
 
@@ -21,7 +21,7 @@
             class="boq-btn-primary"
         >
             <i class="fas fa-plus"></i>
-            New Project
+            {{ __('New Project') }}
         </a>
 
     </div>
@@ -38,7 +38,7 @@
 
             <div>
                 <p class="boq-stat-label">
-                    Total Projects
+                    {{ __('Total Projects') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -58,7 +58,7 @@
 
             <div>
                 <p class="boq-stat-label">
-                    Active Projects
+                    {{ __('Active Projects') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -78,7 +78,7 @@
 
             <div>
                 <p class="boq-stat-label">
-                    Total BOQs
+                    {{ __('Total BOQs') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -98,7 +98,7 @@
 
             <div>
                 <p class="boq-stat-label">
-                    Total Value
+                    {{ __('Total Value') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -152,7 +152,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Search Projects
+                    {{ __('Search Projects') }}
                 </label>
 
                 <div class="boq-input-icon-wrap">
@@ -163,7 +163,7 @@
                         type="search"
                         wire:model.live.debounce.300ms="search"
                         class="boq-field boq-field-with-icon"
-                        placeholder="Search name, code, client or location..."
+                        placeholder="{{ __('Search name, code, client or location...') }}"
                     >
 
                 </div>
@@ -175,7 +175,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Rows
+                    {{ __('Rows') }}
                 </label>
 
                 <select
@@ -200,7 +200,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Sort By
+                    {{ __('Sort By') }}
                 </label>
 
                 <div
@@ -303,7 +303,7 @@
     <div class="boq-panel">
 
         <x-bulk-bar :count="count($selected)">
-            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected projects?" class="boq-btn-danger"><i class="fas fa-trash"></i> Delete</button>
+            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected projects?" class="boq-btn-danger"><i class="fas fa-trash"></i> {{ __('Delete') }}</button>
         </x-bulk-bar>
 
         <div class="boq-table-wrapper">
@@ -380,7 +380,7 @@
                             wire:click="sortBy('client')"
                             style="cursor:pointer;"
                         >
-                            Client
+                            {{ __('Client') }}
                         </th>
 
 
@@ -389,7 +389,7 @@
                             wire:click="sortBy('location')"
                             style="cursor:pointer;"
                         >
-                            Location
+                            {{ __('Location') }}
                         </th>
 
 
@@ -398,7 +398,7 @@
                             wire:click="sortBy('contract_value')"
                             style="cursor:pointer;"
                         >
-                            Contract Value
+                            {{ __('Contract Value') }}
                         </th>
 
 
@@ -407,7 +407,7 @@
                             wire:click="sortBy('status')"
                             style="cursor:pointer;"
                         >
-                            Status
+                            {{ __('Status') }}
                         </th>
 
 
@@ -416,13 +416,13 @@
                             wire:click="sortBy('start_date')"
                             style="cursor:pointer;"
                         >
-                            Start Date
+                            {{ __('Start Date') }}
                         </th>
 
 
                         {{-- Actions --}}
                         <th class="text-right">
-                            Actions
+                            {{ __('Actions') }}
                         </th>
 
                     </tr>
@@ -682,7 +682,7 @@
                                     <a
                                         href="{{ url('/projects/'.$project->id) }}"
                                         class="boq-icon-btn"
-                                        title="View Project"
+                                        title="{{ __('View Project') }}"
                                     >
                                         <i class="fas fa-eye"></i>
                                     </a>
@@ -692,7 +692,7 @@
                                     <a
                                         href="{{ url('/projects/'.$project->id.'/edit') }}"
                                         class="boq-icon-btn"
-                                        title="Edit Project"
+                                        title="{{ __('Edit Project') }}"
                                     >
                                         <i class="fas fa-pen"></i>
                                     </a>
@@ -704,7 +704,7 @@
                                         wire:click="delete({{ $project->id }})"
                                         wire:confirm="Are you sure you want to delete this project?"
                                         class="boq-icon-btn boq-icon-danger"
-                                        title="Delete Project"
+                                        title="{{ __('Delete Project') }}"
                                     >
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -728,7 +728,7 @@
                                 <i class="fas fa-folder-open"></i>
 
                                 <span>
-                                    No projects found.
+                                    {{ __('No projects found.') }}
                                 </span>
 
                                 <div style="margin-top:1rem;">
@@ -738,7 +738,7 @@
                                         class="boq-btn-primary"
                                     >
                                         <i class="fas fa-plus"></i>
-                                        Create your first project
+                                        {{ __('Create your first project') }}
                                     </a>
 
                                 </div>

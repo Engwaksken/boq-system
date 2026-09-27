@@ -89,6 +89,23 @@
             </section>
 
 
+            {{-- Language switcher (guests; signed-in users choose in Profile > Preferences) --}}
+            @php
+                $guestLanguages = \App\Models\Language::where('is_active', true)->orderByDesc('is_default')->orderBy('name')->get(['code', 'native_name']);
+            @endphp
+            @if($guestLanguages->count() > 1)
+                <nav class="mt-5 flex flex-wrap justify-center gap-3 text-xs" aria-label="{{ __('Language') }}">
+                    @foreach($guestLanguages as $guestLanguage)
+                        <a
+                            href="{{ request()->fullUrlWithQuery(['lang' => $guestLanguage->code]) }}"
+                            class="auth-link {{ app()->getLocale() === $guestLanguage->code ? 'font-extrabold text-slate-900' : 'font-medium text-slate-500' }}"
+                            hreflang="{{ $guestLanguage->code }}"
+                            @if(app()->getLocale() === $guestLanguage->code) aria-current="true" @endif
+                        >{{ $guestLanguage->native_name }}</a>
+                    @endforeach
+                </nav>
+            @endif
+
             {{-- Footer --}}
             <p
                 class="mt-6 text-center text-xs text-slate-500"

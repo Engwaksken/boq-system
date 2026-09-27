@@ -1,4 +1,4 @@
-<x-layouts.guest title="Create account">
+<x-layouts.guest title="{{ __('Create account') }}">
 
     <div class="text-center">
 
@@ -7,11 +7,11 @@
         <h1
             class="text-2xl font-extrabold tracking-tight text-slate-900"
         >
-            Create your account
+            {{ __('Create your account') }}
         </h1>
 
         <p class="mt-2 text-sm text-slate-500">
-            Start managing projects, BOQs and construction pricing.
+            {{ __('Start managing projects, BOQs and construction pricing.') }}
         </p>
 
     </div>
@@ -32,7 +32,7 @@
                 for="name"
                 class="mb-1.5 block text-sm font-semibold text-slate-700"
             >
-                Full name
+                {{ __('Full name') }}
             </label>
 
             <div class="auth-input-wrap">
@@ -49,7 +49,7 @@
                     required
                     autofocus
                     autocomplete="name"
-                    placeholder="e.g. John Ssemanda"
+                    placeholder="{{ __('e.g. John Ssemanda') }}"
                     class="auth-field {{ $errors->has('name') ? 'has-error' : '' }}"
                 >
 
@@ -72,7 +72,7 @@
                 for="email"
                 class="mb-1.5 block text-sm font-semibold text-slate-700"
             >
-                Email address
+                {{ __('Email address') }}
             </label>
 
             <div class="auth-input-wrap">
@@ -111,7 +111,7 @@
                 for="password"
                 class="mb-1.5 block text-sm font-semibold text-slate-700"
             >
-                Password
+                {{ __('Password') }}
             </label>
 
             <div
@@ -128,7 +128,7 @@
                     name="password"
                     required
                     autocomplete="new-password"
-                    placeholder="Create a secure password"
+                    placeholder="{{ __('Create a secure password') }}"
                     class="auth-field {{ $errors->has('password') ? 'has-error' : '' }}"
                 >
 
@@ -136,7 +136,7 @@
                     type="button"
                     class="auth-password-toggle"
                     data-password-toggle
-                    aria-label="Show password"
+                    aria-label="{{ __('Show password') }}"
                 >
                     <i class="fas fa-eye"></i>
                 </button>
@@ -146,8 +146,7 @@
             <p
                 class="mt-1.5 text-xs text-slate-400"
             >
-                Use a strong password with a mix of letters,
-                numbers and symbols.
+                {{ __('Use a strong password with a mix of letters, numbers and symbols.') }}
             </p>
 
             @error('password')
@@ -167,7 +166,7 @@
                 for="password_confirmation"
                 class="mb-1.5 block text-sm font-semibold text-slate-700"
             >
-                Confirm password
+                {{ __('Confirm password') }}
             </label>
 
             <div
@@ -184,7 +183,7 @@
                     name="password_confirmation"
                     required
                     autocomplete="new-password"
-                    placeholder="Re-enter your password"
+                    placeholder="{{ __('Re-enter your password') }}"
                     class="auth-field"
                 >
 
@@ -192,7 +191,7 @@
                     type="button"
                     class="auth-password-toggle"
                     data-password-toggle
-                    aria-label="Show password"
+                    aria-label="{{ __('Show password') }}"
                 >
                     <i class="fas fa-eye"></i>
                 </button>
@@ -221,7 +220,7 @@
                 >
 
                 <span>
-                    I agree to the
+                    {{ __('I agree to the') }}
 
                     <a
                         href="{{ route('legal.privacy') }}"
@@ -229,10 +228,10 @@
                         rel="noopener"
                         class="auth-link"
                     >
-                        Privacy Policy
+                        {{ __('Privacy Policy') }}
                     </a>
 
-                    and
+                    {{ __('and') }}
 
                     <a
                         href="{{ route('legal.terms') }}"
@@ -240,7 +239,7 @@
                         rel="noopener"
                         class="auth-link"
                     >
-                        Terms of Use
+                        {{ __('Terms of Use') }}
                     </a>
                 </span>
 
@@ -262,7 +261,7 @@
             class="auth-primary"
         >
             <i class="fas fa-user-plus"></i>
-            Create account
+            {{ __('Create account') }}
         </button>
 
     </form>
@@ -271,13 +270,13 @@
     <p
         class="mt-7 text-center text-sm text-slate-500"
     >
-        Already have an account?
+        {{ __('Already have an account?') }}
 
         <a
             href="{{ route('login') }}"
             class="auth-link ml-1"
         >
-            Sign in
+            {{ __('Sign in') }}
         </a>
     </p>
 

@@ -9,11 +9,11 @@
 
             <h1 class="boq-page-title">
                 <i class="fas fa-layer-group"></i>
-                Plans & Pricing
+                {{ __('Plans & Pricing') }}
             </h1>
 
             <p class="boq-page-subtitle">
-                Choose the plan that fits your BOQ workflow.
+                {{ __('Choose the plan that fits your BOQ workflow.') }}
             </p>
 
         </div>
@@ -23,7 +23,7 @@
             class="boq-btn-primary"
         >
             <i class="fas fa-credit-card"></i>
-            My Subscription
+            {{ __('My Subscription') }}
         </a>
 
     </div>
@@ -38,7 +38,7 @@
 
             <div>
                 <p class="boq-stat-label">
-                    Available Plans
+                    {{ __('Available Plans') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -57,7 +57,7 @@
 
             <div>
                 <p class="boq-stat-label">
-                    Monthly Plans
+                    {{ __('Monthly Plans') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -76,7 +76,7 @@
 
             <div>
                 <p class="boq-stat-label">
-                    Annual Plans
+                    {{ __('Annual Plans') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -104,7 +104,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Search Plans
+                    {{ __('Search Plans') }}
                 </label>
 
                 <div class="boq-input-icon-wrap">
@@ -115,7 +115,7 @@
                         type="search"
                         wire:model.live.debounce.300ms="search"
                         class="boq-field boq-field-with-icon"
-                        placeholder="Search plan name, code, type or currency..."
+                        placeholder="{{ __('Search plan name, code, type or currency...') }}"
                     >
 
                 </div>
@@ -127,7 +127,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Rows
+                    {{ __('Rows') }}
                 </label>
 
                 <select
@@ -152,7 +152,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Sort By
+                    {{ __('Sort By') }}
                 </label>
 
                 <div class="boq-sort-buttons">
@@ -311,7 +311,7 @@
                         @else
 
                             <span>
-                                Lifetime access
+                                {{ __('Lifetime access') }}
                             </span>
 
                         @endif
@@ -331,7 +331,7 @@
 
                                 <div class="boq-plan-limit-label">
                                     <i class="fas fa-folder-open"></i>
-                                    Projects
+                                    {{ __('Projects') }}
                                 </div>
 
                                 <div class="boq-plan-limit-value">
@@ -345,7 +345,7 @@
 
                                 <div class="boq-plan-limit-label">
                                     <i class="fas fa-file-invoice-dollar"></i>
-                                    BOQs
+                                    {{ __('BOQs') }}
                                 </div>
 
                                 <div class="boq-plan-limit-value">
@@ -359,7 +359,7 @@
 
                                 <div class="boq-plan-limit-label">
                                     <i class="fas fa-robot"></i>
-                                    AI
+                                    {{ __('AI') }}
                                 </div>
 
                                 <div class="boq-plan-limit-value">
@@ -385,7 +385,7 @@
 
                             <p class="boq-plan-features-title">
                                 <i class="fas fa-list-check"></i>
-                                Features
+                                {{ __('Features') }}
                             </p>
 
 
@@ -460,7 +460,7 @@
                             class="boq-plan-choose-button"
                         >
                             <i class="fas fa-check-circle"></i>
-                            Choose Plan
+                            {{ __('Choose Plan') }}
                         </a>
 
                     </div>
@@ -494,11 +494,11 @@
             </span>
 
             <h3 class="boq-empty-title">
-                No plans found
+                {{ __('No plans found') }}
             </h3>
 
             <p class="boq-empty-description">
-                No subscription plans match your search.
+                {{ __('No subscription plans match your search.') }}
             </p>
 
         </div>

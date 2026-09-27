@@ -13,7 +13,7 @@
 
         <button type="button" wire:click="clearSelection" class="boq-bulk-clear-btn">
             <i class="fas fa-xmark"></i>
-            Clear
+            {{ __('Clear') }}
         </button>
     </div>
 @endif

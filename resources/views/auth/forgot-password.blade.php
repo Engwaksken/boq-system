@@ -1,4 +1,4 @@
-<x-layouts.guest title="Forgot password">
+<x-layouts.guest title="{{ __('Forgot password') }}">
 
     <div class="text-center">
 
@@ -7,12 +7,11 @@
         <h1
             class="text-2xl font-extrabold tracking-tight text-slate-900"
         >
-            Forgot your password?
+            {{ __('Forgot your password?') }}
         </h1>
 
         <p class="mt-2 text-sm leading-6 text-slate-500">
-            Enter the email address linked to your account.
-            We will send you a secure password reset link.
+            {{ __('Enter the email address linked to your account. We will send you a secure password reset link.') }}
         </p>
 
     </div>
@@ -46,7 +45,7 @@
                 for="email"
                 class="mb-1.5 block text-sm font-semibold text-slate-700"
             >
-                Email address
+                {{ __('Email address') }}
             </label>
 
             <div class="auth-input-wrap">
@@ -88,7 +87,7 @@
             class="auth-primary"
         >
             <i class="fas fa-paper-plane"></i>
-            Send password reset link
+            {{ __('Send password reset link') }}
         </button>
 
     </form>
@@ -103,7 +102,7 @@
             class="auth-link inline-flex items-center gap-2 text-sm"
         >
             <i class="fas fa-arrow-left"></i>
-            Back to sign in
+            {{ __('Back to sign in') }}
         </a>
 
     </div>

@@ -5,11 +5,11 @@
         <div>
             <h1 class="boq-page-title">
                 <i class="fas fa-book"></i>
-                Rate Library
+                {{ __('Rate Library') }}
             </h1>
 
             <p class="boq-page-subtitle">
-                Central verified construction rates used to price BOQ items.
+                {{ __('Central verified construction rates used to price BOQ items.') }}
             </p>
         </div>
 
@@ -19,7 +19,7 @@
             class="boq-btn-primary"
         >
             <i class="fas fa-plus"></i>
-            Add Rate
+            {{ __('Add Rate') }}
         </button>
 
     </div>
@@ -47,7 +47,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Search
+                    {{ __('Search') }}
                 </label>
 
                 <div class="boq-input-icon-wrap">
@@ -58,7 +58,7 @@
                         type="search"
                         wire:model.live.debounce.300ms="search"
                         class="boq-field boq-field-with-icon"
-                        placeholder="Search item, description or code..."
+                        placeholder="{{ __('Search item, description or code...') }}"
                     >
 
                 </div>
@@ -69,7 +69,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Verification
+                    {{ __('Verification') }}
                 </label>
 
                 <select
@@ -77,27 +77,27 @@
                     class="boq-field"
                 >
                     <option value="">
-                        All statuses
+                        {{ __('All statuses') }}
                     </option>
 
                     <option value="approved">
-                        Approved
+                        {{ __('Approved') }}
                     </option>
 
                     <option value="pending">
-                        Pending
+                        {{ __('Pending') }}
                     </option>
 
                     <option value="draft">
-                        Draft
+                        {{ __('Draft') }}
                     </option>
 
                     <option value="rejected">
-                        Rejected
+                        {{ __('Rejected') }}
                     </option>
 
                     <option value="expired">
-                        Expired
+                        {{ __('Expired') }}
                     </option>
                 </select>
 
@@ -107,7 +107,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Currency
+                    {{ __('Currency') }}
                 </label>
 
                 <select
@@ -115,7 +115,7 @@
                     class="boq-field"
                 >
                     <option value="">
-                        All currencies
+                        {{ __('All currencies') }}
                     </option>
 
                     @foreach(\App\Models\Currency::activeCodes() as $currencyCode)
@@ -137,9 +137,9 @@
     <div class="boq-panel">
 
         <x-bulk-bar :count="count($selected)">
-            <button type="button" wire:click="bulkApprove" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> Approve</button>
-            <button type="button" wire:click="bulkReject" wire:confirm="Reject the selected rates?" class="boq-btn-danger"><i class="fas fa-circle-xmark"></i> Reject</button>
-            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected rates? Rates used in quotations are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> Delete</button>
+            <button type="button" wire:click="bulkApprove" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> {{ __('Approve') }}</button>
+            <button type="button" wire:click="bulkReject" wire:confirm="Reject the selected rates?" class="boq-btn-danger"><i class="fas fa-circle-xmark"></i> {{ __('Reject') }}</button>
+            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected rates? Rates used in quotations are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> {{ __('Delete') }}</button>
         </x-bulk-bar>
 
         <div class="boq-table-wrapper">
@@ -149,14 +149,14 @@
                 <thead>
                     <tr>
                         <th class="boq-check-col"><x-select-all :ids="$rates->pluck('id')" :selected="$selected" /></th>
-                        <th>Item</th>
-                        <th>Unit</th>
-                        <th class="text-right">Rate</th>
-                        <th>Currency</th>
-                        <th>Region</th>
-                        <th>Supplier</th>
-                        <th>Verification</th>
-                        <th class="text-right">Actions</th>
+                        <th>{{ __('Item') }}</th>
+                        <th>{{ __('Unit') }}</th>
+                        <th class="text-right">{{ __('Rate') }}</th>
+                        <th>{{ __('Currency') }}</th>
+                        <th>{{ __('Region') }}</th>
+                        <th>{{ __('Supplier') }}</th>
+                        <th>{{ __('Verification') }}</th>
+                        <th class="text-right">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
 
@@ -264,7 +264,7 @@
                                             type="button"
                                             wire:click="approve({{ $rate->id }})"
                                             class="boq-icon-btn boq-icon-success"
-                                            title="Approve rate"
+                                            title="{{ __('Approve rate') }}"
                                         >
                                             <i class="fas fa-check"></i>
                                         </button>
@@ -287,7 +287,7 @@
                                             type="button"
                                             wire:click="reject({{ $rate->id }})"
                                             class="boq-icon-btn boq-icon-danger"
-                                            title="Reject rate"
+                                            title="{{ __('Reject rate') }}"
                                         >
                                             <i class="fas fa-xmark"></i>
                                         </button>
@@ -299,7 +299,7 @@
                                         type="button"
                                         wire:click="edit({{ $rate->id }})"
                                         class="boq-icon-btn"
-                                        title="Edit rate"
+                                        title="{{ __('Edit rate') }}"
                                     >
                                         <i class="fas fa-pen"></i>
                                     </button>
@@ -321,7 +321,7 @@
                                 <i class="fas fa-book"></i>
 
                                 <span>
-                                    No rates found.
+                                    {{ __('No rates found.') }}
                                 </span>
                             </td>
                         </tr>
@@ -370,7 +370,7 @@
                         </h2>
 
                         <p class="boq-page-subtitle">
-                            Rates become effective after approval.
+                            {{ __('Rates become effective after approval.') }}
                         </p>
 
                     </div>
@@ -398,7 +398,7 @@
                                 value="form.category"
                                 :current="$categoryChoice"
                                 :options="$categoryOptions"
-                                placeholder="Select category..."
+                                placeholder="{{ __('Select category...') }}"
                                 other-placeholder="Type a new category"
                                 error="form.category"
                             />
@@ -411,7 +411,7 @@
                                 value="form.item"
                                 :current="$itemChoice"
                                 :options="$itemOptions"
-                                placeholder="Select item..."
+                                placeholder="{{ __('Select item...') }}"
                                 other-placeholder="Type a new item"
                                 error="form.item"
                                 required
@@ -421,10 +421,10 @@
                             <div class="boq-form-span-2">
 
                                 <label class="boq-field-label">
-                                    Description
+                                    {{ __('Description') }}
                                 </label>
 
-                                <textarea placeholder="Add description..."
+                                <textarea placeholder="{{ __('Add description...') }}"
                                     wire:model="form.description"
                                     rows="3"
                                     class="boq-field boq-textarea"
@@ -436,10 +436,10 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Unit
+                                    {{ __('Unit') }}
                                 </label>
 
-                                <input placeholder="e.g. bag, m³, kg, piece"
+                                <input placeholder="{{ __('e.g. bag, m³, kg, piece') }}"
                                     wire:model="form.unit"
                                     class="boq-field"
                                 >
@@ -450,7 +450,7 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Rate
+                                    {{ __('Rate') }}
                                 </label>
 
                                 <input placeholder="0.00"
@@ -467,7 +467,7 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Currency
+                                    {{ __('Currency') }}
                                 </label>
 
                                 <x-currency-select wire:model="form.currency" :current="$form['currency'] ?? null" />
@@ -478,10 +478,10 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Region
+                                    {{ __('Region') }}
                                 </label>
 
-                                <input placeholder="e.g. city, town or market"
+                                <input placeholder="{{ __('e.g. city, town or market') }}"
                                     wire:model="form.region"
                                     class="boq-field"
                                 >
@@ -492,7 +492,7 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Supplier
+                                    {{ __('Supplier') }}
                                 </label>
 
                                 <select
@@ -500,7 +500,7 @@
                                     class="boq-field"
                                 >
                                     <option value="">
-                                        — None —
+                                        {{ __('— None —') }}
                                     </option>
 
                                     @foreach($this->suppliers as $supplier)
@@ -518,7 +518,7 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Source Type
+                                    {{ __('Source Type') }}
                                 </label>
 
                                 <select
@@ -555,10 +555,10 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Source Reference
+                                    {{ __('Source Reference') }}
                                 </label>
 
-                                <input placeholder="e.g. supplier quote #123"
+                                <input placeholder="{{ __('e.g. supplier quote #123') }}"
                                     wire:model="form.source_reference"
                                     class="boq-field"
                                 >
@@ -569,7 +569,7 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Effective From
+                                    {{ __('Effective From') }}
                                 </label>
 
                                 <input
@@ -584,7 +584,7 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Effective Until
+                                    {{ __('Effective Until') }}
                                 </label>
 
                                 <input
@@ -599,7 +599,7 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Verification
+                                    {{ __('Verification') }}
                                 </label>
 
                                 <select
@@ -607,15 +607,15 @@
                                     class="boq-field"
                                 >
                                     <option value="draft">
-                                        Draft
+                                        {{ __('Draft') }}
                                     </option>
 
                                     <option value="pending">
-                                        Pending
+                                        {{ __('Pending') }}
                                     </option>
 
                                     <option value="approved">
-                                        Approved
+                                        {{ __('Approved') }}
                                     </option>
                                 </select>
 
@@ -644,7 +644,7 @@
                             wire:click="cancel"
                             class="boq-btn-secondary"
                         >
-                            Cancel
+                            {{ __('Cancel') }}
                         </button>
 
                         <button
@@ -652,7 +652,7 @@
                             class="boq-btn-primary"
                         >
                             <i class="fas fa-save"></i>
-                            Save Rate
+                            {{ __('Save Rate') }}
                         </button>
 
                     </div>

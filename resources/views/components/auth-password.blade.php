@@ -16,7 +16,7 @@
             {{ $attributes->class(['auth-field', 'has-error' => $errors->has($name)]) }}
         >
 
-        <button type="button" class="auth-password-toggle" data-password-toggle aria-label="Show password" aria-pressed="false">
+        <button type="button" class="auth-password-toggle" data-password-toggle aria-label="{{ __('Show password') }}" aria-pressed="false">
             <i class="fas fa-eye"></i>
         </button>
     </div>

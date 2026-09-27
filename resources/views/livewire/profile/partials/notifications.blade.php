@@ -6,11 +6,11 @@
     <div class="boq-panel boq-panel-body">
         <div class="mb-4 flex items-start justify-between gap-3">
             <div>
-                <h3 class="boq-section-title"><i class="fas fa-bell"></i> Notification Preferences</h3>
-                <p class="boq-section-subtitle">Choose how you want to be notified about important events. Changes save automatically.</p>
+                <h3 class="boq-section-title"><i class="fas fa-bell"></i> {{ __('Notification Preferences') }}</h3>
+                <p class="boq-section-subtitle">{{ __('Choose how you want to be notified about important events. Changes save automatically.') }}</p>
             </div>
             <span x-show="saved" x-transition class="boq-badge boq-badge-success" role="status">
-                <i class="fas fa-check"></i> Saved
+                <i class="fas fa-check"></i> {{ __('Saved') }}
             </span>
         </div>
 
@@ -45,9 +45,9 @@
     </div>
 
     <div class="boq-panel boq-panel-body">
-        <h3 class="boq-section-title mb-3"><i class="fas fa-clock"></i> Notification Frequency</h3>
+        <h3 class="boq-section-title mb-3"><i class="fas fa-clock"></i> {{ __('Notification Frequency') }}</h3>
 
-        <div class="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Notification frequency">
+        <div class="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="{{ __('Notification frequency') }}">
             @foreach([
                 'immediate' => ['Immediate', 'As soon as something happens'],
                 'hourly' => ['Hourly digest', 'One summary every hour'],

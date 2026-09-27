@@ -8,12 +8,12 @@
                 Top-ups &amp; Add-ons
             </h1>
             <p class="boq-page-subtitle">
-                Buy feature updates, usage credits and one-off unlocks for your workspace.
+                {{ __('Buy feature updates, usage credits and one-off unlocks for your workspace.') }}
             </p>
         </div>
         @if($currentSubscription)
             <div class="boq-current-subscription">
-                <div class="boq-current-subscription-label">Current Plan</div>
+                <div class="boq-current-subscription-label">{{ __('Current Plan') }}</div>
                 <div class="boq-current-subscription-name">{{ $currentSubscription->plan?->name ?? '—' }}</div>
             </div>
         @endif
@@ -30,7 +30,7 @@
     @if($catalog->isEmpty())
         <div class="boq-panel" style="padding:3rem;text-align:center;color:#64748b">
             <i class="fas fa-box-open" style="font-size:2rem;opacity:.6"></i>
-            <p style="margin-top:.75rem">No top-ups are available right now.</p>
+            <p style="margin-top:.75rem">{{ __('No top-ups are available right now.') }}</p>
         </div>
     @else
         <div class="boq-stats-grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">
@@ -44,7 +44,7 @@
                             <p class="boq-stat-value" style="font-size:1.05rem">{{ $item['name'] }}</p>
                         </div>
                         @if($item['owned'])
-                            <span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">Owned</span>
+                            <span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">{{ __('Owned') }}</span>
                         @endif
                     </div>
 
@@ -72,12 +72,12 @@
                     </div>
                     @if($item['purchasable'])
                         <a href="{{ route('checkout', ['type' => 'topup', 'id' => $item['id']]) }}" class="boq-btn-primary w-full justify-center">
-                            <i class="fas fa-cart-shopping"></i> Buy
+                            <i class="fas fa-cart-shopping"></i> {{ __('Buy') }}
                         </a>
                     @elseif(! $planCode)
-                        <p style="font-size:.72rem;color:#b45309">Subscribe to a plan before buying top-ups.</p>
+                        <p style="font-size:.72rem;color:#b45309">{{ __('Subscribe to a plan before buying top-ups.') }}</p>
                     @else
-                        <p style="font-size:.72rem;color:#64748b">Not available for your plan or purchase limit reached.</p>
+                        <p style="font-size:.72rem;color:#64748b">{{ __('Not available for your plan or purchase limit reached.') }}</p>
                     @endif
                 </div>
             @endforeach
@@ -87,7 +87,7 @@
     @if($purchases->isNotEmpty())
         <h2 class="boq-page-title" style="margin-top:2rem">
             <i class="fas fa-history"></i>
-            Purchase History
+            {{ __('Purchase History') }}
         </h2>
         <div class="boq-panel">
             <table class="boq-table min-w-full divide-y divide-slate-200">

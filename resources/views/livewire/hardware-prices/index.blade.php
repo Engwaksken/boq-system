@@ -6,11 +6,11 @@
 
             <h1 class="boq-page-title">
                 <i class="fas fa-tags"></i>
-                Market Prices
+                {{ __('Market Prices') }}
             </h1>
 
             <p class="boq-page-subtitle">
-                Track hardware supplier prices and manufacturer/factory prices across all construction categories.
+                {{ __('Track hardware supplier prices and manufacturer/factory prices across all construction categories.') }}
             </p>
 
         </div>
@@ -22,7 +22,7 @@
                 class="boq-btn-secondary"
             >
                 <i class="fas fa-scale-balanced"></i>
-                Compare
+                {{ __('Compare') }}
             </a>
 
             <a
@@ -30,7 +30,7 @@
                 class="boq-btn-secondary"
             >
                 <i class="fas fa-lightbulb"></i>
-                Recommendations
+                {{ __('Recommendations') }}
             </a>
 
             @if($canManage)
@@ -41,7 +41,7 @@
                     class="boq-btn-primary"
                 >
                     <i class="fas fa-plus"></i>
-                    Add Price
+                    {{ __('Add Price') }}
                 </button>
 
             @endif
@@ -83,7 +83,7 @@
         <div class="boq-stat-card boq-stat-green">
             <div>
                 <p class="boq-stat-label">
-                    Total Prices
+                    {{ __('Total Prices') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -99,7 +99,7 @@
         <div class="boq-stat-card boq-stat-blue">
             <div>
                 <p class="boq-stat-label">
-                    Categories
+                    {{ __('Categories') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -115,7 +115,7 @@
         <div class="boq-stat-card boq-stat-amber">
             <div>
                 <p class="boq-stat-label">
-                    Hardware Prices
+                    {{ __('Hardware Prices') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -131,7 +131,7 @@
         <div class="boq-stat-card boq-stat-purple">
             <div>
                 <p class="boq-stat-label">
-                    Factory Prices
+                    {{ __('Factory Prices') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -153,7 +153,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Search
+                    {{ __('Search') }}
                 </label>
 
                 <div class="boq-input-icon-wrap">
@@ -164,7 +164,7 @@
                         type="search"
                         wire:model.live.debounce.300ms="search"
                         class="boq-field boq-field-with-icon"
-                        placeholder="Search item, brand, specification or supplier..."
+                        placeholder="{{ __('Search item, brand, specification or supplier...') }}"
                     >
 
                 </div>
@@ -174,7 +174,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Price Type
+                    {{ __('Price Type') }}
                 </label>
 
                 <select
@@ -182,15 +182,15 @@
                     class="boq-field"
                 >
                     <option value="">
-                        All Price Types
+                        {{ __('All Price Types') }}
                     </option>
 
                     <option value="hardware">
-                        Hardware Price
+                        {{ __('Hardware Price') }}
                     </option>
 
                     <option value="factory">
-                        Factory Price
+                        {{ __('Factory Price') }}
                     </option>
                 </select>
 
@@ -199,7 +199,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Category
+                    {{ __('Category') }}
                 </label>
 
                 <select
@@ -207,7 +207,7 @@
                     class="boq-field"
                 >
                     <option value="">
-                        All Categories
+                        {{ __('All Categories') }}
                     </option>
 
                     @foreach(
@@ -229,7 +229,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Supplier / Factory
+                    {{ __('Supplier / Factory') }}
                 </label>
 
                 <select
@@ -237,7 +237,7 @@
                     class="boq-field"
                 >
                     <option value="">
-                        All Sources
+                        {{ __('All Sources') }}
                     </option>
 
                     @foreach(
@@ -259,7 +259,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Location
+                    {{ __('Location') }}
                 </label>
 
                 <select
@@ -267,7 +267,7 @@
                     class="boq-field"
                 >
                     <option value="">
-                        All Locations
+                        {{ __('All Locations') }}
                     </option>
 
                     @foreach(
@@ -323,11 +323,11 @@
     <div class="boq-panel overflow-hidden">
 
         <x-bulk-bar :count="count($selected)">
-            <button type="button" wire:click="bulkBookmark" class="boq-btn-secondary"><i class="fas fa-bookmark"></i> Bookmark</button>
+            <button type="button" wire:click="bulkBookmark" class="boq-btn-secondary"><i class="fas fa-bookmark"></i> {{ __('Bookmark') }}</button>
             @if($canManage)
-                <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> Activate</button>
-                <button type="button" wire:click="bulkSetActive(false)" wire:confirm="Deactivate the selected prices?" class="boq-btn-secondary"><i class="fas fa-ban"></i> Deactivate</button>
-                <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected prices? Prices linked to BOQ items are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> Delete</button>
+                <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> {{ __('Activate') }}</button>
+                <button type="button" wire:click="bulkSetActive(false)" wire:confirm="Deactivate the selected prices?" class="boq-btn-secondary"><i class="fas fa-ban"></i> {{ __('Deactivate') }}</button>
+                <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected prices? Prices linked to BOQ items are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> {{ __('Delete') }}</button>
             @endif
         </x-bulk-bar>
 
@@ -338,16 +338,16 @@
                 <thead>
                     <tr>
                         <th class="boq-check-col"><x-select-all :ids="$prices->pluck('id')" :selected="$selected" /></th>
-                        <th>Item</th>
-                        <th>Price Type</th>
-                        <th>Category</th>
-                        <th>Unit</th>
-                        <th>Price</th>
-                        <th>Supplier / Factory</th>
-                        <th>Location</th>
-                        <th>Updated</th>
+                        <th>{{ __('Item') }}</th>
+                        <th>{{ __('Price Type') }}</th>
+                        <th>{{ __('Category') }}</th>
+                        <th>{{ __('Unit') }}</th>
+                        <th>{{ __('Price') }}</th>
+                        <th>{{ __('Supplier / Factory') }}</th>
+                        <th>{{ __('Location') }}</th>
+                        <th>{{ __('Updated') }}</th>
                         <th class="text-right">
-                            Actions
+                            {{ __('Actions') }}
                         </th>
                     </tr>
                 </thead>
@@ -473,7 +473,7 @@
                                     <a
                                         href="{{ url('/hardware-prices/'.$price->id) }}"
                                         class="boq-icon-btn"
-                                        title="View"
+                                        title="{{ __('View') }}"
                                     >
                                         <i class="fas fa-eye"></i>
                                     </a>
@@ -499,7 +499,7 @@
                                             type="button"
                                             wire:click="editPrice({{ $price->id }})"
                                             class="boq-icon-btn"
-                                            title="Edit"
+                                            title="{{ __('Edit') }}"
                                         >
                                             <i class="fas fa-pen"></i>
                                         </button>
@@ -539,7 +539,7 @@
                                 <i class="fas fa-box-open"></i>
 
                                 <span>
-                                    No prices found.
+                                    {{ __('No prices found.') }}
                                 </span>
                             </td>
                         </tr>
@@ -594,7 +594,7 @@
                         </h2>
 
                         <p class="boq-table-subtitle">
-                            Record either a hardware supplier price or a factory/manufacturer price.
+                            {{ __('Record either a hardware supplier price or a factory/manufacturer price.') }}
                         </p>
 
                     </div>
@@ -620,7 +620,7 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Price Type *
+                                    {{ __('Price Type *') }}
                                 </label>
 
                                 <select
@@ -628,11 +628,11 @@
                                     class="boq-field"
                                 >
                                     <option value="hardware">
-                                        Hardware Price
+                                        {{ __('Hardware Price') }}
                                     </option>
 
                                     <option value="factory">
-                                        Factory Price
+                                        {{ __('Factory Price') }}
                                     </option>
                                 </select>
 
@@ -650,7 +650,7 @@
                                 value="form.category"
                                 :current="$categoryChoice"
                                 :options="$categoryOptions"
-                                placeholder="Select category..."
+                                placeholder="{{ __('Select category...') }}"
                                 other-placeholder="e.g. Cement, Steel, Roofing"
                                 error="form.category"
                                 required
@@ -672,13 +672,13 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Brand / Manufacturer
+                                    {{ __('Brand / Manufacturer') }}
                                 </label>
 
                                 <input
                                     wire:model="form.brand"
                                     class="boq-field"
-                                    placeholder="e.g. Hima Cement"
+                                    placeholder="{{ __('e.g. Hima Cement') }}"
                                 >
 
                             </div>
@@ -686,13 +686,13 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Unit *
+                                    {{ __('Unit *') }}
                                 </label>
 
                                 <input
                                     wire:model="form.unit"
                                     class="boq-field"
-                                    placeholder="bag, kg, tonne, metre..."
+                                    placeholder="{{ __('bag, kg, tonne, metre...') }}"
                                 >
 
                             </div>
@@ -700,7 +700,7 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Price *
+                                    {{ __('Price *') }}
                                 </label>
 
                                 <input
@@ -717,7 +717,7 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Currency *
+                                    {{ __('Currency *') }}
                                 </label>
 
                                 <x-currency-select wire:model="form.currency" :current="$form['currency'] ?? null" />
@@ -727,13 +727,13 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Supplier / Factory *
+                                    {{ __('Supplier / Factory *') }}
                                 </label>
 
                                 <input
                                     wire:model="form.supplier"
                                     class="boq-field"
-                                    placeholder="Supplier or manufacturer name"
+                                    placeholder="{{ __('Supplier or manufacturer name') }}"
                                 >
 
                             </div>
@@ -741,13 +741,13 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Location
+                                    {{ __('Location') }}
                                 </label>
 
                                 <input
                                     wire:model="form.location"
                                     class="boq-field"
-                                    placeholder="e.g. city, town or market"
+                                    placeholder="{{ __('e.g. city, town or market') }}"
                                 >
 
                             </div>
@@ -755,13 +755,13 @@
                             <div class="boq-form-span-2">
 
                                 <label class="boq-field-label">
-                                    Specification
+                                    {{ __('Specification') }}
                                 </label>
 
                                 <textarea
                                     wire:model="form.specification"
                                     class="boq-field"
-                                    placeholder="Size, grade, thickness, standard, packaging..."
+                                    placeholder="{{ __('Size, grade, thickness, standard, packaging...') }}"
                                 ></textarea>
 
                             </div>
@@ -769,7 +769,7 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Source URL
+                                    {{ __('Source URL') }}
                                 </label>
 
                                 <input
@@ -784,13 +784,13 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Source Reference
+                                    {{ __('Source Reference') }}
                                 </label>
 
                                 <input
                                     wire:model="form.source_reference"
                                     class="boq-field"
-                                    placeholder="Price list, quotation, market survey..."
+                                    placeholder="{{ __('Price list, quotation, market survey...') }}"
                                 >
 
                             </div>
@@ -798,7 +798,7 @@
                             <div>
 
                                 <label class="boq-field-label">
-                                    Price Date *
+                                    {{ __('Price Date *') }}
                                 </label>
 
                                 <input
@@ -820,7 +820,7 @@
                                         wire:model="form.is_active"
                                     >
 
-                                    Active price
+                                    {{ __('Active price') }}
                                 </label>
                             </div>
 
@@ -835,7 +835,7 @@
                             wire:click="cancelForm"
                             class="boq-btn-secondary"
                         >
-                            Cancel
+                            {{ __('Cancel') }}
                         </button>
 
                         <button
@@ -843,7 +843,7 @@
                             class="boq-btn-primary"
                         >
                             <i class="fas fa-save"></i>
-                            Save Price
+                            {{ __('Save Price') }}
                         </button>
 
                     </div>

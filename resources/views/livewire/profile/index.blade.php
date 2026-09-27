@@ -4,11 +4,11 @@
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-slate-900">
-                    My Profile
+                    {{ __('My Profile') }}
                 </h1>
 
                 <p class="mt-1 text-sm text-slate-500">
-                    Manage your account, security, preferences and saved hardware prices.
+                    {{ __('Manage your account, security, preferences and saved hardware prices.') }}
                 </p>
             </div>
         </div>
@@ -62,7 +62,7 @@
         <div class="border-b border-slate-200">
             <nav
                 class="flex overflow-x-auto px-4 sm:px-6"
-                aria-label="Profile tabs"
+                aria-label="{{ __('Profile tabs') }}"
             >
                 @foreach($tabs as $tabKey => $tabLabel)
                     <button
@@ -127,7 +127,7 @@
                     </svg>
 
                     <p class="mt-2 text-sm text-slate-500">
-                        Loading...
+                        {{ __('Loading...') }}
                     </p>
                 </div>
             </div>
@@ -164,11 +164,11 @@
                     @default
                         <div class="py-12 text-center">
                             <h3 class="text-base font-semibold text-slate-900">
-                                Section unavailable
+                                {{ __('Section unavailable') }}
                             </h3>
 
                             <p class="mt-1 text-sm text-slate-500">
-                                This profile section could not be loaded.
+                                {{ __('This profile section could not be loaded.') }}
                             </p>
                         </div>
 

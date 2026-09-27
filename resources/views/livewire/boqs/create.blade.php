@@ -1,9 +1,9 @@
 <div>
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">New BOQ</h1>
+            <h1 class="text-2xl font-bold text-gray-900">{{ __('New BOQ') }}</h1>
             <p class="mt-1 text-sm text-gray-500">
-                Upload a Bill of Quantities file
+                {{ __('Upload a Bill of Quantities file') }}
             </p>
         </div>
 
@@ -25,7 +25,7 @@
                 />
             </svg>
 
-            Back
+            {{ __('Back') }}
         </a>
     </div>
 
@@ -51,7 +51,7 @@
                         for="projectId"
                         class="block text-sm font-medium text-gray-700 mb-1"
                     >
-                        Project
+                        {{ __('Project') }}
                         <span class="text-red-500">*</span>
                     </label>
 
@@ -60,7 +60,7 @@
                         wire:model="projectId"
                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                     >
-                        <option value="">Select a project</option>
+                        <option value="">{{ __('Select a project') }}</option>
 
                         @if(isset($projects) && $projects->isNotEmpty())
                             @foreach($projects as $project)
@@ -87,14 +87,14 @@
                         for="name"
                         class="block text-sm font-medium text-gray-700 mb-1"
                     >
-                        BOQ Name
+                        {{ __('BOQ Name') }}
                     </label>
 
                     <input
                         type="text"
                         id="name"
                         wire:model="name"
-                        placeholder="Leave blank to use the file name"
+                        placeholder="{{ __('Leave blank to use the file name') }}"
                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                     >
 
@@ -111,7 +111,7 @@
                         for="file"
                         class="block text-sm font-medium text-gray-700 mb-1"
                     >
-                        BOQ File
+                        {{ __('BOQ File') }}
                         <span class="text-red-500">*</span>
                     </label>
 
@@ -147,7 +147,7 @@
                             wire:target="file"
                             class="mt-3 rounded-lg bg-indigo-50 px-3 py-2 text-sm text-indigo-700"
                         >
-                            Uploading file...
+                            {{ __('Uploading file...') }}
                         </div>
 
                         {{-- Selected File --}}
@@ -156,7 +156,7 @@
                                 <div class="flex items-center justify-between gap-3">
                                     <div>
                                         <p class="text-sm font-semibold text-green-800">
-                                            File selected
+                                            {{ __('File selected') }}
                                         </p>
 
                                         <p class="text-xs text-green-700 break-all">
@@ -169,7 +169,7 @@
                                         wire:click="$set('file', null)"
                                         class="text-xs font-semibold text-red-600 hover:text-red-700"
                                     >
-                                        Remove
+                                        {{ __('Remove') }}
                                     </button>
                                 </div>
                             </div>
@@ -191,7 +191,7 @@
                     href="{{ url('/boqs') }}"
                     class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition"
                 >
-                    Cancel
+                    {{ __('Cancel') }}
                 </a>
 
                 <button
@@ -201,7 +201,7 @@
                     class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-300 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition"
                 >
                     <span wire:loading.remove wire:target="save">
-                        Upload BOQ
+                        {{ __('Upload BOQ') }}
                     </span>
 
                     <span
@@ -231,7 +231,7 @@
                             ></path>
                         </svg>
 
-                        Processing...
+                        {{ __('Processing...') }}
                     </span>
                 </button>
             </div>

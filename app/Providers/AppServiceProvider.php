@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Http\Middleware\CheckEntitlement;
 use App\Http\Middleware\CheckPermission;
 use App\Http\Middleware\CheckRole;
+use App\Support\DatabaseTranslationLoader;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 
@@ -15,7 +16,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // UI translations edited in Settings > Languages are layered over lang/*.json.
+        $this->app->extend('translation.loader', function ($loader, $app) {
+            $frameworkLang = dirname((new \ReflectionClass(\Illuminate\Translation\TranslationServiceProvider::class))->getFileName()).'/lang';
+
+            return new DatabaseTranslationLoader($app['files'], [$frameworkLang, $app['path.lang']]);
+        });
     }
 
     /**

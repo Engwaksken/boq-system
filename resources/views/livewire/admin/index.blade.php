@@ -2,9 +2,9 @@
 <div class="space-y-5">
     <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
-            <p class="text-xs font-bold uppercase tracking-[.16em] text-emerald-700">Super Admin</p>
-            <h1 class="mt-1 text-2xl font-bold text-slate-900">Administration & System Control</h1>
-            <p class="mt-1 text-sm text-slate-500">Manage subscriptions, payments, users, access control and system settings.</p>
+            <p class="text-xs font-bold uppercase tracking-[.16em] text-emerald-700">{{ __('Super Admin') }}</p>
+            <h1 class="mt-1 text-2xl font-bold text-slate-900">{{ __('Administration & System Control') }}</h1>
+            <p class="mt-1 text-sm text-slate-500">{{ __('Manage subscriptions, payments, users, access control and system settings.') }}</p>
         </div>
     </div>
 
@@ -26,15 +26,15 @@
                     </button>
                 @endforeach
             </div>
-            <input wire:model.live.debounce.300ms="search" class="w-full rounded-lg border-slate-300 text-sm md:w-80" placeholder="Search current tab...">
+            <input wire:model.live.debounce.300ms="search" class="w-full rounded-lg border-slate-300 text-sm md:w-80" placeholder="{{ __('Search current tab...') }}">
         </div>
 
         @if($activeTab === 'subscriptions')
             <div class="overflow-x-auto">
                 <table class="boq-table min-w-full divide-y divide-slate-200">
                     <thead><tr>
-                        <th class="px-4 py-3 text-left">User</th><th class="px-4 py-3 text-left">Plan</th>
-                        <th class="px-4 py-3 text-left">Status</th><th class="px-4 py-3 text-left">Period</th>
+                        <th class="px-4 py-3 text-left">{{ __('User') }}</th><th class="px-4 py-3 text-left">{{ __('Plan') }}</th>
+                        <th class="px-4 py-3 text-left">{{ __('Status') }}</th><th class="px-4 py-3 text-left">{{ __('Period') }}</th>
                     </tr></thead>
                     <tbody class="divide-y divide-slate-100">
                         @forelse($subscriptions as $sub)
@@ -44,7 +44,7 @@
                             <td class="px-4 py-3 text-sm">{{ ucwords(str_replace('_',' ',$sub->status)) }}</td>
                             <td class="px-4 py-3 text-sm text-slate-500">{{ \App\Support\Format::date($sub->start_date, false) ?? '—' }} – {{ \App\Support\Format::date($sub->end_date, false) ?? 'Ongoing' }}</td>
                         </tr>
-                        @empty<tr><td colspan="4" class="p-8 text-center text-slate-500">No subscriptions found.</td></tr>@endforelse
+                        @empty<tr><td colspan="4" class="p-8 text-center text-slate-500">{{ __('No subscriptions found.') }}</td></tr>@endforelse
                     </tbody>
                 </table>
                 <div class="p-4">{{ $subscriptions->links() }}</div>
@@ -52,13 +52,13 @@
         @elseif($activeTab === 'plans')
             <div class="overflow-x-auto">
                 <table class="boq-table min-w-full divide-y divide-slate-200">
-                    <thead><tr><th class="px-4 py-3 text-left">Plan</th><th class="px-4 py-3 text-left">Price</th><th class="px-4 py-3 text-left">Status</th></tr></thead>
+                    <thead><tr><th class="px-4 py-3 text-left">{{ __('Plan') }}</th><th class="px-4 py-3 text-left">{{ __('Price') }}</th><th class="px-4 py-3 text-left">{{ __('Status') }}</th></tr></thead>
                     <tbody class="divide-y divide-slate-100">
                     @forelse($plans as $plan)<tr>
                         <td class="px-4 py-3"><div class="font-semibold">{{ $plan->name }}</div><div class="text-xs text-slate-500">{{ $plan->code }}</div></td>
                         <td class="px-4 py-3">{{ $plan->currency }} {{ \App\Support\Format::number((float)$plan->price, 2) }}</td>
                         <td class="px-4 py-3">{{ $plan->is_active ? 'Active' : 'Inactive' }}</td>
-                    </tr>@empty<tr><td colspan="3" class="p-8 text-center text-slate-500">No plans found.</td></tr>@endforelse
+                    </tr>@empty<tr><td colspan="3" class="p-8 text-center text-slate-500">{{ __('No plans found.') }}</td></tr>@endforelse
                     </tbody>
                 </table>
                 <div class="p-4">{{ $plans->links() }}</div>
@@ -66,13 +66,13 @@
         @elseif($activeTab === 'users')
             <div class="overflow-x-auto">
                 <table class="boq-table min-w-full divide-y divide-slate-200">
-                    <thead><tr><th class="px-4 py-3 text-left">User</th><th class="px-4 py-3 text-left">Organisation</th><th class="px-4 py-3 text-left">Roles</th></tr></thead>
+                    <thead><tr><th class="px-4 py-3 text-left">{{ __('User') }}</th><th class="px-4 py-3 text-left">{{ __('Organisation') }}</th><th class="px-4 py-3 text-left">{{ __('Roles') }}</th></tr></thead>
                     <tbody class="divide-y divide-slate-100">
                     @forelse($users as $user)<tr>
                         <td class="px-4 py-3"><div class="font-semibold">{{ $user->name }}</div><div class="text-xs text-slate-500">{{ $user->email }}</div></td>
                         <td class="px-4 py-3 text-sm">{{ $user->organisation?->name ?? '—' }}</td>
                         <td class="px-4 py-3 text-sm">{{ $user->roles->pluck('name')->join(', ') ?: '—' }}</td>
-                    </tr>@empty<tr><td colspan="3" class="p-8 text-center text-slate-500">No users found.</td></tr>@endforelse
+                    </tr>@empty<tr><td colspan="3" class="p-8 text-center text-slate-500">{{ __('No users found.') }}</td></tr>@endforelse
                     </tbody>
                 </table>
                 <div class="p-4">{{ $users->links() }}</div>

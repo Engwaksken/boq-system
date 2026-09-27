@@ -9,11 +9,11 @@
 
             <h1 class="boq-page-title">
                 <i class="fas fa-file-invoice-dollar"></i>
-                BOQs
+                {{ __('BOQs') }}
             </h1>
 
             <p class="boq-page-subtitle">
-                Bill of Quantities for your projects.
+                {{ __('Bill of Quantities for your projects.') }}
             </p>
 
         </div>
@@ -23,7 +23,7 @@
             class="boq-btn-primary"
         >
             <i class="fas fa-plus"></i>
-            New BOQ
+            {{ __('New BOQ') }}
         </a>
 
     </div>
@@ -41,7 +41,7 @@
             <div>
 
                 <p class="boq-stat-label">
-                    Total BOQs
+                    {{ __('Total BOQs') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -63,7 +63,7 @@
             <div>
 
                 <p class="boq-stat-label">
-                    Uploaded
+                    {{ __('Uploaded') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -85,7 +85,7 @@
             <div>
 
                 <p class="boq-stat-label">
-                    Under Review
+                    {{ __('Under Review') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -107,7 +107,7 @@
             <div>
 
                 <p class="boq-stat-label">
-                    Approved
+                    {{ __('Approved') }}
                 </p>
 
                 <p class="boq-stat-value">
@@ -138,7 +138,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Search BOQs
+                    {{ __('Search BOQs') }}
                 </label>
 
                 <div class="boq-input-icon-wrap">
@@ -149,7 +149,7 @@
                         type="search"
                         wire:model.live.debounce.300ms="search"
                         class="boq-field boq-field-with-icon"
-                        placeholder="Search BOQ name, project or status..."
+                        placeholder="{{ __('Search BOQ name, project or status...') }}"
                     >
 
                 </div>
@@ -161,7 +161,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Rows
+                    {{ __('Rows') }}
                 </label>
 
                 <select
@@ -186,7 +186,7 @@
             <div>
 
                 <label class="boq-field-label">
-                    Sort By
+                    {{ __('Sort By') }}
                 </label>
 
                 <div class="boq-sort-buttons">
@@ -281,7 +281,7 @@
 
                         {{-- Project --}}
                         <th>
-                            Project
+                            {{ __('Project') }}
                         </th>
 
 
@@ -333,13 +333,13 @@
 
                         {{-- Version --}}
                         <th>
-                            Version
+                            {{ __('Version') }}
                         </th>
 
 
                         {{-- Items --}}
                         <th>
-                            Items
+                            {{ __('Items') }}
                         </th>
 
 
@@ -368,7 +368,7 @@
 
                         {{-- Actions --}}
                         <th class="text-right">
-                            Actions
+                            {{ __('Actions') }}
                         </th>
 
                     </tr>
@@ -565,7 +565,7 @@
                                     <a
                                         href="{{ url('/boqs/'.$boq->id) }}"
                                         class="boq-icon-btn"
-                                        title="View BOQ"
+                                        title="{{ __('View BOQ') }}"
                                     >
                                         <i class="fas fa-eye"></i>
                                     </a>
@@ -589,7 +589,7 @@
                                 <i class="fas fa-file-invoice-dollar"></i>
 
                                 <span>
-                                    No BOQs found.
+                                    {{ __('No BOQs found.') }}
                                 </span>
 
                                 <div class="boq-empty-action">
@@ -599,7 +599,7 @@
                                         class="boq-btn-primary"
                                     >
                                         <i class="fas fa-plus"></i>
-                                        Upload your first BOQ
+                                        {{ __('Upload your first BOQ') }}
                                     </a>
 
                                 </div>

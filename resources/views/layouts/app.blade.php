@@ -184,7 +184,7 @@
                     <span
                         class="block text-xs text-slate-400"
                     >
-                        Cost intelligence
+                        {{ __('Cost intelligence') }}
                     </span>
                 </span>
             </a>
@@ -193,7 +193,7 @@
                 type="button"
                 @click="sidebarOpen = false"
                 class="rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-white lg:hidden"
-                aria-label="Close navigation"
+                aria-label="{{ __('Close navigation') }}"
             >
                 <i class="fas fa-xmark"></i>
             </button>
@@ -205,7 +205,7 @@
             <p
                 class="mb-3 px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500"
             >
-                Workspace
+                {{ __('Workspace') }}
             </p>
 
             @foreach($navigation as $item)
@@ -231,7 +231,7 @@
                     </span>
 
                     <span>
-                        {{ $item['label'] }}
+                        {{ __($item['label']) }}
                     </span>
                 </a>
 
@@ -251,7 +251,7 @@
                     >
                         <span>
                             <i class="fas fa-shield-halved mr-1.5"></i>
-                            Administration
+                            {{ __('Administration') }}
                         </span>
 
                         <i
@@ -288,7 +288,7 @@
                                 </span>
 
                                 <span>
-                                    {{ $item['label'] }}
+                                    {{ __($item['label']) }}
                                 </span>
                             </a>
 
@@ -337,7 +337,7 @@
                     <span
                         class="block truncate text-xs text-slate-400"
                     >
-                        Update profile
+                        {{ __('Update profile') }}
                     </span>
                 </span>
 
@@ -358,7 +358,7 @@
                     class="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-400 transition hover:bg-white/10 hover:text-white"
                 >
                     <i class="fas fa-right-from-bracket mr-2"></i>
-                    Log out
+                    {{ __('Log out') }}
                 </button>
             </form>
         </div>
@@ -376,7 +376,7 @@
                 type="button"
                 @click="sidebarOpen = true"
                 class="rounded-lg p-2 text-slate-600 hover:bg-slate-100"
-                aria-label="Open navigation"
+                aria-label="{{ __('Open navigation') }}"
             >
                 <i class="fas fa-bars"></i>
             </button>

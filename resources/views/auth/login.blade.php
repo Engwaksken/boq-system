@@ -1,4 +1,4 @@
-<x-layouts.guest title="Sign in">
+<x-layouts.guest title="{{ __('Sign in') }}">
 
     <div class="text-center">
 
@@ -7,11 +7,11 @@
         <h1
             class="text-2xl font-extrabold tracking-tight text-slate-900"
         >
-            Sign in
+            {{ __('Sign in') }}
         </h1>
 
         <p class="mt-2 text-sm text-slate-500">
-            Access your projects, BOQs, pricing and subscriptions.
+            {{ __('Access your projects, BOQs, pricing and subscriptions.') }}
         </p>
 
     </div>
@@ -42,7 +42,7 @@
                 for="email"
                 class="mb-1.5 block text-sm font-semibold text-slate-700"
             >
-                Email address
+                {{ __('Email address') }}
             </label>
 
             <div class="auth-input-wrap">
@@ -86,7 +86,7 @@
                     for="password"
                     class="block text-sm font-semibold text-slate-700"
                 >
-                    Password
+                    {{ __('Password') }}
                 </label>
 
                 @if(Route::has('password.request'))
@@ -95,7 +95,7 @@
                         href="{{ route('password.request') }}"
                         class="auth-link text-xs"
                     >
-                        Forgot password?
+                        {{ __('Forgot password?') }}
                     </a>
 
                 @endif
@@ -116,7 +116,7 @@
                     name="password"
                     required
                     autocomplete="current-password"
-                    placeholder="Enter your password"
+                    placeholder="{{ __('Enter your password') }}"
                     class="auth-field {{ $errors->has('password') ? 'has-error' : '' }}"
                 >
 
@@ -124,7 +124,7 @@
                     type="button"
                     class="auth-password-toggle"
                     data-password-toggle
-                    aria-label="Show password"
+                    aria-label="{{ __('Show password') }}"
                 >
                     <i class="fas fa-eye"></i>
                 </button>
@@ -161,7 +161,7 @@
                 >
 
                 <span>
-                    Remember me
+                    {{ __('Remember me') }}
                 </span>
 
             </label>
@@ -175,7 +175,7 @@
             class="auth-primary"
         >
             <i class="fas fa-right-to-bracket"></i>
-            Sign in
+            {{ __('Sign in') }}
         </button>
 
     </form>
@@ -185,7 +185,7 @@
     <div data-biometric-only class="hidden">
 
         <div class="auth-divider">
-            <span>or</span>
+            <span>{{ __('or') }}</span>
         </div>
 
         <button
@@ -194,7 +194,7 @@
             class="auth-secondary"
         >
             <i class="fas fa-fingerprint"></i>
-            Sign in with biometrics
+            {{ __('Sign in with biometrics') }}
         </button>
 
         <p data-biometric-error class="auth-error hidden text-center" role="alert"></p>
@@ -211,13 +211,13 @@
         <p
             class="mt-7 text-center text-sm text-slate-500"
         >
-            Don't have an account?
+            {{ __('Don\'t have an account?') }}
 
             <a
                 href="{{ route('register') }}"
                 class="auth-link ml-1"
             >
-                Create account
+                {{ __('Create account') }}
             </a>
         </p>
 

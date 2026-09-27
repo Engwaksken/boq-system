@@ -8,11 +8,11 @@
 
                 <h1 class="boq-page-title">
                     <i class="fas fa-user-gear"></i>
-                    My Profile
+                    {{ __('My Profile') }}
                 </h1>
 
                 <p class="boq-page-subtitle">
-                    Manage your personal information, account security and preferences.
+                    {{ __('Manage your personal information, account security and preferences.') }}
                 </p>
 
             </div>
@@ -22,7 +22,7 @@
                 class="boq-btn-secondary"
             >
                 <i class="fas fa-arrow-left"></i>
-                Back to Dashboard
+                {{ __('Back to Dashboard') }}
             </a>
 
         </div>
@@ -33,7 +33,7 @@
 
                 <div>
                     <p class="boq-stat-label">
-                        Account
+                        {{ __('Account') }}
                     </p>
 
                     <p class="boq-stat-value">
@@ -51,7 +51,7 @@
 
                 <div>
                     <p class="boq-stat-label">
-                        Email Status
+                        {{ __('Email Status') }}
                     </p>
 
                     <p class="boq-stat-value" style="font-size:1rem;">
@@ -77,7 +77,7 @@
 
                 <div>
                     <p class="boq-stat-label">
-                        Language
+                        {{ __('Language') }}
                     </p>
 
                     <p class="boq-stat-value" style="font-size:1rem;">
@@ -101,7 +101,7 @@
 
                 <div>
                     <p class="boq-stat-label">
-                        Timezone
+                        {{ __('Timezone') }}
                     </p>
 
                     <p class="boq-stat-value" style="font-size:1rem;">
@@ -140,7 +140,7 @@
                     class="boq-profile-tab"
                 >
                     <i class="fas fa-user"></i>
-                    Profile Information
+                    {{ __('Profile Information') }}
                 </button>
 
                 <button
@@ -150,7 +150,7 @@
                     class="boq-profile-tab"
                 >
                     <i class="fas fa-lock"></i>
-                    Password & Security
+                    {{ __('Password & Security') }}
                 </button>
 
                 <button
@@ -160,7 +160,7 @@
                     class="boq-profile-tab"
                 >
                     <i class="fas fa-user-xmark"></i>
-                    Account
+                    {{ __('Account') }}
                 </button>
 
             </div>

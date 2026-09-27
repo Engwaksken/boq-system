@@ -3,14 +3,14 @@
         <div>
             <h1 class="boq-page-title">
                 <i class="fas fa-credit-card"></i>
-                Payment Gateways
+                {{ __('Payment Gateways') }}
             </h1>
-            <p class="boq-page-subtitle">Configure payment drivers, API credentials and webhook settings.</p>
+            <p class="boq-page-subtitle">{{ __('Configure payment drivers, API credentials and webhook settings.') }}</p>
         </div>
 
         <button type="button" wire:click="create" class="boq-btn-primary">
             <i class="fas fa-plus"></i>
-            Add Gateway
+            {{ __('Add Gateway') }}
         </button>
     </div>
 
@@ -31,11 +31,11 @@
     <div class="boq-panel overflow-hidden">
         <x-bulk-bar :count="count($selected)">
             <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary">
-                <i class="fas fa-circle-check"></i> Activate
+                <i class="fas fa-circle-check"></i> {{ __('Activate') }}
             </button>
             <button type="button" wire:click="bulkSetActive(false)" wire:confirm="Deactivate the selected gateways?" class="boq-btn-secondary">
-            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected gateways? Gateways with payments and the default gateway are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> Delete</button>
-                <i class="fas fa-ban"></i> Deactivate
+            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected gateways? Gateways with payments and the default gateway are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> {{ __('Delete') }}</button>
+                <i class="fas fa-ban"></i> {{ __('Deactivate') }}
             </button>
         </x-bulk-bar>
 
@@ -46,11 +46,11 @@
                         <th class="boq-check-col">
                             <x-select-all :ids="$gateways->pluck('id')" :selected="$selected" />
                         </th>
-                        <th>Gateway</th>
-                        <th>Driver</th>
-                        <th>Status</th>
-                        <th>Mode</th>
-                        <th class="text-right">Actions</th>
+                        <th>{{ __('Gateway') }}</th>
+                        <th>{{ __('Driver') }}</th>
+                        <th>{{ __('Status') }}</th>
+                        <th>{{ __('Mode') }}</th>
+                        <th class="text-right">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -63,7 +63,7 @@
                                 <div class="boq-table-title">
                                     {{ $gateway->name }}
                                     @if($gateway->is_default)
-                                        <span class="boq-badge boq-badge-warning ml-1"><i class="fas fa-star"></i> Default</span>
+                                        <span class="boq-badge boq-badge-warning ml-1"><i class="fas fa-star"></i> {{ __('Default') }}</span>
                                     @endif
                                 </div>
                                 <div class="boq-table-subtitle font-mono">{{ $gateway->code }}</div>
@@ -81,11 +81,11 @@
                             </td>
                             <td>
                                 <div class="boq-table-actions justify-end">
-                                    <button type="button" wire:click="edit({{ $gateway->id }})" class="boq-icon-btn" title="Edit" aria-label="Edit">
+                                    <button type="button" wire:click="edit({{ $gateway->id }})" class="boq-icon-btn" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}">
                                         <i class="fas fa-pen"></i>
                                     </button>
                                     @unless($gateway->is_default)
-                                        <button type="button" wire:click="setDefault({{ $gateway->id }})" class="boq-icon-btn" title="Make default" aria-label="Make default">
+                                        <button type="button" wire:click="setDefault({{ $gateway->id }})" class="boq-icon-btn" title="{{ __('Make default') }}" aria-label="{{ __('Make default') }}">
                                             <i class="far fa-star"></i>
                                         </button>
                                     @endunless
@@ -97,7 +97,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="boq-table-empty">No payment gateways configured.</td>
+                            <td colspan="6" class="boq-table-empty">{{ __('No payment gateways configured.') }}</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -117,7 +117,7 @@
                         <i class="fas {{ $editingId ? 'fa-pen' : 'fa-plus' }}"></i>
                         {{ $editingId ? 'Edit Payment Gateway' : 'New Payment Gateway' }}
                     </h2>
-                    <button type="button" wire:click="cancel" class="boq-modal-close" aria-label="Close">
+                    <button type="button" wire:click="cancel" class="boq-modal-close" aria-label="{{ __('Close') }}">
                         <i class="fas fa-xmark"></i>
                     </button>
                 </div>
@@ -125,25 +125,25 @@
                 <div class="boq-modal-body space-y-5">
                     <div class="boq-form-grid">
                         <div>
-                            <label for="gw-name" class="boq-field-label">Name *</label>
-                            <input id="gw-name" type="text" wire:model="form.name" class="boq-field" placeholder="e.g. ioTec Pay">
+                            <label for="gw-name" class="boq-field-label">{{ __('Name *') }}</label>
+                            <input id="gw-name" type="text" wire:model="form.name" class="boq-field" placeholder="{{ __('e.g. ioTec Pay') }}">
                             @error('form.name') <p class="boq-field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
                             <label for="gw-code" class="boq-field-label">Code (unique) *</label>
-                            <input id="gw-code" type="text" wire:model="form.code" class="boq-field" placeholder="e.g. iotec">
+                            <input id="gw-code" type="text" wire:model="form.code" class="boq-field" placeholder="{{ __('e.g. iotec') }}">
                             @error('form.code') <p class="boq-field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
-                            <label for="gw-driver" class="boq-field-label">Driver *</label>
+                            <label for="gw-driver" class="boq-field-label">{{ __('Driver *') }}</label>
                             <select id="gw-driver" wire:model.live="form.driver" class="boq-field">
                                 @foreach($driverOptions as $value => $label)
                                     <option value="{{ $value }}">{{ $label }}</option>
                                 @endforeach
                             </select>
-                            <p class="boq-field-help">Changing the driver loads its configuration template.</p>
+                            <p class="boq-field-help">{{ __('Changing the driver loads its configuration template.') }}</p>
                             @error('form.driver') <p class="boq-field-error">{{ $message }}</p> @enderror
                         </div>
 
@@ -154,48 +154,48 @@
                         </div>
 
                         <div class="boq-form-span-2">
-                            <label for="gw-description" class="boq-field-label">Description</label>
-                            <textarea id="gw-description" wire:model="form.description" rows="2" class="boq-field boq-textarea" placeholder="Shown to administrators only"></textarea>
+                            <label for="gw-description" class="boq-field-label">{{ __('Description') }}</label>
+                            <textarea id="gw-description" wire:model="form.description" rows="2" class="boq-field boq-textarea" placeholder="{{ __('Shown to administrators only') }}"></textarea>
                             @error('form.description') <p class="boq-field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="boq-form-span-2">
-                            <label for="gw-webhook" class="boq-field-label">Webhook URL</label>
+                            <label for="gw-webhook" class="boq-field-label">{{ __('Webhook URL') }}</label>
                             <input id="gw-webhook" type="url" wire:model="form.webhook_url" class="boq-field" placeholder="{{ url('/api/v1/payments/webhook') }}">
                             @error('form.webhook_url') <p class="boq-field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
-                            <label for="gw-currencies" class="boq-field-label">Supported Currencies</label>
-                            <input id="gw-currencies" type="text" wire:model="supportedCurrenciesCsv" class="boq-field" placeholder="UGX, USD">
+                            <label for="gw-currencies" class="boq-field-label">{{ __('Supported Currencies') }}</label>
+                            <input id="gw-currencies" type="text" wire:model="supportedCurrenciesCsv" class="boq-field" placeholder="{{ __('UGX, USD') }}">
                             @error('supportedCurrenciesCsv') <p class="boq-field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
-                            <label for="gw-countries" class="boq-field-label">Supported Countries</label>
-                            <input id="gw-countries" type="text" wire:model="supportedCountriesCsv" class="boq-field" placeholder="UG">
+                            <label for="gw-countries" class="boq-field-label">{{ __('Supported Countries') }}</label>
+                            <input id="gw-countries" type="text" wire:model="supportedCountriesCsv" class="boq-field" placeholder="{{ __('UG') }}">
                             @error('supportedCountriesCsv') <p class="boq-field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="boq-form-span-2">
-                            <label for="gw-methods" class="boq-field-label">Supported Methods</label>
-                            <input id="gw-methods" type="text" wire:model="supportedMethodsCsv" class="boq-field" placeholder="mobile_money, card">
-                            <p class="boq-field-help">Comma separated.</p>
+                            <label for="gw-methods" class="boq-field-label">{{ __('Supported Methods') }}</label>
+                            <input id="gw-methods" type="text" wire:model="supportedMethodsCsv" class="boq-field" placeholder="{{ __('mobile_money, card') }}">
+                            <p class="boq-field-help">{{ __('Comma separated.') }}</p>
                             @error('supportedMethodsCsv') <p class="boq-field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="boq-form-span-2 flex flex-wrap gap-5">
                             <label class="boq-check">
                                 <input type="checkbox" wire:model="form.is_active">
-                                <span>Active</span>
+                                <span>{{ __('Active') }}</span>
                             </label>
                             <label class="boq-check">
                                 <input type="checkbox" wire:model="form.is_test_mode">
-                                <span>Test mode</span>
+                                <span>{{ __('Test mode') }}</span>
                             </label>
                             <label class="boq-check">
                                 <input type="checkbox" wire:model="form.is_default">
-                                <span>Default gateway</span>
+                                <span>{{ __('Default gateway') }}</span>
                             </label>
                         </div>
                     </div>
@@ -204,9 +204,9 @@
                         <div>
                             <h3 class="boq-section-title">
                                 <i class="fas fa-key"></i>
-                                Driver Configuration
+                                {{ __('Driver Configuration') }}
                             </h3>
-                            <p class="boq-field-help mb-3">Saved secrets show as <code>***stored***</code>; leave them unchanged to keep the stored value.</p>
+                            <p class="boq-field-help mb-3">{{ __('Saved secrets show as') }} <code>{{ __('***stored***') }}</code>; leave them unchanged to keep the stored value.</p>
 
                             <div class="boq-form-grid">
                                 @foreach($config as $key => $value)
@@ -249,11 +249,11 @@
                 </div>
 
                 <div class="boq-modal-foot">
-                    <button type="button" wire:click="cancel" class="boq-btn-secondary">Cancel</button>
+                    <button type="button" wire:click="cancel" class="boq-btn-secondary">{{ __('Cancel') }}</button>
                     <button type="submit" wire:loading.attr="disabled" wire:target="save" class="boq-btn-primary">
                         <i wire:loading.remove wire:target="save" class="fas fa-floppy-disk"></i>
                         <i wire:loading wire:target="save" class="fas fa-spinner fa-spin"></i>
-                        Save Gateway
+                        {{ __('Save Gateway') }}
                     </button>
                 </div>
             </form>
