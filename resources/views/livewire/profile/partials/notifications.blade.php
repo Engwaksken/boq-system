@@ -16,16 +16,16 @@
 
         <div class="space-y-3">
             @foreach([
-                'email_project_updates' => ['fa-envelope', 'Email', 'Project updates', 'Receive email when projects are updated'],
-                'email_boq_changes' => ['fa-envelope', 'Email', 'BOQ changes', 'Get notified when BOQs are modified'],
-                'email_price_alerts' => ['fa-envelope', 'Email', 'Price alerts', 'Alerts when hardware prices change significantly'],
-                'in_app_project_updates' => ['fa-bell', 'In-app', 'Project updates', 'See project updates in the notification centre'],
-                'in_app_boq_changes' => ['fa-bell', 'In-app', 'BOQ changes', 'See BOQ changes in the notification centre'],
-                'in_app_approvals' => ['fa-bell', 'In-app', 'Approvals', 'Notifications when items need your approval'],
+                'email_project_updates' => ['fa-envelope', __('Email'), __('Project updates'), __('Receive email when projects are updated')],
+                'email_boq_changes' => ['fa-envelope', __('Email'), __('BOQ changes'), __('Get notified when BOQs are modified')],
+                'email_price_alerts' => ['fa-envelope', __('Email'), __('Price alerts'), __('Alerts when hardware prices change significantly')],
+                'in_app_project_updates' => ['fa-bell', __('In-app'), __('Project updates'), __('See project updates in the notification centre')],
+                'in_app_boq_changes' => ['fa-bell', __('In-app'), __('BOQ changes'), __('See BOQ changes in the notification centre')],
+                'in_app_approvals' => ['fa-bell', __('In-app'), __('Approvals'), __('Notifications when items need your approval')],
             ] as $key => [$icon, $channel, $title, $description])
                 <label for="pref-{{ $key }}" class="boq-toggle-row" wire:key="pref-{{ $key }}">
                     <span class="flex items-center gap-3">
-                        <span class="boq-stat-icon"><i class="fas {{ $icon }}"></i></span>
+                        <span class="boq-stat-icon"><i class="fas {{ $icon }}" aria-hidden="true"></i></span>
                         <span>
                             <span class="block font-semibold text-slate-900">{{ $title }} <span class="text-xs font-medium text-slate-400">· {{ $channel }}</span></span>
                             <span class="block text-sm text-slate-500">{{ $description }}</span>
@@ -49,10 +49,10 @@
 
         <div class="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="{{ __('Notification frequency') }}">
             @foreach([
-                'immediate' => ['Immediate', 'As soon as something happens'],
-                'hourly' => ['Hourly digest', 'One summary every hour'],
-                'daily' => ['Daily digest', 'One summary each day'],
-                'weekly' => ['Weekly digest', 'One summary each week'],
+                'immediate' => [__('Immediate'), __('As soon as something happens')],
+                'hourly' => [__('Hourly digest'), __('One summary every hour')],
+                'daily' => [__('Daily digest'), __('One summary each day')],
+                'weekly' => [__('Weekly digest'), __('One summary each week')],
             ] as $value => [$label, $hint])
                 <label class="boq-radio-card" wire:key="freq-{{ $value }}">
                     <input type="radio" value="{{ $value }}" wire:model.live="notificationPrefs.frequency">

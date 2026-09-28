@@ -6,7 +6,7 @@
     <div class="boq-panel boq-panel-body">
         <div class="mb-4 flex items-start justify-between gap-3">
             <div>
-                <h3 class="boq-section-title"><i class="fas fa-sliders"></i> Display &amp; Regional Preferences</h3>
+                <h3 class="boq-section-title"><i class="fas fa-sliders" aria-hidden="true"></i> {{ __('Display & Regional Preferences') }}</h3>
                 <p class="boq-section-subtitle">{{ __('How dates, numbers and money are shown to you. Changes save automatically.') }}</p>
             </div>
             <span x-show="saved" x-transition class="boq-badge boq-badge-success" role="status">

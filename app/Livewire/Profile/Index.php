@@ -79,7 +79,7 @@ class Index extends Component
                 'required',
                 'email',
                 'max:255',
-                Rule::unique(User::class)->ignore(Auth::id()),
+                Rule::unique(User::class, 'email')->ignore(Auth::id()),
             ],
 
             'form.phone' => [
@@ -88,9 +88,11 @@ class Index extends Component
                 'max:30',
             ],
 
+            // Any active language (was a hard-coded en/fr/sw list, so saving the
+            // overview failed silently for e.g. Luganda users).
             'form.locale' => [
                 'required',
-                Rule::in(['en', 'fr', 'sw']),
+                Rule::in($this->allowedLocales()),
             ],
 
             'form.timezone' => [
@@ -104,6 +106,18 @@ class Index extends Component
                 'max:2048',
             ],
         ];
+    }
+
+    /** @return list<string> */
+    private function allowedLocales(): array
+    {
+        try {
+            $codes = \App\Models\Language::query()->where('is_active', true)->pluck('code')->all();
+        } catch (\Throwable) {
+            $codes = [];
+        }
+
+        return array_values(array_unique(array_filter([...$codes, 'en', Auth::user()?->locale])));
     }
 
     public function mount(): void

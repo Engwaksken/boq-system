@@ -152,6 +152,43 @@ class WebRedesignTest extends TestCase
             ->assertSee('Please select 2 to 10 items to compare.');
     }
 
+    public function test_plans_page_counts_available_monthly_and_annual_plans(): void
+    {
+        \App\Models\Plan::factory()->create(['type' => 'monthly', 'is_active' => true, 'is_archived' => false]);
+        \App\Models\Plan::factory()->create(['type' => 'annual', 'is_active' => true, 'is_archived' => false]);
+        \App\Models\Plan::factory()->create(['type' => 'monthly', 'is_active' => false, 'is_archived' => false]);
+
+        Livewire::actingAs($this->customer())
+            ->test(\App\Livewire\Plans\Index::class)
+            ->assertViewHas('stats', fn (array $stats) => $stats['available_plans'] === 2
+                && $stats['monthly_plans'] === 1
+                && $stats['annual_plans'] === 1);
+    }
+
+    public function test_choose_plan_link_opens_the_plans_tab(): void
+    {
+        Livewire::withQueryParams(['tab' => 'plans'])
+            ->actingAs($this->customer())
+            ->test(\App\Livewire\Subscriptions\Index::class)
+            ->assertSet('activeTab', 'plans');
+    }
+
+    public function test_profile_overview_saves_for_a_user_on_an_active_non_default_language(): void
+    {
+        \App\Models\Language::updateOrCreate(['code' => 'lg'], ['name' => 'Luganda', 'native_name' => 'Luganda', 'is_active' => true]);
+        $user = $this->customer();
+        $user->forceFill(['locale' => 'lg'])->save();
+
+        Livewire::actingAs($user)
+            ->test(\App\Livewire\Profile\Index::class)
+            ->set('form.name', 'Peter O. Okello')
+            ->call('updateProfile')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Peter O. Okello', $user->fresh()->name);
+        $this->assertSame('lg', $user->fresh()->locale);
+    }
+
     public function test_built_stylesheet_includes_pagination_utilities(): void
     {
         $manifest = json_decode(file_get_contents(public_path('build/manifest.json')), true);

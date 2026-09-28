@@ -21,9 +21,9 @@
                         <span class="boq-upload-preview is-empty">{{ __('No logo') }}</span>
                     @endif
                     <div class="flex flex-col gap-2">
-                        <label class="boq-btn-secondary cursor-pointer">
-                            <i class="fas fa-upload"></i> {{ __('Choose logo') }}
-                            <input type="file" wire:model="companyLogo" accept="image/png,image/jpeg,image/webp" class="hidden">
+                        <input id="company-logo" type="file" wire:model="companyLogo" accept="image/png,image/jpeg,image/webp" class="peer sr-only">
+                        <label for="company-logo" class="boq-btn-secondary cursor-pointer peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-600">
+                            <i class="fas fa-upload" aria-hidden="true"></i> {{ __('Choose logo') }}
                         </label>
                         @if($previewLogo)
                             <button type="button" wire:click="$set('removeCompanyLogo', true)" class="boq-btn-secondary text-red-600"><i class="fas fa-trash"></i> {{ __('Remove') }}</button>
@@ -36,7 +36,7 @@
             </div>
 
             @foreach([
-                'company_name' => [__('Company Name').' *', 'text', __('e.g. Riverside Builders Ltd'), 2],
+                'company_name' => [__('Company Name'), 'text', __('e.g. Riverside Builders Ltd'), 2],
                 'registration_number' => [__('Registration Number'), 'text', __('e.g. 80020001234567'), 1],
                 'tin' => [__('TIN (if applicable)'), 'text', __('e.g. 1000123456'), 1],
                 'city' => [__('District/City'), 'text', __('e.g. city, town or market'), 1],
@@ -48,8 +48,8 @@
                 'website' => [__('Website'), 'url', 'https://example.com', 1],
             ] as $field => [$label, $type, $placeholder, $span])
                 <div class="{{ $span === 2 ? 'boq-form-span-2' : '' }}">
-                    <label for="company-{{ $field }}" class="boq-field-label">{{ $label }}</label>
-                    <input id="company-{{ $field }}" type="{{ $type }}" wire:model.live.debounce.400ms="companyForm.{{ $field }}" class="boq-field" placeholder="{{ $placeholder }}">
+                    <label for="company-{{ $field }}" class="boq-field-label">{{ $label }}@if($field === 'company_name') <span class="boq-field-required" aria-hidden="true">*</span>@endif</label>
+                    <input id="company-{{ $field }}" type="{{ $type }}" wire:model.live.debounce.400ms="companyForm.{{ $field }}" @class(['boq-field', 'has-error' => $errors->has('companyForm.'.$field)]) placeholder="{{ $placeholder }}">
                     @error('companyForm.'.$field) <p class="boq-field-error">{{ $message }}</p> @enderror
                 </div>
 
@@ -83,7 +83,7 @@
 
     {{-- Live preview of the PDF letterhead --}}
     <aside class="lg:col-span-2">
-        <div class="boq-panel boq-panel-body lg:sticky lg:top-6">
+        <div class="boq-panel boq-panel-body lg:sticky lg:top-20">
             <h3 class="boq-section-title mb-3"><i class="fas fa-eye"></i> {{ __('Preview') }}</h3>
             <div class="boq-company-preview">
                 <div class="boq-company-preview-head">

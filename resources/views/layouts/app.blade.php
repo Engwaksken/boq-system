@@ -366,6 +366,10 @@
                             <i class="fas fa-user" aria-hidden="true"></i> {{ __('Update profile') }}
                         </a>
 
+                        <a href="{{ route('profile.edit', ['tab' => 'company']) }}" class="boq-menu-item" role="menuitem">
+                            <i class="fas fa-building" aria-hidden="true"></i> {{ __('Company Profile') }}
+                        </a>
+
                         @if($authUser->hasPermission('subscriptions.view'))
                             <a href="{{ route('subscriptions.index') }}" class="boq-menu-item" role="menuitem">
                                 <i class="fas fa-credit-card" aria-hidden="true"></i> {{ __('Subscriptions') }}

@@ -1,4 +1,4 @@
-<div class="max-w-2xl space-y-6">
+<div class="grid max-w-5xl gap-5 lg:grid-cols-2">
     <div class="boq-panel boq-panel-body">
         <h3 class="boq-section-title mb-4">
             <i class="fas fa-key"></i>
@@ -7,13 +7,13 @@
 
         <form wire:submit="updatePassword" class="space-y-4">
             <div>
-                <label for="current_password" class="boq-field-label">{{ __('Current Password') }}</label>
+                <label for="current_password" class="boq-field-label">{{ __('Current Password') }} <span class="boq-field-required" aria-hidden="true">*</span></label>
                 <x-password-input placeholder="••••••••" id="current_password" wire:model="passwordForm.current_password" required autocomplete="current-password" />
                 @error('passwordForm.current_password') <p class="boq-field-error">{{ $message }}</p> @enderror
             </div>
 
             <div>
-                <label for="new_password" class="boq-field-label">{{ __('New Password') }}</label>
+                <label for="new_password" class="boq-field-label">{{ __('New Password') }} <span class="boq-field-required" aria-hidden="true">*</span></label>
                 <x-password-input placeholder="••••••••" id="new_password" wire:model="passwordForm.password" required autocomplete="new-password" minlength="8" />
                 @error('passwordForm.password') <p class="boq-field-error">{{ $message }}</p> @enderror
             </div>
@@ -68,14 +68,14 @@
                         <div>
                             <div class="text-sm font-semibold text-slate-800">
                                 <i class="fas fa-laptop mr-1 text-slate-400"></i>
-                                {{ $device->alias ?: 'Registered device' }}
+                                {{ $device->alias ?: __('Registered device') }}
                             </div>
-                            <div class="text-xs text-slate-500">Added {{ \App\Support\Format::date($device->created_at, false) }}</div>
+                            <div class="text-xs text-slate-500">{{ __('Added') }} <x-date :value="$device->created_at" /></div>
                         </div>
                         <button
                             type="button"
                             wire:click="removeBiometricDevice(@js($device->id))"
-                            wire:confirm="Remove biometric sign-in for this device?"
+                            wire:confirm="{{ __('Remove biometric sign-in for this device?') }}"
                             class="boq-icon-btn boq-icon-danger"
                             title="{{ __('Remove') }}"
                             aria-label="{{ __('Remove device') }}"
@@ -97,7 +97,7 @@
         <template x-if="! supported">
             <p class="text-sm text-slate-500">
                 <i class="fas fa-circle-info mr-1"></i>
-                This device or browser has no biometric sign-in (Windows Hello, Touch ID or fingerprint) set up.
+                {{ __('This device or browser has no biometric sign-in (Windows Hello, Touch ID or fingerprint) set up.') }}
             </p>
         </template>
 

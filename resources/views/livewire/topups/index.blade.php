@@ -1,120 +1,129 @@
+@php
+    $typeIcons = ['feature_update' => 'fa-wand-magic-sparkles', 'usage_credits' => 'fa-coins', 'unlock' => 'fa-unlock', 'storage' => 'fa-database'];
+@endphp
+
 <div class="boq-subscriptions-page">
 
-    {{-- HEADER --}}
-    <div class="boq-page-header">
-        <div>
-            <h1 class="boq-page-title">
-                <i class="fas fa-gift"></i>
-                Top-ups &amp; Add-ons
-            </h1>
-            <p class="boq-page-subtitle">
-                {{ __('Buy feature updates, usage credits and one-off unlocks for your workspace.') }}
-            </p>
-        </div>
-        @if($currentSubscription)
-            <div class="boq-current-subscription">
-                <div class="boq-current-subscription-label">{{ __('Current Plan') }}</div>
-                <div class="boq-current-subscription-name">{{ $currentSubscription->plan?->name ?? '—' }}</div>
-            </div>
-        @endif
-    </div>
+    <x-ui.page-header
+        :title="__('Top-ups & Add-ons')"
+        icon="fa-gift"
+        :subtitle="__('Buy feature updates, usage credits and one-off unlocks for your workspace.')"
+    >
+        <x-slot:actions>
+            @if($currentSubscription)
+                <div class="boq-current-subscription">
+                    <div class="boq-current-subscription-label">{{ __('Current Plan') }}</div>
+                    <div class="boq-current-subscription-name">{{ $currentSubscription->plan?->name ?? '—' }}</div>
+                </div>
+            @else
+                <x-ui.button icon="fa-layer-group" :href="route('plans.index')">{{ __('View Plans') }}</x-ui.button>
+            @endif
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    {{-- FLASH --}}
-    @if(session('message'))
-        <div class="boq-flash">
-            <i class="fas fa-circle-check"></i>
-            {{ session('message') }}
-        </div>
+    <x-ui.flash :keys="['message', 'status', 'error']" />
+
+    @if(! $planCode)
+        <x-ui.alert type="info" :title="__('Subscribe to a plan before buying top-ups.')">
+            {{ __('Top-ups extend an active plan with extra credits and features.') }}
+            <a href="{{ route('subscriptions.index', ['tab' => 'plans']) }}" class="ml-1 font-semibold underline-offset-2 hover:underline">{{ __('Choose a plan') }}</a>
+        </x-ui.alert>
     @endif
 
     @if($catalog->isEmpty())
-        <div class="boq-panel" style="padding:3rem;text-align:center;color:#64748b">
-            <i class="fas fa-box-open" style="font-size:2rem;opacity:.6"></i>
-            <p style="margin-top:.75rem">{{ __('No top-ups are available right now.') }}</p>
-        </div>
+        <x-ui.card>
+            <x-ui.empty-state icon="fa-box-open" :title="__('No top-ups are available right now.')" :description="__('Check back later for credits and feature updates.')" />
+        </x-ui.card>
     @else
-        <div class="boq-stats-grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             @foreach($catalog as $item)
-                <div class="boq-stat-card boq-stat-green" style="flex-direction:column;align-items:flex-start;gap:.5rem">
-                    <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-start">
-                        <div>
-                            <p class="boq-stat-label" style="text-transform:uppercase;letter-spacing:.04em">
-                                {{ str_replace('_', ' ', $item['type']) }}
-                            </p>
-                            <p class="boq-stat-value" style="font-size:1.05rem">{{ $item['name'] }}</p>
+                <article class="boq-plan-card" wire:key="topup-{{ $item['id'] }}">
+                    <div class="boq-plan-header">
+                        <div class="boq-plan-heading-copy">
+                            <span class="boq-plan-main-icon"><i class="fas {{ $typeIcons[$item['type']] ?? 'fa-gift' }}" aria-hidden="true"></i></span>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __(\Illuminate\Support\Str::headline((string) $item['type'])) }}</p>
+                            <h2 class="boq-plan-name">{{ $item['name'] }}</h2>
+                            @if($item['description'])
+                                <p class="boq-plan-description">{{ $item['description'] }}</p>
+                            @endif
                         </div>
+
                         @if($item['owned'])
-                            <span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">{{ __('Owned') }}</span>
+                            <x-ui.badge color="success" icon="fa-circle-check">{{ __('Owned') }}</x-ui.badge>
                         @endif
                     </div>
 
-                    @if($item['description'])
-                        <p style="font-size:.85rem;color:#475569">{{ $item['description'] }}</p>
+                    <div class="boq-plan-price">
+                        <span class="boq-plan-price-value text-2xl"><x-money :amount="$item['price']" :currency="$item['currency']" /></span>
+                    </div>
+
+                    <div class="boq-plan-duration">
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                        {{ $item['is_permanent'] || ! $item['duration_days'] ? __('One-time') : trans_choice(':count day|:count days', (int) $item['duration_days'], ['count' => $item['duration_days']]) }}
+                    </div>
+
+                    @if($item['release_version'] || ! empty($item['usage_credits']) || ! empty($item['included_features']))
+                        <div class="boq-plan-secondary-limits mb-3">
+                            @if($item['release_version'])
+                                <div><i class="fas fa-code-branch" aria-hidden="true"></i> v{{ $item['release_version'] }}</div>
+                            @endif
+                            @foreach(($item['usage_credits'] ?? []) as $key => $value)
+                                <div><i class="fas fa-coins" aria-hidden="true"></i> {{ __(\Illuminate\Support\Str::headline((string) $key)) }}: {{ is_numeric($value) ? \App\Support\Format::number($value, 0) : $value }}</div>
+                            @endforeach
+                            @foreach(array_slice($item['included_features'], 0, 3) as $feature)
+                                <div><i class="fas fa-check" aria-hidden="true"></i> {{ $feature }}</div>
+                            @endforeach
+                        </div>
                     @endif
 
-                    <div style="font-size:.82rem;color:#475569;display:flex;flex-wrap:wrap;gap:.35rem">
-                        @if($item['release_version'])
-                            <span class="rounded bg-slate-100 px-1.5 py-0.5 text-xs">v{{ $item['release_version'] }}</span>
+                    <div class="boq-plan-action">
+                        @if($item['purchasable'])
+                            <a href="{{ route('checkout', ['type' => 'topup', 'id' => $item['id']]) }}" class="boq-plan-choose-button">
+                                <i class="fas fa-cart-shopping" aria-hidden="true"></i> {{ __('Buy') }}
+                            </a>
+                        @elseif(! $planCode)
+                            <span class="boq-current-plan-button border-amber-200 bg-amber-50 text-amber-800">{{ __('Subscribe to a plan first') }}</span>
+                        @else
+                            <span class="boq-current-plan-button border-slate-200 bg-slate-50 text-slate-500">{{ __('Not available for your plan or purchase limit reached.') }}</span>
                         @endif
-                        @foreach(($item['usage_credits'] ?? []) as $key=>$value)
-                            <span class="rounded bg-indigo-50 px-1.5 py-0.5 text-xs">{{ str_replace('_', ' ', $key) }}: {{ $value }}</span>
-                        @endforeach
-                        @foreach(array_slice($item['included_features'], 0, 3) as $feature)
-                            <span class="rounded bg-slate-100 px-1.5 py-0.5 text-xs">{{ $feature }}</span>
-                        @endforeach
                     </div>
-
-                    <div style="width:100%;display:flex;justify-content:space-between;align-items:center;margin-top:.25rem">
-                        <strong><x-money :amount="$item['price']" :currency="$item['currency']" /></strong>
-                        <span style="font-size:.78rem;color:#64748b">
-                            {{ $item['is_permanent'] || ! $item['duration_days'] ? 'One-time' : $item['duration_days'].' days' }}
-                        </span>
-                    </div>
-                    @if($item['purchasable'])
-                        <a href="{{ route('checkout', ['type' => 'topup', 'id' => $item['id']]) }}" class="boq-btn-primary w-full justify-center">
-                            <i class="fas fa-cart-shopping"></i> {{ __('Buy') }}
-                        </a>
-                    @elseif(! $planCode)
-                        <p style="font-size:.72rem;color:#b45309">{{ __('Subscribe to a plan before buying top-ups.') }}</p>
-                    @else
-                        <p style="font-size:.72rem;color:#64748b">{{ __('Not available for your plan or purchase limit reached.') }}</p>
-                    @endif
-                </div>
+                </article>
             @endforeach
         </div>
     @endif
 
     @if($purchases->isNotEmpty())
-        <h2 class="boq-page-title" style="margin-top:2rem">
-            <i class="fas fa-history"></i>
-            {{ __('Purchase History') }}
-        </h2>
-        <div class="boq-panel">
-            <table class="boq-table min-w-full divide-y divide-slate-200">
+        <x-ui.card :title="__('Purchase History')" icon="fa-clock-rotate-left" :padded="false">
+            <x-ui.table>
                 <thead>
                     <tr>
-                        @foreach(['Top-up','Status','Purchased','Expires','Reference'] as $h)
-                            <th class="px-4 py-3 text-left">{{ $h }}</th>
-                        @endforeach
+                        <th>{{ __('Top-up') }}</th>
+                        <th>{{ __('Status') }}</th>
+                        <th>{{ __('Purchased') }}</th>
+                        <th>{{ __('Expires') }}</th>
+                        <th>{{ __('Reference') }}</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody>
                     @foreach($purchases as $purchase)
-                        <tr>
-                            <td class="px-4 py-3 font-semibold">{{ $purchase->topup?->name }}</td>
-                            <td class="px-4 py-3">
-                                <span class="rounded-full px-2 py-1 text-xs {{ $purchase->isValid() ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">
-                                    {{ $purchase->status }}
-                                </span>
+                        <tr wire:key="purchase-{{ $purchase->id }}">
+                            <td class="font-semibold text-slate-900">{{ $purchase->topup?->name ?? __('Deleted top-up') }}</td>
+                            <td>
+                                <x-ui.badge :color="$purchase->isValid() ? 'success' : 'neutral'" dot>{{ __(\Illuminate\Support\Str::headline((string) $purchase->status)) }}</x-ui.badge>
                             </td>
-                            <td class="px-4 py-3 text-sm"><x-date :value="$purchase->purchased_at" /></td>
-                            <td class="px-4 py-3 text-sm">@if($purchase->expires_at)<x-date :value="$purchase->expires_at" />@else{{ $purchase->is_permanent ? 'Permanent' : '—' }}@endif</td>
-                            <td class="px-4 py-3 text-xs text-slate-500">{{ $purchase->transaction?->reference ?? '—' }}</td>
+                            <td class="whitespace-nowrap"><x-date :value="$purchase->purchased_at" /></td>
+                            <td class="whitespace-nowrap">
+                                @if($purchase->expires_at)
+                                    <x-date :value="$purchase->expires_at" />
+                                @else
+                                    {{ $purchase->is_permanent ? __('Permanent') : '—' }}
+                                @endif
+                            </td>
+                            <td><span class="boq-code">{{ $purchase->transaction?->reference ?? '—' }}</span></td>
                         </tr>
                     @endforeach
                 </tbody>
-            </table>
-        </div>
+            </x-ui.table>
+        </x-ui.card>
     @endif
-
 </div>
