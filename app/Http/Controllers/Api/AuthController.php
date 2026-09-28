@@ -222,4 +222,49 @@ class AuthController extends Controller
             'data' => ['user' => $user->fresh()],
         ]);
     }
+
+    /**
+     * Upload or replace the authenticated user's profile picture.
+     */
+    public function updateAvatar(Request $request): JsonResponse
+    {
+        $request->validate([
+            'avatar' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+        ]);
+
+        $user = $request->user();
+        $file = $request->file('avatar');
+        $path = $file->storeAs("avatars/{$user->id}", \Illuminate\Support\Str::random(24).'.'.($file->guessExtension() ?: 'jpg'), 'public');
+
+        if ($user->avatar_path && $user->avatar_path !== $path) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar_path);
+        }
+
+        $user->update(['avatar_path' => $path]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile picture updated.',
+            'data' => ['user' => $user->fresh()],
+        ]);
+    }
+
+    /**
+     * Remove the authenticated user's profile picture.
+     */
+    public function deleteAvatar(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->avatar_path) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar_path);
+            $user->update(['avatar_path' => null]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile picture removed.',
+            'data' => ['user' => $user->fresh()],
+        ]);
+    }
 }

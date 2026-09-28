@@ -367,8 +367,8 @@ public function show(Request $request, Boq $boq): JsonResponse
         $project = Project::findOrFail($validated['project_id']);
 
         $file = $request->file('file');
-        $path = $file->store("boqs/{$project->id}");
-        $extension = strtolower($file->getClientOriginalExtension());
+        // Detect the real format and convert it to a standard one (.xlsx, .csv, .pdf, .jpg/.png).
+        $stored = app(\App\Services\BoqUploadNormalizer::class)->store($file, "boqs/{$project->id}");
 
         $boq = Boq::create([
             'project_id' => $project->id,
@@ -376,8 +376,8 @@ public function show(Request $request, Boq $boq): JsonResponse
             'name' => ($validated['name'] ?? null) ?: pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
             'currency' => $project->currency ?: \App\Support\Regional::currency(),
             'status' => 'uploaded',
-            'source_type' => in_array($extension, ['xlsx', 'csv']) ? 'excel' : ($extension === 'pdf' ? 'pdf' : 'scan'),
-            'source_file_path' => $path,
+            'source_type' => $stored['source_type'],
+            'source_file_path' => $stored['path'],
         ]);
 
         return (new BoqResource($boq))

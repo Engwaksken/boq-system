@@ -38,7 +38,13 @@ class User extends Authenticatable implements WebAuthnAuthenticatable
         'report_language',
         'is_active',
         'last_login_at',
+        'avatar_path',
     ];
+
+    /**
+     * @var list<string>
+     */
+    protected $appends = ['avatar_url'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -105,6 +111,14 @@ class User extends Authenticatable implements WebAuthnAuthenticatable
         'in_app_approvals' => true,
         'frequency' => 'immediate',
     ];
+
+    /** Public URL of the profile picture, or null when none was uploaded. */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return $this->avatar_path
+            ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->avatar_path)
+            : null;
+    }
 
     public function companyProfile(): \Illuminate\Database\Eloquent\Relations\HasOne
     {

@@ -1005,19 +1005,6 @@
                                     </div>
 
 
-                                    {{-- AI --}}
-                                    <div class="boq-plan-limit">
-
-                                        <div class="boq-plan-limit-label">
-                                            <i class="fas fa-robot"></i>
-                                            {{ __('AI') }}
-                                        </div>
-
-                                        <div class="boq-plan-limit-value">
-                                            {{ $plan->max_ai_credits ?? '∞' }}
-                                        </div>
-
-                                    </div>
 
                                 </div>
 

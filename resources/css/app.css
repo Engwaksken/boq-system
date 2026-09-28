@@ -615,7 +615,7 @@ a:visited {
 
 .boq-app-shell .boq-plan-limits-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
 }
 
 .boq-app-shell .boq-plan-limit {

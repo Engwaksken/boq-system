@@ -311,10 +311,14 @@ class Index extends Component
                 'public'
             );
 
-            $data['avatar'] = $path;
-        } else {
-            unset($data['avatar']);
+            if ($user->avatar_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar_path);
+            }
+
+            $data['avatar_path'] = $path;
         }
+
+        unset($data['avatar']);
 
         $user->update($data);
 

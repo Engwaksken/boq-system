@@ -38,6 +38,9 @@
 
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">{{ __('Avatar') }}</label>
+                @if (auth()->user()->avatar_url)
+                    <img src="{{ auth()->user()->avatar_url }}" alt="{{ __('Avatar') }}" class="mb-2 h-16 w-16 rounded-full object-cover ring-1 ring-slate-200">
+                @endif
                 <input type="file" wire:model="form.avatar" accept="image/*" class="mt-1 w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                 @error('form.avatar') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>

@@ -384,6 +384,33 @@ class HardwarePriceController extends Controller
         ]);
     }
 
+    /**
+     * Distinct values for the price list filters (suppliers, locations, brands).
+     */
+    public function filters(Request $request): JsonResponse
+    {
+        $base = HardwarePrice::active()->where('organisation_id', $request->user()->organisation_id);
+
+        $distinct = fn (string $column) => (clone $base)
+            ->whereNotNull($column)
+            ->where($column, '!=', '')
+            ->distinct()
+            ->orderBy($column)
+            ->pluck($column)
+            ->map(fn ($value) => trim((string) $value))
+            ->unique()
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'suppliers' => $distinct('supplier'),
+                'locations' => $distinct('location'),
+                'brands' => $distinct('brand'),
+            ],
+        ]);
+    }
+
     private function calculateTrend(array $prices): string
     {
         if (count($prices) < 2) {

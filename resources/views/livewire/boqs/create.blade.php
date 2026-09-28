@@ -121,7 +121,7 @@
                             type="file"
                             id="file"
                             wire:model.live="file"
-                            accept=".xlsx,.csv,.pdf,.jpg,.jpeg,.png"
+                            accept=".xlsx,.xlsm,.ods,.csv,.tsv,.txt,.pdf,.jpg,.jpeg,.png,.webp,.gif,.bmp"
                             class="block w-full text-sm text-gray-700
                                    file:mr-4
                                    file:py-2
@@ -137,7 +137,7 @@
 
                         <p class="mt-2 text-xs text-gray-500">
                             Accepted formats:
-                            Excel (.xlsx), CSV, PDF, JPG, JPEG, PNG.
+                            Excel (.xlsx, .ods), CSV/TSV, PDF or photos (JPG, PNG, WebP). Files are converted to a standard format automatically.
                             Maximum file size: 20MB.
                         </p>
 

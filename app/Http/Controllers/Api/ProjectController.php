@@ -24,9 +24,14 @@ class ProjectController extends Controller
                     $q->orWhere('organisation_id', $user->organisation_id);
                 }
             })
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')->toString()))
+            ->when($request->filled('boq_status'), fn ($q) => $q->whereHas(
+                'boqs',
+                fn ($boqs) => $boqs->where('status', $request->string('boq_status')->toString()),
+            ))
             ->withCount('boqs')
             ->latest()
-            ->paginate(15);
+            ->paginate(min(max((int) $request->integer('per_page', 15), 1), 100));
 
         return response()->json([
             'success' => true,

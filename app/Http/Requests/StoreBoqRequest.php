@@ -23,7 +23,7 @@ class StoreBoqRequest extends FormRequest
     {
         return [
             'project_id' => ['required', 'exists:projects,id'],
-            'file' => ['required', 'file', 'mimes:xlsx,csv,pdf,jpg,jpeg,png', 'max:20480'],
+            'file' => \App\Services\BoqUploadNormalizer::rules(),
             'name' => ['sometimes', 'nullable', 'string', 'max:255'],
         ];
     }

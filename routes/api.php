@@ -60,6 +60,8 @@ Route::prefix('v1')->group(function () {
         Route::get('company-profile', [\App\Http\Controllers\Api\CompanyProfileController::class, 'show']);
         Route::post('company-profile', [\App\Http\Controllers\Api\CompanyProfileController::class, 'update'])->middleware('throttle:20,1');
         Route::put('auth/profile', [AuthController::class, 'updateProfile']);
+        Route::post('auth/avatar', [AuthController::class, 'updateAvatar'])->middleware('throttle:20,1');
+        Route::delete('auth/avatar', [AuthController::class, 'deleteAvatar']);
 
         // Notifications
         Route::get('notifications', [NotificationController::class, 'index']);
@@ -144,6 +146,7 @@ Route::prefix('v1')->group(function () {
         Route::middleware('permission:hardware-prices.view')->group(function () {
             Route::get('hardware-prices', [HardwarePriceController::class, 'index']);
             Route::get('hardware-prices/statistics', [HardwarePriceController::class, 'statistics']);
+            Route::get('hardware-prices/filters', [HardwarePriceController::class, 'filters']);
             Route::get('hardware-prices/recommendations', [HardwarePriceController::class, 'recommendations']);
             Route::post('hardware-prices/compare', [HardwarePriceController::class, 'compare']);
             Route::get('hardware-prices/{hardwarePrice}', [HardwarePriceController::class, 'show']);

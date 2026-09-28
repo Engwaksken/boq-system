@@ -41,7 +41,7 @@ class Create extends Component
     {
         $validated = $this->validate([
             'projectId' => ['required', 'exists:projects,id'],
-            'file' => ['required', 'file', 'mimes:xlsx,csv,pdf,jpg,jpeg,png', 'max:20480'],
+            'file' => \App\Services\BoqUploadNormalizer::rules(),
             'name' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -56,9 +56,8 @@ class Create extends Component
 
         abort_unless($tenantAccess || $personalAccess, 403);
 
-        $extension = strtolower($this->file->getClientOriginalExtension());
-        // Keep the real extension: guessing it from the content turns CSVs into .txt.
-        $path = $this->file->storeAs("boqs/{$project->id}", \Illuminate\Support\Str::random(40).'.'.$extension);
+        // Detect the real format and convert it to a standard one (.xlsx, .csv, .pdf, .jpg/.png).
+        $stored = app(\App\Services\BoqUploadNormalizer::class)->store($this->file, "boqs/{$project->id}");
 
         $boq = Boq::create([
             'project_id' => $project->id,
@@ -66,8 +65,8 @@ class Create extends Component
             'name' => ($validated['name'] ?? null) ?: pathinfo($this->file->getClientOriginalName(), PATHINFO_FILENAME),
             'currency' => $project->currency ?: \App\Support\Regional::currency(),
             'status' => 'uploaded',
-            'source_type' => in_array($extension, ['xlsx', 'csv']) ? 'excel' : ($extension === 'pdf' ? 'pdf' : 'scan'),
-            'source_file_path' => $path,
+            'source_type' => $stored['source_type'],
+            'source_file_path' => $stored['path'],
         ]);
 
         session()->flash('status', $this->importNow($boq, $user));
