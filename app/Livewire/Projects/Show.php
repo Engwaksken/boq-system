@@ -25,6 +25,11 @@ class Show extends Component
 
     public function render()
     {
-        return view('livewire.projects.show');
+        $service = app(\App\Services\BoqTotals::class);
+
+        return view('livewire.projects.show', [
+            'totals' => $service->forProjects([$this->project->id])[$this->project->id],
+            'boqTotals' => $service->forBoqs($this->project->boqs->pluck('id')->all()),
+        ]);
     }
 }

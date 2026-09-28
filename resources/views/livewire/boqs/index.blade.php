@@ -546,6 +546,8 @@
 
                                 </span>
 
+                                <x-boq-totals compact :totals="$totals[$boq->id] ?? []" :currency="$boq->currency" />
+
                             </td>
 
 

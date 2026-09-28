@@ -33,6 +33,9 @@ class ProjectController extends Controller
             ->latest()
             ->paginate(min(max((int) $request->integer('per_page', 15), 1), 100));
 
+        $totals = app(\App\Services\BoqTotals::class)->forProjects($projects->getCollection()->pluck('id')->all());
+        $projects->getCollection()->each(fn (Project $project) => $project->setAttribute('totals', $totals[$project->id]));
+
         return response()->json([
             'success' => true,
             'data' => $projects,
@@ -90,9 +93,15 @@ class ProjectController extends Controller
     {
         $this->authorizeProjectAccess($request, $project);
 
+        $project->load('boqs');
+        $service = app(\App\Services\BoqTotals::class);
+        $boqTotals = $service->forBoqs($project->boqs->pluck('id')->all());
+        $project->boqs->each(fn ($boq) => $boq->setAttribute('totals', $boqTotals[$boq->id]));
+        $project->setAttribute('totals', $service->forProjects([$project->id])[$project->id]);
+
         return response()->json([
             'success' => true,
-            'data' => $project->load('boqs'),
+            'data' => $project,
         ]);
     }
 

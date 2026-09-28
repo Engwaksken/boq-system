@@ -73,6 +73,9 @@ Route::prefix('v1')->group(function () {
             Route::post('boqs', [BoqController::class, 'store'])
                 ->middleware('throttle:10,1')
                 ->name('api.v1.boqs.store');
+            Route::post('boqs/{boq}/estimates', [BoqController::class, 'uploadEstimates'])
+                ->middleware('throttle:10,1')
+                ->name('api.v1.boqs.estimates.upload');
             Route::patch('boqs/{boq}', [BoqController::class, 'update'])
                 ->middleware('throttle:30,1')
                 ->name('api.v1.boqs.update');
@@ -85,6 +88,7 @@ Route::prefix('v1')->group(function () {
             Route::get('boqs', [BoqController::class, 'index'])->name('api.v1.boqs.index');
             Route::get('boqs/{boq}', [BoqController::class, 'show'])->name('api.v1.boqs.show');
             Route::get('boqs/{boq}/items', [BoqController::class, 'items'])->name('api.v1.boqs.items');
+            Route::get('boqs/{boq}/estimates/template', [BoqController::class, 'estimatesTemplate'])->name('api.v1.boqs.estimates.template');
             Route::get('boqs/{boq}/pdf', [BoqController::class, 'pdf'])
                 ->middleware('throttle:10,1')
                 ->name('api.v1.boqs.pdf');

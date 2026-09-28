@@ -384,6 +384,24 @@
     </div>
 
 
+    {{-- Estimated vs generated totals --}}
+    <x-boq-totals class="mb-6" :totals="$totals" :currency="$boq->currency">
+        @can('update', $boq)
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('boqs.estimates-template', $boq) }}" class="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                    <i class="fas fa-download"></i> {{ __('Template') }}
+                </a>
+                <form wire:submit="uploadEstimates" class="flex flex-wrap items-center gap-2">
+                    <input type="file" wire:model="estimatesFile" accept=".xlsx,.xlsm,.ods,.csv,.tsv,.txt" class="block max-w-[14rem] text-sm text-gray-600 file:mr-2 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-indigo-700">
+                    <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50" wire:loading.attr="disabled" wire:target="estimatesFile,uploadEstimates">
+                        <i class="fas fa-upload"></i> {{ __('Upload estimated prices') }}
+                    </button>
+                </form>
+            </div>
+        @endcan
+    </x-boq-totals>
+    @error('estimatesFile') <p class="-mt-4 mb-6 text-sm text-rose-600">{{ $message }}</p> @enderror
+
     {{-- Items --}}
     <div class="boq-panel overflow-hidden">
 

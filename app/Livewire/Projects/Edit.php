@@ -82,6 +82,19 @@ class Edit extends Component
 
     public function save(): void
     {
+        // Livewire keeps cleared inputs as "": store them as empty (null) values.
+        foreach (['code', 'client', 'contractor', 'consultant', 'quantitySurveyor', 'projectManager', 'siteEngineer',
+            'fundingOrganisation', 'country', 'district', 'location', 'projectType', 'startDate',
+            'expectedCompletionDate', 'contractValue', 'description'] as $field) {
+            if (is_string($this->{$field}) && trim($this->{$field}) === '') {
+                $this->{$field} = null;
+            }
+        }
+        if (is_string($this->contractValue)) {
+            $this->contractValue = str_replace([',', ' '], '', $this->contractValue);
+        }
+        $this->currency = strtoupper(trim((string) $this->currency));
+
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'code' => ['nullable', 'string', 'max:255'],

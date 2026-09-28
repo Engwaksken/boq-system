@@ -261,7 +261,7 @@ class BoqSpreadsheetImporter
         return count($allRows);
     }
 
-    private function getCellValue($cell): string
+    public function getCellValue($cell): string
     {
         if ($cell instanceof FormulaCell) {
             $computed = $cell->getComputedValue();
@@ -419,7 +419,7 @@ class BoqSpreadsheetImporter
         return null;
     }
 
-    private function buildSummaries(Boq $boq): void
+    public function buildSummaries(Boq $boq): void
     {
         $vatRate = 0.18;
         $contingencyRate = 0.05;
@@ -490,7 +490,7 @@ class BoqSpreadsheetImporter
      * under generated names whose extension is guessed (a CSV often becomes .txt,
      * an .xlsx sometimes .zip).
      */
-    private function readerFor(string $path): \OpenSpout\Reader\ReaderInterface
+    public function readerFor(string $path): \OpenSpout\Reader\ReaderInterface
     {
         $head = (string) file_get_contents($path, false, null, 0, 4096);
 

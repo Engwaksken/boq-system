@@ -92,4 +92,24 @@
             </dl>
         </div>
     </div>
+
+    <x-boq-totals class="mt-6" :totals="$totals" :currency="$project->currency" :title="__('Project totals')" />
+
+    <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900">{{ __('BOQs') }}</h2>
+            <span class="text-sm text-gray-500">{{ $project->boqs->count() }}</span>
+        </div>
+        @forelse ($project->boqs as $boq)
+            <a href="{{ route('boqs.show', $boq) }}" class="flex flex-col gap-1 px-6 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <div class="font-medium text-gray-900">{{ $boq->name }}</div>
+                    <div class="text-xs text-gray-500">{{ ($boqTotals[$boq->id]['items'] ?? 0) }} {{ __('items') }} · {{ \Illuminate\Support\Str::headline($boq->status) }}</div>
+                </div>
+                <x-boq-totals compact class="sm:text-right" :totals="$boqTotals[$boq->id] ?? []" :currency="$boq->currency ?: $project->currency" />
+            </a>
+        @empty
+            <p class="px-6 py-6 text-sm text-gray-500">{{ __('No BOQs yet.') }}</p>
+        @endforelse
+    </div>
 </div>

@@ -236,6 +236,12 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('entitlement:boq.management')
         ->name('boqs.pdf');
 
+    Route::get('/boqs/{boq}/estimates-template', function (Request $request, Boq $boq) {
+        return app(BoqController::class)->estimatesTemplate($request, $boq);
+    })
+        ->middleware('entitlement:boq.management')
+        ->name('boqs.estimates-template');
+
 
     /*
     |--------------------------------------------------------------------------

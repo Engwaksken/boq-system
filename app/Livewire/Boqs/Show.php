@@ -12,12 +12,17 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
 class Show extends Component
 {
+    use WithFileUploads;
     use WithPagination;
+
+    /** File of estimated rates (one per item). */
+    public $estimatesFile = null;
 
     public Boq $boq;
 
@@ -1099,6 +1104,29 @@ class Show extends Component
                 ]);
     }
 
+    public function uploadEstimates(\App\Services\BoqEstimateImporter $importer): void
+    {
+        abort_unless(auth()->user()?->can('update', $this->boq), 403);
+
+        $this->validate(['estimatesFile' => \App\Services\BoqUploadNormalizer::rules()], [], ['estimatesFile' => __('estimated prices file')]);
+
+        try {
+            $result = $importer->import($this->boq, $this->estimatesFile);
+        } catch (ValidationException $e) {
+            $this->addError('estimatesFile', collect($e->errors())->flatten()->first());
+
+            return;
+        }
+
+        $this->reset('estimatesFile');
+        $message = trans_choice(':count estimated price updated.|:count estimated prices updated.', $result['updated'], ['count' => $result['updated']]);
+        if ($result['unmatched'] !== []) {
+            $message .= ' '.__(':count row(s) did not match a BOQ item.', ['count' => count($result['unmatched'])]);
+        }
+        session()->flash('status', $message);
+        $this->boq->refresh();
+    }
+
     public function render()
     {
         $itemsQuery =
@@ -1286,6 +1314,9 @@ class Show extends Component
 
                 'itemStats' =>
                     $itemStats,
+
+                'totals' =>
+                    app(\App\Services\BoqTotals::class)->forBoq($this->boq),
             ]
         );
     }

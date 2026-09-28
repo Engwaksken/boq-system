@@ -108,6 +108,8 @@ class Index extends Component
             ->orderBy($this->sortBy, $this->sortDir)
             ->paginate($this->perPage);
 
+        $totals = app(\App\Services\BoqTotals::class)->forProjects($projects->getCollection()->pluck('id')->all());
+
         $baseProjectQuery = Project::query()
             ->where(function ($q) use ($user) {
                 $q->where('user_id', $user->id);
@@ -127,6 +129,7 @@ class Index extends Component
         return view('livewire.projects.index', [
             'projects' => $projects,
             'stats' => $stats,
+            'totals' => $totals,
         ]);
     }
 }

@@ -232,6 +232,7 @@ class Index extends Component
             'boqs' => $boqs,
             'projects' => $projects,
             'stats' => $stats,
+            'totals' => app(\App\Services\BoqTotals::class)->forBoqs($boqs->getCollection()->pluck('id')->all()),
         ]);
     }
 }

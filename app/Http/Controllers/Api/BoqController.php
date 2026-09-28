@@ -78,6 +78,8 @@ class BoqController extends Controller
         }
 
         $boqs = $query->paginate($perPage);
+        $totals = app(\App\Services\BoqTotals::class)->forBoqs($boqs->getCollection()->pluck('id')->all());
+        $boqs->getCollection()->each(fn (Boq $boq) => $boq->setAttribute('totals', $totals[$boq->id]));
 
         return response()->json([
             'success' => true,
@@ -296,6 +298,7 @@ class BoqController extends Controller
 public function show(Request $request, Boq $boq): JsonResponse
     {
         $this->authorize('view', $boq);
+        $boq->setAttribute('totals', app(\App\Services\BoqTotals::class)->forBoq($boq));
 
         return (new BoqResource($this->loadPhaseFourRelations($boq)))
             ->additional(['success' => true])
@@ -344,6 +347,47 @@ public function show(Request $request, Boq $boq): JsonResponse
         return (new BoqResource($boq->fresh()->load('project')))
             ->additional(['success' => true, 'message' => __('BOQ updated.')])
             ->response();
+    }
+
+    /**
+     * CSV template of the BOQ's items for entering estimated rates.
+     */
+    public function estimatesTemplate(Request $request, Boq $boq): \Symfony\Component\HttpFoundation\Response
+    {
+        $this->authorize('view', $boq);
+
+        $name = \Illuminate\Support\Str::slug($boq->name ?: 'boq').'-estimated-prices.csv';
+
+        return response(app(\App\Services\BoqEstimateImporter::class)->template($boq), 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$name.'"',
+        ]);
+    }
+
+    /**
+     * Apply a file of estimated rates to the BOQ's items.
+     */
+    public function uploadEstimates(Request $request, Boq $boq): JsonResponse
+    {
+        $this->authorize('update', $boq);
+
+        $request->validate(['file' => \App\Services\BoqUploadNormalizer::rules()]);
+
+        $result = app(\App\Services\BoqEstimateImporter::class)->import($boq, $request->file('file'));
+        $totals = app(\App\Services\BoqTotals::class)->forBoq($boq);
+
+        $message = $result['updated'] === 1
+            ? '1 estimated price updated.'
+            : "{$result['updated']} estimated prices updated.";
+        if ($result['unmatched'] !== []) {
+            $message .= ' '.count($result['unmatched']).' row(s) did not match a BOQ item.';
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => $result + ['totals' => $totals],
+        ]);
     }
 
     public function destroy(Request $request, Boq $boq): JsonResponse
