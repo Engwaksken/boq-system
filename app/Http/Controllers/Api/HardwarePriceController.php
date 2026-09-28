@@ -36,6 +36,14 @@ class HardwarePriceController extends Controller
             $query->byLocation($request->location);
         }
 
+        if (in_array($request->input('price_type'), [HardwarePrice::TYPE_HARDWARE, HardwarePrice::TYPE_FACTORY], true)) {
+            $query->where('price_type', $request->input('price_type'));
+        }
+
+        if ($request->filled('brand')) {
+            $query->where('brand', $request->input('brand'));
+        }
+
         if ($request->filled('search')) {
             $query->search($request->search);
         }
@@ -56,8 +64,10 @@ class HardwarePriceController extends Controller
             $query->where('fetched_at', '<=', $request->date_to);
         }
 
-        $sortBy = $request->get('sort_by', 'fetched_at');
-        $sortDir = $request->get('sort_dir', 'desc');
+        $sortBy = in_array($request->get('sort_by'), ['fetched_at', 'last_verified_at', 'price', 'item_name', 'supplier', 'location'], true)
+            ? $request->get('sort_by')
+            : 'fetched_at';
+        $sortDir = strtolower((string) $request->get('sort_dir')) === 'asc' ? 'asc' : 'desc';
         $query->orderBy($sortBy, $sortDir);
 
         $perPage = min($request->get('per_page', 20), 100);
