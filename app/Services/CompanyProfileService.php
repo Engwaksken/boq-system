@@ -66,7 +66,14 @@ class CompanyProfileService
                 Storage::disk('public')->delete($profile->logo_path);
             }
 
-            $profile->logo_path = $logo->storeAs('company-logos', $user->id.'-'.now()->timestamp.'.'.$logo->guessExtension(), 'public');
+            // Logos keep transparency; they are resized for PDFs and the web.
+            $profile->logo_path = app(FileCompressor::class)->storeImage(
+                $logo,
+                'company-logos',
+                FileCompressor::LOGO_MAX_SIDE,
+                keepTransparency: true,
+                basename: $user->id.'-'.now()->timestamp,
+            );
         }
 
         $profile->user_id = $user->id;

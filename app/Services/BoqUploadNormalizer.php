@@ -23,8 +23,13 @@ use Throwable;
  */
 class BoqUploadNormalizer
 {
+    public function __construct(private ?FileCompressor $compressor = null)
+    {
+        $this->compressor ??= new FileCompressor();
+    }
+
     /** Extensions accepted by the upload forms (contents are checked afterwards). */
-    public const EXTENSIONS = ['xlsx', 'xlsm', 'ods', 'xls', 'csv', 'tsv', 'txt', 'pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'];
+    public const EXTENSIONS = ['xlsx', 'xlsm', 'ods', 'xls', 'csv', 'tsv', 'txt', 'pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'gz'];
 
     public const MAX_KILOBYTES = 20480;
 
@@ -52,8 +57,15 @@ class BoqUploadNormalizer
         }
 
         $temporary = null;
+        $unpacked = null;
 
         try {
+            // The mobile app gzips text files to upload them faster.
+            if ($this->compressor->isGzip($source)) {
+                $unpacked = $this->compressor->gunzip($source, $attribute);
+                $source = $unpacked;
+            }
+
             [$extension, $converted] = $this->normalize($source, $attribute);
             $temporary = $converted;
 
@@ -74,8 +86,10 @@ class BoqUploadNormalizer
                 'extension' => $extension,
             ];
         } finally {
-            if ($temporary !== null && is_file($temporary)) {
-                @unlink($temporary);
+            foreach ([$temporary, $unpacked] as $file) {
+                if ($file !== null && is_file($file)) {
+                    @unlink($file);
+                }
             }
         }
     }
@@ -106,11 +120,20 @@ class BoqUploadNormalizer
         $image = @getimagesize($path);
 
         if ($image !== false) {
+            if (! in_array($image[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP, IMAGETYPE_GIF, IMAGETYPE_BMP], true)) {
+                $this->fail($attribute, 'This image type is not supported. Save the photo as JPEG or PNG and upload it again.');
+            }
+
+            // Resize and re-encode photos/scans to save upload time and storage.
+            $compressed = $this->compressor->image($path, FileCompressor::SCAN_MAX_SIDE);
+            if ($compressed !== null) {
+                return [$compressed['extension'], $compressed['path']];
+            }
+
             return match ($image[2]) {
                 IMAGETYPE_JPEG => ['jpg', null],
                 IMAGETYPE_PNG => ['png', null],
-                IMAGETYPE_WEBP, IMAGETYPE_GIF, IMAGETYPE_BMP => ['jpg', $this->imageToJpeg($path, $attribute)],
-                default => $this->fail($attribute, 'This image type is not supported. Save the photo as JPEG or PNG and upload it again.'),
+                default => ['jpg', $this->imageToJpeg($path, $attribute)],
             };
         }
 

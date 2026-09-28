@@ -234,7 +234,7 @@ class AuthController extends Controller
 
         $user = $request->user();
         $file = $request->file('avatar');
-        $path = $file->storeAs("avatars/{$user->id}", \Illuminate\Support\Str::random(24).'.'.($file->guessExtension() ?: 'jpg'), 'public');
+        $path = app(\App\Services\FileCompressor::class)->storeImage($file, "avatars/{$user->id}", \App\Services\FileCompressor::AVATAR_MAX_SIDE);
 
         if ($user->avatar_path && $user->avatar_path !== $path) {
             \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar_path);

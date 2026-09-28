@@ -136,6 +136,8 @@ class BoqEstimateImporter
                 $reader->close();
             } catch (Throwable) {
             }
+            // The estimates are copied onto the items: the file itself is not kept.
+            Storage::delete($stored['path']);
         }
 
         if ($rows === 0) {

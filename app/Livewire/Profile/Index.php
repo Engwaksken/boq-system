@@ -306,9 +306,10 @@ class Index extends Component
         $data = $this->form;
 
         if (! empty($data['avatar'])) {
-            $path = $data['avatar']->store(
+            $path = app(\App\Services\FileCompressor::class)->storeImage(
+                $data['avatar'],
                 "avatars/{$user->id}",
-                'public'
+                \App\Services\FileCompressor::AVATAR_MAX_SIDE,
             );
 
             if ($user->avatar_path) {
