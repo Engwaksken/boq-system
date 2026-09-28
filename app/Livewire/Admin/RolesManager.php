@@ -40,7 +40,15 @@ class RolesManager extends Component
             'description'=>['nullable','string'], 'permissionIds'=>['array'], 'permissionIds.*'=>['exists:permissions,id'],
         ]);
         $slug=$data['slug'] ?: Str::slug($data['name']);
-        $role=Role::updateOrCreate(['id'=>$this->editingId],['name'=>$data['name'],'slug'=>$slug,'description'=>$data['description'],'is_system'=>false]);
+        $existing=$this->editingId ? Role::find($this->editingId) : null;
+
+        // System roles keep their slug (code checks it) and stay system roles;
+        // previously any edit silently turned them into deletable custom roles.
+        if ($existing?->is_system) {
+            $slug=$existing->slug;
+        }
+
+        $role=Role::updateOrCreate(['id'=>$this->editingId],['name'=>$data['name'],'slug'=>$slug,'description'=>$data['description'],'is_system'=>(bool) ($existing?->is_system)]);
         $role->permissions()->sync(array_map('intval',$data['permissionIds']));
         session()->flash('message','Role saved successfully.'); $this->cancel();
     }

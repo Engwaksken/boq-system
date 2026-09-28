@@ -1,98 +1,150 @@
-<div class="space-y-5" x-data="{ confirmAccept: false, acceptId: null, acceptNo: '', confirmReject: false, rejectId: null, rejectNo: '' }">
-    <div class="flex flex-wrap items-end justify-between gap-3">
-        <div><h1 class="text-2xl font-bold text-slate-900">{{ __('Supplier Quotations') }}</h1><p class="text-sm text-slate-500">{{ __('Review, approve lines and promote prices into the rate library.') }}</p></div>
-    </div>
-    @if(session('message'))<div class="boq-flash">{{ session('message') }}</div>@endif
+<div class="boq-page-stack" x-data="{ confirmAccept: false, acceptId: null, acceptNo: '', confirmReject: false, rejectId: null, rejectNo: '' }">
+    <x-ui.page-header
+        :title="__('Supplier Quotations')"
+        icon="fa-file-invoice"
+        :subtitle="__('Review, approve lines and promote prices into the rate library.')"
+    />
 
-    <div class="flex flex-wrap gap-3">
-        <input wire:model.live.debounce.300ms="search" placeholder="{{ __('Search quote number or supplier...') }}" class="w-full rounded-lg border-slate-300 text-sm md:w-96">
-        <select wire:model.live="status" class="rounded-lg border-slate-300 text-sm">
-            <option value="">{{ __('All statuses') }}</option>
-            <option>{{ __('draft') }}</option>
-            <option>{{ __('sent') }}</option>
-            <option>{{ __('received') }}</option>
-            <option>{{ __('reviewed') }}</option>
-            <option>{{ __('accepted') }}</option>
-            <option>{{ __('rejected') }}</option>
-            <option>{{ __('expired') }}</option>
-        </select>
-    </div>
+    <x-ui.flash :keys="['message', 'status', 'error']" />
 
-    <div class="boq-panel overflow-x-auto">
-        <table class="boq-table min-w-full divide-y divide-slate-200">
-            <thead><tr>@foreach(['Quote #','Supplier','Date','Valid until','Total','Status','Actions'] as $h)<th class="px-4 py-3 text-left">{{ $h }}</th>@endforeach</tr></thead>
-            <tbody class="divide-y divide-slate-100">
-            @forelse($quotations as $quotation)
+    <div class="boq-panel">
+        <div class="boq-toolbar border-b border-slate-200">
+            <x-ui.field :label="__('Search')" for="quote-search" class="boq-toolbar-grow">
+                <div class="boq-input-icon-wrap">
+                    <i class="fas fa-magnifying-glass boq-input-icon" aria-hidden="true"></i>
+                    <input id="quote-search" type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search quote number or supplier...') }}" class="boq-field boq-field-with-icon">
+                </div>
+            </x-ui.field>
+
+            <x-ui.field :label="__('Status')" for="quote-status" class="w-full sm:w-44">
+                {{-- Option values stay in English: they are the stored statuses, only the labels are translated. --}}
+                <select id="quote-status" wire:model.live="status" class="boq-field">
+                    <option value="">{{ __('All statuses') }}</option>
+                    @foreach(['draft', 'sent', 'received', 'reviewed', 'accepted', 'rejected', 'expired'] as $quoteStatus)
+                        <option value="{{ $quoteStatus }}">{{ __(ucfirst($quoteStatus)) }}</option>
+                    @endforeach
+                </select>
+            </x-ui.field>
+        </div>
+
+        <x-ui.table>
+            <thead>
                 <tr>
-                    <td class="px-4 py-3 font-mono text-sm font-semibold">{{ $quotation->quote_number }}</td>
-                    <td class="px-4 py-3 font-semibold">{{ $quotation->supplier?->name }}</td>
-                    <td class="px-4 py-3 text-sm">{{ \App\Support\Format::date($quotation->quotation_date, false) }}</td>
-                    <td class="px-4 py-3 text-sm">{{ \App\Support\Format::date($quotation->valid_until, false) ?: '—' }}</td>
-                    <td class="px-4 py-3 font-semibold">{{ $quotation->currency }} {{ \App\Support\Format::number((float)$quotation->total_amount, 2) }}</td>
-                    <td class="px-4 py-3"><span class="rounded-full px-2 py-1 text-xs {{ match($quotation->status) { 'accepted' => 'bg-emerald-100 text-emerald-700', 'rejected' => 'bg-red-100 text-red-700', 'reviewed' => 'bg-sky-100 text-sky-700', 'expired' => 'bg-slate-100 text-slate-600', default => 'bg-amber-100 text-amber-700' } }}">{{ ucfirst($quotation->status) }}</span></td>
-                    <td class="px-4 py-3 whitespace-nowrap">
-                        <button wire:click="view({{ $quotation->id }})" class="mr-3 text-sm font-semibold text-emerald-700">{{ __('Review') }}</button>
-                        @if($quotation->status === 'received' || $quotation->status === 'reviewed')
-                            <button @click="acceptId={{$quotation->id}}; acceptNo=@js($quotation->quote_number); confirmAccept=true" class="mr-3 text-sm text-slate-600">{{ __('Accept') }}</button>
-                            <button @click="rejectId={{$quotation->id}}; rejectNo=@js($quotation->quote_number); confirmReject=true" class="text-sm font-semibold text-red-600">{{ __('Reject') }}</button>
-                        @endif
-                    </td>
+                    <th>{{ __('Quote #') }}</th>
+                    <th>{{ __('Supplier') }}</th>
+                    <th>{{ __('Date') }}</th>
+                    <th>{{ __('Valid until') }}</th>
+                    <th class="text-right">{{ __('Total') }}</th>
+                    <th>{{ __('Status') }}</th>
+                    <th class="text-right">{{ __('Actions') }}</th>
                 </tr>
-            @empty<tr><td colspan="7" class="p-8 text-center text-slate-500">{{ __('No quotations found.') }}</td></tr>@endforelse
+            </thead>
+            <tbody>
+                @forelse($quotations as $quotation)
+                    <tr wire:key="quotation-{{ $quotation->id }}">
+                        <td><span class="boq-code">{{ $quotation->quote_number }}</span></td>
+                        <td class="font-semibold text-slate-900">{{ $quotation->supplier?->name ?? '—' }}</td>
+                        <td class="whitespace-nowrap">{{ \App\Support\Format::date($quotation->quotation_date) ?? '—' }}</td>
+                        <td class="whitespace-nowrap">{{ \App\Support\Format::date($quotation->valid_until) ?? '—' }}</td>
+                        <td class="is-numeric font-semibold text-slate-900"><x-money :amount="$quotation->total_amount ?? 0" :currency="$quotation->currency" /></td>
+                        <td><x-ui.status :status="$quotation->status" /></td>
+                        <td class="text-right">
+                            <div class="boq-table-actions">
+                                <button type="button" wire:click="view({{ $quotation->id }})" class="boq-btn-secondary boq-btn-sm"><i class="fas fa-eye" aria-hidden="true"></i> {{ __('Review') }}</button>
+                                @if(in_array($quotation->status, ['received', 'reviewed'], true))
+                                    <button type="button" @click="acceptId={{ $quotation->id }}; acceptNo=@js($quotation->quote_number); confirmAccept=true" class="boq-icon-btn boq-icon-success" title="{{ __('Accept') }}" aria-label="{{ __('Accept') }}"><i class="fas fa-check" aria-hidden="true"></i></button>
+                                    <button type="button" @click="rejectId={{ $quotation->id }}; rejectNo=@js($quotation->quote_number); confirmReject=true" class="boq-icon-btn boq-icon-danger" title="{{ __('Reject') }}" aria-label="{{ __('Reject') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="7" class="p-0"><x-ui.empty-state icon="fa-file-invoice" :title="__('No quotations found.')" /></td></tr>
+                @endforelse
             </tbody>
-        </table>
-        <div class="p-4">{{ $quotations->links() }}</div>
+        </x-ui.table>
+
+        @if($quotations->hasPages())<div class="boq-pagination">{{ $quotations->links() }}</div>@endif
     </div>
 
     @if($this->viewing)
-    <div class="boq-modal-backdrop" x-data @keydown.escape.window="$wire.close()">
-        <div class="boq-modal boq-modal-xl" @click.stop>
-            <div class="boq-modal-head">
-                <div><h2 class="text-lg font-bold">{{ $viewing->quote_number }}</h2><p class="text-xs text-slate-500">From {{ $viewing->supplier?->name }} · {{ $viewing->currency }} · {{ $viewing->total_amount ? \App\Support\Format::number((float)$viewing->total_amount, 2) : '—' }}</p></div>
-                <button type="button" wire:click="close" class="text-2xl leading-none text-slate-400 hover:text-slate-700">&times;</button>
-            </div>
-            <div class="boq-modal-body">
-                <table class="boq-table min-w-full divide-y divide-slate-200">
-                    <thead><tr>@foreach(['Product','Description','Qty','Unit','Unit price','Line total','Approve'] as $h)<th class="px-3 py-2 text-left text-xs">{{ $h }}</th>@endforeach</tr></thead>
-                    <tbody class="divide-y divide-slate-100">
-                    @foreach($viewing->items as $item)
+        <x-ui.modal
+            wire:key="quotation-view-{{ $viewing->id }}"
+            id="quotation-view"
+            :title="$viewing->quote_number"
+            :subtitle="__('From :supplier', ['supplier' => $viewing->supplier?->name ?? '—']).' · '.($viewing->total_amount ? \App\Support\Format::money($viewing->total_amount, $viewing->currency) : '—')"
+            icon="fa-file-invoice"
+            size="xl"
+            close="close"
+        >
+            <div class="boq-table-wrapper rounded-lg border border-slate-200">
+                <table class="boq-table">
+                    <thead>
                         <tr>
-                            <td class="px-3 py-2 text-sm font-semibold">{{ $item->product }}</td>
-                            <td class="px-3 py-2 text-xs text-slate-500 max-w-xs truncated">{{ $item->description }}</td>
-                            <td class="px-3 py-2 text-sm">{{ \App\Support\Format::number((float)$item->quantity, 2) }}</td>
-                            <td class="px-3 py-2 text-sm">{{ $item->unit }}</td>
-                            <td class="px-3 py-2 text-sm">{{ \App\Support\Format::number((float)$item->unit_price, 2) }}</td>
-                            <td class="px-3 py-2 text-sm font-semibold">{{ \App\Support\Format::number((float)$item->line_total, 2) }}</td>
-                            <td class="px-3 py-2"><input type="checkbox" @checked($item->approved) wire:change="preapproveLine({{ $item->id }})" @disabled(in_array($viewing->status, ['accepted','rejected']))></td>
+                            <th>{{ __('Product') }}</th>
+                            <th>{{ __('Description') }}</th>
+                            <th class="text-right">{{ __('Qty') }}</th>
+                            <th>{{ __('Unit') }}</th>
+                            <th class="text-right">{{ __('Unit price') }}</th>
+                            <th class="text-right">{{ __('Line total') }}</th>
+                            <th class="text-center">{{ __('Approve') }}</th>
                         </tr>
-                    @endforeach
+                    </thead>
+                    <tbody>
+                        @forelse($viewing->items as $item)
+                            <tr wire:key="quote-line-{{ $item->id }}">
+                                <td class="font-semibold text-slate-900">{{ $item->product }}</td>
+                                <td class="max-w-xs text-xs text-slate-500">{{ $item->description }}</td>
+                                <td class="is-numeric">{{ \App\Support\Format::number((float) $item->quantity, 2) }}</td>
+                                <td>{{ $item->unit }}</td>
+                                <td class="is-numeric">{{ \App\Support\Format::number((float) $item->unit_price, 2) }}</td>
+                                <td class="is-numeric font-semibold">{{ \App\Support\Format::number((float) $item->line_total, 2) }}</td>
+                                <td class="text-center">
+                                    <input type="checkbox" class="boq-checkbox" aria-label="{{ __('Approve') }} {{ $item->product }}" @checked($item->approved) wire:change="preapproveLine({{ $item->id }})" @disabled(in_array($viewing->status, ['accepted', 'rejected'], true))>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="7" class="boq-empty-table">{{ __('This quotation has no lines.') }}</td></tr>
+                        @endforelse
                     </tbody>
                 </table>
-                @if($viewing->status === 'received' || $viewing->status === 'reviewed')
-                <div class="mt-4 flex flex-wrap gap-3">
-                    <button wire:click="review({{ $viewing->id }})" class="boq-btn-secondary">{{ __('Mark reviewed') }}</button>
-                    <button @click="acceptId={{$viewing->id}}; acceptNo=@js($viewing->quote_number); confirmAccept=true" class="boq-btn-primary">{{ __('Accept & promote to rates') }}</button>
-                    <button @click="rejectId={{$viewing->id}}; rejectNo=@js($viewing->quote_number); confirmReject=true" class="boq-btn-danger">{{ __('Reject') }}</button>
-                </div>
-                @endif
+            </div>
+
+            @if(in_array($viewing->status, ['received', 'reviewed'], true))
+                <x-slot:footer>
+                    <x-ui.button variant="secondary" icon="fa-eye" wire:click="review({{ $viewing->id }})">{{ __('Mark reviewed') }}</x-ui.button>
+                    <button type="button" @click="rejectId={{ $viewing->id }}; rejectNo=@js($viewing->quote_number); confirmReject=true" class="boq-btn-danger"><i class="fas fa-xmark" aria-hidden="true"></i> {{ __('Reject') }}</button>
+                    <button type="button" @click="acceptId={{ $viewing->id }}; acceptNo=@js($viewing->quote_number); confirmAccept=true" class="boq-btn-primary"><i class="fas fa-check" aria-hidden="true"></i> {{ __('Accept & promote to rates') }}</button>
+                </x-slot:footer>
+            @endif
+        </x-ui.modal>
+    @endif
+
+    <div x-show="confirmAccept" x-cloak class="boq-modal-backdrop z-[110]" role="dialog" aria-modal="true" @keydown.escape.window="confirmAccept=false">
+        <div class="boq-modal boq-modal-sm" @click.outside="confirmAccept=false">
+            <div class="boq-modal-head">
+                <h2>{{ __('Accept quotation?') }}</h2>
+                <button type="button" @click="confirmAccept=false" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
+            </div>
+            <div class="boq-modal-body boq-modal-message">{{ __('Accept') }} <strong x-text="acceptNo"></strong>{{ __('? Approved lines will be promoted into the rate library.') }}</div>
+            <div class="boq-modal-foot">
+                <button type="button" @click="confirmAccept=false" class="boq-btn-secondary">{{ __('Cancel') }}</button>
+                <button type="button" @click="$wire.accept(acceptId); confirmAccept=false" class="boq-btn-primary">{{ __('Accept') }}</button>
             </div>
         </div>
     </div>
-    @endif
 
-    <div x-show="confirmAccept" x-cloak class="boq-modal-backdrop" @keydown.escape.window="confirmAccept=false">
-        <div class="boq-modal boq-modal-sm" @click.stop>
-            <div class="boq-modal-head"><h2 class="text-lg font-bold">{{ __('Accept quotation?') }}</h2><button @click="confirmAccept=false" class="text-2xl text-slate-400">&times;</button></div>
-            <div class="boq-modal-body text-sm text-slate-600">{{ __('Accept') }} <strong x-text="acceptNo"></strong>{{ __('? Approved lines will be promoted into the rate library.') }}</div>
-            <div class="boq-modal-foot"><button @click="confirmAccept=false" class="boq-btn-secondary">{{ __('Cancel') }}</button><button @click="$wire.accept(acceptId); confirmAccept=false" class="boq-btn-primary">{{ __('Accept') }}</button></div>
-        </div>
-    </div>
-
-    <div x-show="confirmReject" x-cloak class="boq-modal-backdrop" @keydown.escape.window="confirmReject=false">
-        <div class="boq-modal boq-modal-sm" @click.stop>
-            <div class="boq-modal-head"><h2 class="text-lg font-bold">{{ __('Reject quotation?') }}</h2><button @click="confirmReject=false" class="text-2xl text-slate-400">&times;</button></div>
-            <div class="boq-modal-body text-sm text-slate-600">{{ __('Reject') }} <strong x-text="rejectNo"></strong>{{ __('? No rates will be added.') }}</div>
-            <div class="boq-modal-foot"><button @click="confirmReject=false" class="boq-btn-secondary">{{ __('Cancel') }}</button><button @click="$wire.reject(rejectId); confirmReject=false" class="boq-btn-danger">{{ __('Reject') }}</button></div>
+    <div x-show="confirmReject" x-cloak class="boq-modal-backdrop z-[110]" role="dialog" aria-modal="true" @keydown.escape.window="confirmReject=false">
+        <div class="boq-modal boq-modal-sm" @click.outside="confirmReject=false">
+            <div class="boq-modal-head">
+                <h2>{{ __('Reject quotation?') }}</h2>
+                <button type="button" @click="confirmReject=false" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
+            </div>
+            <div class="boq-modal-body boq-modal-message">{{ __('Reject') }} <strong x-text="rejectNo"></strong>{{ __('? No rates will be added.') }}</div>
+            <div class="boq-modal-foot">
+                <button type="button" @click="confirmReject=false" class="boq-btn-secondary">{{ __('Cancel') }}</button>
+                <button type="button" @click="$wire.reject(rejectId); confirmReject=false" class="boq-btn-danger">{{ __('Reject') }}</button>
+            </div>
         </div>
     </div>
 </div>

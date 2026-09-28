@@ -189,6 +189,59 @@ class WebRedesignTest extends TestCase
         $this->assertSame('lg', $user->fresh()->locale);
     }
 
+    private function superAdmin(): User
+    {
+        $user = User::factory()->create();
+        $user->roles()->attach(Role::where('slug', 'super-admin')->value('id'));
+
+        return $user;
+    }
+
+    public function test_add_user_dialog_closes_after_the_user_is_created(): void
+    {
+        Livewire::actingAs($this->superAdmin())
+            ->test(\App\Livewire\Admin\UsersManager::class)
+            ->set('showCreate', true)
+            ->assertSee('new-user-name', false)
+            ->set('newName', 'Jane Doe')
+            ->set('newEmail', 'jane.doe@example.test')
+            ->set('newPassword', 'secret-pass-123')
+            ->call('createUser')
+            ->assertHasNoErrors()
+            ->assertSet('showCreate', false)
+            ->assertDontSee('new-user-name', false);
+
+        $this->assertDatabaseHas('users', ['email' => 'jane.doe@example.test']);
+    }
+
+    public function test_editing_a_system_role_keeps_it_a_system_role(): void
+    {
+        $role = Role::where('slug', 'user')->firstOrFail();
+        $this->assertTrue((bool) $role->is_system);
+
+        Livewire::actingAs($this->superAdmin())
+            ->test(\App\Livewire\Admin\RolesManager::class)
+            ->call('edit', $role->id)
+            ->set('name', 'Customer')
+            ->set('slug', 'renamed-slug')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $role->refresh();
+        $this->assertSame('Customer', $role->name);
+        $this->assertSame('user', $role->slug);
+        $this->assertTrue((bool) $role->is_system);
+    }
+
+    public function test_quotation_status_filter_values_are_not_translated(): void
+    {
+        app()->setLocale('lg');
+
+        Livewire::actingAs($this->superAdmin())
+            ->test(\App\Livewire\Admin\QuotationsManager::class)
+            ->assertSeeHtml('<option value="accepted">');
+    }
+
     public function test_built_stylesheet_includes_pagination_utilities(): void
     {
         $manifest = json_decode(file_get_contents(public_path('build/manifest.json')), true);

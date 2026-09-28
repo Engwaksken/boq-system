@@ -1,112 +1,194 @@
+<div class="boq-page-stack" x-data="{ confirmStatus: false, statusId: null, statusName: '', statusAction: '', confirmRole: false, roleUserId: null, roleId: null, roleName: '', roleUserName: '' }">
+    <x-ui.page-header
+        :title="__('Users')"
+        icon="fa-users"
+        :subtitle="__('Manage account access, roles and subscription links.')"
+    >
+        <x-slot:actions>
+            <x-ui.button icon="fa-user-plus" wire:click="$set('showCreate', true)">{{ __('Add user') }}</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-<div class="space-y-5" x-data="{ showCreate:false, confirmStatus:false, statusId:null, statusName:'', statusAction:'', confirmRole:false, roleUserId:null, roleId:null, roleName:'', roleUserName:'' }">
-    <div><h1 class="text-2xl font-bold">{{ __('Users') }}</h1><p class="text-sm text-slate-500">{{ __('Manage account access, roles and subscription links.') }}</p></div>
-    @if(session('message'))<div class="boq-flash">{{session('message')}}</div>@endif
+    <x-ui.flash :keys="['message', 'status', 'error']" />
 
-    <div class="flex flex-wrap gap-3">
-        <input wire:model.live.debounce.300ms="search" placeholder="{{ __('Search name or email') }}" class="min-w-64 flex-1 rounded-lg border-slate-300 text-sm">
-        <select wire:model.live="status" class="rounded-lg border-slate-300 text-sm"><option value="all">{{ __('All users') }}</option><option value="active">{{ __('Active') }}</option><option value="inactive">{{ __('Inactive') }}</option></select>
-        <button @click="showCreate=true" class="boq-btn-primary">{{ __('Add user') }}</button>
-    </div>
+    <div class="boq-panel">
+        <div class="boq-toolbar border-b border-slate-200">
+            <x-ui.field :label="__('Search')" for="user-search" class="boq-toolbar-grow">
+                <div class="boq-input-icon-wrap">
+                    <i class="fas fa-search boq-input-icon" aria-hidden="true"></i>
+                    <input id="user-search" type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search name or email') }}" class="boq-field boq-field-with-icon">
+                </div>
+            </x-ui.field>
 
-    <x-bulk-bar :count="count($selected)">
-        <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-user-check"></i> {{ __('Enable') }}</button>
-        <button type="button" wire:click="bulkSetActive(false)" wire:confirm="Disable the selected users? Your own account is skipped." class="boq-btn-secondary"><i class="fas fa-user-slash"></i> {{ __('Disable') }}</button>
-        <select wire:change="bulkAssignRole($event.target.value)" class="boq-field boq-field-sm" aria-label="{{ __('Assign role to selected users') }}">
-            <option value="">{{ __('Assign role...') }}</option>
-            @foreach($roles as $role)<option value="{{ $role->id }}">{{ $role->name }}</option>@endforeach
-        </select>
-    </x-bulk-bar>
+            <x-ui.field :label="__('Status')" for="user-status" class="w-full sm:w-44">
+                <select id="user-status" wire:model.live="status" class="boq-field">
+                    <option value="all">{{ __('All users') }}</option>
+                    <option value="active">{{ __('Active') }}</option>
+                    <option value="inactive">{{ __('Inactive') }}</option>
+                </select>
+            </x-ui.field>
+        </div>
 
-    <div class="boq-panel overflow-x-auto">
-        <table class="boq-table min-w-full divide-y divide-slate-200">
-            <thead><tr><th class="boq-check-col"><x-select-all :ids="$users->pluck('id')" :selected="$selected" /></th>@foreach(['User','Organisation','Roles','Subscription','Status','Actions'] as $h)<th class="px-4 py-3 text-left">{{$h}}</th>@endforeach</tr></thead>
-            <tbody class="divide-y divide-slate-100">
-            @forelse($users as $user)
-            <tr wire:key="user-{{ $user->id }}">
-                <td class="boq-check-col"><x-select-row :id="$user->id" /></td>
-                <td class="px-4 py-3"><div class="font-semibold">{{$user->name}}</div><div class="text-xs text-slate-500">{{$user->email}}</div></td>
-                <td class="px-4 py-3 text-sm">{{$user->organisation?->name ?? '—'}}</td>
-                <td class="px-4 py-3"><div class="flex flex-wrap gap-1">@foreach($user->roles as $role)<button @click="roleUserId={{$user->id}}; roleId={{$role->id}}; roleName=@js($role->name); roleUserName=@js($user->name); confirmRole=true" class="rounded-full bg-emerald-50 px-2 py-1 text-xs text-emerald-700">{{$role->name}} ×</button>@endforeach</div><select wire:change="assignRole({{$user->id}}, $event.target.value)" class="mt-2 rounded border-slate-300 text-xs"><option value="">{{ __('Add role...') }}</option>@foreach($roles as $role)<option value="{{$role->id}}">{{$role->name}}</option>@endforeach</select></td>
-                <td class="px-4 py-3 text-sm">@php($sub=$user->subscriptions->sortByDesc('created_at')->first()){{$sub?->plan?->name ?? 'None'}} @if($sub)<span class="text-xs text-slate-500">({{$sub->status}})</span>@endif</td>
-                <td class="px-4 py-3"><span class="rounded-full px-2 py-1 text-xs {{$user->is_active?'bg-emerald-100 text-emerald-700':'bg-red-100 text-red-700'}}">{{$user->is_active?'Active':'Inactive'}}</span></td>
-                <td class="px-4 py-3"><button @click="statusId={{$user->id}}; statusName=@js($user->name); statusAction=@js($user->is_active?'Disable':'Enable'); confirmStatus=true" class="text-sm font-semibold {{$user->is_active?'text-red-600':'text-emerald-700'}}">{{$user->is_active?'Disable':'Enable'}}</button></td>
-            </tr>
-            @empty
-            <tr><td colspan="7" class="p-8 text-center text-slate-500">{{ __('No users found.') }}</td></tr>
-            @endforelse
+        <x-bulk-bar :count="count($selected)">
+            <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-user-check" aria-hidden="true"></i> {{ __('Enable') }}</button>
+            <button type="button" wire:click="bulkSetActive(false)" wire:confirm="{{ __('Disable the selected users? Your own account is skipped.') }}" class="boq-btn-secondary"><i class="fas fa-user-slash" aria-hidden="true"></i> {{ __('Disable') }}</button>
+            <select wire:change="bulkAssignRole($event.target.value)" class="boq-field boq-field-sm" aria-label="{{ __('Assign role to selected users') }}">
+                <option value="">{{ __('Assign role...') }}</option>
+                @foreach($roles as $role)<option value="{{ $role->id }}">{{ $role->name }}</option>@endforeach
+            </select>
+        </x-bulk-bar>
+
+        <x-ui.table>
+            <thead>
+                <tr>
+                    <th class="boq-check-col"><x-select-all :ids="$users->pluck('id')" :selected="$selected" /></th>
+                    <th>{{ __('User') }}</th>
+                    <th>{{ __('Organisation') }}</th>
+                    <th>{{ __('Roles') }}</th>
+                    <th>{{ __('Subscription') }}</th>
+                    <th>{{ __('Status') }}</th>
+                    <th class="text-right">{{ __('Actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($users as $user)
+                    @php $sub = $user->subscriptions->sortByDesc('created_at')->first(); @endphp
+                    <tr wire:key="user-{{ $user->id }}">
+                        <td class="boq-check-col"><x-select-row :id="$user->id" /></td>
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <span class="boq-avatar">
+                                    @if($user->avatar_url)
+                                        <img src="{{ $user->avatar_url }}" alt="">
+                                    @else
+                                        {{ mb_strtoupper(mb_substr((string) $user->name, 0, 1)) }}
+                                    @endif
+                                </span>
+                                <div class="min-w-0">
+                                    <div class="boq-table-title">{{ $user->name }}</div>
+                                    <div class="boq-table-subtitle">{{ $user->email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ $user->organisation?->name ?? '—' }}</td>
+                        <td class="min-w-[12rem]">
+                            <div class="flex flex-wrap gap-1">
+                                @foreach($user->roles as $role)
+                                    <button
+                                        type="button"
+                                        @click="roleUserId={{ $user->id }}; roleId={{ $role->id }}; roleName=@js($role->name); roleUserName=@js($user->name); confirmRole=true"
+                                        class="boq-badge boq-badge-brand hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                                        title="{{ __('Remove role') }}"
+                                    >
+                                        {{ $role->name }} <i class="fas fa-xmark" aria-hidden="true"></i>
+                                    </button>
+                                @endforeach
+                            </div>
+                            <select wire:change="assignRole({{ $user->id }}, $event.target.value)" class="boq-field boq-field-sm mt-2" aria-label="{{ __('Add role...') }}">
+                                <option value="">{{ __('Add role...') }}</option>
+                                @foreach($roles as $role)<option value="{{ $role->id }}">{{ $role->name }}</option>@endforeach
+                            </select>
+                        </td>
+                        <td>
+                            @if($sub)
+                                <div class="boq-table-title">{{ $sub->plan?->name ?? __('Unknown plan') }}</div>
+                                <x-ui.status class="mt-1" :status="$sub->status" />
+                            @else
+                                <span class="boq-table-empty">{{ __('None') }}</span>
+                            @endif
+                        </td>
+                        <td><x-ui.status :status="$user->is_active ? 'active' : 'inactive'" /></td>
+                        <td class="text-right">
+                            <button
+                                type="button"
+                                @click="statusId={{ $user->id }}; statusName=@js($user->name); statusAction=@js($user->is_active ? __('Disable') : __('Enable')); confirmStatus=true"
+                                class="{{ $user->is_active ? 'boq-btn-secondary text-red-600' : 'boq-btn-soft' }} boq-btn-sm"
+                            >
+                                <i class="fas {{ $user->is_active ? 'fa-user-slash' : 'fa-user-check' }}" aria-hidden="true"></i>
+                                {{ $user->is_active ? __('Disable') : __('Enable') }}
+                            </button>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="7" class="p-0"><x-ui.empty-state icon="fa-users" :title="__('No users found.')" /></td></tr>
+                @endforelse
             </tbody>
-        </table>
-        <div class="p-4">{{$users->links()}}</div>
+        </x-ui.table>
+
+        @if($users->hasPages())
+            <div class="boq-pagination">{{ $users->links() }}</div>
+        @endif
     </div>
 
-    <div x-show="showCreate" x-cloak class="boq-modal-backdrop">
-        <div class="boq-modal" @click.stop>
-            <form wire:submit="createUser">
-                <div class="boq-modal-head"><h2 class="text-lg font-bold">{{ __('Add user') }}</h2><button type="button" @click="showCreate=false" class="text-2xl text-slate-400">&times;</button></div>
-                <div class="boq-modal-body space-y-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700">{{ __('Full name') }}</label>
-                        <input wire:model="newName" type="text" class="mt-1 w-full rounded-lg border-slate-300 text-sm" placeholder="{{ __('e.g. Jane Doe') }}">
-                        @error('newName') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700">{{ __('Email') }}</label>
-                        <input wire:model="newEmail" type="email" class="mt-1 w-full rounded-lg border-slate-300 text-sm" placeholder="name@company.com">
-                        @error('newEmail') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700">{{ __('Temporary password') }}</label>
-                        <x-password-input wire:model="newPassword" placeholder="{{ __('min. 8 characters') }}" autocomplete="new-password" />
-                        @error('newPassword') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700">Phone (optional)</label>
-                        <input wire:model="newPhone" type="tel" class="mt-1 w-full rounded-lg border-slate-300 text-sm" placeholder="+1 202 555 0143 (include country code)">
-                        @error('newPhone') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
-                    </div>
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700">{{ __('Organisation') }}</label>
-                            <select wire:model="newOrganisationId" class="mt-1 w-full rounded-lg border-slate-300 text-sm">
-                                <option value="0">{{ __('None (personal account)') }}</option>
-                                @foreach($organisations as $org)<option value="{{$org->id}}">{{$org->name}}</option>@endforeach
-                            </select>
-                            @error('newOrganisationId') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700">{{ __('Role') }}</label>
-                            <select wire:model="newRoleId" class="mt-1 w-full rounded-lg border-slate-300 text-sm">
-                                <option value="">{{ __('Select...') }}</option>
-                                @foreach($roles as $role)<option value="{{$role->id}}">{{$role->name}}</option>@endforeach
-                            </select>
-                            @error('newRoleId') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
-                </div>
-                <div class="boq-modal-foot">
-                    <button type="button" @click="showCreate=false" class="boq-btn-secondary">{{ __('Cancel') }}</button>
-                    <button type="submit" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="createUser">
-                        <span wire:loading.remove wire:target="createUser">{{ __('Create user') }}</span>
-                        <span wire:loading wire:target="createUser">{{ __('Creating...') }}</span>
-                    </button>
-                </div>
-            </form>
+    @if($showCreate)
+        <x-ui.modal wire:key="user-create-modal" id="user-create" :title="__('Add user')" icon="fa-user-plus" close="$set('showCreate', false)" submit="createUser">
+            <div class="boq-form-grid">
+                <x-ui.field :label="__('Full name')" for="new-user-name" error="newName" required>
+                    <input id="new-user-name" wire:model="newName" type="text" class="boq-field @error('newName') has-error @enderror" placeholder="{{ __('e.g. Jane Doe') }}" autocomplete="off">
+                </x-ui.field>
+
+                <x-ui.field :label="__('Email')" for="new-user-email" error="newEmail" required>
+                    <input id="new-user-email" wire:model="newEmail" type="email" class="boq-field @error('newEmail') has-error @enderror" placeholder="name@company.com" autocomplete="off">
+                </x-ui.field>
+
+                <x-ui.field :label="__('Temporary password')" for="new-user-password" error="newPassword" required>
+                    <x-password-input id="new-user-password" wire:model="newPassword" placeholder="{{ __('min. 8 characters') }}" autocomplete="new-password" />
+                </x-ui.field>
+
+                <x-ui.field :label="__('Phone (optional)')" for="new-user-phone" error="newPhone" :hint="__('Include the country code.')">
+                    <input id="new-user-phone" wire:model="newPhone" type="tel" class="boq-field @error('newPhone') has-error @enderror" placeholder="+1 202 555 0143">
+                </x-ui.field>
+
+                <x-ui.field :label="__('Organisation')" for="new-user-org" error="newOrganisationId">
+                    <select id="new-user-org" wire:model="newOrganisationId" class="boq-field">
+                        <option value="0">{{ __('None (personal account)') }}</option>
+                        @foreach($organisations as $org)<option value="{{ $org->id }}">{{ $org->name }}</option>@endforeach
+                    </select>
+                </x-ui.field>
+
+                <x-ui.field :label="__('Role')" for="new-user-role" error="newRoleId" required>
+                    <select id="new-user-role" wire:model="newRoleId" class="boq-field @error('newRoleId') has-error @enderror">
+                        <option value="">{{ __('Select...') }}</option>
+                        @foreach($roles as $role)<option value="{{ $role->id }}">{{ $role->name }}</option>@endforeach
+                    </select>
+                </x-ui.field>
+            </div>
+
+            <x-slot:footer>
+                <x-ui.button variant="secondary" wire:click="$set('showCreate', false)">{{ __('Cancel') }}</x-ui.button>
+                <button type="submit" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="createUser">
+                    <span wire:loading.remove wire:target="createUser"><i class="fas fa-user-plus" aria-hidden="true"></i> {{ __('Create user') }}</span>
+                    <span wire:loading wire:target="createUser"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> {{ __('Creating...') }}</span>
+                </button>
+            </x-slot:footer>
+        </x-ui.modal>
+    @endif
+
+    <div x-show="confirmStatus" x-cloak class="boq-modal-backdrop" role="dialog" aria-modal="true" x-on:keydown.escape.window="confirmStatus=false">
+        <div class="boq-modal boq-modal-sm" @click.outside="confirmStatus=false">
+            <div class="boq-modal-head">
+                <h2><span x-text="statusAction"></span> {{ __('user?') }}</h2>
+                <button type="button" @click="confirmStatus=false" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
+            </div>
+            <div class="boq-modal-body boq-modal-message"><span x-text="statusAction"></span> {{ __('access for') }} <strong x-text="statusName"></strong>?</div>
+            <div class="boq-modal-foot">
+                <button type="button" @click="confirmStatus=false" class="boq-btn-secondary">{{ __('Cancel') }}</button>
+                <button type="button" @click="$wire.toggleActive(statusId); confirmStatus=false" class="boq-btn-primary">{{ __('Confirm') }}</button>
+            </div>
         </div>
     </div>
 
-    <div x-show="confirmStatus" x-cloak class="boq-modal-backdrop">
-        <div class="boq-modal boq-modal-sm" @click.stop>
-            <div class="boq-modal-head"><h2 class="text-lg font-bold"><span x-text="statusAction"></span> {{ __('user?') }}</h2><button @click="confirmStatus=false" class="text-2xl text-slate-400">&times;</button></div>
-            <div class="boq-modal-body text-sm text-slate-600"><span x-text="statusAction"></span> {{ __('access for') }} <strong x-text="statusName"></strong>?</div>
-            <div class="boq-modal-foot"><button @click="confirmStatus=false" class="boq-btn-secondary">{{ __('Cancel') }}</button><button @click="$wire.toggleActive(statusId); confirmStatus=false" class="boq-btn-primary">{{ __('Confirm') }}</button></div>
-        </div>
-    </div>
-    <div x-show="confirmRole" x-cloak class="boq-modal-backdrop">
-        <div class="boq-modal boq-modal-sm" @click.stop>
-            <div class="boq-modal-head"><h2 class="text-lg font-bold">{{ __('Remove role?') }}</h2><button @click="confirmRole=false" class="text-2xl text-slate-400">&times;</button></div>
-            <div class="boq-modal-body text-sm text-slate-600">{{ __('Remove') }} <strong x-text="roleName"></strong> {{ __('from') }} <strong x-text="roleUserName"></strong>?</div>
-            <div class="boq-modal-foot"><button @click="confirmRole=false" class="boq-btn-secondary">{{ __('Cancel') }}</button><button @click="$wire.removeRole(roleUserId, roleId); confirmRole=false" class="boq-btn-danger">{{ __('Remove') }}</button></div>
+    <div x-show="confirmRole" x-cloak class="boq-modal-backdrop" role="dialog" aria-modal="true" x-on:keydown.escape.window="confirmRole=false">
+        <div class="boq-modal boq-modal-sm" @click.outside="confirmRole=false">
+            <div class="boq-modal-head">
+                <h2>{{ __('Remove role?') }}</h2>
+                <button type="button" @click="confirmRole=false" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
+            </div>
+            <div class="boq-modal-body boq-modal-message">{{ __('Remove') }} <strong x-text="roleName"></strong> {{ __('from') }} <strong x-text="roleUserName"></strong>?</div>
+            <div class="boq-modal-foot">
+                <button type="button" @click="confirmRole=false" class="boq-btn-secondary">{{ __('Cancel') }}</button>
+                <button type="button" @click="$wire.removeRole(roleUserId, roleId); confirmRole=false" class="boq-btn-danger">{{ __('Remove') }}</button>
+            </div>
         </div>
     </div>
 </div>

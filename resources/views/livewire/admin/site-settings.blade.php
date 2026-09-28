@@ -1,31 +1,22 @@
 <div class="boq-page-stack" x-data="{ tab: 'general' }">
-    <div class="boq-page-header">
-        <div>
-            <h1 class="boq-page-title">
-                <i class="fas fa-gear"></i>
-                {{ __('Site Settings') }}
-            </h1>
-            <p class="boq-page-subtitle">{{ __('Configure global system settings and defaults.') }}</p>
-        </div>
-    </div>
+    <x-ui.page-header
+        :title="__('Site Settings')"
+        icon="fa-gear"
+        :subtitle="__('Configure global system settings and defaults.')"
+    />
 
-    @if (session()->has('message'))
-        <div class="boq-flash">
-            <i class="fas fa-circle-check"></i>
-            {{ session('message') }}
-        </div>
-    @endif
+    <x-ui.flash :keys="['message', 'status', 'error']" />
 
-    <form wire:submit="save" class="boq-panel overflow-hidden">
+    <div class="boq-panel">
         <div class="boq-tabs" role="tablist" aria-label="{{ __('Settings sections') }}">
             @foreach([
-                'general' => ['fa-sliders', 'General'],
-                'branding' => ['fa-image', 'Branding'],
-                'mobile' => ['fa-mobile-screen', 'Mobile App'],
-                'currencies' => ['fa-coins', 'Currencies'],
-                'languages' => ['fa-language', 'Languages'],
-                'access' => ['fa-user-lock', 'Registration & Access'],
-                'legal' => ['fa-scale-balanced', 'Legal'],
+                'general' => ['fa-sliders', __('General')],
+                'branding' => ['fa-image', __('Branding')],
+                'mobile' => ['fa-mobile-screen', __('Mobile App')],
+                'currencies' => ['fa-coins', __('Currencies')],
+                'languages' => ['fa-language', __('Languages')],
+                'access' => ['fa-user-lock', __('Registration & Access')],
+                'legal' => ['fa-scale-balanced', __('Legal')],
             ] as $key => [$icon, $label])
                 <button
                     type="button"
@@ -35,12 +26,24 @@
                     :aria-selected="(tab === '{{ $key }}').toString()"
                     @click="tab = '{{ $key }}'"
                 >
-                    <i class="fas {{ $icon }}"></i>
+                    <i class="fas {{ $icon }}" aria-hidden="true"></i>
                     {{ $label }}
                 </button>
             @endforeach
         </div>
 
+        {{-- Currencies and languages are separate components with their own forms,
+             so they must not sit inside the settings <form> (nested forms are invalid
+             HTML and their Save buttons submitted the site settings instead). --}}
+        <div class="boq-panel-body" x-show="tab === 'currencies'" x-cloak>
+            <livewire:admin.currencies-manager />
+        </div>
+
+        <div class="boq-panel-body" x-show="tab === 'languages'" x-cloak>
+            <livewire:admin.languages-manager />
+        </div>
+
+        <form wire:submit="save" x-show="! ['currencies', 'languages'].includes(tab)">
         <div class="boq-panel-body">
             {{-- General --}}
             <div x-show="tab === 'general'" class="boq-form-grid">
@@ -71,7 +74,7 @@
                 <div>
                     <label for="country" class="boq-field-label">{{ __('Default Country') }}</label>
                     <select id="country" wire:model="settings.country" class="boq-field">
-                        <option value="">Not set (international)</option>
+                        <option value="">{{ __('Not set (international)') }}</option>
                         @foreach(\App\Models\Country::options() as $iso => $name)
                             <option value="{{ $iso }}">{{ $name }}</option>
                         @endforeach
@@ -95,7 +98,7 @@
                 </div>
 
                 <div>
-                    <label for="trial_duration" class="boq-field-label">Trial Duration (Days)</label>
+                    <label for="trial_duration" class="boq-field-label">{{ __('Trial Duration (Days)') }}</label>
                     <input id="trial_duration" type="number" wire:model="settings.trial_duration" class="boq-field" placeholder="14">
                     @error('settings.trial_duration') <p class="boq-field-error">{{ $message }}</p> @enderror
                 </div>
@@ -118,10 +121,10 @@
                         @endif
 
                         <div class="flex flex-col gap-2">
-                            <label class="boq-btn-secondary cursor-pointer">
-                                <i class="fas fa-upload"></i>
+                            <input id="site-logo-file" type="file" wire:model="logoFile" accept="image/png,image/jpeg,image/webp" class="peer sr-only">
+                            <label for="site-logo-file" class="boq-btn-secondary cursor-pointer peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-600">
+                                <i class="fas fa-upload" aria-hidden="true"></i>
                                 {{ __('Choose logo') }}
-                                <input type="file" wire:model="logoFile" accept="image/png,image/jpeg,image/webp" class="hidden">
                             </label>
                             @if($logoUrl)
                                 <button type="button" wire:click="removeLogo" class="boq-btn-secondary text-red-600">
@@ -146,10 +149,10 @@
                         @endif
 
                         <div class="flex flex-col gap-2">
-                            <label class="boq-btn-secondary cursor-pointer">
-                                <i class="fas fa-upload"></i>
+                            <input id="site-favicon-file" type="file" wire:model="faviconFile" accept="image/png,image/jpeg,image/webp,image/x-icon" class="peer sr-only">
+                            <label for="site-favicon-file" class="boq-btn-secondary cursor-pointer peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-600">
+                                <i class="fas fa-upload" aria-hidden="true"></i>
                                 {{ __('Choose favicon') }}
-                                <input type="file" wire:model="faviconFile" accept="image/png,image/jpeg,image/webp,image/x-icon" class="hidden">
                             </label>
                             @if($faviconUrl)
                                 <button type="button" wire:click="removeFavicon" class="boq-btn-secondary text-red-600">
@@ -176,7 +179,7 @@
                     </label>
 
                     <div>
-                        <label for="splash_duration" class="boq-field-label">Splash Duration (milliseconds)</label>
+                        <label for="splash_duration" class="boq-field-label">{{ __('Splash Duration (milliseconds)') }}</label>
                         <input id="splash_duration" type="number" wire:model="settings.splash_duration" class="boq-field" placeholder="2000">
                         @error('settings.splash_duration') <p class="boq-field-error">{{ $message }}</p> @enderror
                     </div>
@@ -201,16 +204,6 @@
                 </div>
             </div>
 
-            {{-- Currencies (own component, saves independently) --}}
-            <div x-show="tab === 'currencies'" x-cloak>
-                <livewire:admin.currencies-manager />
-            </div>
-
-            {{-- Languages (own component, saves independently) --}}
-            <div x-show="tab === 'languages'" x-cloak>
-                <livewire:admin.languages-manager />
-            </div>
-
             {{-- Access --}}
             <div x-show="tab === 'access'" x-cloak>
                 <p class="mb-4 text-sm text-slate-500">{{ __('Which options appear on the login screens.') }}</p>
@@ -230,11 +223,9 @@
 
             {{-- Legal --}}
             <div x-show="tab === 'legal'" x-cloak>
-                <p class="mb-4 text-sm text-slate-500">
-                    Linked from the registration page and mobile login screen. Leave blank to hide a link.
-                    If the value is a URL, that address opens. Otherwise it is shown as a page, and basic HTML is allowed
-                    (headings, paragraphs, lists, bold/italic, links, tables). Scripts and unsafe markup are removed automatically.
-                </p>
+                <x-ui.alert type="info" class="mb-4">
+                    {{ __('Linked from the registration page and mobile login screen. Leave blank to hide a link. If the value is a URL, that address opens. Otherwise it is shown as a page, and basic HTML is allowed (headings, paragraphs, lists, bold/italic, links, tables). Scripts and unsafe markup are removed automatically.') }}
+                </x-ui.alert>
 
                 <div class="space-y-4">
                     <div>
@@ -268,5 +259,6 @@
                 {{ __('Save Settings') }}
             </button>
         </div>
-    </form>
+        </form>
+    </div>
 </div>

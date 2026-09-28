@@ -1,42 +1,32 @@
 <div class="boq-page-stack">
-    <div class="boq-page-header">
-        <div>
-            <h1 class="boq-page-title">
-                <i class="fas fa-credit-card"></i>
-                {{ __('Payment Gateways') }}
-            </h1>
-            <p class="boq-page-subtitle">{{ __('Configure payment drivers, API credentials and webhook settings.') }}</p>
-        </div>
+    <x-ui.page-header
+        :title="__('Payment Gateways')"
+        icon="fa-building-columns"
+        :subtitle="__('Configure payment drivers, API credentials and webhook settings.')"
+    >
+        <x-slot:actions>
+            <x-ui.button icon="fa-plus" wire:click="create">{{ __('Add Gateway') }}</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-        <button type="button" wire:click="create" class="boq-btn-primary">
-            <i class="fas fa-plus"></i>
-            {{ __('Add Gateway') }}
-        </button>
-    </div>
-
-    @if (session()->has('message'))
-        <div class="boq-flash">
-            <i class="fas fa-circle-check"></i>
-            {{ session('message') }}
-        </div>
-    @endif
+    <x-ui.flash :keys="['message', 'status', 'error']" />
 
     <div class="boq-stats-grid">
-        <x-stat-card label="Gateways" :value="\App\Support\Format::number($stats['gateways'], 0)" icon="fa-credit-card" color="green" />
-        <x-stat-card label="Active" :value="\App\Support\Format::number($stats['active'], 0)" icon="fa-circle-check" color="blue" />
-        <x-stat-card label="Aggregators" :value="\App\Support\Format::number($stats['aggregators'], 0)" icon="fa-network-wired" color="purple" />
-        <x-stat-card label="Default Gateway" :value="$stats['default']" icon="fa-star" color="amber" />
+        <x-stat-card :label="__('Gateways')" :value="\App\Support\Format::number($stats['gateways'], 0)" icon="fa-credit-card" color="green" />
+        <x-stat-card :label="__('Active')" :value="\App\Support\Format::number($stats['active'], 0)" icon="fa-circle-check" color="blue" />
+        <x-stat-card :label="__('Aggregators')" :value="\App\Support\Format::number($stats['aggregators'], 0)" icon="fa-network-wired" color="purple" />
+        <x-stat-card :label="__('Default Gateway')" :value="$stats['default'] ?: '—'" icon="fa-star" color="amber" />
     </div>
 
-    <div class="boq-panel overflow-hidden">
+    <div class="boq-panel">
         <x-bulk-bar :count="count($selected)">
             <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary">
                 <i class="fas fa-circle-check"></i> {{ __('Activate') }}
             </button>
-            <button type="button" wire:click="bulkSetActive(false)" wire:confirm="Deactivate the selected gateways?" class="boq-btn-secondary">
-            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected gateways? Gateways with payments and the default gateway are skipped." class="boq-btn-danger"><i class="fas fa-trash"></i> {{ __('Delete') }}</button>
-                <i class="fas fa-ban"></i> {{ __('Deactivate') }}
+            <button type="button" wire:click="bulkSetActive(false)" wire:confirm="{{ __('Deactivate the selected gateways?') }}" class="boq-btn-secondary">
+                <i class="fas fa-ban" aria-hidden="true"></i> {{ __('Deactivate') }}
             </button>
+            <button type="button" wire:click="bulkDelete" wire:confirm="{{ __('Delete the selected gateways? Gateways with payments and the default gateway are skipped.') }}" class="boq-btn-danger"><i class="fas fa-trash" aria-hidden="true"></i> {{ __('Delete') }}</button>
         </x-bulk-bar>
 
         <div class="boq-table-wrapper">
@@ -70,14 +60,12 @@
                             </td>
                             <td>{{ $driverOptions[$gateway->driver] ?? $gateway->driver }}</td>
                             <td>
-                                <span class="boq-badge {{ $gateway->is_active ? 'boq-badge-success' : 'boq-badge-danger' }}">
-                                    {{ $gateway->is_active ? 'Active' : 'Inactive' }}
-                                </span>
+                                <x-ui.status :status="$gateway->is_active ? 'active' : 'inactive'" />
                             </td>
                             <td>
-                                <span class="boq-badge {{ $gateway->is_test_mode ? 'boq-badge-warning' : 'boq-badge-info' }}">
-                                    {{ $gateway->is_test_mode ? 'Test' : 'Live' }}
-                                </span>
+                                <x-ui.badge :color="$gateway->is_test_mode ? 'warning' : 'success'" :icon="$gateway->is_test_mode ? 'fa-flask' : 'fa-bolt'">
+                                    {{ $gateway->is_test_mode ? __('Test') : __('Live') }}
+                                </x-ui.badge>
                             </td>
                             <td>
                                 <div class="boq-table-actions justify-end">
@@ -89,7 +77,7 @@
                                             <i class="far fa-star"></i>
                                         </button>
                                     @endunless
-                                    <button type="button" wire:click="toggleActive({{ $gateway->id }})" class="boq-icon-btn {{ $gateway->is_active ? 'boq-icon-danger' : '' }}" title="{{ $gateway->is_active ? 'Deactivate' : 'Activate' }}" aria-label="{{ $gateway->is_active ? 'Deactivate' : 'Activate' }}">
+                                    <button type="button" wire:click="toggleActive({{ $gateway->id }})" class="boq-icon-btn {{ $gateway->is_active ? 'boq-icon-danger' : '' }}" title="{{ $gateway->is_active ? __('Deactivate') : __('Activate') }}" aria-label="{{ $gateway->is_active ? __('Deactivate') : __('Activate') }}">
                                         <i class="fas {{ $gateway->is_active ? 'fa-ban' : 'fa-circle-check' }}"></i>
                                     </button>
                                 </div>
@@ -97,7 +85,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="boq-table-empty">{{ __('No payment gateways configured.') }}</td>
+                            <td colspan="6" class="p-0"><x-ui.empty-state icon="fa-building-columns" :title="__('No payment gateways configured.')" /></td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -110,12 +98,12 @@
     </div>
 
     @if($showForm)
-        <div class="boq-modal-backdrop" wire:key="gateway-modal" role="dialog" aria-modal="true" aria-labelledby="gateway-modal-title">
+        <div class="boq-modal-backdrop" wire:key="gateway-modal" role="dialog" aria-modal="true" aria-labelledby="gateway-modal-title" x-data x-trap.noscroll="true" @keydown.escape.window="$wire.cancel()">
             <form wire:submit="save" class="boq-modal boq-modal-lg">
                 <div class="boq-modal-head">
                     <h2 id="gateway-modal-title">
                         <i class="fas {{ $editingId ? 'fa-pen' : 'fa-plus' }}"></i>
-                        {{ $editingId ? 'Edit Payment Gateway' : 'New Payment Gateway' }}
+                        {{ $editingId ? __('Edit Payment Gateway') : __('New Payment Gateway') }}
                     </h2>
                     <button type="button" wire:click="cancel" class="boq-modal-close" aria-label="{{ __('Close') }}">
                         <i class="fas fa-xmark"></i>
@@ -125,19 +113,19 @@
                 <div class="boq-modal-body space-y-5">
                     <div class="boq-form-grid">
                         <div>
-                            <label for="gw-name" class="boq-field-label">{{ __('Name *') }}</label>
+                            <label for="gw-name" class="boq-field-label">{{ __('Name') }} <span class="boq-field-required" aria-hidden="true">*</span></label>
                             <input id="gw-name" type="text" wire:model="form.name" class="boq-field" placeholder="{{ __('e.g. ioTec Pay') }}">
                             @error('form.name') <p class="boq-field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
-                            <label for="gw-code" class="boq-field-label">Code (unique) *</label>
+                            <label for="gw-code" class="boq-field-label">{{ __('Code (unique)') }} <span class="boq-field-required" aria-hidden="true">*</span></label>
                             <input id="gw-code" type="text" wire:model="form.code" class="boq-field" placeholder="{{ __('e.g. iotec') }}">
                             @error('form.code') <p class="boq-field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
-                            <label for="gw-driver" class="boq-field-label">{{ __('Driver *') }}</label>
+                            <label for="gw-driver" class="boq-field-label">{{ __('Driver') }} <span class="boq-field-required" aria-hidden="true">*</span></label>
                             <select id="gw-driver" wire:model.live="form.driver" class="boq-field">
                                 @foreach($driverOptions as $value => $label)
                                     <option value="{{ $value }}">{{ $label }}</option>
@@ -148,7 +136,7 @@
                         </div>
 
                         <div>
-                            <label for="gw-timeout" class="boq-field-label">Payment Timeout (seconds) *</label>
+                            <label for="gw-timeout" class="boq-field-label">{{ __('Payment Timeout (seconds)') }} <span class="boq-field-required" aria-hidden="true">*</span></label>
                             <input id="gw-timeout" type="number" min="30" wire:model="form.payment_timeout_seconds" class="boq-field" placeholder="900">
                             @error('form.payment_timeout_seconds') <p class="boq-field-error">{{ $message }}</p> @enderror
                         </div>
@@ -206,7 +194,7 @@
                                 <i class="fas fa-key"></i>
                                 {{ __('Driver Configuration') }}
                             </h3>
-                            <p class="boq-field-help mb-3">{{ __('Saved secrets show as') }} <code>{{ __('***stored***') }}</code>; leave them unchanged to keep the stored value.</p>
+                            <p class="boq-field-help mb-3">{{ __('Saved secrets show as') }} <code class="boq-code">{{ __('***stored***') }}</code>; {{ __('leave them unchanged to keep the stored value.') }}</p>
 
                             <div class="boq-form-grid">
                                 @foreach($config as $key => $value)
