@@ -185,19 +185,78 @@ class BoqController extends Controller
             ->response();
     }
 
-    public function pdf(Request $request, Boq $boq)
+    /**
+     * Email the branded BOQ PDF.
+     */
+    public function shareEmail(Request $request, Boq $boq, \App\Services\BoqShareService $shares): JsonResponse
     {
-        ini_set('memory_limit', '1024M');
-        set_time_limit(300);
         $user = $request->user();
         abort_unless($this->canAccess($boq, $user->id, $user->organisation_id), 403);
-        $items = $boq->items()->orderBy('id')->get();
-        $html = '<h2>'.e($boq->name).'</h2><table width="100%" border="1" cellspacing="0" cellpadding="5"><tr><th>Item</th><th>Description</th><th>Unit</th><th>Qty</th><th>Rate</th><th>Amount</th></tr>';
-        foreach ($items as $item) {
-            $html .= '<tr><td>'.e($item->item_code).'</td><td>'.e($item->description).'</td><td>'.e($item->unit).'</td><td>'.$item->quantity.'</td><td>'.$item->approved_rate.'</td><td>'.$item->amount.'</td></tr>';
+
+        $data = $request->validate([
+            'email' => ['required', 'email', 'max:255'],
+            'subject' => ['nullable', 'string', 'max:200'],
+            'message' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        try {
+            $shares->email($boq, $user, $data['email'], $data['subject'] ?? null, $data['message'] ?? null);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'error_code' => 'SHARE_FAILED',
+                'message' => 'The email could not be sent. Please try again later.',
+            ], 502);
         }
 
-        return Pdf::loadHTML($html.'</table>')->setPaper('a4', 'landscape')->download('boq-'.$boq->id.'.pdf');
+        return response()->json(['success' => true, 'message' => 'BOQ sent to '.$data['email'].'.']);
+    }
+
+    /**
+     * Signed download link and a ready-made message for WhatsApp / device sharing.
+     */
+    public function shareLink(Request $request, Boq $boq, \App\Services\BoqShareService $shares): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($this->canAccess($boq, $user->id, $user->organisation_id), 403);
+
+        $link = $shares->link($boq);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'url' => $link,
+                'expires_in_days' => \App\Services\BoqShareService::LINK_DAYS,
+                'message' => $shares->message($boq, $link),
+                'whatsapp_url' => 'https://wa.me/?text='.rawurlencode($shares->message($boq, $link)),
+                'filename' => app(\App\Services\BoqPdfService::class)->filename($boq),
+            ],
+        ]);
+    }
+
+    public function pdf(Request $request, Boq $boq, \App\Services\BoqPdfService $pdfs)
+    {
+        $user = $request->user();
+        abort_unless($this->canAccess($boq, $user->id, $user->organisation_id), 403);
+
+        try {
+            $pdf = $pdfs->pdf($boq);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'error_code' => 'PDF_FAILED',
+                'message' => 'The PDF could not be generated. Please try again.',
+            ], 500);
+        }
+
+        // ?inline=1 previews in the browser; otherwise download.
+        return $request->boolean('inline')
+            ? $pdf->stream($pdfs->filename($boq))
+            : $pdf->download($pdfs->filename($boq));
     }
 
     public function priceAll(Request $request, Boq $boq, GeminiPricingService $gemini): JsonResponse

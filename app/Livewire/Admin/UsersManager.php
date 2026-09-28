@@ -43,7 +43,7 @@ class UsersManager extends Component
         // New users start as personal accounts: joining an organisation shares its
         // projects, BOQs and subscriptions, so the admin must choose it explicitly.
         $this->newOrganisationId = 0;
-        $this->newRoleId = (int) (Role::where('slug', 'viewer')->value('id') ?? 0);
+        $this->newRoleId = (int) (Role::where('slug', Role::CUSTOMER)->value('id') ?? 0);
     }
 
     public function createUser(): void
@@ -83,7 +83,7 @@ class UsersManager extends Component
 
         $this->reset(['showCreate','newName','newEmail','newPassword','newPhone']);
         $this->newOrganisationId = 0;
-        $this->newRoleId = (int) (Role::where('slug', 'viewer')->value('id') ?? 0);
+        $this->newRoleId = (int) (Role::where('slug', Role::CUSTOMER)->value('id') ?? 0);
     }
 
     public function bulkSetActive(bool $active): void

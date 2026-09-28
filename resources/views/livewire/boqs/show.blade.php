@@ -37,13 +37,20 @@
             </a>
 
             @if(isset($pdfUrl) && $pdfUrl)
-                <a
-                    href="{{ $pdfUrl }}"
-                    target="_blank"
-                    class="boq-btn-secondary"
-                >
-                    <i class="fas fa-file-pdf"></i>
-                    {{ __('Download PDF') }}
+                <button type="button" wire:click="openPdfPreview" class="boq-btn-secondary">
+                    <i class="fas fa-eye"></i> {{ __('Preview PDF') }}
+                </button>
+
+                <a href="{{ $pdfUrl }}" class="boq-btn-secondary">
+                    <i class="fas fa-file-pdf"></i> {{ __('Download PDF') }}
+                </a>
+
+                <button type="button" wire:click="openEmailShare" class="boq-btn-secondary">
+                    <i class="fas fa-envelope"></i> {{ __('Share by Email') }}
+                </button>
+
+                <a href="{{ app(\App\Services\BoqShareService::class)->whatsappUrl($boq) }}" target="_blank" rel="noopener noreferrer" class="boq-btn-secondary">
+                    <i class="fab fa-whatsapp"></i> {{ __('Share on WhatsApp') }}
                 </a>
             @endif
 
@@ -1320,4 +1327,58 @@
 
     </div>
 
+
+    @if($showPdfPreview)
+        <div class="boq-modal-backdrop" wire:key="pdf-preview" role="dialog" aria-modal="true" aria-labelledby="pdf-preview-title">
+            <div class="boq-modal boq-modal-xl">
+                <div class="boq-modal-head">
+                    <h2 id="pdf-preview-title"><i class="fas fa-file-pdf"></i> {{ __('PDF Preview') }}</h2>
+                    <button type="button" wire:click="closePdfPreview" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
+                </div>
+                <div class="boq-modal-body p-0">
+                    <iframe src="{{ $pdfUrl.(str_contains($pdfUrl, '?') ? '&' : '?').'inline=1' }}" title="{{ __('PDF Preview') }}" class="h-[70vh] w-full border-0"></iframe>
+                </div>
+                <div class="boq-modal-foot">
+                    <button type="button" wire:click="closePdfPreview" class="boq-btn-secondary">{{ __('Close') }}</button>
+                    <a href="{{ $pdfUrl }}" class="boq-btn-primary"><i class="fas fa-download"></i> {{ __('Download PDF') }}</a>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if($showEmailShare)
+        <div class="boq-modal-backdrop" wire:key="email-share" role="dialog" aria-modal="true" aria-labelledby="email-share-title">
+            <form wire:submit="sendShareEmail" class="boq-modal boq-modal-sm">
+                <div class="boq-modal-head">
+                    <h2 id="email-share-title"><i class="fas fa-envelope"></i> {{ __('Share by Email') }}</h2>
+                    <button type="button" wire:click="closeEmailShare" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
+                </div>
+                <div class="boq-modal-body space-y-4">
+                    <div>
+                        <label for="share-email" class="boq-field-label">{{ __('Recipient email') }} *</label>
+                        <input id="share-email" type="email" wire:model="shareEmail" class="boq-field" placeholder="name@example.com" autocomplete="email">
+                        @error('shareEmail') <p class="boq-field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label for="share-subject" class="boq-field-label">{{ __('Subject') }} *</label>
+                        <input id="share-subject" type="text" wire:model="shareSubject" class="boq-field" placeholder="{{ __('Subject') }}">
+                        @error('shareSubject') <p class="boq-field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label for="share-message" class="boq-field-label">{{ __('Message (optional)') }}</label>
+                        <textarea id="share-message" wire:model="shareMessage" rows="4" class="boq-field boq-textarea" placeholder="{{ __('Add a short note for the recipient...') }}"></textarea>
+                    </div>
+                    <p class="boq-field-help"><i class="fas fa-paperclip"></i> {{ __('The BOQ PDF is attached, branded with the owner\'s company details.') }}</p>
+                </div>
+                <div class="boq-modal-foot">
+                    <button type="button" wire:click="closeEmailShare" class="boq-btn-secondary">{{ __('Cancel') }}</button>
+                    <button type="submit" wire:loading.attr="disabled" wire:target="sendShareEmail" class="boq-btn-primary">
+                        <i wire:loading.remove wire:target="sendShareEmail" class="fas fa-paper-plane"></i>
+                        <i wire:loading wire:target="sendShareEmail" class="fas fa-spinner fa-spin"></i>
+                        {{ __('Send') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    @endif
 </div>

@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Role extends Model
 {
+    /** Role given to self-registered customers (formerly "viewer"). */
+    public const CUSTOMER = 'user';
+
     use HasFactory;
 
     /**

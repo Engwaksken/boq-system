@@ -12,6 +12,7 @@ use App\Services\HardwarePriceCsvImporter;
 use App\Services\HardwarePriceManager;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -24,15 +25,31 @@ class Index extends Component
     use WithFileUploads;
     use WithPagination;
 
+    #[Url(except: '')]
     public string $search = '';
 
+    #[Url(except: '')]
     public string $priceType = '';
 
+    #[Url]
     public ?string $category = null;
 
+    #[Url]
     public ?string $supplier = null;
 
+    #[Url]
     public ?string $location = null;
+
+    #[Url]
+    public ?string $brand = null;
+
+    /** '', 'today' or 'week': prices fetched or verified in that period. */
+    #[Url(except: '')]
+    public string $updated = '';
+
+    /** latest, price_asc, price_desc, name */
+    #[Url(except: 'latest')]
+    public string $sort = 'latest';
 
     public string $status = 'active';
 
@@ -74,6 +91,27 @@ class Index extends Component
 
     public function updatedSupplier(): void
     {
+        $this->resetPage();
+    }
+
+    public function updatedBrand(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedUpdated(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSort(): void
+    {
+        $this->resetPage();
+    }
+
+    public function clearFilters(): void
+    {
+        $this->reset(['search', 'priceType', 'category', 'supplier', 'location', 'brand', 'updated', 'sort']);
         $this->resetPage();
     }
 
@@ -569,10 +607,44 @@ class Index extends Component
                             $this->location
                         )
                 )
-                ->orderByDesc(
-                    'fetched_at'
+                ->when(
+                    filled($this->brand),
+                    fn ($query) => $query->where('brand', $this->brand)
                 )
+                ->when(
+                    in_array($this->updated, ['today', 'week'], true),
+                    function ($query) {
+                        $since = $this->updated === 'today' ? now()->startOfDay() : now()->startOfWeek();
+
+                        $query->where(fn ($q) => $q->where('fetched_at', '>=', $since)->orWhere('last_verified_at', '>=', $since));
+                    }
+                )
+                ->tap(fn ($query) => match ($this->sort) {
+                    'price_asc' => $query->orderBy('price'),
+                    'price_desc' => $query->orderByDesc('price'),
+                    'name' => $query->orderBy('item_name'),
+                    default => $query->orderByDesc('fetched_at'),
+                })
                 ->paginate(20);
+
+        // Lowest / highest active price for each item on this page (same unit and currency).
+        $extremes = $prices->isEmpty() ? collect() : HardwarePrice::query()
+            ->where('organisation_id', $organisationId)
+            ->where('is_active', true)
+            ->whereIn('item_name', $prices->pluck('item_name')->unique())
+            ->selectRaw('item_name, unit, currency, MIN(price) as min_price, MAX(price) as max_price, COUNT(*) as offers')
+            ->groupBy('item_name', 'unit', 'currency')
+            ->get()
+            ->keyBy(fn ($row) => mb_strtolower($row->item_name.'|'.$row->unit.'|'.$row->currency));
+
+        $brands =
+            (clone $baseQuery)
+                ->where('is_active', true)
+                ->whereNotNull('brand')
+                ->where('brand', '!=', '')
+                ->distinct()
+                ->orderBy('brand')
+                ->pluck('brand');
 
         $categories =
             (clone $baseQuery)
@@ -680,6 +752,12 @@ class Index extends Component
                     $this->showForm
                         ? $this->itemOptions($organisationId, (string) ($this->form['category'] ?? ''))
                         : [],
+
+                'brands' =>
+                    $brands,
+
+                'extremes' =>
+                    $extremes,
 
                 'bookmarkedIds' =>
                     $user->hardwareBookmarks()

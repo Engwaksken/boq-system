@@ -70,7 +70,7 @@ class AuthController extends Controller
             $user->save();
 
             // Assign default viewer role
-            $viewerRole = Role::where('slug', 'viewer')->first();
+            $viewerRole = Role::where('slug', Role::CUSTOMER)->first();
             if ($viewerRole) {
                 $user->roles()->attach($viewerRole->id);
             }

@@ -57,7 +57,7 @@ class RegisteredUserController extends Controller
 
             $user->forceFill(['is_active' => true])->save();
 
-            if ($viewer = Role::where('slug', 'viewer')->first()) {
+            if ($viewer = Role::where('slug', Role::CUSTOMER)->first()) {
                 $user->roles()->attach($viewer->id);
             }
 

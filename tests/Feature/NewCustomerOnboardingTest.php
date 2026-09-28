@@ -50,7 +50,7 @@ class NewCustomerOnboardingTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
 
         // Simulate a database seeded before the viewer role could create projects.
-        $viewer = Role::where('slug', 'viewer')->firstOrFail();
+        $viewer = Role::where('slug', 'user')->firstOrFail();
         $viewer->permissions()->detach(
             \App\Models\Permission::whereIn('slug', ['projects.create', 'projects.edit', 'boq.edit'])->pluck('id')
         );
@@ -63,7 +63,7 @@ class NewCustomerOnboardingTest extends TestCase
         $migration->up(); // idempotent
 
         $roleless = $roleless->fresh();
-        $this->assertTrue($roleless->hasAnyRole(['viewer']));
+        $this->assertTrue($roleless->hasAnyRole(['user']));
         $this->assertTrue($roleless->hasPermission('projects.create'));
         $this->assertSame(1, DB::table('role_user')->where('user_id', $roleless->id)->count());
     }

@@ -23,6 +23,16 @@ class Show extends Component
 
     public string $pdfUrl = '';
 
+    public bool $showPdfPreview = false;
+
+    public bool $showEmailShare = false;
+
+    public string $shareEmail = '';
+
+    public string $shareSubject = '';
+
+    public string $shareMessage = '';
+
     /** @var array{parsed: int, matched: int, unmatched: int, location: string}|array{} */
     public array $generationSummary = [];
 
@@ -765,6 +775,54 @@ class Show extends Component
                 ->project
                 ->user_id
                 === $userId;
+    }
+
+    public function openPdfPreview(): void
+    {
+        $this->showPdfPreview = true;
+    }
+
+    public function closePdfPreview(): void
+    {
+        $this->showPdfPreview = false;
+    }
+
+    public function openEmailShare(): void
+    {
+        $this->shareEmail = '';
+        $this->shareSubject = app(\App\Services\BoqShareService::class)->defaultSubject($this->boq);
+        $this->shareMessage = '';
+        $this->resetValidation();
+        $this->showEmailShare = true;
+    }
+
+    public function closeEmailShare(): void
+    {
+        $this->showEmailShare = false;
+    }
+
+    public function sendShareEmail(\App\Services\BoqShareService $shares): void
+    {
+        $user = auth()->user();
+        abort_unless($user->can('view', $this->boq), 403);
+
+        $data = $this->validate([
+            'shareEmail' => ['required', 'email', 'max:255'],
+            'shareSubject' => ['required', 'string', 'max:200'],
+            'shareMessage' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        try {
+            $shares->email($this->boq, $user, $data['shareEmail'], $data['shareSubject'], $data['shareMessage'] ?: null);
+        } catch (\Throwable $e) {
+            report($e);
+            $this->addError('shareEmail', __('The email could not be sent. Please try again later.'));
+
+            return;
+        }
+
+        $this->showEmailShare = false;
+        session()->flash('status', __('BOQ sent to :email.', ['email' => $data['shareEmail']]));
     }
 
     /**

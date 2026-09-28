@@ -181,11 +181,21 @@ class HardwarePriceFetchingService
         string $location,
         string $priceType
     ): ?array {
+        // Prefer a managed supplier/factory that has a website the AI can use as a source.
+        $sourceSupplier = Supplier::query()
+            ->where('is_active', true)
+            ->where('type', $priceType === HardwarePrice::TYPE_FACTORY ? Supplier::TYPE_FACTORY : Supplier::TYPE_SUPPLIER)
+            ->whereNotNull('website_url')
+            ->where('website_url', '!=', '')
+            ->inRandomOrder()
+            ->first();
+
         $sourceNames = $this->getSuppliers($priceType);
 
-        $source = $sourceNames !== []
+        $source = $sourceSupplier?->name ?? ($sourceNames !== []
             ? $sourceNames[array_rand($sourceNames)]
-            : ($priceType === HardwarePrice::TYPE_FACTORY ? 'a local manufacturer' : 'a local hardware supplier');
+            : ($priceType === HardwarePrice::TYPE_FACTORY ? 'a local manufacturer' : 'a local hardware supplier'));
+        $sourceWebsite = $sourceSupplier?->website_url;
 
         $prompt =
             $this->buildPricePrompt(
@@ -202,56 +212,18 @@ class HardwarePriceFetchingService
                     $location,
 
                 priceType:
-                    $priceType
+                    $priceType,
+
+                website:
+                    $sourceWebsite
             );
 
         try {
-            $response =
-                Http::timeout(45)
-                    ->withHeaders([
-                        'x-goog-api-key' =>
-                            (string) config(
-                                'services.gemini.key'
-                            ),
+            $response = $this->requestPrice($prompt, grounded: (bool) config('services.gemini.grounding', true));
 
-                        'Content-Type' =>
-                            'application/json',
-                    ])
-                    ->post(
-                        rtrim(
-                            (string) config(
-                                'services.gemini.base_url'
-                            ),
-                            '/'
-                        )
-                        .'/v1beta/models/'
-                        .urlencode(
-                            (string) config(
-                                'services.gemini.model'
-                            )
-                        )
-                        .':generateContent',
-                        [
-                            'contents' => [
-                                [
-                                    'parts' => [
-                                        [
-                                            'text' =>
-                                                $prompt,
-                                        ],
-                                    ],
-                                ],
-                            ],
-
-                            'generationConfig' => [
-                                'temperature' =>
-                                    0.2,
-
-                                'maxOutputTokens' =>
-                                    1024,
-                            ],
-                        ]
-                    );
+            if (! $response->successful() && config('services.gemini.grounding', true)) {
+                $response = $this->requestPrice($prompt, grounded: false);
+            }
 
             if (
                 ! $response->successful()
@@ -270,7 +242,7 @@ class HardwarePriceFetchingService
                 )
                 ?? '';
 
-            return $this->parsePriceResponse(
+            $parsed = $this->parsePriceResponse(
                 text:
                     $text,
 
@@ -289,6 +261,17 @@ class HardwarePriceFetchingService
                 priceType:
                     $priceType
             );
+
+            if ($parsed !== null) {
+                $parsed['supplier_id'] = $sourceSupplier && strcasecmp((string) $parsed['supplier'], $sourceSupplier->name) === 0
+                    ? $sourceSupplier->id
+                    : Supplier::whereRaw('LOWER(name) = ?', [mb_strtolower((string) $parsed['supplier'])])->value('id');
+
+                $parsed['ai_metadata']['source_website'] = $sourceWebsite;
+                $parsed['ai_metadata']['grounded'] = (bool) config('services.gemini.grounding', true);
+            }
+
+            return $parsed;
         } catch (Throwable $exception) {
             Log::warning(
                 'AI price fetch failed.',
@@ -314,12 +297,37 @@ class HardwarePriceFetchingService
         }
     }
 
+    private function requestPrice(string $prompt, bool $grounded): \Illuminate\Http\Client\Response
+    {
+        $payload = [
+            'contents' => [['parts' => [['text' => $prompt]]]],
+            'generationConfig' => ['temperature' => 0.2, 'maxOutputTokens' => 1024],
+        ];
+
+        if ($grounded) {
+            // Lets the model look up current prices on the web, including supplier websites.
+            $payload['tools'] = [['google_search' => new \stdClass()]];
+        }
+
+        return Http::timeout(60)
+            ->withHeaders([
+                'x-goog-api-key' => (string) config('services.gemini.key'),
+                'Content-Type' => 'application/json',
+            ])
+            ->post(
+                rtrim((string) config('services.gemini.base_url'), '/')
+                .'/v1beta/models/'.urlencode((string) config('services.gemini.model')).':generateContent',
+                $payload
+            );
+    }
+
     private function buildPricePrompt(
         string $itemName,
         string $category,
         string $source,
         string $location,
-        string $priceType
+        string $priceType,
+        ?string $website = null
     ): string {
         $typeInstruction =
             $priceType
@@ -345,7 +353,7 @@ You are a construction material price researcher for {$place}.
 
 Item: {$itemName}
 Category: {$category}
-Suggested source: {$source}
+Suggested source: {$source}{$this->websiteLine($website)}
 Location: {$place}
 Price type: {$priceType}
 Currency: {$currency} (convert if the source uses another currency)
@@ -375,6 +383,13 @@ Rules:
 - do not invent a source URL.
 - if the price cannot be reasonably estimated, return {"price": null}.
 PROMPT;
+    }
+
+    private function websiteLine(?string $website): string
+    {
+        return $website
+            ? "\nSource website: {$website}\nCheck this website first. If you find the price there, set source_url to the exact page URL and source_reference to the page title."
+            : '';
     }
 
     private function parsePriceResponse(
@@ -573,67 +588,66 @@ PROMPT;
                 ->first();
 
         if ($existing) {
-            if (
-                number_format(
-                    (float) $existing->price,
-                    2,
-                    '.',
-                    ''
-                )
-                !==
-                number_format(
-                    (float) $priceData['price'],
-                    2,
-                    '.',
-                    ''
-                )
-            ) {
-                PriceHistory::create([
-                    'organisation_id' =>
-                        $organisationId,
+            $samePrice = number_format((float) $existing->price, 2, '.', '') === number_format((float) $priceData['price'], 2, '.', '');
 
-                    'hardware_price_id' =>
-                        $existing->id,
-
-                    'price' =>
-                        $existing->price,
-
-                    'currency' =>
-                        $existing->currency,
-
-                    'supplier' =>
-                        $existing->supplier,
-
-                    'location' =>
-                        $existing->location,
-
-                    'source_url' =>
-                        $existing->source_url,
-
-                    'recorded_at' =>
-                        $existing->fetched_at,
-
-                    'metadata' => [
-                        'price_type' =>
-                            $existing->price_type,
-                    ],
-                ]);
+            // First observation of an older row: keep its original value in the history.
+            if (! $existing->priceHistories()->exists()) {
+                $this->recordHistory($existing, $organisationId);
             }
 
-            $existing->update(
-                $priceData
-            );
+            if ($samePrice) {
+                // Same price seen again: just mark it verified (history already has it).
+                $existing->update([
+                    'last_verified_at' => now(),
+                    'source_url' => $priceData['source_url'] ?? $existing->source_url,
+                    'source_reference' => $priceData['source_reference'] ?? $existing->source_reference,
+                    'ai_metadata' => $priceData['ai_metadata'] ?? $existing->ai_metadata,
+                ]);
+
+                return 'updated';
+            }
+
+            $existing->update($priceData + ['last_verified_at' => now()]);
+            $this->recordHistory($existing->fresh(), $organisationId);
 
             return 'updated';
         }
 
-        HardwarePrice::create([
+        $created = HardwarePrice::create([
             ...$priceData,
             'organisation_id' =>
                 $organisationId,
+            'last_verified_at' => now(),
         ]);
 
+        $this->recordHistory($created, $organisationId);
+
         return 'created';
+    }
+
+    /**
+     * Append an immutable history entry for the price's current value and source.
+     */
+    private function recordHistory(HardwarePrice $price, int $organisationId): void
+    {
+        PriceHistory::create([
+            'organisation_id' => $organisationId,
+            'hardware_price_id' => $price->id,
+            'price' => $price->price,
+            'currency' => $price->currency,
+            'supplier' => (string) ($price->supplier ?? ''),
+            'location' => $price->location,
+            'source_url' => $price->source_url,
+            'source_reference' => $price->source_reference,
+            'recorded_at' => $price->fetched_at ?? now(),
+            'metadata' => [
+                'price_type' => $price->price_type,
+                'brand' => $price->brand,
+                'specification' => $price->specification,
+                'unit' => $price->unit,
+                'ai' => $price->ai_metadata,
+            ],
+        ]);
     }
 
     private function itemsForCategory(

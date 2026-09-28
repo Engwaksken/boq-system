@@ -1,0 +1,1 @@
+@include('errors.layout', ['code' => 419, 'icon' => 'fa-clock-rotate-left', 'heading' => __('Page Expired'), 'message' => __('Your session expired for security reasons. Please go back, refresh the page and try again.')])

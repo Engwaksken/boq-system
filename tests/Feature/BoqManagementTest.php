@@ -22,7 +22,7 @@ class BoqManagementTest extends TestCase
     private function customer(): User
     {
         $user = User::factory()->create();
-        $user->roles()->attach(\App\Models\Role::where('slug', 'viewer')->value('id'));
+        $user->roles()->attach(\App\Models\Role::where('slug', 'user')->value('id'));
 
         Entitlement::factory()->create([
             'user_id' => $user->id,

@@ -1,0 +1,1 @@
+@include('errors.layout', ['code' => 500, 'icon' => 'fa-triangle-exclamation', 'heading' => __('Something Went Wrong'), 'message' => __('An unexpected error occurred. Our team has been notified. Please try again shortly.')])

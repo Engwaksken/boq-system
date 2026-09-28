@@ -140,6 +140,10 @@
                         @include('livewire.profile.partials.overview')
                         @break
 
+                    @case('company')
+                        @include('livewire.profile.partials.company')
+                        @break
+
                     @case('security')
                         @include('livewire.profile.partials.security')
                         @break

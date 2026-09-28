@@ -29,10 +29,12 @@ class HardwarePrice extends Model
         'price',
         'currency',
         'supplier',
+        'supplier_id',
         'location',
         'source_url',
         'source_reference',
         'fetched_at',
+        'last_verified_at',
         'is_active',
         'ai_metadata',
     ];
@@ -40,6 +42,7 @@ class HardwarePrice extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'fetched_at' => 'datetime',
+        'last_verified_at' => 'datetime',
         'is_active' => 'boolean',
         'ai_metadata' => 'array',
     ];

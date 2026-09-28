@@ -250,7 +250,7 @@ class ProductionHardeningTest extends TestCase
 
     public function test_web_registration_grants_viewer_role_and_respects_setting(): void
     {
-        Role::firstOrCreate(['slug' => 'viewer'], ['name' => 'Viewer']);
+        Role::firstOrCreate(['slug' => 'user'], ['name' => 'Viewer']);
 
         $this->post('/register', [
             'name' => 'New User',
@@ -260,7 +260,7 @@ class ProductionHardeningTest extends TestCase
             'terms' => '1',
         ])->assertRedirect();
 
-        $this->assertTrue(User::where('email', 'new@example.com')->firstOrFail()->hasAnyRole(['viewer']));
+        $this->assertTrue(User::where('email', 'new@example.com')->firstOrFail()->hasAnyRole(['user']));
 
         auth()->guard('web')->logout();
         SiteSetting::set('allow_registration', false, 'general', 'boolean');

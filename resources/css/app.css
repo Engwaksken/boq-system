@@ -3004,3 +3004,108 @@ a:visited {
         grid-template-columns: 1fr;
     }
 }
+
+
+/* ---------- clickable statistics cards ---------- */
+
+.boq-app-shell .boq-stat-link {
+    display: block;
+    border: 0;
+    background: none;
+    padding: 0;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+}
+
+.boq-app-shell .boq-stat-link .boq-stat-card {
+    height: 100%;
+    transition: box-shadow .15s ease, transform .15s ease;
+}
+
+.boq-app-shell .boq-stat-link:hover .boq-stat-card,
+.boq-app-shell .boq-stat-link:focus-visible .boq-stat-card {
+    box-shadow: var(--boq-shadow-hover);
+    transform: translateY(-1px);
+}
+
+.boq-app-shell .boq-stat-link:focus-visible {
+    outline: 3px solid rgba(5, 100, 91, .3);
+    outline-offset: 2px;
+    border-radius: 14px;
+}
+
+/* ---------- company profile letterhead preview ---------- */
+
+.boq-app-shell .boq-company-preview {
+    overflow: hidden;
+    border: 1px solid var(--boq-border);
+    border-radius: var(--boq-radius);
+    background: #fff;
+}
+
+.boq-app-shell .boq-company-preview-head {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    border-bottom: 2px solid var(--boq-primary);
+    padding: .85rem;
+}
+
+.boq-app-shell .boq-company-preview-head img {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    object-fit: contain;
+}
+
+.boq-app-shell .boq-company-preview-name {
+    color: #0f172a;
+    font-size: .95rem;
+    font-weight: 800;
+}
+
+.boq-app-shell .boq-company-preview-lines {
+    margin-top: .15rem;
+    color: #64748b;
+    font-size: .7rem;
+    line-height: 1.45;
+}
+
+.boq-app-shell .boq-company-preview-doc {
+    margin-left: auto;
+    color: var(--boq-primary);
+    font-size: .6rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.boq-app-shell .boq-company-preview-body {
+    position: relative;
+    min-height: 140px;
+    padding: .85rem;
+}
+
+.boq-app-shell .boq-company-preview-watermark {
+    position: absolute;
+    inset: 20% 25%;
+    width: 50%;
+    height: 60%;
+    object-fit: contain;
+    opacity: .07;
+    pointer-events: none;
+}
+
+.boq-app-shell .boq-company-preview-rows span {
+    display: block;
+    height: 9px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background: #f1f5f9;
+}
+
+.boq-app-shell .boq-company-preview-rows span:nth-child(2) { width: 85%; }
+.boq-app-shell .boq-company-preview-rows span:nth-child(3) { width: 70%; }
+.boq-app-shell .boq-company-preview-rows span:nth-child(4) { width: 90%; }

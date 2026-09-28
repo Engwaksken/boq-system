@@ -106,6 +106,11 @@ class User extends Authenticatable implements WebAuthnAuthenticatable
         'frequency' => 'immediate',
     ];
 
+    public function companyProfile(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(CompanyProfile::class);
+    }
+
     /**
      * The organisation this user belongs to.
      */

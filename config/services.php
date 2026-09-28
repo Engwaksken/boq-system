@@ -6,6 +6,8 @@ return [
         'key' => env('GEMINI_API_KEY'),
         'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
         'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com'),
+        // Google Search grounding for AI price research (falls back automatically if unsupported).
+        'grounding' => env('GEMINI_GROUNDING', true),
     ],
     'ai_provider' => env('AI_PROVIDER', 'gemini'),
     'openai' => [

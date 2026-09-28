@@ -18,6 +18,7 @@ class PriceHistory extends Model
         'supplier',
         'location',
         'source_url',
+        'source_reference',
         'recorded_at',
         'metadata',
     ];

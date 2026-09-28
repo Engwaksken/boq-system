@@ -34,7 +34,7 @@ return [
     'contractor' => 'Omukola',
     'consultant' => 'Omubuulirira',
     'client' => 'Omukozesa',
-    'viewer' => 'Alaba',
+    'user' => 'Omukozesa',
     'translator' => 'Omuvvuunuzi',
     'language_administrator' => 'Omudukanya w\'Ennimi',
     'billing_administrator' => 'Omudukanya w\'Okusasula',

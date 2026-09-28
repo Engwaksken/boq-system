@@ -34,7 +34,7 @@ return [
     'contractor' => 'Contractor',
     'consultant' => 'Consultant',
     'client' => 'Client',
-    'viewer' => 'Viewer',
+    'user' => 'User',
     'translator' => 'Translator',
     'language_administrator' => 'Language Administrator',
     'billing_administrator' => 'Billing Administrator',

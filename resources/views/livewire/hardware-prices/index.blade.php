@@ -286,6 +286,35 @@
 
             </div>
 
+            <div>
+                <label class="boq-field-label">{{ __('Brand') }}</label>
+                <select wire:model.live="brand" class="boq-field">
+                    <option value="">{{ __('All Brands') }}</option>
+                    @foreach($brands as $brandOption)
+                        <option value="{{ $brandOption }}">{{ $brandOption }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label class="boq-field-label">{{ __('Updated') }}</label>
+                <select wire:model.live="updated" class="boq-field">
+                    <option value="">{{ __('Any time') }}</option>
+                    <option value="today">{{ __('Today') }}</option>
+                    <option value="week">{{ __('This week') }}</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="boq-field-label">{{ __('Sort By') }}</label>
+                <select wire:model.live="sort" class="boq-field">
+                    <option value="latest">{{ __('Latest update') }}</option>
+                    <option value="price_asc">{{ __('Lowest price first') }}</option>
+                    <option value="price_desc">{{ __('Highest price first') }}</option>
+                    <option value="name">{{ __('Item name') }}</option>
+                </select>
+            </div>
+
         </div>
 
         @if($canManage)
@@ -438,30 +467,34 @@
                             <td
                                 class="font-semibold text-slate-900"
                             >
-                                {{ $price->currency }}
+                                <x-money :amount="$price->price" :currency="$price->currency" />
 
-                                {{
-                                    \App\Support\Format::number((float) $price->price, 0)
-                                }}
+                                @php($extreme = $extremes[mb_strtolower($price->item_name.'|'.$price->unit.'|'.$price->currency)] ?? null)
+                                @if($extreme && $extreme->offers > 1)
+                                    @if((float) $price->price <= (float) $extreme->min_price)
+                                        <span class="boq-badge boq-badge-success ml-1" title="{{ __('Lowest available price for this item') }}"><i class="fas fa-arrow-down"></i> {{ __('Lowest') }}</span>
+                                    @elseif((float) $price->price >= (float) $extreme->max_price)
+                                        <span class="boq-badge boq-badge-danger ml-1" title="{{ __('Highest available price for this item') }}"><i class="fas fa-arrow-up"></i> {{ __('Highest') }}</span>
+                                    @endif
+                                @endif
                             </td>
 
                             <td>
                                 {{ $price->supplier }}
+                                @if($price->source_url)
+                                    <a href="{{ $price->source_url }}" target="_blank" rel="noopener noreferrer" class="ml-1 text-slate-400 hover:text-[#05645b]" title="{{ __('View source') }}" aria-label="{{ __('View source') }}"><i class="fas fa-arrow-up-right-from-square text-xs"></i></a>
+                                @endif
                             </td>
 
                             <td>
                                 {{ $price->location ?: '—' }}
                             </td>
 
-                            <td>
-                                {{
-                                    $price
-                                        ->fetched_at
-                                        ?->format(
-                                            'd M Y'
-                                        )
-                                    ?? '—'
-                                }}
+                            <td class="text-sm">
+                                <x-date :value="$price->last_verified_at ?? $price->fetched_at" />
+                                @if($price->last_verified_at)
+                                    <div class="text-xs text-slate-400">{{ __('verified') }}</div>
+                                @endif
                             </td>
 
                             <td class="text-right">

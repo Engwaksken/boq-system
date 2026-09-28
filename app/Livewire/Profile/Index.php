@@ -23,7 +23,15 @@ class Index extends Component
         'preferences' => 'Preferences',
         'notifications' => 'Notifications',
         'hardware-bookmarks' => 'Hardware Bookmarks',
+        'company' => 'Company Profile',
     ];
+
+    /** @var array<string, string|null> */
+    public array $companyForm = [];
+
+    public $companyLogo = null;
+
+    public bool $removeCompanyLogo = false;
 
     public array $form = [
         'name' => '',
@@ -114,6 +122,7 @@ class Index extends Component
         ];
 
         $this->notificationPrefs = $user->notificationPreferences();
+        $this->loadCompanyForm();
         $this->displayPrefs = $user->displayPreferences() + ['locale' => $user->locale ?: 'en'];
 
         $tab = (string) request()->query('tab', '');
@@ -229,6 +238,44 @@ class Index extends Component
         $this->notificationPrefs = $clean;
 
         $this->dispatch('notification-preferences-saved');
+    }
+
+    private function loadCompanyForm(): void
+    {
+        $profile = Auth::user()->companyProfile;
+
+        $this->companyForm = collect(array_keys(\App\Services\CompanyProfileService::rules()))
+            ->mapWithKeys(fn ($field) => [$field => (string) ($profile?->{$field} ?? '')])
+            ->all();
+
+        if (! $profile) {
+            $this->companyForm['company_name'] = (string) (Auth::user()->organisation?->name ?? '');
+            $this->companyForm['email'] = (string) Auth::user()->email;
+            $this->companyForm['country'] = \App\Support\Regional::countryCode();
+        }
+    }
+
+    public function updatedCompanyLogo(): void
+    {
+        $this->validateOnly('companyLogo', ['companyLogo' => \App\Services\CompanyProfileService::LOGO_RULES]);
+        $this->removeCompanyLogo = false;
+    }
+
+    public function saveCompanyProfile(\App\Services\CompanyProfileService $service): void
+    {
+        try {
+            $service->save(Auth::user(), $this->companyForm, $this->companyLogo, $this->removeCompanyLogo);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            foreach ($e->errors() as $field => $messages) {
+                $this->addError($field === 'logo' ? 'companyLogo' : 'companyForm.'.$field, $messages[0]);
+            }
+
+            return;
+        }
+
+        $this->reset(['companyLogo', 'removeCompanyLogo']);
+        $this->loadCompanyForm();
+        session()->flash('status', __('Company profile saved. New BOQ exports will use these details.'));
     }
 
     /**

@@ -70,6 +70,16 @@ WebAuthnRoutes::register()->middleware('throttle:20,1');
 // Readiness probe for uptime monitoring (database, cache, storage, queue).
 Route::get('/health', \App\Http\Controllers\HealthController::class)->middleware('throttle:30,1')->name('health');
 
+// Signed, time-limited PDF links created by "Share" (WhatsApp / chat apps).
+Route::get('/shared/boqs/{boq}/pdf', function (\App\Models\Boq $boq, \App\Services\BoqPdfService $pdfs) {
+    try {
+        return $pdfs->pdf($boq)->stream($pdfs->filename($boq));
+    } catch (\Throwable $e) {
+        report($e);
+        abort(500);
+    }
+})->middleware(['signed', 'throttle:30,1'])->name('boqs.shared-pdf');
+
 Route::get('/privacy-policy', [LegalPageController::class, 'privacy'])->name('legal.privacy');
 Route::get('/terms-of-use', [LegalPageController::class, 'terms'])->name('legal.terms');
 
@@ -206,7 +216,8 @@ Route::middleware('auth')->group(function (): void {
         ) {
             $apiRequest = Request::create(
                 '/api/v1/boqs/'.$boq->getKey().'/pdf',
-                'GET'
+                'GET',
+                ['inline' => $request->boolean('inline') ? 1 : 0]
             );
 
             $apiRequest->setUserResolver(
@@ -217,7 +228,8 @@ Route::middleware('auth')->group(function (): void {
                 BoqController::class
             )->pdf(
                 $apiRequest,
-                $boq
+                $boq,
+                app(\App\Services\BoqPdfService::class)
             );
         }
     )

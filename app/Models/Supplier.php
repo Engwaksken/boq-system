@@ -16,13 +16,20 @@ class Supplier extends Model
      *
      * @var list<string>
      */
+    public const TYPE_SUPPLIER = 'supplier';
+
+    public const TYPE_FACTORY = 'factory';
+
     protected $fillable = [
         'code',
         'name',
+        'type',
         'contact_name',
         'email',
         'phone',
+        'website_url',
         'location',
+        'address',
         'region',
         'country',
         'currency',

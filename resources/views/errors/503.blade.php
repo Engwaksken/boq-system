@@ -1,0 +1,1 @@
+@include('errors.layout', ['code' => 503, 'icon' => 'fa-screwdriver-wrench', 'heading' => __('Service Unavailable'), 'message' => __('The system is temporarily unavailable. Please try again shortly.')])

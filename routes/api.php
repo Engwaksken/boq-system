@@ -57,6 +57,8 @@ Route::prefix('v1')->group(function () {
         // Auth
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::get('auth/me', [AuthController::class, 'me']);
+        Route::get('company-profile', [\App\Http\Controllers\Api\CompanyProfileController::class, 'show']);
+        Route::post('company-profile', [\App\Http\Controllers\Api\CompanyProfileController::class, 'update'])->middleware('throttle:20,1');
         Route::put('auth/profile', [AuthController::class, 'updateProfile']);
 
         // Notifications
@@ -81,6 +83,8 @@ Route::prefix('v1')->group(function () {
             Route::get('boqs/{boq}/pdf', [BoqController::class, 'pdf'])
                 ->middleware('throttle:10,1')
                 ->name('api.v1.boqs.pdf');
+            Route::post('boqs/{boq}/share/email', [BoqController::class, 'shareEmail'])->middleware('throttle:10,1');
+            Route::get('boqs/{boq}/share/link', [BoqController::class, 'shareLink'])->middleware('throttle:30,1');
             Route::get('boq-items/{boqItem}', [BoqController::class, 'item'])
                 ->name('api.v1.boq-items.show');
         });

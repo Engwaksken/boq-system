@@ -22,7 +22,7 @@ return new class extends Migration
             return;
         }
 
-        $viewerId = DB::table('roles')->where('slug', 'viewer')->value('id');
+        $viewerId = DB::table('roles')->whereIn('slug', ['viewer', 'user'])->orderByRaw("slug = 'user' desc")->value('id');
 
         if (! $viewerId) {
             return;

@@ -17,7 +17,7 @@ class AuthControllerTest extends TestCase
 
     public function test_register_creates_user_and_returns_token(): void
     {
-        $viewerRole = Role::factory()->create(['slug' => 'viewer']);
+        $viewerRole = Role::factory()->create(['slug' => 'user']);
 
         $response = $this->postJson('/api/v1/auth/register', [
             'name' => 'Test User',
@@ -40,14 +40,14 @@ class AuthControllerTest extends TestCase
         $this->assertDatabaseHas('organisations', ['name' => 'Acme Ltd']);
 
         $user = User::where('email', 'test@example.com')->first();
-        $this->assertTrue($user->hasRole('viewer'));
+        $this->assertTrue($user->hasRole('user'));
         $this->assertNotNull($user->organisation_id);
         $this->assertTrue($user->is_active);
     }
 
     public function test_register_without_organisation_name_creates_user_without_org(): void
     {
-        $viewerRole = Role::factory()->create(['slug' => 'viewer']);
+        $viewerRole = Role::factory()->create(['slug' => 'user']);
 
         $response = $this->postJson('/api/v1/auth/register', [
             'name' => 'Solo User',
@@ -73,7 +73,7 @@ class AuthControllerTest extends TestCase
     public function test_register_accepts_country_and_profile_languages(): void
     {
         (new LanguagesSeeder)->run();
-        Role::factory()->create(['slug' => 'viewer']);
+        Role::factory()->create(['slug' => 'user']);
 
         $response = $this->postJson('/api/v1/auth/register', [
             'name' => 'Luganda User',
@@ -101,7 +101,7 @@ class AuthControllerTest extends TestCase
     public function test_register_rejects_unknown_language_codes(): void
     {
         (new LanguagesSeeder)->run();
-        Role::factory()->create(['slug' => 'viewer']);
+        Role::factory()->create(['slug' => 'user']);
 
         $response = $this->postJson('/api/v1/auth/register', [
             'name' => 'Bad Lang',

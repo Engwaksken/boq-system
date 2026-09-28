@@ -150,10 +150,18 @@ class Handler extends ExceptionHandler
                 ], 500);
             }
 
+            [$code, $default] = match ($statusCode) {
+                403 => ['FORBIDDEN', 'You do not have permission to perform this action.'],
+                404 => ['NOT_FOUND', 'The requested resource was not found.'],
+                419 => ['SESSION_EXPIRED', 'Your session has expired. Please sign in again.'],
+                429 => ['TOO_MANY_REQUESTS', 'Too many requests. Please wait a moment and try again.'],
+                default => ['HTTP_ERROR', 'The request could not be completed.'],
+            };
+
             return response()->json([
                 'success' => false,
-                'error_code' => 'HTTP_ERROR',
-                'message' => $message ?: 'An error occurred.',
+                'error_code' => $code,
+                'message' => $message ?: $default,
             ], $statusCode);
         }
 
