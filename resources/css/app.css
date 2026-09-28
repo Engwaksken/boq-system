@@ -511,32 +511,6 @@ button.boq-nav-heading:hover {
     padding: 0.7rem;
 }
 
-.boq-plan-chip {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    border: 1px solid var(--boq-border);
-    border-radius: var(--boq-radius);
-    background: var(--boq-surface-soft);
-    padding: 0.55rem 0.7rem;
-    color: var(--boq-text-body);
-    font-size: var(--boq-text-xs);
-}
-
-.boq-plan-chip:hover {
-    border-color: var(--boq-border-dark);
-    background: #fff;
-}
-
-.boq-plan-chip strong {
-    display: block;
-    overflow: hidden;
-    color: var(--boq-text);
-    font-size: var(--boq-text-sm);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
 .boq-main {
     display: flex;
     min-width: 0;
@@ -759,11 +733,10 @@ button.boq-nav-heading:hover {
     }
 
     .boq-shell-collapsed .boq-brand-text,
-    .boq-shell-collapsed .boq-nav-label,
-    .boq-shell-collapsed .boq-nav-heading span,
-    .boq-shell-collapsed .boq-nav-heading i,
-    .boq-shell-collapsed .boq-plan-chip-text,
-    .boq-shell-collapsed .boq-nav-badge {
+.boq-shell-collapsed .boq-nav-label,
+.boq-shell-collapsed .boq-nav-heading span,
+.boq-shell-collapsed .boq-nav-heading i,
+.boq-shell-collapsed .boq-nav-badge {
         display: none;
     }
 
@@ -779,8 +752,7 @@ button.boq-nav-heading:hover {
         background: var(--boq-border);
     }
 
-    .boq-shell-collapsed .boq-nav-item,
-    .boq-shell-collapsed .boq-plan-chip {
+    .boq-shell-collapsed .boq-nav-item {
         justify-content: center;
         padding-inline: 0;
     }
@@ -864,10 +836,6 @@ button.boq-nav-heading:hover {
     gap: 0.5rem;
 }
 
-.boq-muted {
-    color: var(--boq-text-muted);
-}
-
 .boq-section-title {
     display: flex;
     align-items: center;
@@ -905,7 +873,6 @@ button.boq-nav-heading:hover {
     overflow: hidden;
 }
 
-.boq-panel-header,
 .boq-card-header {
     display: flex;
     flex-wrap: wrap;
@@ -956,33 +923,6 @@ button.boq-nav-heading:hover {
 
 .boq-card-footer {
     border-radius: 0 0 var(--boq-radius-lg) var(--boq-radius-lg);
-}
-
-.boq-divider {
-    height: 1px;
-    border: 0;
-    background: var(--boq-border);
-}
-
-/* Description list: label / value pairs on detail pages. */
-.boq-dl {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
-    gap: 1rem 1.5rem;
-}
-
-.boq-dl dt {
-    color: var(--boq-text-muted);
-    font-size: var(--boq-text-xs);
-    font-weight: 600;
-}
-
-.boq-dl dd {
-    margin-top: 0.2rem;
-    color: var(--boq-text);
-    font-size: var(--boq-text-base);
-    font-weight: 500;
-    overflow-wrap: anywhere;
 }
 
 /* ------------------------------------------------------------
@@ -1270,8 +1210,7 @@ select.boq-field[multiple] {
     padding-left: 2.25rem;
 }
 
-.boq-check,
-.boq-check-row label {
+.boq-check {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -1300,19 +1239,6 @@ select.boq-field[multiple] {
     color: var(--boq-text-body);
     font-size: var(--boq-text-sm);
     font-weight: 700;
-}
-
-.boq-form-error-summary {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 1rem;
-    border: 1px solid #fecaca;
-    border-radius: var(--boq-radius);
-    background: var(--boq-danger-soft);
-    padding: 0.7rem 0.85rem;
-    color: var(--boq-danger-text);
-    font-size: var(--boq-text-sm);
 }
 
 /* Password field with visibility toggle. */
@@ -1699,40 +1625,6 @@ input[type="checkbox"].boq-switch:focus-visible {
     color: var(--boq-primary);
 }
 
-/* Sort / segmented buttons */
-.boq-sort-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-}
-
-.boq-sort-button {
-    display: inline-flex;
-    min-height: var(--boq-field-height);
-    align-items: center;
-    gap: 0.35rem;
-    border: 1px solid var(--boq-border-dark);
-    border-radius: var(--boq-radius);
-    background: #fff;
-    padding: 0 0.7rem;
-    color: #475569;
-    font-size: var(--boq-text-xs);
-    font-weight: 600;
-    white-space: nowrap;
-    cursor: pointer;
-}
-
-.boq-sort-button:hover {
-    border-color: var(--boq-primary);
-    color: var(--boq-primary);
-}
-
-.boq-sort-button.is-active {
-    border-color: var(--boq-primary);
-    background: var(--boq-primary);
-    color: #fff;
-}
-
 .boq-segmented {
     display: inline-flex;
     flex-wrap: wrap;
@@ -1797,46 +1689,10 @@ input[type="checkbox"].boq-switch:focus-visible {
     padding: 1rem 1.1rem;
 }
 
-.boq-index-filter-grid,
-.project-filter-grid,
-.boq-plans-index-filter {
-    display: grid;
-    grid-template-columns: minmax(16rem, 1.5fr) 7rem minmax(18rem, 2fr);
-    gap: 0.8rem;
-    align-items: end;
-    padding: 1rem 1.1rem;
-}
-
-.boq-index-filter-grid > div,
-.project-filter-grid > div,
-.boq-plans-index-filter > div {
-    min-width: 0;
-}
-
-.boq-index-filter-grid .boq-sort-buttons {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: thin;
-}
-
-.boq-admin-filter-row {
-    display: grid;
-    grid-template-columns: minmax(16rem, 1fr) 7rem;
-    gap: 0.75rem;
-    align-items: end;
-    padding: 1rem 1.1rem;
-}
-
-.boq-admin-filter-search,
-.boq-admin-filter-small {
-    min-width: 0;
-}
-
 .boq-subscription-filter-grid,
 .boq-plan-filter-grid,
 .boq-rate-filter-grid,
-.boq-ai-filter-grid,
-.hardware-price-filters {
+.boq-ai-filter-grid {
     display: grid;
     gap: 0.75rem;
     align-items: end;
@@ -1860,15 +1716,10 @@ input[type="checkbox"].boq-switch:focus-visible {
     padding: 1rem 1.1rem;
 }
 
-.hardware-price-filters {
-    grid-template-columns: minmax(15rem, 1.7fr) minmax(9rem, 0.8fr) minmax(10rem, 0.9fr) minmax(11rem, 1fr) minmax(9rem, 0.8fr);
-}
-
 .boq-subscription-filter-grid > div,
 .boq-plan-filter-grid > div,
 .boq-rate-filter-grid > div,
-.boq-ai-filter-grid > div,
-.hardware-price-filters > div {
+.boq-ai-filter-grid > div {
     min-width: 0;
 }
 
@@ -2115,16 +1966,6 @@ input[type="checkbox"].boq-switch:focus-visible {
     text-align: center;
 }
 
-.boq-sortable-header {
-    cursor: pointer;
-    user-select: none;
-}
-
-.boq-sortable-header:hover {
-    color: var(--boq-primary);
-}
-
-.boq-sortable-header span,
 .boq-sort-th {
     display: inline-flex;
     align-items: center;
@@ -2216,46 +2057,6 @@ button.boq-sort-th:hover {
     color: var(--boq-primary-dark);
 }
 
-/* Pill-style tabs (used where tabs sit inside a card header). */
-.boq-admin-tabs {
-    display: flex;
-    width: 100%;
-    align-items: center;
-    gap: 0.3rem;
-    overflow-x: auto;
-    border-bottom: 1px solid var(--boq-border);
-    padding: 0.5rem 0.7rem;
-    scrollbar-width: thin;
-}
-
-.boq-admin-tab {
-    display: inline-flex;
-    min-height: 2.1rem;
-    flex: 0 0 auto;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    border: 0;
-    border-radius: var(--boq-radius);
-    background: transparent;
-    padding: 0.4rem 0.75rem;
-    color: var(--boq-text-muted);
-    font-size: var(--boq-text-sm);
-    font-weight: 600;
-    white-space: nowrap;
-    transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.boq-admin-tab:hover {
-    background: var(--boq-surface-sunken);
-    color: var(--boq-text);
-}
-
-.boq-admin-tab.is-active {
-    background: var(--boq-primary-soft);
-    color: var(--boq-primary-dark);
-}
-
 .boq-tab-loading {
     display: flex;
     align-items: center;
@@ -2266,11 +2067,6 @@ button.boq-sort-th:hover {
     font-size: var(--boq-text-xs);
 }
 
-/* ------------------------------------------------------------
-   4j. ALERTS / FLASH
-   ------------------------------------------------------------ */
-
-.boq-flash,
 .boq-alert {
     display: flex;
     align-items: flex-start;
@@ -2284,7 +2080,6 @@ button.boq-sort-th:hover {
     line-height: 1.5;
 }
 
-.boq-flash > i:first-child,
 .boq-alert > i:first-child {
     margin-top: 0.2rem;
     flex-shrink: 0;
@@ -2299,21 +2094,18 @@ button.boq-sort-th:hover {
     font-weight: 700;
 }
 
-.boq-flash-error,
 .boq-alert-error {
     border-color: #fecaca;
     background: var(--boq-danger-soft);
     color: var(--boq-danger-text);
 }
 
-.boq-flash-warning,
 .boq-alert-warning {
     border-color: #fde68a;
     background: var(--boq-warning-soft);
     color: var(--boq-warning-text);
 }
 
-.boq-flash-info,
 .boq-alert-info {
     border-color: #bfdbfe;
     background: var(--boq-info-soft);
@@ -2340,24 +2132,6 @@ button.boq-sort-th:hover {
     opacity: 1;
 }
 
-/* Toasts (top-right stack in the shell). */
-.boq-toast-stack {
-    position: fixed;
-    top: calc(var(--boq-topbar-height) + 0.75rem);
-    right: 1rem;
-    z-index: 90;
-    display: flex;
-    width: min(24rem, calc(100vw - 2rem));
-    flex-direction: column;
-    gap: 0.5rem;
-    pointer-events: none;
-}
-
-.boq-toast-stack > * {
-    box-shadow: var(--shadow-raised);
-    pointer-events: auto;
-}
-
 /* ------------------------------------------------------------
    4k. EMPTY / LOADING STATES
    ------------------------------------------------------------ */
@@ -2368,6 +2142,16 @@ button.boq-sort-th:hover {
     align-items: center;
     padding: 2.75rem 1rem;
     text-align: center;
+}
+
+/* Keep empty states inside horizontally scrolling tables in view on phones. */
+@media (max-width: 1023px) {
+    .boq-table-wrapper .boq-empty-state,
+    .boq-table-wrapper .boq-empty-table {
+        position: sticky;
+        left: 0;
+        max-width: calc(100vw - 2.5rem);
+    }
 }
 
 .boq-empty-icon {
@@ -2455,13 +2239,6 @@ button.boq-sort-th:hover {
 @keyframes boq-loading-bar {
     0% { transform: translateX(-100%); }
     100% { transform: translateX(300%); }
-}
-
-.boq-skeleton {
-    border-radius: var(--boq-radius-sm);
-    background: linear-gradient(90deg, #eef2f6 25%, #f8fafc 50%, #eef2f6 75%);
-    background-size: 200% 100%;
-    animation: boq-skeleton 1.2s ease-in-out infinite;
 }
 
 @keyframes boq-skeleton {
@@ -2579,18 +2356,6 @@ button.boq-sort-th:hover {
     line-height: 1.55;
 }
 
-.boq-modal-danger-icon {
-    display: inline-flex;
-    width: 2.5rem;
-    height: 2.5rem;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    background: var(--boq-danger-soft);
-    color: var(--boq-danger);
-}
-
 /* ------------------------------------------------------------
    4m. BULK ACTIONS
    ------------------------------------------------------------ */
@@ -2655,36 +2420,6 @@ button.boq-sort-th:hover {
 
 .boq-bulk-clear-btn:hover {
     color: var(--boq-danger);
-}
-
-.boq-bulk-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    margin-top: 0.75rem;
-    border-radius: var(--boq-radius);
-    background: var(--boq-surface-soft);
-    padding: 0.6rem 0.8rem;
-    color: #475569;
-    font-size: var(--boq-text-xs);
-    font-weight: 600;
-}
-
-.boq-bulk-danger,
-.boq-bulk-clear {
-    border: 0;
-    background: transparent;
-    font-size: var(--boq-text-xs);
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.boq-bulk-danger {
-    color: var(--boq-danger);
-}
-
-.boq-bulk-clear {
-    color: var(--boq-text-muted);
 }
 
 /* ------------------------------------------------------------
@@ -3092,59 +2827,6 @@ button.boq-sort-th:hover {
     overflow: hidden;
 }
 
-/* ---------- hardware / factory prices & scanner ---------- */
-
-.hardware-admin-card {
-    min-width: 0;
-    padding: 1.1rem;
-}
-
-.hardware-admin-card .boq-form-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.hardware-card-head,
-.hardware-category-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.8rem;
-}
-
-.hardware-card-head {
-    margin-bottom: 1rem;
-}
-
-.hardware-category-header {
-    align-items: center;
-    border-bottom: 1px solid var(--boq-border);
-    padding: 0.9rem 1.1rem;
-}
-
-.hardware-card-head h2,
-.hardware-category-header h2 {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    margin: 0;
-    color: var(--boq-text);
-    font-size: 0.95rem;
-    font-weight: 700;
-}
-
-.hardware-card-head h2 i,
-.hardware-category-header h2 i {
-    color: var(--boq-primary);
-}
-
-.hardware-card-head p,
-.hardware-category-header p {
-    margin-top: 0.25rem;
-    color: var(--boq-text-muted);
-    font-size: var(--boq-text-xs);
-    line-height: 1.45;
-}
-
 .hardware-card-actions {
     display: flex;
     flex-wrap: wrap;
@@ -3311,30 +2993,6 @@ button.boq-sort-th:hover {
     transition: width 0.3s ease;
 }
 
-/* Rich text returned from the API or the legal editor. */
-.boq-prose {
-    color: #475569;
-    font-size: var(--boq-text-base);
-    line-height: 1.7;
-}
-
-.boq-prose h1,
-.boq-prose h2,
-.boq-prose h3 {
-    margin: 1rem 0 0.4rem;
-    color: var(--boq-text);
-    font-weight: 700;
-}
-
-.boq-prose p,
-.boq-prose ul,
-.boq-prose ol {
-    margin: 0 0 0.75rem;
-}
-
-.boq-prose ul { list-style: disc; padding-left: 1.25rem; }
-.boq-prose ol { list-style: decimal; padding-left: 1.25rem; }
-
 /* ------------------------------------------------------------
    7. RESPONSIVE (dashboard)
    ------------------------------------------------------------ */
@@ -3344,17 +3002,9 @@ button.boq-sort-th:hover {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    .boq-index-filter-grid,
-    .project-filter-grid,
-    .boq-plans-index-filter {
-        grid-template-columns: minmax(14rem, 1fr) 7rem;
-    }
+    
 
-    .boq-index-filter-grid > :last-child,
-    .project-filter-grid > :last-child,
-    .boq-plans-index-filter > :last-child {
-        grid-column: 1 / -1;
-    }
+    
 
     .boq-subscription-filter-grid,
     .boq-plan-filter-grid,
@@ -3363,13 +3013,9 @@ button.boq-sort-th:hover {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .hardware-price-filters {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
+    
 
-    .hardware-price-filters > :first-child {
-        grid-column: span 2;
-    }
+    
 }
 
 @media (max-width: 1100px) {
@@ -3422,51 +3068,30 @@ button.boq-sort-th:hover {
     }
 
     .boq-plan-grid,
-    .boq-form-grid,
-    .hardware-admin-card .boq-form-grid,
-    .boq-index-filter-grid,
-    .project-filter-grid,
-    .boq-plans-index-filter,
-    .boq-admin-filter-row,
-    .boq-subscription-filter-grid,
-    .boq-plan-filter-grid,
-    .boq-rate-filter-grid,
-    .boq-ai-filter-grid,
-    .hardware-price-filters,
-    .boq-totals-grid {
+.boq-form-grid,
+.boq-subscription-filter-grid,
+.boq-plan-filter-grid,
+.boq-rate-filter-grid,
+.boq-ai-filter-grid,
+.boq-totals-grid {
         grid-template-columns: 1fr;
     }
 
-    .boq-form-span-2,
-    .hardware-price-filters > :first-child,
-    .boq-index-filter-grid > :last-child,
-    .project-filter-grid > :last-child,
-    .boq-plans-index-filter > :last-child {
+    .boq-form-span-2 {
         grid-column: auto;
     }
 
-    .boq-sort-buttons {
-        width: 100%;
-    }
+    
 
-    .boq-sort-button {
-        flex: 1 1 auto;
-        justify-content: center;
-    }
+    
 
-    .boq-bulk-actions {
-        align-items: flex-start;
-        flex-direction: column;
-    }
+    
 
     .boq-bulk-clear-btn {
         margin-left: 0;
     }
 
-    .hardware-category-header {
-        align-items: flex-start;
-        flex-direction: column;
-    }
+    
 
     .boq-profile-content {
         padding: 0.9rem;

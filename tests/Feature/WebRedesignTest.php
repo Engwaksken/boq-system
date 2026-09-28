@@ -242,6 +242,16 @@ class WebRedesignTest extends TestCase
             ->assertSeeHtml('<option value="accepted">');
     }
 
+    public function test_error_pages_do_not_depend_on_built_assets(): void
+    {
+        $this->actingAs($this->customer())
+            ->get(route('admin.index'))
+            ->assertStatus(403)
+            ->assertSee('403 – Access Denied')
+            ->assertSee('Return to Dashboard')
+            ->assertDontSee('/build/assets/', false);
+    }
+
     public function test_built_stylesheet_includes_pagination_utilities(): void
     {
         $manifest = json_decode(file_get_contents(public_path('build/manifest.json')), true);
