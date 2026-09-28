@@ -35,6 +35,13 @@ class Create extends Component
             })
             ->orderBy('name')
             ->get(['id', 'name', 'code']);
+
+        // "Add BOQ" on a project page links here with ?project=<id>.
+        $requested = (int) request()->query('project', 0);
+
+        if ($requested > 0 && $this->projects->contains('id', $requested)) {
+            $this->projectId = $requested;
+        }
     }
 
     public function save(): void

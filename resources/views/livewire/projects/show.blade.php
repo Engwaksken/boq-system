@@ -1,115 +1,108 @@
-<div>
-    <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center gap-3">
-            <h1 class="text-2xl font-bold text-gray-900">{{ $project->name }}</h1>
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $project->status === 'active' ? 'bg-green-100 text-green-800' : ($project->status === 'completed' ? 'bg-blue-100 text-blue-800' : ($project->status === 'archived' ? 'bg-gray-100 text-gray-800' : 'bg-amber-100 text-amber-800')) }}">
-                {{ $project->status }}
-            </span>
-        </div>
-        <div class="flex items-center gap-2">
-            <a href="{{ url('/projects') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition">
-                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-                {{ __('Back') }}
-            </a>
-            <a href="{{ url('/projects/' . $project->id . '/edit') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition">{{ __('Edit') }}</a>
-        </div>
-    </div>
+@php
+    $dash = '—';
+    $details = [
+        __('Project Code') => $project->code,
+        __('Client') => $project->client,
+        __('Contractor') => $project->contractor,
+        __('Consultant') => $project->consultant,
+        __('Quantity Surveyor') => $project->quantity_surveyor,
+        __('Project Manager') => $project->project_manager,
+        __('Site Engineer') => $project->site_engineer,
+        __('Funding Organisation') => $project->funding_organisation,
+        __('Country') => $project->country,
+        __('District') => $project->district,
+        __('Location') => $project->location,
+        __('Project Type') => $project->project_type ? __(\Illuminate\Support\Str::headline($project->project_type)) : null,
+        __('Start Date') => \App\Support\Format::date($project->start_date),
+        __('Expected Completion') => \App\Support\Format::date($project->expected_completion_date),
+        __('Currency') => $project->currency,
+    ];
+@endphp
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900">{{ __('Project Details') }}</h2>
-        </div>
-        <div class="p-6">
-            <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ __('Project Code') }}</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $project->code ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ __('Client') }}</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $project->client ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ __('Contractor') }}</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $project->contractor ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ __('Consultant') }}</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $project->consultant ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ __('Quantity Surveyor') }}</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $project->quantity_surveyor ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ __('Project Manager') }}</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $project->project_manager ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ __('Site Engineer') }}</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $project->site_engineer ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ __('Funding Organisation') }}</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $project->funding_organisation ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ __('Country') }}</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $project->country ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ __('District') }}</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $project->district ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ __('Location') }}</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $project->location ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ __('Project Type') }}</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $project->project_type ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ __('Start Date') }}</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ \App\Support\Format::date($project->start_date, false) ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ __('Expected Completion') }}</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ \App\Support\Format::date($project->expected_completion_date, false) ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ __('Contract Value') }}</dt>
-                    <dd class="mt-1 text-sm font-semibold text-gray-900">{{ \App\Support\Format::number((float) $project->contract_value, 2) }} {{ $project->currency }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ __('Currency') }}</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $project->currency }}</dd>
-                </div>
-                <div class="md:col-span-2">
-                    <dt class="text-sm font-medium text-gray-500">{{ __('Description') }}</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $project->description ?? '?' }}</dd>
-                </div>
-            </dl>
-        </div>
-    </div>
+<div class="boq-page-stack">
 
-    <x-boq-totals class="mt-6" :totals="$totals" :currency="$project->currency" :title="__('Project totals')" />
-
-    <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-gray-900">{{ __('BOQs') }}</h2>
-            <span class="text-sm text-gray-500">{{ $project->boqs->count() }}</span>
+    <x-ui.page-header :title="$project->name" icon="fa-folder-open">
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+            <x-ui.status :status="$project->status" />
+            @if($project->code)
+                <span class="boq-code">{{ $project->code }}</span>
+            @endif
+            @if($project->location)
+                <span class="boq-cell-with-icon text-sm text-slate-500"><i class="fas fa-location-dot" aria-hidden="true"></i> {{ $project->location }}</span>
+            @endif
         </div>
-        @forelse ($project->boqs as $boq)
-            <a href="{{ route('boqs.show', $boq) }}" class="flex flex-col gap-1 px-6 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <div class="font-medium text-gray-900">{{ $boq->name }}</div>
-                    <div class="text-xs text-gray-500">{{ ($boqTotals[$boq->id]['items'] ?? 0) }} {{ __('items') }} · {{ \Illuminate\Support\Str::headline($boq->status) }}</div>
-                </div>
-                <x-boq-totals compact class="sm:text-right" :totals="$boqTotals[$boq->id] ?? []" :currency="$boq->currency ?: $project->currency" />
-            </a>
-        @empty
-            <p class="px-6 py-6 text-sm text-gray-500">{{ __('No BOQs yet.') }}</p>
-        @endforelse
+
+        <x-slot:actions>
+            <x-ui.button variant="secondary" icon="fa-arrow-left" :href="route('projects.index')">{{ __('Back') }}</x-ui.button>
+            @if(auth()->user()->hasPermission('projects.edit'))
+                <x-ui.button variant="secondary" icon="fa-pen" :href="route('projects.edit', $project->id)">{{ __('Edit') }}</x-ui.button>
+            @endif
+            <x-ui.button icon="fa-file-circle-plus" :href="route('boqs.create', ['project' => $project->id])">{{ __('Add BOQ') }}</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
+
+    <x-ui.flash />
+
+    <div class="grid gap-5 xl:grid-cols-3">
+        <div class="flex min-w-0 flex-col gap-5 xl:col-span-2">
+            <x-boq-totals :totals="$totals" :currency="$project->currency" :title="__('Project totals')" />
+
+            <x-ui.card :title="__('BOQs')" icon="fa-file-invoice-dollar" :padded="false">
+                <x-slot:actions>
+                    <x-ui.badge>{{ \App\Support\Format::number($project->boqs->count(), 0) }}</x-ui.badge>
+                </x-slot:actions>
+
+                @forelse ($project->boqs as $boq)
+                    <a
+                        href="{{ route('boqs.show', $boq) }}"
+                        wire:key="project-boq-{{ $boq->id }}"
+                        class="flex flex-col gap-2 border-b border-slate-100 px-5 py-4 last:border-0 hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                        <div class="min-w-0">
+                            <div class="font-semibold text-slate-900">{{ $boq->name }}</div>
+                            <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                                <span>{{ trans_choice(':count item|:count items', $boqTotals[$boq->id]['items'] ?? 0, ['count' => \App\Support\Format::number($boqTotals[$boq->id]['items'] ?? 0, 0)]) }}</span>
+                                <x-ui.status :status="$boq->status" />
+                            </div>
+                        </div>
+                        <x-boq-totals compact class="sm:text-right" :totals="$boqTotals[$boq->id] ?? []" :currency="$boq->currency ?: $project->currency" />
+                    </a>
+                @empty
+                    <x-ui.empty-state
+                        icon="fa-file-invoice-dollar"
+                        :title="__('No BOQs yet.')"
+                        :description="__('Upload a bill of quantities to price it against current market rates.')"
+                    >
+                        <x-ui.button icon="fa-file-arrow-up" :href="route('boqs.create', ['project' => $project->id])">{{ __('Add BOQ') }}</x-ui.button>
+                    </x-ui.empty-state>
+                @endforelse
+            </x-ui.card>
+        </div>
+
+        <div class="flex min-w-0 flex-col gap-5">
+            <x-ui.card :title="__('Contract Value')" icon="fa-money-bill-wave">
+                <p class="text-2xl font-bold tracking-tight text-slate-900">
+                    <x-money :amount="$project->contract_value ?? 0" :currency="$project->currency" />
+                </p>
+            </x-ui.card>
+
+            <x-ui.card :title="__('Project Details')" icon="fa-circle-info">
+                <dl class="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+                    @foreach($details as $label => $value)
+                        <div class="min-w-0">
+                            <dt class="text-xs font-semibold text-slate-500">{{ $label }}</dt>
+                            <dd class="mt-0.5 text-sm text-slate-900 [overflow-wrap:anywhere]">{{ filled($value) ? $value : $dash }}</dd>
+                        </div>
+                    @endforeach
+                </dl>
+
+                @if(filled($project->description))
+                    <div class="mt-5 border-t border-slate-100 pt-4">
+                        <p class="text-xs font-semibold text-slate-500">{{ __('Description') }}</p>
+                        <p class="mt-1 whitespace-pre-line text-sm text-slate-700">{{ $project->description }}</p>
+                    </div>
+                @endif
+            </x-ui.card>
+        </div>
     </div>
 </div>

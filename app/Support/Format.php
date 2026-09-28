@@ -39,6 +39,23 @@ final class Format
     }
 
     /**
+     * Short form for large figures in stat cards: 950, 12.5K, 2.6M, 1.3B.
+     */
+    public static function compact(float|int|string|null $value, int $decimals = 1): string
+    {
+        $value = (float) $value;
+        $abs = abs($value);
+
+        foreach ([1_000_000_000_000 => 'T', 1_000_000_000 => 'B', 1_000_000 => 'M', 1_000 => 'K'] as $size => $suffix) {
+            if ($abs >= $size) {
+                return self::number($value / $size, $decimals).$suffix;
+            }
+        }
+
+        return self::number($value, 0);
+    }
+
+    /**
      * Null for empty values so callers can supply their own fallback (e.g. `?? 'Ongoing'`).
      */
     public static function date(DateTimeInterface|string|null $value, bool $withTime = false): ?string

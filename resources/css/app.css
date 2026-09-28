@@ -845,7 +845,7 @@ button.boq-nav-heading:hover {
     align-items: center;
     justify-content: center;
     border-radius: 0.6rem;
-    background: var(--boq-primary-soft);
+    background: var(--color-brand-100);
     color: var(--boq-primary);
     font-size: 0.95rem;
 }
@@ -1081,6 +1081,20 @@ button.boq-nav-heading:hover {
 .boq-stat-red .boq-stat-icon {
     background: var(--boq-danger-soft);
     color: var(--boq-danger);
+}
+
+/* Dense KPI rows (e.g. BOQ item counts): smaller cards without icons. */
+.boq-stats-compact .boq-stat-card {
+    min-height: 0;
+    padding: 0.75rem 0.9rem;
+}
+
+.boq-stats-compact .boq-stat-icon {
+    display: none;
+}
+
+.boq-stats-compact .boq-stat-value {
+    font-size: 1.25rem;
 }
 
 /* Clickable statistics cards (links or buttons wrapping a stat card). */
@@ -1745,6 +1759,11 @@ input[type="checkbox"].boq-switch:focus-visible {
 
 .boq-segmented > *:hover {
     color: var(--boq-text);
+}
+
+.boq-segmented > label:has(input:focus-visible) {
+    outline: 2px solid var(--boq-primary);
+    outline-offset: 1px;
 }
 
 .boq-segmented > .is-active {

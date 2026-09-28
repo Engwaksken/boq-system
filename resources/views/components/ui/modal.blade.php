@@ -20,6 +20,7 @@
     'close' => null,
     'submit' => null,
     'id' => null,
+    'bodyClass' => '',
 ])
 
 @php
@@ -68,7 +69,7 @@
             </div>
         @endif
 
-        <div class="boq-modal-body">
+        <div class="boq-modal-body {{ $bodyClass }}">
             {{ $slot }}
         </div>
 

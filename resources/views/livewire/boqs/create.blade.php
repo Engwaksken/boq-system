@@ -1,240 +1,116 @@
-<div>
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">{{ __('New BOQ') }}</h1>
-            <p class="mt-1 text-sm text-gray-500">
-                {{ __('Upload a Bill of Quantities file') }}
-            </p>
-        </div>
+<div class="boq-page-stack">
+    <x-ui.page-header
+        :title="__('New BOQ')"
+        icon="fa-file-arrow-up"
+        :subtitle="__('Upload a Bill of Quantities file')"
+    >
+        <x-slot:actions>
+            <x-ui.button variant="secondary" icon="fa-arrow-left" :href="route('boqs.index')">{{ __('Back') }}</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-        <a
-            href="{{ url('/boqs') }}"
-            class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition"
-        >
-            <svg
-                class="w-4 h-4 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                />
-            </svg>
+    <x-ui.flash />
 
-            {{ __('Back') }}
-        </a>
-    </div>
-
-    @if (session()->has('status'))
-        <div
-            x-data="{ show: true }"
-            x-init="setTimeout(() => show = false, 5000)"
-            x-show="show"
-            class="mb-5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
-        >
-            {{ session('status') }}
-        </div>
+    @if(! isset($projects) || $projects->isEmpty())
+        <x-ui.alert type="warning" :title="__('Create a project first')">
+            {{ __('Every BOQ belongs to a project. Create one, then come back to upload your BOQ.') }}
+            @if(auth()->user()->hasPermission('projects.create'))
+                <div class="mt-2">
+                    <x-ui.button size="sm" icon="fa-folder-plus" :href="route('projects.create')">{{ __('New Project') }}</x-ui.button>
+                </div>
+            @endif
+        </x-ui.alert>
     @endif
 
-    <form wire:submit.prevent="save">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                {{-- Project --}}
-                <div>
-                    <label
-                        for="projectId"
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                        {{ __('Project') }}
-                        <span class="text-red-500">*</span>
-                    </label>
-
-                    <select
-                        id="projectId"
-                        wire:model="projectId"
-                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                    >
+    <form wire:submit.prevent="save" class="grid gap-5 lg:grid-cols-3">
+        <x-ui.card class="lg:col-span-2" :title="__('BOQ details')" icon="fa-file-invoice-dollar">
+            <div class="boq-form-grid">
+                <x-ui.field :label="__('Project')" for="projectId" error="projectId" required>
+                    <select id="projectId" wire:model="projectId" class="boq-field @error('projectId') has-error @enderror">
                         <option value="">{{ __('Select a project') }}</option>
-
-                        @if(isset($projects) && $projects->isNotEmpty())
-                            @foreach($projects as $project)
-                                <option value="{{ $project->id }}">
-                                    {{ $project->name }}
-                                    @if(!empty($project->code))
-                                        ({{ $project->code }})
-                                    @endif
-                                </option>
-                            @endforeach
-                        @endif
+                        @foreach($projects ?? [] as $project)
+                            <option value="{{ $project->id }}">{{ $project->name }}@if(!empty($project->code)) ({{ $project->code }})@endif</option>
+                        @endforeach
                     </select>
+                </x-ui.field>
 
-                    @error('projectId')
-                        <p class="mt-1 text-sm text-red-600">
-                            {{ $message }}
-                        </p>
-                    @enderror
-                </div>
+                <x-ui.field :label="__('BOQ Name')" for="name" error="name" :hint="__('Leave blank to use the file name')">
+                    <input type="text" id="name" wire:model="name" placeholder="{{ __('e.g. Main building - Phase 1') }}" class="boq-field @error('name') has-error @enderror">
+                </x-ui.field>
 
-                {{-- BOQ Name --}}
-                <div>
-                    <label
-                        for="name"
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                        {{ __('BOQ Name') }}
-                    </label>
-
+                <x-ui.field :label="__('BOQ File')" for="file" error="file" required class="boq-form-span-2">
                     <input
-                        type="text"
-                        id="name"
-                        wire:model="name"
-                        placeholder="{{ __('Leave blank to use the file name') }}"
-                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                        type="file"
+                        id="file"
+                        wire:model.live="file"
+                        accept=".xlsx,.xlsm,.ods,.csv,.tsv,.txt,.pdf,.jpg,.jpeg,.png,.webp,.gif,.bmp"
+                        class="peer sr-only"
                     >
 
-                    @error('name')
-                        <p class="mt-1 text-sm text-red-600">
-                            {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-
-                {{-- File Upload --}}
-                <div class="md:col-span-2">
                     <label
                         for="file"
-                        class="block text-sm font-medium text-gray-700 mb-1"
+                        class="peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-600 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition {{ $file ? 'border-brand-300 bg-brand-50' : 'border-slate-300 bg-slate-50 hover:border-brand-300 hover:bg-brand-50/50' }}"
                     >
-                        {{ __('BOQ File') }}
-                        <span class="text-red-500">*</span>
+                        <span class="boq-empty-icon mb-0"><i class="fas fa-cloud-arrow-up" aria-hidden="true"></i></span>
+                        <span class="text-sm font-semibold text-slate-800">{{ __('Choose a file to upload') }}</span>
+                        <span class="text-xs text-slate-500">{{ __('Excel (.xlsx, .ods), CSV/TSV, PDF or photos (JPG, PNG, WebP). Maximum file size: 20MB.') }}</span>
                     </label>
 
-                    <div class="rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-5">
+                    <div wire:loading.flex wire:target="file" class="mt-3 items-center gap-2 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700">
+                        <i class="fas fa-spinner fa-spin" aria-hidden="true"></i> {{ __('Uploading file...') }}
+                    </div>
 
-                        <input
-                            type="file"
-                            id="file"
-                            wire:model.live="file"
-                            accept=".xlsx,.xlsm,.ods,.csv,.tsv,.txt,.pdf,.jpg,.jpeg,.png,.webp,.gif,.bmp"
-                            class="block w-full text-sm text-gray-700
-                                   file:mr-4
-                                   file:py-2
-                                   file:px-4
-                                   file:rounded-lg
-                                   file:border-0
-                                   file:text-sm
-                                   file:font-semibold
-                                   file:bg-indigo-50
-                                   file:text-indigo-700
-                                   hover:file:bg-indigo-100"
-                        >
-
-                        <p class="mt-2 text-xs text-gray-500">
-                            Accepted formats:
-                            Excel (.xlsx, .ods), CSV/TSV, PDF or photos (JPG, PNG, WebP). Files are converted to a standard format automatically.
-                            Maximum file size: 20MB.
-                        </p>
-
-                        {{-- Upload Progress --}}
-                        <div
-                            wire:loading
-                            wire:target="file"
-                            class="mt-3 rounded-lg bg-indigo-50 px-3 py-2 text-sm text-indigo-700"
-                        >
-                            {{ __('Uploading file...') }}
-                        </div>
-
-                        {{-- Selected File --}}
-                        @if ($file)
-                            <div class="mt-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
-                                <div class="flex items-center justify-between gap-3">
-                                    <div>
-                                        <p class="text-sm font-semibold text-green-800">
-                                            {{ __('File selected') }}
-                                        </p>
-
-                                        <p class="text-xs text-green-700 break-all">
-                                            {{ $file->getClientOriginalName() }}
-                                        </p>
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        wire:click="$set('file', null)"
-                                        class="text-xs font-semibold text-red-600 hover:text-red-700"
-                                    >
-                                        {{ __('Remove') }}
-                                    </button>
+                    @if ($file)
+                        <div class="mt-3 flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2" wire:loading.remove wire:target="file">
+                            <div class="flex min-w-0 items-center gap-2">
+                                <i class="fas fa-file-circle-check text-emerald-600" aria-hidden="true"></i>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-semibold text-emerald-800">{{ __('File selected') }}</p>
+                                    <p class="break-all text-xs text-emerald-700">{{ $file->getClientOriginalName() }}</p>
                                 </div>
                             </div>
-                        @endif
 
-                        @error('file')
-                            <p class="mt-2 text-sm text-red-600">
-                                {{ $message }}
-                            </p>
-                        @enderror
-                    </div>
-                </div>
+                            <button type="button" wire:click="$set('file', null)" class="boq-link-button text-red-600 hover:text-red-700">
+                                <i class="fas fa-xmark" aria-hidden="true"></i> {{ __('Remove') }}
+                            </button>
+                        </div>
+                    @endif
+                </x-ui.field>
             </div>
 
-            {{-- Actions --}}
-            <div class="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
-
-                <a
-                    href="{{ url('/boqs') }}"
-                    class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition"
-                >
-                    {{ __('Cancel') }}
-                </a>
-
+            <x-slot:footer>
+                <x-ui.button variant="secondary" :href="route('boqs.index')">{{ __('Cancel') }}</x-ui.button>
                 <button
                     type="submit"
                     wire:loading.attr="disabled"
                     wire:target="file,save"
-                    class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-300 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition"
+                    class="boq-btn-primary"
                 >
-                    <span wire:loading.remove wire:target="save">
-                        {{ __('Upload BOQ') }}
+                    <span wire:loading.remove wire:target="save" class="inline-flex items-center gap-2">
+                        <i class="fas fa-upload" aria-hidden="true"></i> {{ __('Upload BOQ') }}
                     </span>
-
-                    <span
-                        wire:loading
-                        wire:target="save"
-                        class="inline-flex items-center"
-                    >
-                        <svg
-                            class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                        >
-                            <circle
-                                class="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                stroke-width="4"
-                            ></circle>
-
-                            <path
-                                class="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                            ></path>
-                        </svg>
-
-                        {{ __('Processing...') }}
+                    <span wire:loading wire:target="save">
+                        <i class="fas fa-spinner fa-spin" aria-hidden="true"></i> {{ __('Processing...') }}
                     </span>
                 </button>
-            </div>
-        </div>
+            </x-slot:footer>
+        </x-ui.card>
+
+        <x-ui.card class="self-start" :title="__('What happens next')" icon="fa-list-check">
+            <ol class="space-y-4 text-sm text-slate-600">
+                <li class="flex gap-3">
+                    <span class="boq-badge boq-badge-brand h-6 w-6 shrink-0 justify-center p-0">1</span>
+                    <span>{{ __('Spreadsheets are imported straight away. PDFs and photos are read when you press "Generate BOQ".') }}</span>
+                </li>
+                <li class="flex gap-3">
+                    <span class="boq-badge boq-badge-brand h-6 w-6 shrink-0 justify-center p-0">2</span>
+                    <span>{{ __('Each item is matched to current hardware and factory prices near your project.') }}</span>
+                </li>
+                <li class="flex gap-3">
+                    <span class="boq-badge boq-badge-brand h-6 w-6 shrink-0 justify-center p-0">3</span>
+                    <span>{{ __('Review the suggested rates, then download or share the priced BOQ as a PDF.') }}</span>
+                </li>
+            </ol>
+        </x-ui.card>
     </form>
 </div>
