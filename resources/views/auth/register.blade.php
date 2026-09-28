@@ -88,7 +88,7 @@
                     value="{{ old('email') }}"
                     required
                     autocomplete="username"
-                    placeholder="e.g. name@example.com"
+                    placeholder="{{ __('e.g. name@example.com') }}"
                     class="auth-field {{ $errors->has('email') ? 'has-error' : '' }}"
                 >
 

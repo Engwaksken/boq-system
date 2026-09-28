@@ -1,227 +1,78 @@
+@php
+    $typeIcons = ['monthly' => 'fa-calendar-days', 'quarterly' => 'fa-calendar-week', 'three_month' => 'fa-calendar-week', 'six_month' => 'fa-calendar-week', 'annual' => 'fa-calendar-check', 'lifetime' => 'fa-infinity'];
+    $subscriptionStatuses = ['pending', 'trial', 'active', 'past_due', 'grace_period', 'suspended', 'expired', 'cancelled'];
+    $isDanger = in_array($actionType, ['cancel', 'bulk_cancel'], true);
+@endphp
+
 <div class="boq-subscriptions-page">
 
-    {{-- =========================================================
-         HEADER
-    ========================================================== --}}
-    <div class="boq-page-header">
-
-        <div>
-            <h1 class="boq-page-title">
-                <i class="fas fa-credit-card"></i>
-                {{ __('Subscriptions') }}
-            </h1>
-
-            <p class="boq-page-subtitle">
-                {{ __('Manage your subscription history and choose an available plan.') }}
-            </p>
-        </div>
-
-        @if($currentSubscription)
-            <div class="boq-current-subscription">
-
-                <div class="boq-current-subscription-label">
-                    {{ __('Current Subscription') }}
+    <x-ui.page-header
+        :title="__('Subscriptions')"
+        icon="fa-credit-card"
+        :subtitle="__('Manage your subscription history and choose an available plan.')"
+    >
+        <x-slot:actions>
+            @if($currentSubscription)
+                <div class="boq-current-subscription">
+                    <div class="boq-current-subscription-label">{{ __('Current Subscription') }}</div>
+                    <div class="boq-current-subscription-name">{{ $currentSubscription->plan?->name ?? __('Plan') }}</div>
+                    @if($currentSubscription->end_date)
+                        <div class="mt-0.5 text-xs text-slate-500">{{ __('Until') }} <x-date :value="$currentSubscription->end_date" /></div>
+                    @endif
                 </div>
+            @endif
+            <x-ui.button variant="secondary" icon="fa-gift" :href="route('topups.index')">{{ __('Top-ups') }}</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-                <div class="boq-current-subscription-name">
-                    {{ $currentSubscription->plan?->name ?? 'Plan' }}
-                </div>
+    <x-ui.flash :keys="['message', 'status', 'error']" :types="['message' => 'info']" />
 
-            </div>
-        @endif
-
-    </div>
-
-
-    {{-- =========================================================
-         FLASH MESSAGE
-    ========================================================== --}}
-    @if(session('message'))
-        <div
-            class="boq-flash"
-            x-data="{ visible: true }"
-            x-init="setTimeout(() => visible = false, 5000)"
-            x-show="visible"
-            x-transition
-        >
-            <i class="fas fa-circle-check"></i>
-
-            <span>
-                {{ session('message') }}
-            </span>
-
-            <button
-                type="button"
-                class="boq-flash-close"
-                x-on:click="visible = false"
-                aria-label="{{ __('Close message') }}"
-            >
-                <i class="fas fa-xmark"></i>
-            </button>
-        </div>
-    @endif
-
-
-    {{-- =========================================================
-         STATISTICS
-    ========================================================== --}}
     <div class="boq-stats-grid">
-
-        <div class="boq-stat-card boq-stat-green">
-
-            <div>
-                <p class="boq-stat-label">
-                    {{ __('Total Subscriptions') }}
-                </p>
-
-                <p class="boq-stat-value">
-                    {{ $stats['total'] ?? 0 }}
-                </p>
-            </div>
-
-            <span class="boq-stat-icon">
-                <i class="fas fa-receipt"></i>
-            </span>
-
-        </div>
-
-
-        <div class="boq-stat-card boq-stat-blue">
-
-            <div>
-                <p class="boq-stat-label">
-                    {{ __('Active') }}
-                </p>
-
-                <p class="boq-stat-value">
-                    {{ $stats['active'] ?? 0 }}
-                </p>
-            </div>
-
-            <span class="boq-stat-icon">
-                <i class="fas fa-circle-check"></i>
-            </span>
-
-        </div>
-
-
-        <div class="boq-stat-card boq-stat-amber">
-
-            <div>
-                <p class="boq-stat-label">
-                    {{ __('Pending') }}
-                </p>
-
-                <p class="boq-stat-value">
-                    {{ $stats['pending'] ?? 0 }}
-                </p>
-            </div>
-
-            <span class="boq-stat-icon">
-                <i class="fas fa-clock"></i>
-            </span>
-
-        </div>
-
-
-        <div class="boq-stat-card boq-stat-purple">
-
-            <div>
-                <p class="boq-stat-label">
-                    {{ __('Available Plans') }}
-                </p>
-
-                <p class="boq-stat-value">
-                    {{ $stats['plans'] ?? 0 }}
-                </p>
-            </div>
-
-            <span class="boq-stat-icon">
-                <i class="fas fa-layer-group"></i>
-            </span>
-
-        </div>
-
+        <x-stat-card :label="__('Total Subscriptions')" :value="\App\Support\Format::number($stats['total'] ?? 0, 0)" icon="fa-receipt" color="green" />
+        <x-stat-card :label="__('Active')" :value="\App\Support\Format::number($stats['active'] ?? 0, 0)" icon="fa-circle-check" color="blue" />
+        <x-stat-card :label="__('Pending')" :value="\App\Support\Format::number($stats['pending'] ?? 0, 0)" icon="fa-clock" color="amber" />
+        <x-stat-card
+            :label="__('Available Plans')"
+            :value="\App\Support\Format::number($stats['plans'] ?? 0, 0)"
+            icon="fa-layer-group"
+            color="purple"
+            :active="$activeTab === 'plans'"
+            wire:click="showPlans"
+        />
     </div>
 
-
-    {{-- =========================================================
-         MAIN SUBSCRIPTION PANEL
-    ========================================================== --}}
     <div class="boq-panel boq-subscription-panel">
 
-        {{-- =====================================================
-             TABS
-        ====================================================== --}}
-        <div class="boq-tabs">
-
-            <button
-                type="button"
+        <x-ui.tabs :label="__('Subscription sections')">
+            <x-ui.tab
+                icon="fa-credit-card"
+                :active="$activeTab === 'subscriptions'"
                 wire:click.prevent="showSubscriptions"
                 wire:loading.attr="disabled"
                 wire:target="showSubscriptions,showPlans"
-                class="boq-tab {{ $activeTab === 'subscriptions' ? 'is-active' : '' }}"
-            >
-                <i class="fas fa-credit-card"></i>
-                {{ __('Subscriptions') }}
-            </button>
+            >{{ __('Subscriptions') }}</x-ui.tab>
 
-
-            <button
-                type="button"
+            <x-ui.tab
+                icon="fa-layer-group"
+                :active="$activeTab === 'plans'"
                 wire:click.prevent="showPlans"
                 wire:loading.attr="disabled"
                 wire:target="showSubscriptions,showPlans"
-                class="boq-tab {{ $activeTab === 'plans' ? 'is-active' : '' }}"
-            >
-                <i class="fas fa-layer-group"></i>
-                {{ __('Available Plans') }}
-            </button>
+            >{{ __('Available Plans') }}</x-ui.tab>
+        </x-ui.tabs>
 
-        </div>
-
-
-        {{-- =====================================================
-             TAB LOADING INDICATOR
-        ====================================================== --}}
-        <div
-            wire:loading.flex
-            wire:target="showSubscriptions,showPlans"
-            class="boq-tab-loading"
-        >
-            <i class="fas fa-spinner fa-spin"></i>
+        <div wire:loading.flex wire:target="showSubscriptions,showPlans" class="boq-tab-loading">
+            <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
             {{ __('Loading...') }}
         </div>
 
-
-        {{-- =====================================================
-             SUBSCRIPTIONS TAB
-        ====================================================== --}}
         @if($activeTab === 'subscriptions')
-
             <div wire:key="subscriptions-tab">
-
-                {{-- =================================================
-                     FILTERS
-                ================================================== --}}
                 <div class="boq-filter-section">
-
                     <div class="boq-subscription-filter-grid">
-
-                        {{-- Search --}}
-                        <div>
-
-                            <label
-                                for="subscription-search"
-                                class="boq-field-label"
-                            >
-                                {{ __('Search') }}
-                            </label>
-
+                        <x-ui.field :label="__('Search')" for="subscription-search">
                             <div class="boq-input-icon-wrap">
-
-                                <i class="fas fa-search boq-input-icon"></i>
-
+                                <i class="fas fa-search boq-input-icon" aria-hidden="true"></i>
                                 <input
                                     id="subscription-search"
                                     type="search"
@@ -230,428 +81,113 @@
                                     placeholder="{{ __('Search plan, status or payment...') }}"
                                     autocomplete="off"
                                 >
-
                             </div>
+                        </x-ui.field>
 
-                        </div>
-
-
-                        {{-- Status --}}
-                        <div>
-
-                            <label
-                                for="subscription-status"
-                                class="boq-field-label"
-                            >
-                                {{ __('Status') }}
-                            </label>
-
-                            <select
-                                id="subscription-status"
-                                wire:model.live="statusFilter"
-                                class="boq-field"
-                            >
-
-                                <option value="all">
-                                    {{ __('All statuses') }}
-                                </option>
-
-                                @foreach([
-                                    'pending',
-                                    'trial',
-                                    'active',
-                                    'past_due',
-                                    'grace_period',
-                                    'suspended',
-                                    'expired',
-                                    'cancelled',
-                                ] as $status)
-
-                                    <option value="{{ $status }}">
-                                        {{ ucwords(str_replace('_', ' ', $status)) }}
-                                    </option>
-
+                        <x-ui.field :label="__('Status')" for="subscription-status">
+                            <select id="subscription-status" wire:model.live="statusFilter" class="boq-field">
+                                <option value="all">{{ __('All statuses') }}</option>
+                                @foreach($subscriptionStatuses as $status)
+                                    <option value="{{ $status }}">{{ __(ucwords(str_replace('_', ' ', $status))) }}</option>
                                 @endforeach
-
                             </select>
+                        </x-ui.field>
 
-                        </div>
-
-
-                        {{-- Period --}}
-                        <div>
-
-                            <label
-                                for="subscription-period"
-                                class="boq-field-label"
-                            >
-                                {{ __('Period') }}
-                            </label>
-
-                            <select
-                                id="subscription-period"
-                                wire:model.live="periodFilter"
-                                class="boq-field"
-                            >
-
-                                <option value="all">
-                                    {{ __('All periods') }}
-                                </option>
-
-                                <option value="current">
-                                    {{ __('Current') }}
-                                </option>
-
-                                <option value="ending_30">
-                                    {{ __('Ending in 30 days') }}
-                                </option>
-
-                                <option value="expired">
-                                    {{ __('Expired') }}
-                                </option>
-
-                                <option value="this_year">
-                                    {{ __('Created this year') }}
-                                </option>
-
+                        <x-ui.field :label="__('Period')" for="subscription-period">
+                            <select id="subscription-period" wire:model.live="periodFilter" class="boq-field">
+                                <option value="all">{{ __('All periods') }}</option>
+                                <option value="current">{{ __('Current') }}</option>
+                                <option value="ending_30">{{ __('Ending in 30 days') }}</option>
+                                <option value="expired">{{ __('Expired') }}</option>
+                                <option value="this_year">{{ __('Created this year') }}</option>
                             </select>
+                        </x-ui.field>
 
-                        </div>
-
-
-                        {{-- Rows --}}
-                        <div>
-
-                            <label
-                                for="subscription-per-page"
-                                class="boq-field-label"
-                            >
-                                {{ __('Rows') }}
-                            </label>
-
-                            <select
-                                id="subscription-per-page"
-                                wire:model.live="perPage"
-                                class="boq-field"
-                            >
-
+                        <x-ui.field :label="__('Rows')" for="subscription-per-page">
+                            <select id="subscription-per-page" wire:model.live="perPage" class="boq-field">
                                 @foreach([10, 25, 50, 100] as $size)
-
-                                    <option value="{{ $size }}">
-                                        {{ $size }}
-                                    </option>
-
+                                    <option value="{{ $size }}">{{ $size }}</option>
                                 @endforeach
-
                             </select>
-
-                        </div>
-
+                        </x-ui.field>
                     </div>
-
-
-                    {{-- =============================================
-                         BULK ACTIONS
-                    ============================================== --}}
-                    @if(count($selectedSubscriptions))
-
-                        <div class="boq-bulk-actions">
-
-                            <span>
-                                {{ count($selectedSubscriptions) }}
-                                selected
-                            </span>
-
-                            <button
-                                type="button"
-                                wire:click="confirmBulkCancel"
-                                class="boq-bulk-danger"
-                            >
-                                <i class="fas fa-ban"></i>
-                                {{ __('Cancel selected') }}
-                            </button>
-
-                            <button
-                                type="button"
-                                wire:click="clearSelection"
-                                class="boq-bulk-clear"
-                            >
-                                {{ __('Clear selection') }}
-                            </button>
-
-                        </div>
-
-                    @endif
-
                 </div>
 
+                <x-bulk-bar :count="count($selectedSubscriptions)">
+                    <button type="button" wire:click="confirmBulkCancel" class="boq-btn-danger">
+                        <i class="fas fa-ban" aria-hidden="true"></i>
+                        {{ __('Cancel selected') }}
+                    </button>
+                </x-bulk-bar>
 
-                {{-- =================================================
-                     SUBSCRIPTIONS TABLE
-                ================================================== --}}
-                <div class="boq-table-wrapper">
+                <x-ui.table>
+                    <thead>
+                        <tr>
+                            <th class="boq-checkbox-column">
+                                <input type="checkbox" class="boq-checkbox" wire:model.live="selectPage" aria-label="{{ __('Select all subscriptions on this page') }}">
+                            </th>
+                            <th>{{ __('Plan') }}</th>
+                            <th>{{ __('Status') }}</th>
+                            <th>{{ __('Payment') }}</th>
+                            <th>{{ __('Period') }}</th>
+                            <th class="text-right">{{ __('Price') }}</th>
+                            <th class="text-right">{{ __('Actions') }}</th>
+                        </tr>
+                    </thead>
 
-                    <table class="boq-table">
-
-                        <thead>
-                            <tr>
-
-                                <th class="boq-checkbox-column">
-
+                    <tbody>
+                        @forelse($subscriptions as $item)
+                            <tr wire:key="subscription-{{ $item->id }}">
+                                <td class="boq-checkbox-column">
                                     <input
                                         type="checkbox"
-                                        wire:model.live="selectPage"
-                                        aria-label="{{ __('Select all subscriptions on this page') }}"
+                                        class="boq-checkbox"
+                                        wire:model.live="selectedSubscriptions"
+                                        value="{{ $item->id }}"
+                                        aria-label="{{ __('Select :name', ['name' => $item->plan?->name ?? __('subscription')]) }}"
                                     >
+                                </td>
 
-                                </th>
+                                <td>
+                                    <div class="boq-table-title">{{ $item->plan?->name ?? __('Unknown plan') }}</div>
+                                    @if($item->plan?->code)
+                                        <div class="boq-table-subtitle">{{ $item->plan->code }}</div>
+                                    @endif
+                                </td>
 
-                                <th>
-                                    {{ __('Plan') }}
-                                </th>
+                                <td><x-ui.status :status="$item->status ?? 'unknown'" /></td>
 
-                                <th>
-                                    {{ __('Status') }}
-                                </th>
+                                <td><x-ui.status :status="$item->payment_status ?? 'pending'" /></td>
 
-                                <th>
-                                    {{ __('Payment') }}
-                                </th>
-
-                                <th>
-                                    {{ __('Period') }}
-                                </th>
-
-                                <th class="text-right">
-                                    {{ __('Price') }}
-                                </th>
-
-                                <th class="text-right">
-                                    {{ __('Actions') }}
-                                </th>
-
-                            </tr>
-                        </thead>
-
-
-                        <tbody>
-
-                            @forelse($subscriptions as $item)
-
-                                <tr wire:key="subscription-{{ $item->id }}">
-
-                                    {{-- Checkbox --}}
-                                    <td>
-
-                                        <input
-                                            type="checkbox"
-                                            wire:model.live="selectedSubscriptions"
-                                            value="{{ $item->id }}"
-                                            aria-label="Select {{ $item->plan?->name ?? 'subscription' }}"
-                                        >
-
-                                    </td>
-
-
-                                    {{-- Plan --}}
-                                    <td>
-
-                                        <div class="boq-table-title">
-                                            {{ $item->plan?->name ?? 'Unknown plan' }}
-                                        </div>
-
-                                        @if($item->plan?->code)
-
-                                            <div class="boq-table-subtitle">
-                                                {{ $item->plan->code }}
-                                            </div>
-
-                                        @endif
-
-                                    </td>
-
-
-                                    {{-- Status --}}
-                                    <td>
-
-                                        @php
-                                            $statusClass = match($item->status) {
-                                                'active',
-                                                'trial'
-                                                    => 'boq-badge-success',
-
-                                                'pending',
-                                                'grace_period'
-                                                    => 'boq-badge-warning',
-
-                                                'past_due',
-                                                'suspended',
-                                                'cancelled',
-                                                'expired'
-                                                    => 'boq-badge-danger',
-
-                                                default
-                                                    => '',
-                                            };
-
-                                            $statusIcon = match($item->status) {
-                                                'active'
-                                                    => 'fa-circle-check',
-
-                                                'trial'
-                                                    => 'fa-gift',
-
-                                                'pending'
-                                                    => 'fa-clock',
-
-                                                'grace_period'
-                                                    => 'fa-hourglass-half',
-
-                                                'past_due'
-                                                    => 'fa-triangle-exclamation',
-
-                                                'suspended'
-                                                    => 'fa-pause-circle',
-
-                                                'expired'
-                                                    => 'fa-calendar-xmark',
-
-                                                'cancelled'
-                                                    => 'fa-ban',
-
-                                                default
-                                                    => 'fa-circle',
-                                            };
-                                        @endphp
-
-                                        <span class="boq-badge {{ $statusClass }}">
-
-                                            <i class="fas {{ $statusIcon }}"></i>
-
-                                            {{ ucwords(
-                                                str_replace(
-                                                    '_',
-                                                    ' ',
-                                                    $item->status ?? 'unknown'
-                                                )
-                                            ) }}
-
+                                <td>
+                                    <div class="boq-cell-stack">
+                                        <span class="boq-cell-with-icon">
+                                            <i class="fas fa-calendar-day" aria-hidden="true"></i>
+                                            {{ \App\Support\Format::date($item->start_date) ?? __('Not started') }}
                                         </span>
-
-                                    </td>
-
-
-                                    {{-- Payment Status --}}
-                                    <td>
-
-                                        @php
-                                            $paymentStatus =
-                                                $item->payment_status
-                                                ?? 'pending';
-
-                                            $paymentClass = match($paymentStatus) {
-                                                'paid',
-                                                'successful',
-                                                'completed'
-                                                    => 'boq-badge-success',
-
-                                                'pending',
-                                                'processing',
-                                                'initiated'
-                                                    => 'boq-badge-warning',
-
-                                                'failed',
-                                                'cancelled',
-                                                'refunded'
-                                                    => 'boq-badge-danger',
-
-                                                default
-                                                    => '',
-                                            };
-                                        @endphp
-
-                                        <span class="boq-badge {{ $paymentClass }}">
-                                            {{ ucwords(
-                                                str_replace(
-                                                    '_',
-                                                    ' ',
-                                                    $paymentStatus
-                                                )
-                                            ) }}
+                                        <span class="boq-table-subtitle">
+                                            {{ __('Until') }} {{ \App\Support\Format::date($item->end_date) ?? __('Ongoing') }}
                                         </span>
+                                    </div>
+                                </td>
 
-                                    </td>
+                                <td class="is-numeric font-semibold text-slate-900">
+                                    <x-money :amount="$item->plan?->price ?? 0" :currency="$item->plan?->currency" />
+                                </td>
 
-
-                                    {{-- Period --}}
-                                    <td>
-
-                                        <div class="boq-cell-stack">
-
-                                            <span class="boq-cell-with-icon">
-
-                                                <i class="fas fa-calendar-day"></i>
-
-                                                {{ \App\Support\Format::date($item->start_date, false)
-                                                    ?? 'Not started'
-                                                }}
-
-                                            </span>
-
-                                            <span class="boq-table-subtitle">
-
-                                                Until
-
-                                                {{ \App\Support\Format::date($item->end_date, false)
-                                                    ?? 'Ongoing'
-                                                }}
-
-                                            </span>
-
-                                        </div>
-
-                                    </td>
-
-
-                                    {{-- Price --}}
-                                    <td class="text-right">
-
-                                        <strong>
-
-                                            {{ $item->plan?->currency ?? \App\Support\Regional::currency() }}
-
-                                            {{ \App\Support\Format::number((float) ($item->plan?->price ?? 0), 0) }}
-
-                                        </strong>
-
-                                    </td>
-
-
-                                    {{-- Actions --}}
-                                    <td class="text-right">
-
+                                <td class="text-right">
+                                    <div class="boq-table-actions">
                                         @if(in_array($item->status, ['pending', 'past_due'], true))
                                             <a
                                                 href="{{ route('checkout', ['type' => 'plan', 'id' => $item->id]) }}"
-                                                class="boq-icon-btn boq-icon-success"
-                                                title="{{ __('Pay now') }}"
-                                                aria-label="{{ __('Pay now') }}"
+                                                class="boq-btn-primary boq-btn-sm"
                                             >
-                                                <i class="fas fa-credit-card"></i>
+                                                <i class="fas fa-credit-card" aria-hidden="true"></i>
+                                                {{ __('Pay now') }}
                                             </a>
                                         @endif
 
-                                        @unless(
-                                            in_array(
-                                                $item->status,
-                                                [
-                                                    'cancelled',
-                                                    'expired',
-                                                ],
-                                                true
-                                            )
-                                        )
-
+                                        @unless(in_array($item->status, ['cancelled', 'expired'], true))
                                             <button
                                                 type="button"
                                                 wire:click="confirmCancel({{ $item->id }})"
@@ -661,92 +197,43 @@
                                                 title="{{ __('Cancel subscription') }}"
                                                 aria-label="{{ __('Cancel subscription') }}"
                                             >
-                                                <i class="fas fa-ban"></i>
+                                                <i class="fas fa-ban" aria-hidden="true"></i>
                                             </button>
-
                                         @else
-
-                                            <span class="boq-no-action">
-                                                {{ __('No action') }}
-                                            </span>
-
+                                            <span class="boq-no-action">{{ __('No action') }}</span>
                                         @endunless
-
-                                    </td>
-
-                                </tr>
-
-
-                            @empty
-
-                                <tr>
-
-                                    <td
-                                        colspan="7"
-                                        class="boq-empty-table"
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="p-0">
+                                    <x-ui.empty-state
+                                        icon="fa-receipt"
+                                        :title="__('No subscriptions match your filters.')"
+                                        :description="__('Pick a plan to get started, or change the filters above.')"
                                     >
+                                        <x-ui.button size="sm" icon="fa-layer-group" wire:click="showPlans">{{ __('Available Plans') }}</x-ui.button>
+                                    </x-ui.empty-state>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </x-ui.table>
 
-                                        <i class="fas fa-receipt"></i>
-
-                                        <span>
-                                            {{ __('No subscriptions match your filters.') }}
-                                        </span>
-
-                                    </td>
-
-                                </tr>
-
-                            @endforelse
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-
-                {{-- =================================================
-                     SUBSCRIPTION PAGINATION
-                ================================================== --}}
                 @if($subscriptions->hasPages())
-
                     <div class="boq-pagination">
                         {{ $subscriptions->links() }}
                     </div>
-
                 @endif
-
             </div>
-
-
-        {{-- =========================================================
-             AVAILABLE PLANS TAB
-        ========================================================== --}}
         @else
-
             <div wire:key="plans-tab">
-
-                {{-- =================================================
-                     PLAN FILTERS
-                ================================================== --}}
                 <div class="boq-filter-section">
-
                     <div class="boq-plan-filter-grid">
-
-                        {{-- Search --}}
-                        <div>
-
-                            <label
-                                for="plan-search"
-                                class="boq-field-label"
-                            >
-                                {{ __('Search Plans') }}
-                            </label>
-
+                        <x-ui.field :label="__('Search Plans')" for="plan-search">
                             <div class="boq-input-icon-wrap">
-
-                                <i class="fas fa-search boq-input-icon"></i>
-
+                                <i class="fas fa-search boq-input-icon" aria-hidden="true"></i>
                                 <input
                                     id="plan-search"
                                     type="search"
@@ -755,416 +242,123 @@
                                     placeholder="{{ __('Search plan name, code or description...') }}"
                                     autocomplete="off"
                                 >
-
                             </div>
+                        </x-ui.field>
 
-                        </div>
-
-
-                        {{-- Billing Period --}}
-                        <div>
-
-                            <label
-                                for="plan-period"
-                                class="boq-field-label"
-                            >
-                                {{ __('Billing Period') }}
-                            </label>
-
-                            <select
-                                id="plan-period"
-                                wire:model.live="planPeriodFilter"
-                                class="boq-field"
-                            >
-
-                                <option value="all">
-                                    {{ __('All periods') }}
-                                </option>
-
-                                <option value="monthly">
-                                    {{ __('Monthly') }}
-                                </option>
-
-                                <option value="quarterly">
-                                    {{ __('3 months') }}
-                                </option>
-
-                                <option value="six_month">
-                                    {{ __('6 months') }}
-                                </option>
-
-                                <option value="annual">
-                                    {{ __('Annual') }}
-                                </option>
-
-                                <option value="lifetime">
-                                    {{ __('Lifetime') }}
-                                </option>
-
+                        <x-ui.field :label="__('Billing Period')" for="plan-period">
+                            <select id="plan-period" wire:model.live="planPeriodFilter" class="boq-field">
+                                <option value="all">{{ __('All periods') }}</option>
+                                <option value="monthly">{{ __('Monthly') }}</option>
+                                <option value="quarterly">{{ __('3 months') }}</option>
+                                <option value="six_month">{{ __('6 months') }}</option>
+                                <option value="annual">{{ __('Annual') }}</option>
+                                <option value="lifetime">{{ __('Lifetime') }}</option>
                             </select>
+                        </x-ui.field>
 
-                        </div>
-
-
-                        {{-- Rows --}}
-                        <div>
-
-                            <label
-                                for="plan-per-page"
-                                class="boq-field-label"
-                            >
-                                {{ __('Rows') }}
-                            </label>
-
-                            <select
-                                id="plan-per-page"
-                                wire:model.live="planPerPage"
-                                class="boq-field"
-                            >
-
+                        <x-ui.field :label="__('Rows')" for="plan-per-page">
+                            <select id="plan-per-page" wire:model.live="planPerPage" class="boq-field">
                                 @foreach([10, 25, 50, 100] as $size)
-
-                                    <option value="{{ $size }}">
-                                        {{ $size }}
-                                    </option>
-
+                                    <option value="{{ $size }}">{{ $size }}</option>
                                 @endforeach
-
                             </select>
-
-                        </div>
-
+                        </x-ui.field>
                     </div>
-
                 </div>
 
-
-                {{-- =================================================
-                     PLAN CARDS
-                ================================================== --}}
-                <div class="boq-plan-grid">
-
+                <div class="boq-plan-grid p-4 sm:p-5">
                     @forelse($plans as $plan)
+                        @php $isCurrent = $currentSubscription && (int) $currentSubscription->plan_id === (int) $plan->id; @endphp
 
-                        <article
-                            wire:key="available-plan-{{ $plan->id }}"
-                            class="boq-plan-card"
-                        >
-
-                            {{-- =========================================
-                                 PLAN HEADER
-                            ========================================== --}}
+                        <article wire:key="available-plan-{{ $plan->id }}" @class(['boq-plan-card', 'is-current' => $isCurrent])>
                             <div class="boq-plan-header">
-
                                 <div class="boq-plan-heading-copy">
-
-                                    <div class="boq-plan-main-icon">
-
-                                        @switch($plan->type)
-
-                                            @case('monthly')
-                                                <i class="fas fa-calendar-alt"></i>
-                                                @break
-
-                                            @case('three_month')
-                                                <i class="fas fa-calendar-week"></i>
-                                                @break
-
-                                            @case('six_month')
-                                                <i class="fas fa-calendar-days"></i>
-                                                @break
-
-                                            @case('annual')
-                                                <i class="fas fa-calendar-check"></i>
-                                                @break
-
-                                            @case('lifetime')
-                                                <i class="fas fa-infinity"></i>
-                                                @break
-
-                                            @default
-                                                <i class="fas fa-box-open"></i>
-
-                                        @endswitch
-
-                                    </div>
-
-
-                                    <div>
-
-                                        <h3 class="boq-plan-name">
-                                            {{ $plan->name }}
-                                        </h3>
-
-                                        <p class="boq-plan-description">
-                                            {{ $plan->description ?: 'BOQ subscription plan' }}
-                                        </p>
-
-                                    </div>
-
+                                    <span class="boq-plan-main-icon"><i class="fas {{ $typeIcons[$plan->type] ?? 'fa-box-open' }}" aria-hidden="true"></i></span>
+                                    <h3 class="boq-plan-name">{{ $plan->name }}</h3>
+                                    <p class="boq-plan-description">{{ $plan->description ?: __('BOQ subscription plan') }}</p>
                                 </div>
 
-
-                                <span class="boq-plan-type">
-
-                                    <i class="fas fa-tag"></i>
-
-                                    {{ ucwords(
-                                        str_replace(
-                                            '_',
-                                            ' ',
-                                            $plan->type ?? 'plan'
-                                        )
-                                    ) }}
-
-                                </span>
-
+                                <span class="boq-plan-type">{{ __(\Illuminate\Support\Str::headline($plan->type ?? 'plan')) }}</span>
                             </div>
 
-
-                            {{-- =========================================
-                                 PRICE
-                            ========================================== --}}
                             <div class="boq-plan-price">
-
-                                <span class="boq-plan-currency">
-                                    {{ $plan->currency ?? \App\Support\Regional::currency() }}
-                                </span>
-
-                                <span class="boq-plan-price-value">
-                                    {{ \App\Support\Format::number((float) $plan->price, 0) }}
-                                </span>
-
+                                <span class="boq-plan-currency">{{ $plan->currency ?? \App\Support\Regional::currency() }}</span>
+                                <span class="boq-plan-price-value">{{ \App\Support\Format::number((float) $plan->price, 0) }}</span>
                             </div>
 
-
-                            {{-- =========================================
-                                 DURATION
-                            ========================================== --}}
                             <div class="boq-plan-duration">
-
-                                <i class="fas fa-clock"></i>
-
+                                <i class="fas fa-clock" aria-hidden="true"></i>
                                 @if($plan->type === 'lifetime')
-
-                                    <span>
-                                        {{ __('Lifetime access') }}
-                                    </span>
-
+                                    <span>{{ __('Lifetime access') }}</span>
                                 @elseif($plan->duration_days)
-
-                                    <span>
-                                        {{ $plan->duration_days }} days
-                                    </span>
-
+                                    <span>{{ trans_choice(':count day|:count days', (int) $plan->duration_days, ['count' => \App\Support\Format::number($plan->duration_days, 0)]) }}</span>
                                 @else
-
-                                    <span>
-                                        {{ __('Duration based on plan') }}
-                                    </span>
-
+                                    <span>{{ __('Duration based on plan') }}</span>
                                 @endif
-
                             </div>
 
-
-                            {{-- =========================================
-                                 PLAN LIMITS
-                            ========================================== --}}
                             <div class="boq-plan-limits">
-
                                 <div class="boq-plan-limits-grid">
-
-                                    {{-- Projects --}}
                                     <div class="boq-plan-limit">
-
-                                        <div class="boq-plan-limit-label">
-                                            <i class="fas fa-folder-open"></i>
-                                            {{ __('Projects') }}
-                                        </div>
-
-                                        <div class="boq-plan-limit-value">
-                                            {{ $plan->max_projects ?? '∞' }}
-                                        </div>
-
+                                        <div class="boq-plan-limit-label"><i class="fas fa-folder-open" aria-hidden="true"></i> {{ __('Projects') }}</div>
+                                        <div class="boq-plan-limit-value">{{ $plan->max_projects !== null ? \App\Support\Format::number($plan->max_projects, 0) : '∞' }}</div>
                                     </div>
-
-
-                                    {{-- BOQs --}}
                                     <div class="boq-plan-limit">
-
-                                        <div class="boq-plan-limit-label">
-                                            <i class="fas fa-file-invoice-dollar"></i>
-                                            {{ __('BOQs') }}
-                                        </div>
-
-                                        <div class="boq-plan-limit-value">
-                                            {{ $plan->max_boqs ?? '∞' }}
-                                        </div>
-
+                                        <div class="boq-plan-limit-label"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i> {{ __('BOQs') }}</div>
+                                        <div class="boq-plan-limit-value">{{ $plan->max_boqs !== null ? \App\Support\Format::number($plan->max_boqs, 0) : '∞' }}</div>
                                     </div>
-
-
-
                                 </div>
-
                             </div>
 
-
-                            {{-- =========================================
-                                 EXTRA LIMITS
-                            ========================================== --}}
-                            @if(
-                                $plan->max_users
-                                || $plan->max_ocr_pages
-                                || $plan->max_storage_bytes
-                            )
-
+                            @if($plan->max_users || $plan->max_ocr_pages || $plan->max_storage_bytes)
                                 <div class="boq-plan-secondary-limits">
-
                                     @if($plan->max_users)
-
-                                        <div>
-                                            <i class="fas fa-users"></i>
-
-                                            {{ $plan->max_users }}
-                                            users
-                                        </div>
-
+                                        <div><i class="fas fa-users" aria-hidden="true"></i> {{ trans_choice(':count user|:count users', (int) $plan->max_users, ['count' => \App\Support\Format::number($plan->max_users, 0)]) }}</div>
                                     @endif
-
-
                                     @if($plan->max_ocr_pages)
-
-                                        <div>
-                                            <i class="fas fa-file-lines"></i>
-
-                                            {{ $plan->max_ocr_pages }}
-                                            OCR pages
-                                        </div>
-
+                                        <div><i class="fas fa-file-lines" aria-hidden="true"></i> {{ __(':count OCR pages', ['count' => \App\Support\Format::number($plan->max_ocr_pages, 0)]) }}</div>
                                     @endif
-
-
                                     @if($plan->max_storage_bytes)
-
-                                        <div>
-                                            <i class="fas fa-database"></i>
-
-                                            {{ \App\Support\Format::number($plan->max_storage_bytes
-                                                / 1024
-                                                / 1024, 0) }}
-                                            MB storage
-                                        </div>
-
+                                        <div><i class="fas fa-database" aria-hidden="true"></i> {{ __(':size MB storage', ['size' => \App\Support\Format::number($plan->max_storage_bytes / 1024 / 1024, 0)]) }}</div>
                                     @endif
-
                                 </div>
-
                             @endif
 
-
-                            {{-- =========================================
-                                 FEATURES
-                            ========================================== --}}
-                            @if(
-                                $plan->relationLoaded('features')
-                                && $plan->features->isNotEmpty()
-                            )
-
+                            @if($plan->relationLoaded('features') && $plan->features->isNotEmpty())
                                 <div class="boq-plan-features">
-
-                                    <p class="boq-plan-features-title">
-
-                                        <i class="fas fa-list-check"></i>
-
-                                        {{ __('Features') }}
-
-                                    </p>
-
-
-                                    <div class="boq-plan-feature-list">
-
-                                        @foreach(
-                                            $plan->features->take(5)
-                                            as $feature
-                                        )
-
-                                            <div class="boq-plan-feature">
-
-                                                <span class="boq-plan-feature-check">
-                                                    <i class="fas fa-check"></i>
-                                                </span>
-
-                                                <span>
-                                                    {{ $feature->name }}
-                                                </span>
-
-                                            </div>
-
+                                    <p class="boq-plan-features-title">{{ __('Features') }}</p>
+                                    <ul class="boq-plan-feature-list">
+                                        @foreach($plan->features->take(5) as $feature)
+                                            <li class="boq-plan-feature">
+                                                <span class="boq-plan-feature-check" aria-hidden="true"><i class="fas fa-check"></i></span>
+                                                <span>{{ $feature->name }}</span>
+                                            </li>
                                         @endforeach
-
-                                    </div>
-
+                                    </ul>
 
                                     @if($plan->features->count() > 5)
-
                                         <p class="boq-plan-more-features">
-
-                                            <i class="fas fa-plus-circle"></i>
-
-                                            {{ $plan->features->count() - 5 }}
-                                            more features
-
+                                            <i class="fas fa-plus-circle" aria-hidden="true"></i>
+                                            {{ trans_choice(':count more feature|:count more features', $plan->features->count() - 5, ['count' => $plan->features->count() - 5]) }}
                                         </p>
-
                                     @endif
-
                                 </div>
-
                             @endif
 
-
-                            {{-- =========================================
-                                 FREE TRIAL
-                            ========================================== --}}
-                            @if(
-                                ($plan->has_trial ?? false)
-                                && ($plan->trial_days ?? 0) > 0
-                            )
-
+                            @if(($plan->has_trial ?? false) && ($plan->trial_days ?? 0) > 0)
                                 <div class="boq-plan-trial">
-
-                                    <i class="fas fa-gift"></i>
-
-                                    {{ $plan->trial_days }}-day free trial
-
+                                    <i class="fas fa-gift" aria-hidden="true"></i>
+                                    {{ __(':days-day free trial', ['days' => $plan->trial_days]) }}
                                 </div>
-
                             @endif
 
-
-                            {{-- =========================================
-                                 ACTION
-                            ========================================== --}}
                             <div class="boq-plan-action">
-
-                                @if(
-                                    $currentSubscription
-                                    && (int) $currentSubscription->plan_id
-                                        === (int) $plan->id
-                                )
-
+                                @if($isCurrent)
                                     <span class="boq-current-plan-button">
-
-                                        <i class="fas fa-circle-check"></i>
-
+                                        <i class="fas fa-circle-check" aria-hidden="true"></i>
                                         {{ __('Current Plan') }}
-
                                     </span>
-
                                 @else
-
                                     <button
                                         type="button"
                                         wire:click="confirmSubscribe({{ $plan->id }})"
@@ -1172,201 +366,55 @@
                                         wire:target="confirmSubscribe({{ $plan->id }})"
                                         class="boq-plan-choose-button"
                                     >
-
-                                        <i
-                                            wire:loading.remove
-                                            wire:target="confirmSubscribe({{ $plan->id }})"
-                                            class="fas fa-circle-check"
-                                        ></i>
-
-                                        <i
-                                            wire:loading
-                                            wire:target="confirmSubscribe({{ $plan->id }})"
-                                            class="fas fa-spinner fa-spin"
-                                        ></i>
-
-                                        <span
-                                            wire:loading.remove
-                                            wire:target="confirmSubscribe({{ $plan->id }})"
-                                        >
-                                            {{ __('Choose Plan') }}
-                                        </span>
-
-                                        <span
-                                            wire:loading
-                                            wire:target="confirmSubscribe({{ $plan->id }})"
-                                        >
-                                            {{ __('Processing...') }}
-                                        </span>
-
+                                        <i wire:loading.remove wire:target="confirmSubscribe({{ $plan->id }})" class="fas fa-circle-check" aria-hidden="true"></i>
+                                        <i wire:loading wire:target="confirmSubscribe({{ $plan->id }})" class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                                        <span wire:loading.remove wire:target="confirmSubscribe({{ $plan->id }})">{{ __('Choose Plan') }}</span>
+                                        <span wire:loading wire:target="confirmSubscribe({{ $plan->id }})">{{ __('Processing...') }}</span>
                                     </button>
-
                                 @endif
-
                             </div>
-
                         </article>
-
-
                     @empty
-
                         <div class="boq-plans-empty">
-
-                            <i class="fas fa-layer-group"></i>
-
-                            <p>
-                                {{ __('No available plans match your search.') }}
-                            </p>
-
+                            <i class="fas fa-layer-group" aria-hidden="true"></i>
+                            <p>{{ __('No available plans match your search.') }}</p>
                         </div>
-
                     @endforelse
-
                 </div>
 
-
-                {{-- =================================================
-                     PLAN PAGINATION
-                ================================================== --}}
                 @if($plans->hasPages())
-
                     <div class="boq-pagination">
                         {{ $plans->links() }}
                     </div>
-
                 @endif
-
             </div>
-
         @endif
-
     </div>
 
-
-    {{-- =========================================================
-         CONFIRMATION MODAL
-    ========================================================== --}}
     @if($showActionModal)
-
-        <div
-            class="boq-modal-backdrop"
+        <x-ui.modal
             wire:key="subscription-action-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="subscription-action-title"
+            id="subscription-action"
+            :title="$actionTitle"
+            :icon="$isDanger ? 'fa-ban' : 'fa-circle-check'"
+            size="sm"
+            close="closeActionModal"
         >
+            <p class="boq-modal-message">{{ $actionMessage }}</p>
 
-            <div class="boq-modal boq-modal-sm">
+            <x-slot:footer>
+                <button type="button" wire:click="closeActionModal" wire:loading.attr="disabled" wire:target="performAction" class="boq-btn-secondary">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    {{ __('Back') }}
+                </button>
 
-                {{-- Modal Header --}}
-                <div class="boq-modal-head">
-
-                    <h2 id="subscription-action-title">
-                        {{ $actionTitle }}
-                    </h2>
-
-                    <button
-                        type="button"
-                        wire:click="closeActionModal"
-                        class="boq-modal-close"
-                        aria-label="{{ __('Close') }}"
-                    >
-                        <i class="fas fa-xmark"></i>
-                    </button>
-
-                </div>
-
-
-                {{-- Modal Body --}}
-                <div class="boq-modal-body">
-
-                    <p class="boq-modal-message">
-                        {{ $actionMessage }}
-                    </p>
-
-                </div>
-
-
-                {{-- Modal Footer --}}
-                <div class="boq-modal-foot">
-
-                    <button
-                        type="button"
-                        wire:click="closeActionModal"
-                        wire:loading.attr="disabled"
-                        wire:target="performAction"
-                        class="boq-btn-secondary"
-                    >
-                        <i class="fas fa-arrow-left"></i>
-                        {{ __('Back') }}
-                    </button>
-
-
-                    <button
-                        type="button"
-                        wire:click="performAction"
-                        wire:loading.attr="disabled"
-                        wire:target="performAction"
-                        class="{{
-                            in_array(
-                                $actionType,
-                                [
-                                    'cancel',
-                                    'bulk_cancel',
-                                ],
-                                true
-                            )
-                                ? 'boq-btn-danger'
-                                : 'boq-btn-primary'
-                        }}"
-                    >
-
-                        <i
-                            wire:loading.remove
-                            wire:target="performAction"
-                            class="fas {{
-                                in_array(
-                                    $actionType,
-                                    [
-                                        'cancel',
-                                        'bulk_cancel',
-                                    ],
-                                    true
-                                )
-                                    ? 'fa-ban'
-                                    : 'fa-check'
-                            }}"
-                        ></i>
-
-                        <i
-                            wire:loading
-                            wire:target="performAction"
-                            class="fas fa-spinner fa-spin"
-                        ></i>
-
-
-                        <span
-                            wire:loading.remove
-                            wire:target="performAction"
-                        >
-                            {{ __('Confirm') }}
-                        </span>
-
-                        <span
-                            wire:loading
-                            wire:target="performAction"
-                        >
-                            {{ __('Processing...') }}
-                        </span>
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
+                <button type="button" wire:click="performAction" wire:loading.attr="disabled" wire:target="performAction" class="{{ $isDanger ? 'boq-btn-danger' : 'boq-btn-primary' }}">
+                    <i wire:loading.remove wire:target="performAction" class="fas {{ $isDanger ? 'fa-ban' : 'fa-check' }}" aria-hidden="true"></i>
+                    <i wire:loading wire:target="performAction" class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                    <span wire:loading.remove wire:target="performAction">{{ __('Confirm') }}</span>
+                    <span wire:loading wire:target="performAction">{{ __('Processing...') }}</span>
+                </button>
+            </x-slot:footer>
+        </x-ui.modal>
     @endif
-
 </div>

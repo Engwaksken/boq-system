@@ -1,15 +1,17 @@
-<x-layouts.guest title="{{ __('Maintenance') }}">
+@php
+    try {
+        $loginUrl = route('login');
+    } catch (\Throwable) {
+        $loginUrl = url('/login');
+    }
+@endphp
 
-    <div class="text-center">
-        <x-auth-badge icon="fa-screwdriver-wrench" />
+@component('errors.shell', ['pageTitle' => __('Maintenance')])
+    <span class="badge"><i class="fas fa-screwdriver-wrench" aria-hidden="true"></i></span>
 
-        <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">{{ __('We\'ll be right back') }}</h1>
+    <h1>{{ __('We\'ll be right back') }}</h1>
 
-        <p class="mt-3 text-sm leading-6 text-slate-500">{{ $message }}</p>
+    <p class="message">{{ $message }}</p>
 
-        <p class="mt-6 text-sm">
-            <a href="{{ route('login') }}" class="auth-link">{{ __('Administrator sign in') }}</a>
-        </p>
-    </div>
-
-</x-layouts.guest>
+    <p class="message"><a href="{{ $loginUrl }}" class="link">{{ __('Administrator sign in') }}</a></p>
+@endcomponent

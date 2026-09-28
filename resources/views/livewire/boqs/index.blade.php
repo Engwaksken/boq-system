@@ -1,720 +1,236 @@
+@php
+    $sortOptions = [
+        'created_at' => __('Created'),
+        'name' => __('Name'),
+        'project.name' => __('Project'),
+        'status' => __('Status'),
+        'currency' => __('Currency'),
+        'items_count' => __('Items'),
+    ];
+@endphp
+
 <div class="boq-page-stack">
 
-    @if(session('status'))
-        <div class="boq-flash mb-4"><i class="fas fa-circle-check"></i> {{ session('status') }}</div>
-    @endif
+    <x-ui.page-header
+        :title="__('BOQs')"
+        icon="fa-file-invoice-dollar"
+        :subtitle="__('Bill of Quantities for your projects.')"
+    >
+        <x-slot:actions>
+            <x-ui.button icon="fa-plus" :href="route('boqs.create')">{{ __('New BOQ') }}</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    {{-- =====================================================
-         HEADER
-    ====================================================== --}}
-    <div class="boq-page-header">
+    <x-ui.flash />
 
-        <div>
-
-            <h1 class="boq-page-title">
-                <i class="fas fa-file-invoice-dollar"></i>
-                {{ __('BOQs') }}
-            </h1>
-
-            <p class="boq-page-subtitle">
-                {{ __('Bill of Quantities for your projects.') }}
-            </p>
-
-        </div>
-
-        <a
-            href="{{ url('/boqs/create') }}"
-            class="boq-btn-primary"
-        >
-            <i class="fas fa-plus"></i>
-            {{ __('New BOQ') }}
-        </a>
-
-    </div>
-
-
-    {{-- =====================================================
-         STATISTICS
-         SAME DISPLAY AS PLANS & PRICING
-    ====================================================== --}}
     <div class="boq-stats-grid">
-
-        {{-- Total BOQs --}}
-        <div class="boq-stat-card boq-stat-green">
-
-            <div>
-
-                <p class="boq-stat-label">
-                    {{ __('Total BOQs') }}
-                </p>
-
-                <p class="boq-stat-value">
-                    {{ $stats['total_boqs'] ?? 0 }}
-                </p>
-
-            </div>
-
-            <span class="boq-stat-icon">
-                <i class="fas fa-file-invoice-dollar"></i>
-            </span>
-
-        </div>
-
-
-        {{-- Uploaded --}}
-        <div class="boq-stat-card boq-stat-blue">
-
-            <div>
-
-                <p class="boq-stat-label">
-                    {{ __('Uploaded') }}
-                </p>
-
-                <p class="boq-stat-value">
-                    {{ $stats['uploaded'] ?? 0 }}
-                </p>
-
-            </div>
-
-            <span class="boq-stat-icon">
-                <i class="fas fa-cloud-arrow-up"></i>
-            </span>
-
-        </div>
-
-
-        {{-- Under Review --}}
-        <div class="boq-stat-card boq-stat-amber">
-
-            <div>
-
-                <p class="boq-stat-label">
-                    {{ __('Under Review') }}
-                </p>
-
-                <p class="boq-stat-value">
-                    {{ $stats['under_review'] ?? 0 }}
-                </p>
-
-            </div>
-
-            <span class="boq-stat-icon">
-                <i class="fas fa-magnifying-glass-chart"></i>
-            </span>
-
-        </div>
-
-
-        {{-- Approved --}}
-        <div class="boq-stat-card boq-stat-purple">
-
-            <div>
-
-                <p class="boq-stat-label">
-                    {{ __('Approved') }}
-                </p>
-
-                <p class="boq-stat-value">
-                    {{ $stats['approved'] ?? 0 }}
-                </p>
-
-            </div>
-
-            <span class="boq-stat-icon">
-                <i class="fas fa-circle-check"></i>
-            </span>
-
-        </div>
-
+        <x-stat-card :label="__('Total BOQs')" :value="\App\Support\Format::number($stats['total_boqs'] ?? 0, 0)" icon="fa-file-invoice-dollar" color="green" />
+        <x-stat-card :label="__('Uploaded')" :value="\App\Support\Format::number($stats['uploaded'] ?? 0, 0)" icon="fa-cloud-arrow-up" color="blue" />
+        <x-stat-card :label="__('Under Review')" :value="\App\Support\Format::number($stats['under_review'] ?? 0, 0)" icon="fa-magnifying-glass-chart" color="amber" />
+        <x-stat-card :label="__('Approved')" :value="\App\Support\Format::number($stats['approved'] ?? 0, 0)" icon="fa-circle-check" color="purple" />
     </div>
 
-
-    {{-- =====================================================
-         SEARCH / ROWS / SORT
-    ====================================================== --}}
     <div class="boq-panel">
 
-        <div
-            class="boq-index-filter-grid boq-index-filter-grid-boqs"
-        >
-
-            {{-- Search --}}
-            <div>
-
-                <label class="boq-field-label">
-                    {{ __('Search BOQs') }}
-                </label>
-
+        <div class="boq-toolbar border-b border-slate-200">
+            <x-ui.field :label="__('Search BOQs')" for="boq-search" class="boq-toolbar-grow">
                 <div class="boq-input-icon-wrap">
-
-                    <i class="fas fa-search boq-input-icon"></i>
-
+                    <i class="fas fa-search boq-input-icon" aria-hidden="true"></i>
                     <input
+                        id="boq-search"
                         type="search"
                         wire:model.live.debounce.300ms="search"
                         class="boq-field boq-field-with-icon"
-                        placeholder="{{ __('Search BOQ name, project or status...') }}"
+                        placeholder="{{ __('Search by BOQ name...') }}"
                     >
-
                 </div>
+            </x-ui.field>
 
-            </div>
+            @if($projects->count() > 1)
+                <x-ui.field :label="__('Project')" for="boq-project-filter" class="w-full sm:w-56">
+                    <select id="boq-project-filter" wire:model.live="projectId" class="boq-field">
+                        <option value="">{{ __('All projects') }}</option>
+                        @foreach($projects as $projectOption)
+                            <option value="{{ $projectOption->id }}">{{ $projectOption->name }}</option>
+                        @endforeach
+                    </select>
+                </x-ui.field>
+            @endif
 
-
-            {{-- Rows --}}
-            <div>
-
-                <label class="boq-field-label">
-                    {{ __('Rows') }}
-                </label>
-
-                <select
-                    wire:model.live="perPage"
-                    class="boq-field"
-                >
-
-                    @foreach($perPageOptions as $option)
-
-                        <option value="{{ $option }}">
-                            {{ $option }}
-                        </option>
-
+            <x-ui.field :label="__('Sort By')" for="boq-sort" class="w-full sm:w-40">
+                <select id="boq-sort" class="boq-field" wire:change="sortBy($event.target.value)">
+                    @foreach($sortOptions as $field => $label)
+                        <option value="{{ $field }}" @selected($sortBy === $field)>{{ $label }}</option>
                     @endforeach
-
                 </select>
+            </x-ui.field>
 
-            </div>
-
-
-            {{-- Sort --}}
-            <div>
-
-                <label class="boq-field-label">
-                    {{ __('Sort By') }}
-                </label>
-
-                <div class="boq-sort-buttons">
-
-                    @foreach([
-                        'name' => [
-                            'label' => 'Name',
-                            'icon' => 'fa-font',
-                        ],
-                        'status' => [
-                            'label' => 'Status',
-                            'icon' => 'fa-circle-check',
-                        ],
-                        'currency' => [
-                            'label' => 'Currency',
-                            'icon' => 'fa-coins',
-                        ],
-                        'created_at' => [
-                            'label' => 'Created',
-                            'icon' => 'fa-calendar',
-                        ],
-                    ] as $field => $sortOption)
-
-                        <button
-                            type="button"
-                            wire:click="sortBy('{{ $field }}')"
-                            class="boq-sort-button {{ $sortBy === $field ? 'is-active' : '' }}"
-                        >
-
-                            <i class="fas {{ $sortOption['icon'] }}"></i>
-
-                            {{ $sortOption['label'] }}
-
-                            @if($sortBy === $field)
-
-                                <i class="fas {{
-                                    $sortDir === 'asc'
-                                        ? 'fa-arrow-up'
-                                        : 'fa-arrow-down'
-                                }}"></i>
-
-                            @endif
-
-                        </button>
-
+            <x-ui.field :label="__('Rows')" for="boq-rows" class="w-full sm:w-24">
+                <select id="boq-rows" wire:model.live="perPage" class="boq-field">
+                    @foreach($perPageOptions as $option)
+                        <option value="{{ $option }}">{{ $option }}</option>
                     @endforeach
-
-                </div>
-
-            </div>
-
+                </select>
+            </x-ui.field>
         </div>
-
-    </div>
-
-
-    {{-- =====================================================
-         BOQ TABLE
-    ====================================================== --}}
-    <div class="boq-panel">
 
         <x-bulk-bar :count="count($selected)">
-            <button type="button" wire:click="bulkDelete" wire:confirm="{{ __('Delete the selected BOQs?') }}" class="boq-btn-danger"><i class="fas fa-trash"></i> {{ __('Delete') }}</button>
+            <button type="button" wire:click="bulkDelete" wire:confirm="{{ __('Delete the selected BOQs?') }}" class="boq-btn-danger"><i class="fas fa-trash" aria-hidden="true"></i> {{ __('Delete') }}</button>
         </x-bulk-bar>
 
+        <div class="boq-loading-bar" wire:loading.delay wire:target="search, perPage, projectId, sortBy, gotoPage, nextPage, previousPage"></div>
 
-        <div class="boq-table-wrapper">
+        <x-ui.table>
+            <thead>
+                <tr>
+                    <th class="boq-check-col"><x-select-all :ids="$boqs->pluck('id')" :selected="$selected" /></th>
+                    <x-ui.sort-header field="name" :sort-by="$sortBy" :sort-dir="$sortDir">{{ __('Name') }}</x-ui.sort-header>
+                    <x-ui.sort-header field="project.name" :sort-by="$sortBy" :sort-dir="$sortDir">{{ __('Project') }}</x-ui.sort-header>
+                    <x-ui.sort-header field="status" :sort-by="$sortBy" :sort-dir="$sortDir">{{ __('Status') }}</x-ui.sort-header>
+                    <x-ui.sort-header field="items_count" :sort-by="$sortBy" :sort-dir="$sortDir">{{ __('Items') }}</x-ui.sort-header>
+                    <th>{{ __('Totals') }}</th>
+                    <x-ui.sort-header field="created_at" :sort-by="$sortBy" :sort-dir="$sortDir">{{ __('Created') }}</x-ui.sort-header>
+                    <th class="text-right">{{ __('Actions') }}</th>
+                </tr>
+            </thead>
 
-            <table class="boq-table">
+            <tbody>
+                @forelse($boqs as $boq)
+                    <tr wire:key="boq-{{ $boq->id }}">
+                        <td class="boq-check-col">
+                            @can('delete', $boq)
+                                <x-select-row :id="$boq->id" />
+                            @endcan
+                        </td>
 
-                <thead>
-
-                    <tr>
-
-                        <th class="boq-check-col"><x-select-all :ids="$boqs->pluck('id')" :selected="$selected" /></th>
-
-                        {{-- Name --}}
-                        <th
-                            wire:click="sortBy('name')"
-                            class="boq-sortable-header"
-                        >
-
-                            <span>
-                                Name
-
-                                @if($sortBy === 'name')
-
-                                    <i class="fas {{
-                                        $sortDir === 'asc'
-                                            ? 'fa-arrow-up'
-                                            : 'fa-arrow-down'
-                                    }}"></i>
-
+                        <td>
+                            <a href="{{ route('boqs.show', $boq->id) }}" class="boq-table-link">{{ $boq->name }}</a>
+                            <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                                <span class="boq-version-badge"><i class="fas fa-code-branch" aria-hidden="true"></i> v{{ $boq->version ?? 1 }}</span>
+                                @if($boq->currency)
+                                    <span class="boq-currency-badge">{{ $boq->currency }}</span>
                                 @endif
-                            </span>
+                            </div>
+                        </td>
 
-                        </th>
+                        <td>
+                            @if($boq->project)
+                                <a href="{{ route('projects.show', $boq->project->id) }}" class="boq-cell-with-icon hover:text-brand-700">
+                                    <i class="fas fa-folder-open" aria-hidden="true"></i> {{ $boq->project->name }}
+                                </a>
+                            @else
+                                <span class="boq-table-empty">—</span>
+                            @endif
+                        </td>
 
+                        <td><x-ui.status :status="$boq->status" /></td>
 
-                        {{-- Project --}}
-                        <th>
-                            {{ __('Project') }}
-                        </th>
+                        <td>
+                            <span class="boq-item-count"><i class="fas fa-list-ul" aria-hidden="true"></i> {{ \App\Support\Format::number($boq->items_count ?? 0, 0) }}</span>
+                        </td>
 
+                        <td>
+                            @if(($totals[$boq->id]['items'] ?? 0) > 0)
+                                <x-boq-totals compact class="mt-0" :totals="$totals[$boq->id]" :currency="$boq->currency" />
+                            @else
+                                <span class="boq-table-empty">—</span>
+                            @endif
+                        </td>
 
-                        {{-- Status --}}
-                        <th
-                            wire:click="sortBy('status')"
-                            class="boq-sortable-header"
-                        >
+                        <td class="whitespace-nowrap">
+                            @if($boq->created_at)
+                                <x-date :value="$boq->created_at" />
+                            @else
+                                <span class="boq-table-empty">—</span>
+                            @endif
+                        </td>
 
-                            <span>
-                                Status
-
-                                @if($sortBy === 'status')
-
-                                    <i class="fas {{
-                                        $sortDir === 'asc'
-                                            ? 'fa-arrow-up'
-                                            : 'fa-arrow-down'
-                                    }}"></i>
-
-                                @endif
-                            </span>
-
-                        </th>
-
-
-                        {{-- Currency --}}
-                        <th
-                            wire:click="sortBy('currency')"
-                            class="boq-sortable-header"
-                        >
-
-                            <span>
-                                Currency
-
-                                @if($sortBy === 'currency')
-
-                                    <i class="fas {{
-                                        $sortDir === 'asc'
-                                            ? 'fa-arrow-up'
-                                            : 'fa-arrow-down'
-                                    }}"></i>
-
-                                @endif
-                            </span>
-
-                        </th>
-
-
-                        {{-- Version --}}
-                        <th>
-                            {{ __('Version') }}
-                        </th>
-
-
-                        {{-- Items --}}
-                        <th>
-                            {{ __('Items') }}
-                        </th>
-
-
-                        {{-- Created --}}
-                        <th
-                            wire:click="sortBy('created_at')"
-                            class="boq-sortable-header"
-                        >
-
-                            <span>
-                                Created
-
-                                @if($sortBy === 'created_at')
-
-                                    <i class="fas {{
-                                        $sortDir === 'asc'
-                                            ? 'fa-arrow-up'
-                                            : 'fa-arrow-down'
-                                    }}"></i>
-
-                                @endif
-                            </span>
-
-                        </th>
-
-
-                        {{-- Actions --}}
-                        <th class="text-right">
-                            {{ __('Actions') }}
-                        </th>
-
-                    </tr>
-
-                </thead>
-
-
-                <tbody>
-
-                    @forelse($boqs as $boq)
-
-                        <tr wire:key="boq-{{ $boq->id }}">
-
-                            <td class="boq-check-col">
-                                @can('delete', $boq)
-                                    <x-select-row :id="$boq->id" />
-                                @endcan
-                            </td>
-
-                            {{-- BOQ --}}
-                            <td>
-
-                                <a
-                                    href="{{ url('/boqs/'.$boq->id) }}"
-                                    class="boq-table-link"
-                                >
-                                    {{ $boq->name }}
+                        <td class="text-right">
+                            <div class="boq-table-actions">
+                                <a href="{{ route('boqs.show', $boq->id) }}" class="boq-icon-btn" title="{{ __('View BOQ') }}" aria-label="{{ __('View BOQ') }}">
+                                    <i class="fas fa-eye" aria-hidden="true"></i>
                                 </a>
 
-                            </td>
+                                @can('update', $boq)
+                                    <button type="button" wire:click="editBoq({{ $boq->id }})" class="boq-icon-btn" title="{{ __('Edit BOQ') }}" aria-label="{{ __('Edit BOQ') }}">
+                                        <i class="fas fa-pen" aria-hidden="true"></i>
+                                    </button>
+                                @endcan
+
+                                @can('delete', $boq)
+                                    <button type="button" wire:click="confirmDelete({{ $boq->id }})" class="boq-icon-btn boq-icon-danger" title="{{ __('Delete BOQ') }}" aria-label="{{ __('Delete BOQ') }}">
+                                        <i class="fas fa-trash" aria-hidden="true"></i>
+                                    </button>
+                                @endcan
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="8" class="p-0">
+                            @if($search !== '' || $projectId)
+                                <x-ui.empty-state
+                                    icon="fa-magnifying-glass"
+                                    :title="__('No BOQs found.')"
+                                    :description="__('Try a different search term or project.')"
+                                >
+                                    <x-ui.button variant="secondary" size="sm" wire:click="$set('search', '')">{{ __('Clear search') }}</x-ui.button>
+                                </x-ui.empty-state>
+                            @else
+                                <x-ui.empty-state
+                                    icon="fa-file-invoice-dollar"
+                                    :title="__('No BOQs yet.')"
+                                    :description="__('Upload a bill of quantities to price it against current market rates.')"
+                                >
+                                    <x-ui.button icon="fa-plus" :href="route('boqs.create')">{{ __('Upload your first BOQ') }}</x-ui.button>
+                                </x-ui.empty-state>
+                            @endif
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </x-ui.table>
 
-
-                            {{-- Project --}}
-                            <td>
-
-                                @if($boq->project)
-
-                                    <span class="boq-cell-with-icon">
-
-                                        <i class="fas fa-folder-open"></i>
-
-                                        {{ $boq->project->name }}
-
-                                    </span>
-
-                                @else
-
-                                    <span class="boq-table-empty">
-                                        —
-                                    </span>
-
-                                @endif
-
-                            </td>
-
-
-                            {{-- Status --}}
-                            <td>
-
-                                @php
-
-                                    $statusClass = match($boq->status) {
-
-                                        'approved'
-                                            => 'boq-badge-success',
-
-                                        'uploaded'
-                                            => 'boq-badge-info',
-
-                                        'under_review'
-                                            => 'boq-badge-warning',
-
-                                        'rejected'
-                                            => 'boq-badge-danger',
-
-                                        default
-                                            => ''
-                                    };
-
-                                @endphp
-
-                                <span class="boq-badge {{ $statusClass }}">
-
-                                    @switch($boq->status)
-
-                                        @case('approved')
-                                            <i class="fas fa-circle-check"></i>
-                                            @break
-
-                                        @case('uploaded')
-                                            <i class="fas fa-cloud-arrow-up"></i>
-                                            @break
-
-                                        @case('under_review')
-                                            <i class="fas fa-magnifying-glass-chart"></i>
-                                            @break
-
-                                        @case('rejected')
-                                            <i class="fas fa-circle-xmark"></i>
-                                            @break
-
-                                        @default
-                                            <i class="fas fa-circle"></i>
-
-                                    @endswitch
-
-                                    {{ ucwords(
-                                        str_replace(
-                                            '_',
-                                            ' ',
-                                            $boq->status ?? 'unknown'
-                                        )
-                                    ) }}
-
-                                </span>
-
-                            </td>
-
-
-                            {{-- Currency --}}
-                            <td>
-
-                                @if($boq->currency)
-
-                                    <span class="boq-currency-badge">
-                                        {{ $boq->currency }}
-                                    </span>
-
-                                @else
-
-                                    <span class="boq-table-empty">
-                                        —
-                                    </span>
-
-                                @endif
-
-                            </td>
-
-
-                            {{-- Version --}}
-                            <td>
-
-                                <span class="boq-version-badge">
-
-                                    <i class="fas fa-code-branch"></i>
-
-                                    v{{ $boq->version ?? 1 }}
-
-                                </span>
-
-                            </td>
-
-
-                            {{-- Items --}}
-                            <td>
-
-                                <span class="boq-item-count">
-
-                                    <i class="fas fa-list-ul"></i>
-
-                                    {{ $boq->items_count
-                                        ?? $boq->items->count()
-                                    }}
-
-                                </span>
-
-                                <x-boq-totals compact :totals="$totals[$boq->id] ?? []" :currency="$boq->currency" />
-
-                            </td>
-
-
-                            {{-- Created --}}
-                            <td>
-
-                                @if($boq->created_at)
-
-                                    <span class="boq-cell-with-icon">
-
-                                        <i class="fas fa-calendar-day"></i>
-
-                                        {{ $boq->created_at->format('d M Y') }}
-
-                                    </span>
-
-                                @else
-
-                                    <span class="boq-table-empty">
-                                        —
-                                    </span>
-
-                                @endif
-
-                            </td>
-
-
-                            {{-- Actions --}}
-                            <td class="text-right">
-
-                                <div class="boq-table-actions">
-
-                                    {{-- View --}}
-                                    <a
-                                        href="{{ url('/boqs/'.$boq->id) }}"
-                                        class="boq-icon-btn"
-                                        title="{{ __('View BOQ') }}"
-                                    >
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-
-                                    @can('update', $boq)
-                                        <button type="button" wire:click="editBoq({{ $boq->id }})" class="boq-icon-btn" title="{{ __('Edit BOQ') }}" aria-label="{{ __('Edit BOQ') }}">
-                                            <i class="fas fa-pen"></i>
-                                        </button>
-                                    @endcan
-
-                                    @can('delete', $boq)
-                                        <button type="button" wire:click="confirmDelete({{ $boq->id }})" class="boq-icon-btn boq-icon-danger" title="{{ __('Delete BOQ') }}" aria-label="{{ __('Delete BOQ') }}">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    @endcan
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-                    @empty
-
-                        <tr>
-
-                            <td
-                                colspan="9"
-                                class="boq-empty-table"
-                            >
-
-                                <i class="fas fa-file-invoice-dollar"></i>
-
-                                <span>
-                                    {{ __('No BOQs found.') }}
-                                </span>
-
-                                <div class="boq-empty-action">
-
-                                    <a
-                                        href="{{ url('/boqs/create') }}"
-                                        class="boq-btn-primary"
-                                    >
-                                        <i class="fas fa-plus"></i>
-                                        {{ __('Upload your first BOQ') }}
-                                    </a>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-                    @endforelse
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-
-        {{-- =================================================
-             PAGINATION
-        ================================================== --}}
         @if($boqs->hasPages())
-
             <div class="boq-pagination">
-
                 {{ $boqs->links() }}
-
             </div>
-
         @endif
-
     </div>
 
-
     @if($editingBoqId)
-        <div class="boq-modal-backdrop" wire:key="boq-edit-modal" role="dialog" aria-modal="true" aria-labelledby="boq-edit-title">
-            <form wire:submit="saveBoq" class="boq-modal boq-modal-sm">
-                <div class="boq-modal-head">
-                    <h2 id="boq-edit-title"><i class="fas fa-pen"></i> {{ __('Edit BOQ') }}</h2>
-                    <button type="button" wire:click="closeEdit" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
-                </div>
+        <x-ui.modal wire:key="boq-edit-modal" id="boq-edit" :title="__('Edit BOQ')" icon="fa-pen" size="sm" close="closeEdit" submit="saveBoq">
+            <div class="space-y-4">
+                <x-ui.field :label="__('BOQ Name')" for="boq-edit-name" error="editName" required>
+                    <input id="boq-edit-name" type="text" wire:model="editName" class="boq-field @error('editName') has-error @enderror" maxlength="255" placeholder="{{ __('e.g. Main building - Phase 1') }}">
+                </x-ui.field>
 
-                <div class="boq-modal-body space-y-4">
-                    <div>
-                        <label for="boq-edit-name" class="boq-field-label">{{ __('BOQ Name') }} *</label>
-                        <input id="boq-edit-name" type="text" wire:model="editName" class="boq-field" maxlength="255" placeholder="{{ __('e.g. Main building - Phase 1') }}">
-                        @error('editName') <p class="boq-field-error">{{ $message }}</p> @enderror
-                    </div>
+                <x-ui.field :label="__('Project')" for="boq-edit-project" error="editProjectId" required>
+                    <select id="boq-edit-project" wire:model="editProjectId" class="boq-field @error('editProjectId') has-error @enderror">
+                        @foreach($projects as $projectOption)
+                            <option value="{{ $projectOption->id }}">{{ $projectOption->name }}{{ $projectOption->code ? ' ('.$projectOption->code.')' : '' }}</option>
+                        @endforeach
+                    </select>
+                </x-ui.field>
 
-                    <div>
-                        <label for="boq-edit-project" class="boq-field-label">{{ __('Project') }} *</label>
-                        <select id="boq-edit-project" wire:model="editProjectId" class="boq-field">
-                            @foreach($projects as $projectOption)
-                                <option value="{{ $projectOption->id }}">{{ $projectOption->name }}{{ $projectOption->code ? ' ('.$projectOption->code.')' : '' }}</option>
-                            @endforeach
-                        </select>
-                        @error('editProjectId') <p class="boq-field-error">{{ $message }}</p> @enderror
-                    </div>
+                <p class="boq-field-help">{{ __('To change item rates, open the BOQ and review its items.') }}</p>
+            </div>
 
-                    <p class="boq-field-help">{{ __('To change item rates, open the BOQ and review its items.') }}</p>
-                </div>
-
-                <div class="boq-modal-foot">
-                    <button type="button" wire:click="closeEdit" class="boq-btn-secondary">{{ __('Cancel') }}</button>
-                    <button type="submit" class="boq-btn-primary"><i class="fas fa-floppy-disk"></i> {{ __('Save Changes') }}</button>
-                </div>
-            </form>
-        </div>
+            <x-slot:footer>
+                <x-ui.button variant="secondary" wire:click="closeEdit">{{ __('Cancel') }}</x-ui.button>
+                <x-ui.button type="submit" icon="fa-floppy-disk" loading="saveBoq">{{ __('Save Changes') }}</x-ui.button>
+            </x-slot:footer>
+        </x-ui.modal>
     @endif
 
     @if($deletingBoqId)
-        <div class="boq-modal-backdrop" wire:key="boq-delete-modal" role="dialog" aria-modal="true" aria-labelledby="boq-delete-title">
-            <div class="boq-modal boq-modal-sm">
-                <div class="boq-modal-head">
-                    <h2 id="boq-delete-title"><i class="fas fa-trash"></i> {{ __('Delete BOQ?') }}</h2>
-                    <button type="button" wire:click="cancelDelete" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
-                </div>
-                <div class="boq-modal-body">
-                    <p class="boq-modal-message">{{ __('The BOQ and its items will be removed from your list. An administrator can restore it if needed.') }}</p>
-                </div>
-                <div class="boq-modal-foot">
-                    <button type="button" wire:click="cancelDelete" class="boq-btn-secondary">{{ __('Cancel') }}</button>
-                    <button type="button" wire:click="deleteBoq" class="boq-btn-danger"><i class="fas fa-trash"></i> {{ __('Delete') }}</button>
-                </div>
-            </div>
-        </div>
+        <x-ui.modal wire:key="boq-delete-modal" id="boq-delete" :title="__('Delete BOQ?')" icon="fa-trash" size="sm" close="cancelDelete">
+            <p class="boq-modal-message">{{ __('The BOQ and its items will be removed from your list. An administrator can restore it if needed.') }}</p>
+
+            <x-slot:footer>
+                <x-ui.button variant="secondary" wire:click="cancelDelete">{{ __('Cancel') }}</x-ui.button>
+                <x-ui.button variant="danger" icon="fa-trash" wire:click="deleteBoq" loading="deleteBoq">{{ __('Delete') }}</x-ui.button>
+            </x-slot:footer>
+        </x-ui.modal>
     @endif
 </div>

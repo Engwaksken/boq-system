@@ -1,103 +1,100 @@
-<div>
-    <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center gap-3">
-            <h1 class="text-2xl font-bold text-gray-900">{{ $hardwarePrice->item_name }}</h1>
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{{ $hardwarePrice->category }}</span>
-        </div>
-        <div class="flex items-center gap-2">
-            <a href="{{ url('/hardware-prices') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition">
-                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-                {{ __('Back') }}
-            </a>
-            <a href="{{ url('/hardware-prices/compare') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition">{{ __('Compare') }}</a>
-        </div>
-    </div>
+@php
+    $price = $hardwarePrice;
+    $isFactory = $price->price_type === 'factory';
+    $priceChange = $price->price_change;
+    $priceChangePercent = $price->price_change_percent;
+    $amount = fn ($value) => $value !== null ? \App\Support\Format::money($value, $price->currency) : '—';
+    $details = [
+        __('Brand') => $price->brand,
+        __('Specification') => $price->specification,
+        __('Supplier') => $price->supplier,
+        __('Location') => $price->location,
+        __('Source Reference') => $price->source_reference,
+        __('Fetched At') => \App\Support\Format::date($price->fetched_at, true),
+    ];
+@endphp
 
-    {{-- Detail --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-            <div>
-                <p class="text-sm text-gray-500">{{ $hardwarePrice->brand }}</p>
-                <p class="mt-1 text-3xl font-bold text-gray-900">{{ \App\Support\Format::number((float) $hardwarePrice->price, 2) }} {{ $hardwarePrice->currency }}</p>
-                <p class="mt-1 text-sm text-gray-500">per {{ $hardwarePrice->unit }}</p>
-            </div>
-            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                <div>
-                    <dt class="font-medium text-gray-500">{{ __('Specification') }}</dt>
-                    <dd class="mt-1 text-gray-900">{{ $hardwarePrice->specification ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="font-medium text-gray-500">{{ __('Supplier') }}</dt>
-                    <dd class="mt-1 text-gray-900">{{ $hardwarePrice->supplier ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="font-medium text-gray-500">{{ __('Location') }}</dt>
-                    <dd class="mt-1 text-gray-900">{{ $hardwarePrice->location ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="font-medium text-gray-500">{{ __('Source Reference') }}</dt>
-                    <dd class="mt-1 text-gray-900">{{ $hardwarePrice->source_reference ?? '?' }}</dd>
-                </div>
-                <div>
-                    <dt class="font-medium text-gray-500">{{ __('Fetched At') }}</dt>
-                    <dd class="mt-1 text-gray-900">{{ \App\Support\Format::date($hardwarePrice->fetched_at, true) }}</dd>
-                </div>
+<div class="boq-page-stack">
+    <x-ui.page-header :title="$price->item_name" icon="fa-tag">
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+            <x-ui.badge :color="$isFactory ? 'purple' : 'info'" :icon="$isFactory ? 'fa-industry' : 'fa-store'">
+                {{ $isFactory ? __('Factory') : __('Hardware') }}
+            </x-ui.badge>
+            @if($price->category)
+                <x-ui.badge>{{ $price->category }}</x-ui.badge>
+            @endif
+            @unless($price->is_active)
+                <x-ui.badge color="danger">{{ __('Inactive') }}</x-ui.badge>
+            @endunless
+        </div>
+
+        <x-slot:actions>
+            <x-ui.button variant="secondary" icon="fa-arrow-left" :href="route('hardware-prices.index')">{{ __('Back') }}</x-ui.button>
+            <x-ui.button variant="secondary" icon="fa-scale-balanced" :href="route('hardware-prices.compare')">{{ __('Compare') }}</x-ui.button>
+            @if($price->source_url)
+                <x-ui.button variant="ghost" icon="fa-arrow-up-right-from-square" :href="$price->source_url" target="_blank" rel="noopener noreferrer">{{ __('View source') }}</x-ui.button>
+            @endif
+        </x-slot:actions>
+    </x-ui.page-header>
+
+    <div class="grid gap-5 lg:grid-cols-3">
+        <x-ui.card class="lg:col-span-1">
+            <p class="text-xs font-semibold text-slate-500">{{ __('Current price') }}</p>
+            <p class="mt-1 text-3xl font-bold tracking-tight text-slate-900"><x-money :amount="$price->price" :currency="$price->currency" /></p>
+            @if($price->unit)
+                <p class="mt-1 text-sm text-slate-500">{{ __('per :unit', ['unit' => $price->unit]) }}</p>
+            @endif
+        </x-ui.card>
+
+        <x-ui.card class="lg:col-span-2" :title="__('Details')" icon="fa-circle-info">
+            <dl class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach($details as $label => $value)
+                    <div class="min-w-0">
+                        <dt class="text-xs font-semibold text-slate-500">{{ $label }}</dt>
+                        <dd class="mt-0.5 text-sm text-slate-900 [overflow-wrap:anywhere]">{{ filled($value) ? $value : '—' }}</dd>
+                    </div>
+                @endforeach
             </dl>
-        </div>
+        </x-ui.card>
     </div>
 
-    {{-- Summary Stats --}}
-    @php
-        $priceChange = $hardwarePrice->price_change;
-        $priceChangePercent = $hardwarePrice->price_change_percent;
-    @endphp
-
-    <div class="boq-stats-grid mb-6">
-        <x-stat-card label="Lowest Price" :value="\App\Support\Format::number((float) $hardwarePrice->lowest_price, 2)" icon="fa-arrow-down" color="green" />
-        <x-stat-card label="Highest Price" :value="\App\Support\Format::number((float) $hardwarePrice->highest_price, 2)" icon="fa-arrow-up" color="red" />
-        <x-stat-card label="Average Price" :value="\App\Support\Format::number((float) $hardwarePrice->average_price, 2)" icon="fa-scale-balanced" color="blue" />
+    <div class="boq-stats-grid">
+        <x-stat-card :label="__('Lowest Price')" :value="$amount($price->lowest_price)" icon="fa-arrow-down" color="green" />
+        <x-stat-card :label="__('Highest Price')" :value="$amount($price->highest_price)" icon="fa-arrow-up" color="red" />
+        <x-stat-card :label="__('Average Price')" :value="$amount($price->average_price)" icon="fa-scale-balanced" color="blue" />
         <x-stat-card
-            label="Price Change"
-            :value="$priceChange !== null ? \App\Support\Format::number((float) $priceChange, 2) : '—'"
+            :label="__('Price Change')"
+            :value="$priceChange !== null ? (((float) $priceChange > 0 ? '+' : '').\App\Support\Format::number((float) $priceChange, 2)) : '—'"
             :hint="$priceChangePercent !== null ? \App\Support\Format::number((float) $priceChangePercent, 2).'%' : null"
             icon="fa-chart-line"
             :color="$priceChange !== null && (float) $priceChange < 0 ? 'green' : 'amber'"
         />
     </div>
 
-    {{-- Price History --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900">{{ __('Price History') }}</h2>
-        </div>
-
-        @if($hardwarePrice->priceHistories->isNotEmpty())
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+    <x-ui.card :title="__('Price History')" icon="fa-clock-rotate-left" :padded="false">
+        @if($price->priceHistories->isNotEmpty())
+            <x-ui.table>
+                <thead>
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Recorded At') }}</th>
-                        <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Price') }}</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Currency') }}</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Supplier') }}</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Location') }}</th>
+                        <th>{{ __('Recorded At') }}</th>
+                        <th class="text-right">{{ __('Price') }}</th>
+                        <th>{{ __('Supplier') }}</th>
+                        <th>{{ __('Location') }}</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200 bg-white">
-                    @foreach($hardwarePrice->priceHistories as $history)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3 text-sm text-gray-700">{{ \App\Support\Format::date($history->recorded_at, true) }}</td>
-                            <td class="px-4 py-3 text-sm text-right font-medium text-gray-900">{{ \App\Support\Format::number((float) $history->price, 2) }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-700">{{ $history->currency }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-700">{{ $history->supplier }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-700">{{ $history->location }}</td>
+                <tbody>
+                    @foreach($price->priceHistories as $history)
+                        <tr wire:key="history-{{ $history->id }}">
+                            <td class="whitespace-nowrap"><x-date :value="$history->recorded_at" time /></td>
+                            <td class="is-numeric font-semibold text-slate-900"><x-money :amount="$history->price" :currency="$history->currency" /></td>
+                            <td>{{ $history->supplier ?: '—' }}</td>
+                            <td>{{ $history->location ?: '—' }}</td>
                         </tr>
                     @endforeach
                 </tbody>
-            </table>
+            </x-ui.table>
         @else
-            <div class="text-center py-12">
-                <p class="text-gray-500">{{ __('No price history recorded yet.') }}</p>
-            </div>
+            <x-ui.empty-state icon="fa-clock-rotate-left" :title="__('No price history recorded yet.')" :description="__('Changes to this price are recorded here automatically.')" />
         @endif
-    </div>
+    </x-ui.card>
 </div>

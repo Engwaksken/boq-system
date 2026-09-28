@@ -11,7 +11,7 @@
     <form method="POST" action="{{ route('password.confirm') }}" class="mt-7 space-y-5">
         @csrf
 
-        <x-auth-password name="password" label="Password" autofocus />
+        <x-auth-password name="password" :label="__('Password')" autofocus />
 
         <button type="submit" class="auth-primary">
             <i class="fas fa-circle-check"></i>

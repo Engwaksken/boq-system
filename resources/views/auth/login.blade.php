@@ -59,7 +59,7 @@
                     required
                     autofocus
                     autocomplete="username"
-                    placeholder="e.g. name@example.com"
+                    placeholder="{{ __('e.g. name@example.com') }}"
                     class="auth-field {{ $errors->has('email') ? 'has-error' : '' }}"
                 >
 
@@ -200,7 +200,7 @@
         <p data-biometric-error class="auth-error hidden text-center" role="alert"></p>
 
         <p class="mt-2 text-center text-xs text-slate-500">
-            Set it up under Profile &rarr; Security after signing in with your password.
+            {{ __('Set it up under Profile → Security after signing in with your password.') }}
         </p>
 
     </div>

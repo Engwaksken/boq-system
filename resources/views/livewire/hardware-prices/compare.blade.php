@@ -1,171 +1,136 @@
-<div>
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">{{ __('Compare Hardware Prices') }}</h1>
-            <p class="mt-1 text-sm text-gray-500">{{ __('Select 2 to 10 items to compare side by side') }}</p>
-        </div>
-        <a href="{{ url('/hardware-prices') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition">
-            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-            {{ __('Back') }}
-        </a>
-    </div>
+@php
+    $fmt = fn ($value, $suffix = '') => $value !== null && $value !== '' ? \App\Support\Format::number((float) $value, 2).$suffix : '—';
+    $text = fn ($value) => filled($value) ? $value : '—';
+    $compareHint = __('Select items above and click "Compare Selected" to see the side-by-side comparison.');
+@endphp
 
-    {{-- Selection --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-gray-900">{{ __('Select Items') }}</h2>
-            <button type="button" wire:click="compare"
-                    class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition">
-                Compare Selected ({{ isset($selectedIds) ? count($selectedIds) : 0 }})
+<div class="boq-page-stack">
+    <x-ui.page-header
+        :title="__('Compare Hardware Prices')"
+        icon="fa-scale-balanced"
+        :subtitle="__('Select 2 to 10 items to compare side by side')"
+    >
+        <x-slot:actions>
+            <x-ui.button variant="secondary" icon="fa-arrow-left" :href="route('hardware-prices.index')">{{ __('Back') }}</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
+
+    <x-ui.flash :keys="['error', 'status', 'message']" />
+
+    <x-ui.card :title="__('Select Items')" icon="fa-list-check">
+        <x-slot:actions>
+            <button type="button" wire:click="compare" wire:loading.attr="disabled" wire:target="compare" class="boq-btn-primary">
+                <i class="fas fa-scale-balanced" wire:loading.remove wire:target="compare" aria-hidden="true"></i>
+                <i class="fas fa-spinner fa-spin" wire:loading wire:target="compare" aria-hidden="true"></i>
+                {{ __('Compare Selected') }}
+                <span class="rounded-full bg-white/20 px-1.5 text-xs tabular-nums" x-data x-text="($wire.selectedIds || []).length">{{ count($selectedIds ?? []) }}</span>
             </button>
-        </div>
+        </x-slot:actions>
 
         @if(isset($prices) && $prices->isNotEmpty())
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                 @foreach($prices as $item)
-                    <label class="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
-                        <input type="checkbox" wire:model="selectedIds" value="{{ $item->id }}" class="mt-0.5 rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                    <label class="boq-radio-card" wire:key="compare-option-{{ $item->id }}">
+                        <input type="checkbox" wire:model="selectedIds" value="{{ $item->id }}">
                         <span class="min-w-0">
-                            <span class="block text-sm font-medium text-gray-900 truncate">{{ $item->item_name }}</span>
-                            <span class="block text-xs text-gray-500">{{ \App\Support\Format::number((float) $item->price, 2) }} {{ $item->currency }} ? {{ $item->supplier }}</span>
+                            <span class="block truncate text-sm font-semibold text-slate-900">{{ $item->item_name }}</span>
+                            <span class="block text-xs text-slate-500">
+                                <x-money :amount="$item->price" :currency="$item->currency" />
+                                @if($item->supplier) · {{ $item->supplier }} @endif
+                                @if($item->location) · {{ $item->location }} @endif
+                            </span>
                         </span>
                     </label>
                 @endforeach
             </div>
         @else
-            <p class="text-sm text-gray-500">{{ __('No items available to compare.') }}</p>
+            <x-ui.empty-state icon="fa-box-open" :title="__('No items available to compare.')" :description="__('Add hardware or factory prices first.')">
+                <x-ui.button variant="secondary" size="sm" :href="route('hardware-prices.index')">{{ __('Market Prices') }}</x-ui.button>
+            </x-ui.empty-state>
         @endif
-    </div>
+    </x-ui.card>
 
-    {{-- Comparison Results --}}
     @if(isset($comparison) && count($comparison) > 0)
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">{{ __('Comparison') }}</h2>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-40">{{ __('Attribute') }}</th>
-                            @foreach($comparison as $item)
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[180px]">
-                                    <span class="block text-sm font-semibold text-gray-900">{{ $item['item_name'] }}</span>
-                                    @if(isset($summary) && is_array($summary))
-                                        <span class="mt-1 flex flex-wrap gap-1">
-                                            @if(isset($summary['best_value']) && $summary['best_value'] === $item['id'])
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-800">{{ __('Best Value') }}</span>
-                                            @endif
-                                            @if(isset($summary['lowest_price']) && $summary['lowest_price'] === $item['id'])
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-800">{{ __('Lowest Price') }}</span>
-                                            @endif
-                                            @if(isset($summary['best_rated']) && $summary['best_rated'] === $item['id'])
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 text-purple-800">{{ __('Best Rated') }}</span>
-                                            @endif
-                                        </span>
-                                    @endif
-                                </th>
-                            @endforeach
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white">
-                        <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Brand') }}</td>
-                            @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ $item['brand'] ?? '?' }}</td>
-                            @endforeach
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Category') }}</td>
-                            @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ $item['category'] ?? '?' }}</td>
-                            @endforeach
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Specification') }}</td>
-                            @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ $item['specification'] ?? '?' }}</td>
-                            @endforeach
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Unit') }}</td>
-                            @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ $item['unit'] ?? '?' }}</td>
-                            @endforeach
-                        </tr>
-                        <tr class="bg-gray-50">
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Price') }}</td>
-                            @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm font-bold text-gray-900">{{ \App\Support\Format::number((float) $item['price'], 2) }} {{ $item['currency'] }}</td>
-                            @endforeach
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Supplier') }}</td>
-                            @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ $item['supplier'] ?? '?' }}</td>
-                            @endforeach
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Location') }}</td>
-                            @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ $item['location'] ?? '?' }}</td>
-                            @endforeach
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Fetched At') }}</td>
-                            @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ $item['fetched_at'] ?? '?' }}</td>
-                            @endforeach
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Lowest') }}</td>
-                            @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['lowest']) ? \App\Support\Format::number((float) $item['price_history']['lowest'], 2) : '?' }}</td>
-                            @endforeach
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Highest') }}</td>
-                            @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['highest']) ? \App\Support\Format::number((float) $item['price_history']['highest'], 2) : '?' }}</td>
-                            @endforeach
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Average') }}</td>
-                            @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['average']) ? \App\Support\Format::number((float) $item['price_history']['average'], 2) : '?' }}</td>
-                            @endforeach
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Change') }}</td>
-                            @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['change']) ? \App\Support\Format::number((float) $item['price_history']['change'], 2) : '?' }}</td>
-                            @endforeach
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('Change %') }}</td>
-                            @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ isset($item['price_history']['change_percent']) ? \App\Support\Format::number((float) $item['price_history']['change_percent'], 2) . '%' : '?' }}</td>
-                            @endforeach
-                        </tr>
-                        <tr class="bg-gray-50">
-                            <td class="px-4 py-3 text-sm font-medium text-gray-500">{{ __('AI Rating') }}</td>
-                            @foreach($comparison as $item)
-                                <td class="px-4 py-3 text-sm">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold {{ isset($item['rating']['overall']) && $item['rating']['overall'] >= 80 ? 'bg-green-100 text-green-800' : (isset($item['rating']['overall']) && $item['rating']['overall'] >= 60 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800') }}">
-                                        {{ $item['rating']['overall'] ?? '?' }}/100
+        <x-ui.card :title="__('Comparison')" icon="fa-table-columns" :padded="false">
+            @php
+                $rows = [
+                    __('Brand') => fn ($i) => $text($i['brand'] ?? null),
+                    __('Category') => fn ($i) => $text($i['category'] ?? null),
+                    __('Specification') => fn ($i) => $text($i['specification'] ?? null),
+                    __('Unit') => fn ($i) => $text($i['unit'] ?? null),
+                    __('Supplier') => fn ($i) => $text($i['supplier'] ?? null),
+                    __('Location') => fn ($i) => $text($i['location'] ?? null),
+                    __('Fetched At') => fn ($i) => \App\Support\Format::date($i['fetched_at'] ?? null, true) ?? '—',
+                    __('Lowest') => fn ($i) => $fmt($i['price_history']['lowest'] ?? null),
+                    __('Highest') => fn ($i) => $fmt($i['price_history']['highest'] ?? null),
+                    __('Average') => fn ($i) => $fmt($i['price_history']['average'] ?? null),
+                    __('Change') => fn ($i) => $fmt($i['price_history']['change'] ?? null),
+                    __('Change %') => fn ($i) => $fmt($i['price_history']['change_percent'] ?? null, '%'),
+                ];
+            @endphp
+
+            <x-ui.table>
+                <thead>
+                    <tr>
+                        <th class="w-40">{{ __('Attribute') }}</th>
+                        @foreach($comparison as $item)
+                            <th class="min-w-[11rem] normal-case tracking-normal">
+                                <span class="block text-sm font-semibold text-slate-900">{{ $item['item_name'] }}</span>
+                                @if(isset($summary) && is_array($summary))
+                                    <span class="mt-1 flex flex-wrap gap-1">
+                                        @if(($summary['best_value'] ?? null) === $item['id'])
+                                            <x-ui.badge color="success" icon="fa-award">{{ __('Best Value') }}</x-ui.badge>
+                                        @endif
+                                        @if(($summary['lowest_price'] ?? null) === $item['id'])
+                                            <x-ui.badge color="info" icon="fa-arrow-down">{{ __('Lowest Price') }}</x-ui.badge>
+                                        @endif
+                                        @if(($summary['best_rated'] ?? null) === $item['id'])
+                                            <x-ui.badge color="purple" icon="fa-star">{{ __('Best Rated') }}</x-ui.badge>
+                                        @endif
                                     </span>
-                                </td>
+                                @endif
+                            </th>
+                        @endforeach
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="bg-slate-50">
+                        <td class="font-semibold text-slate-500">{{ __('Price') }}</td>
+                        @foreach($comparison as $item)
+                            <td class="text-base font-bold text-slate-900"><x-money :amount="$item['price'] ?? 0" :currency="$item['currency'] ?? null" /></td>
+                        @endforeach
+                    </tr>
+
+                    @foreach($rows as $label => $value)
+                        <tr>
+                            <td class="font-semibold text-slate-500">{{ $label }}</td>
+                            @foreach($comparison as $item)
+                                <td>{{ $value($item) }}</td>
                             @endforeach
                         </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    @else
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="text-center py-12">
-                <p class="text-gray-500">{{ __('Select items above and click "Compare Selected" to see the side-by-side comparison.') }}</p>
-            </div>
-        </div>
+                    @endforeach
+
+                    <tr class="bg-slate-50">
+                        <td class="font-semibold text-slate-500">{{ __('AI Rating') }}</td>
+                        @foreach($comparison as $item)
+                            @php $overall = $item['rating']['overall'] ?? null; @endphp
+                            <td>
+                                <x-ui.badge :color="$overall === null ? 'neutral' : ($overall >= 80 ? 'success' : ($overall >= 60 ? 'warning' : 'danger'))">
+                                    {{ $overall ?? '—' }}/100
+                                </x-ui.badge>
+                            </td>
+                        @endforeach
+                    </tr>
+                </tbody>
+            </x-ui.table>
+        </x-ui.card>
+    @elseif(isset($prices) && $prices->isNotEmpty())
+        <x-ui.card>
+            <x-ui.empty-state
+                icon="fa-scale-balanced"
+                :title="__('Nothing compared yet')"
+                :description="$compareHint"
+            />
+        </x-ui.card>
     @endif
 </div>

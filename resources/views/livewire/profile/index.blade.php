@@ -1,141 +1,71 @@
-<div>
-    {{-- Page Header --}}
-    <div class="mb-6">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h1 class="text-2xl font-bold text-slate-900">
-                    {{ __('My Profile') }}
-                </h1>
+@php
+    $tabIcons = [
+        'overview' => 'fa-user',
+        'security' => 'fa-shield-halved',
+        'preferences' => 'fa-sliders',
+        'notifications' => 'fa-bell',
+        'hardware-bookmarks' => 'fa-bookmark',
+        'company' => 'fa-building',
+    ];
+    $initials = collect(preg_split('/\s+/', trim((string) ($user->name ?? ''))) ?: [])
+        ->filter()->take(2)->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('') ?: 'U';
+@endphp
 
-                <p class="mt-1 text-sm text-slate-500">
-                    {{ __('Manage your account, security, preferences and saved hardware prices.') }}
-                </p>
-            </div>
-        </div>
-    </div>
+<div class="boq-page-stack">
+    <x-ui.page-header
+        :title="__('My Profile')"
+        icon="fa-circle-user"
+        :subtitle="__('Manage your account, security, preferences and saved hardware prices.')"
+    />
 
-    {{-- Flash Message --}}
-    @if(session('status'))
-        <div
-            x-data="{ show: true }"
-            x-show="show"
-            x-transition
-            x-init="setTimeout(() => show = false, 5000)"
-            class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
-            role="status"
-        >
-            {{ session('status') }}
-        </div>
-    @endif
+    <x-ui.flash :keys="['status', 'message', 'error']" />
 
-    {{-- Main Profile Card --}}
-    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div class="boq-panel">
+        {{-- Profile summary --}}
+        <div class="flex flex-col gap-4 border-b border-slate-200 px-5 py-5 sm:flex-row sm:items-center sm:px-6">
+            <span class="boq-avatar boq-avatar-xl">
+                @if($user->avatar_url)
+                    <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}">
+                @else
+                    {{ $initials }}
+                @endif
+            </span>
 
-        {{-- Profile Summary --}}
-        <div class="border-b border-slate-200 px-6 py-6">
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-
-                {{-- Avatar --}}
-                <div class="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xl font-bold text-indigo-700">
-                    {{ strtoupper(substr($user->name ?? 'U', 0, 1)) }}
-                </div>
-
-                <div class="min-w-0">
-                    <h2 class="truncate text-lg font-semibold text-slate-900">
-                        {{ $user->name }}
-                    </h2>
-
-                    <p class="truncate text-sm text-slate-500">
-                        {{ $user->email }}
-                    </p>
-
+            <div class="min-w-0 flex-1">
+                <h2 class="truncate text-lg font-semibold text-slate-900">{{ $user->name }}</h2>
+                <p class="truncate text-sm text-slate-500">{{ $user->email }}</p>
+                <div class="mt-2 flex flex-wrap gap-1.5">
                     @if($user->organisation)
-                        <p class="mt-1 text-xs text-slate-400">
-                            {{ $user->organisation->name }}
-                        </p>
+                        <x-ui.badge icon="fa-building">{{ $user->organisation->name }}</x-ui.badge>
                     @endif
+                    @foreach($user->roles ?? [] as $role)
+                        <x-ui.badge color="brand" icon="fa-user-shield">{{ $role->name }}</x-ui.badge>
+                    @endforeach
                 </div>
             </div>
         </div>
 
         {{-- Tabs --}}
-        <div class="border-b border-slate-200">
-            <nav
-                class="flex overflow-x-auto px-4 sm:px-6"
-                aria-label="{{ __('Profile tabs') }}"
-            >
-                @foreach($tabs as $tabKey => $tabLabel)
-                    <button
-                        type="button"
-                        wire:click="setActiveTab('{{ $tabKey }}')"
-                        wire:key="profile-tab-{{ $tabKey }}"
-                        class="
-                            relative whitespace-nowrap border-b-2 px-4 py-4
-                            text-sm font-medium transition-colors duration-150
+        <x-ui.tabs :label="__('Profile tabs')">
+            @foreach($tabs as $tabKey => $tabLabel)
+                <x-ui.tab
+                    wire:click="setActiveTab('{{ $tabKey }}')"
+                    wire:key="profile-tab-{{ $tabKey }}"
+                    :icon="$tabIcons[$tabKey] ?? null"
+                    :active="$activeTab === $tabKey"
+                >{{ __($tabLabel) }}</x-ui.tab>
+            @endforeach
+        </x-ui.tabs>
 
-                            {{ $activeTab === $tabKey
-                                ? 'border-indigo-600 text-indigo-600'
-                                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
-                            }}
-                        "
-                    >
-                        {{ $tabLabel }}
-
-                        <span
-                            wire:loading
-                            wire:target="setActiveTab('{{ $tabKey }}')"
-                            class="absolute right-0 top-2"
-                        >
-                            <span class="block h-2 w-2 animate-pulse rounded-full bg-indigo-500"></span>
-                        </span>
-                    </button>
-                @endforeach
-            </nav>
-        </div>
-
-        {{-- Tab Content --}}
-        <div
-            class="p-6"
-            wire:key="profile-tab-content-{{ $activeTab }}"
-        >
-            <div
-                wire:loading.flex
-                wire:target="setActiveTab"
-                class="min-h-[180px] items-center justify-center"
-            >
-                <div class="text-center">
-                    <svg
-                        class="mx-auto h-7 w-7 animate-spin text-indigo-600"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                    >
-                        <circle
-                            class="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            stroke-width="4"
-                        ></circle>
-
-                        <path
-                            class="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                        ></path>
-                    </svg>
-
-                    <p class="mt-2 text-sm text-slate-500">
-                        {{ __('Loading...') }}
-                    </p>
-                </div>
+        {{-- Tab content --}}
+        <div class="boq-profile-content" wire:key="profile-tab-content-{{ $activeTab }}">
+            <div wire:loading.flex wire:target="setActiveTab" class="boq-loading min-h-[180px]">
+                <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                {{ __('Loading...') }}
             </div>
 
             <div wire:loading.remove wire:target="setActiveTab">
-
                 @switch($activeTab)
-
                     @case('overview')
                         @include('livewire.profile.partials.overview')
                         @break
@@ -157,25 +87,15 @@
                         @break
 
                     @case('hardware-bookmarks')
-                        @include(
-                            'livewire.profile.partials.hardware-bookmarks',
-                            [
-                                'bookmarkedHardware' => $bookmarkedHardware
-                            ]
-                        )
+                        @include('livewire.profile.partials.hardware-bookmarks', ['bookmarkedHardware' => $bookmarkedHardware])
                         @break
 
                     @default
-                        <div class="py-12 text-center">
-                            <h3 class="text-base font-semibold text-slate-900">
-                                {{ __('Section unavailable') }}
-                            </h3>
-
-                            <p class="mt-1 text-sm text-slate-500">
-                                {{ __('This profile section could not be loaded.') }}
-                            </p>
-                        </div>
-
+                        <x-ui.empty-state
+                            icon="fa-triangle-exclamation"
+                            :title="__('Section unavailable')"
+                            :description="__('This profile section could not be loaded.')"
+                        />
                 @endswitch
             </div>
         </div>

@@ -1,776 +1,205 @@
+@php
+    $canCreate = auth()->user()->hasPermission('projects.create');
+    $canEdit = auth()->user()->hasPermission('projects.edit');
+    $sortOptions = [
+        'created_at' => __('Created'),
+        'name' => __('Name'),
+        'code' => __('Code'),
+        'client' => __('Client'),
+        'location' => __('Location'),
+        'contract_value' => __('Value'),
+        'status' => __('Status'),
+        'start_date' => __('Start Date'),
+    ];
+@endphp
+
 <div class="boq-page-stack">
 
-    {{-- =====================================================
-         HEADER
-    ====================================================== --}}
-    <div class="boq-page-header">
+    <x-ui.page-header
+        :title="__('Projects')"
+        icon="fa-folder-open"
+        :subtitle="__('Manage your construction projects.')"
+    >
+        @if($canCreate)
+            <x-slot:actions>
+                <x-ui.button icon="fa-plus" :href="route('projects.create')">{{ __('New Project') }}</x-ui.button>
+            </x-slot:actions>
+        @endif
+    </x-ui.page-header>
 
-        <div>
-            <h1 class="boq-page-title">
-                <i class="fas fa-folder-open"></i>
-                {{ __('Projects') }}
-            </h1>
+    <x-ui.flash />
 
-            <p class="boq-page-subtitle">
-                {{ __('Manage your construction projects.') }}
-            </p>
-        </div>
-
-        <a
-            href="{{ url('/projects/create') }}"
-            class="boq-btn-primary"
-        >
-            <i class="fas fa-plus"></i>
-            {{ __('New Project') }}
-        </a>
-
-    </div>
-
-
-    {{-- =====================================================
-         STATISTICS
-         SAME DISPLAY AS PLANS & PRICING
-    ====================================================== --}}
     <div class="boq-stats-grid">
-
-        {{-- Total Projects --}}
-        <div class="boq-stat-card boq-stat-green">
-
-            <div>
-                <p class="boq-stat-label">
-                    {{ __('Total Projects') }}
-                </p>
-
-                <p class="boq-stat-value">
-                    {{ $stats['total_projects'] ?? 0 }}
-                </p>
-            </div>
-
-            <span class="boq-stat-icon">
-                <i class="fas fa-folder-open"></i>
-            </span>
-
-        </div>
-
-
-        {{-- Active Projects --}}
-        <div class="boq-stat-card boq-stat-blue">
-
-            <div>
-                <p class="boq-stat-label">
-                    {{ __('Active Projects') }}
-                </p>
-
-                <p class="boq-stat-value">
-                    {{ $stats['active_projects'] ?? 0 }}
-                </p>
-            </div>
-
-            <span class="boq-stat-icon">
-                <i class="fas fa-diagram-project"></i>
-            </span>
-
-        </div>
-
-
-        {{-- Total BOQs --}}
-        <div class="boq-stat-card boq-stat-amber">
-
-            <div>
-                <p class="boq-stat-label">
-                    {{ __('Total BOQs') }}
-                </p>
-
-                <p class="boq-stat-value">
-                    {{ $stats['total_boqs'] ?? 0 }}
-                </p>
-            </div>
-
-            <span class="boq-stat-icon">
-                <i class="fas fa-file-invoice-dollar"></i>
-            </span>
-
-        </div>
-
-
-        {{-- Total Value --}}
-        <div class="boq-stat-card boq-stat-purple">
-
-            <div>
-                <p class="boq-stat-label">
-                    {{ __('Total Value') }}
-                </p>
-
-                <p class="boq-stat-value">
-
-                    @php
-                        $totalValue = (float) ($stats['total_value'] ?? 0);
-                    @endphp
-
-                    @if($totalValue >= 1000000000)
-
-                        UGX
-                        {{ \App\Support\Format::number($totalValue / 1000000000, 1) }}B
-
-                    @elseif($totalValue >= 1000000)
-
-                        UGX
-                        {{ \App\Support\Format::number($totalValue / 1000000, 1) }}M
-
-                    @elseif($totalValue >= 1000)
-
-                        UGX
-                        {{ \App\Support\Format::number($totalValue / 1000, 1) }}K
-
-                    @else
-
-                        UGX
-                        {{ \App\Support\Format::number($totalValue, 0) }}
-
-                    @endif
-
-                </p>
-            </div>
-
-            <span class="boq-stat-icon">
-                <i class="fas fa-money-bill-wave"></i>
-            </span>
-
-        </div>
-
+        <x-stat-card :label="__('Total Projects')" :value="\App\Support\Format::number($stats['total_projects'] ?? 0, 0)" icon="fa-folder-open" color="green" />
+        <x-stat-card :label="__('Active Projects')" :value="\App\Support\Format::number($stats['active_projects'] ?? 0, 0)" icon="fa-diagram-project" color="blue" />
+        <x-stat-card :label="__('Total BOQs')" :value="\App\Support\Format::number($stats['total_boqs'] ?? 0, 0)" icon="fa-file-invoice-dollar" color="amber" />
+        <x-stat-card
+            :label="__('Total Value')"
+            :value="\App\Support\Regional::currency().' '.\App\Support\Format::compact($stats['total_value'] ?? 0)"
+            :hint="__('Sum of contract values')"
+            icon="fa-money-bill-wave"
+            color="purple"
+        />
     </div>
 
-
-    {{-- =====================================================
-         SEARCH / ROWS / SORT
-    ====================================================== --}}
     <div class="boq-panel">
 
-        <div class="project-filter-grid">
-
-            {{-- Search --}}
-            <div>
-
-                <label class="boq-field-label">
-                    {{ __('Search Projects') }}
-                </label>
-
+        <div class="boq-toolbar border-b border-slate-200">
+            <x-ui.field :label="__('Search Projects')" for="project-search" class="boq-toolbar-grow">
                 <div class="boq-input-icon-wrap">
-
-                    <i class="fas fa-search boq-input-icon"></i>
-
+                    <i class="fas fa-search boq-input-icon" aria-hidden="true"></i>
                     <input
+                        id="project-search"
                         type="search"
                         wire:model.live.debounce.300ms="search"
                         class="boq-field boq-field-with-icon"
                         placeholder="{{ __('Search name, code, client or location...') }}"
                     >
-
                 </div>
+            </x-ui.field>
 
-            </div>
-
-
-            {{-- Rows --}}
-            <div>
-
-                <label class="boq-field-label">
-                    {{ __('Rows') }}
-                </label>
-
-                <select
-                    wire:model.live="perPage"
-                    class="boq-field"
-                >
-
-                    @foreach($perPageOptions as $option)
-
-                        <option value="{{ $option }}">
-                            {{ $option }}
-                        </option>
-
+            <x-ui.field :label="__('Sort By')" for="project-sort" class="w-full sm:w-44">
+                <select id="project-sort" class="boq-field" wire:change="sortBy($event.target.value)">
+                    @foreach($sortOptions as $field => $label)
+                        <option value="{{ $field }}" @selected($sortBy === $field)>{{ $label }}</option>
                     @endforeach
-
                 </select>
+            </x-ui.field>
 
-            </div>
-
-
-            {{-- Sort --}}
-            <div>
-
-                <label class="boq-field-label">
-                    {{ __('Sort By') }}
-                </label>
-
-                <div
-                    style="
-                        display:flex;
-                        flex-wrap:wrap;
-                        gap:.4rem;
-                    "
-                >
-
-                    @foreach([
-                        'name' => [
-                            'label' => 'Name',
-                            'icon' => 'fa-font'
-                        ],
-
-                        'code' => [
-                            'label' => 'Code',
-                            'icon' => 'fa-hashtag'
-                        ],
-
-                        'client' => [
-                            'label' => 'Client',
-                            'icon' => 'fa-user-tie'
-                        ],
-
-                        'location' => [
-                            'label' => 'Location',
-                            'icon' => 'fa-location-dot'
-                        ],
-
-                        'contract_value' => [
-                            'label' => 'Value',
-                            'icon' => 'fa-money-bill-wave'
-                        ],
-
-                        'status' => [
-                            'label' => 'Status',
-                            'icon' => 'fa-circle-check'
-                        ],
-
-                        'created_at' => [
-                            'label' => 'Created',
-                            'icon' => 'fa-calendar'
-                        ],
-
-                    ] as $field => $sortOption)
-
-                        <button
-                            type="button"
-                            wire:click="sortBy('{{ $field }}')"
-
-                            style="
-                                display:inline-flex;
-                                height:40px;
-                                align-items:center;
-                                justify-content:center;
-                                gap:.35rem;
-                                border-radius:.625rem;
-                                padding:0 .7rem;
-                                font-size:.72rem;
-                                font-weight:700;
-                                border:1px solid {{ $sortBy === $field ? '#05645b' : '#e2e8f0' }};
-                                background:{{ $sortBy === $field ? '#05645b' : '#f8fafc' }};
-                                color:{{ $sortBy === $field ? '#ffffff' : '#475569' }};
-                                cursor:pointer;
-                            "
-                        >
-
-                            <i class="fas {{ $sortOption['icon'] }}"></i>
-
-                            {{ $sortOption['label'] }}
-
-                            @if($sortBy === $field)
-
-                                <i class="fas {{
-                                    $sortDir === 'asc'
-                                        ? 'fa-arrow-up'
-                                        : 'fa-arrow-down'
-                                }}"></i>
-
-                            @endif
-
-                        </button>
-
+            <x-ui.field :label="__('Rows')" for="project-rows" class="w-full sm:w-24">
+                <select id="project-rows" wire:model.live="perPage" class="boq-field">
+                    @foreach($perPageOptions as $option)
+                        <option value="{{ $option }}">{{ $option }}</option>
                     @endforeach
-
-                </div>
-
-            </div>
-
+                </select>
+            </x-ui.field>
         </div>
-
-    </div>
-
-
-    {{-- =====================================================
-         PROJECTS TABLE
-    ====================================================== --}}
-    <div class="boq-panel">
 
         <x-bulk-bar :count="count($selected)">
-            <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected projects?" class="boq-btn-danger"><i class="fas fa-trash"></i> {{ __('Delete') }}</button>
+            <button type="button" wire:click="bulkDelete" wire:confirm="{{ __('Delete the selected projects?') }}" class="boq-btn-danger"><i class="fas fa-trash" aria-hidden="true"></i> {{ __('Delete') }}</button>
         </x-bulk-bar>
 
-        <div class="boq-table-wrapper">
+        <div class="boq-loading-bar" wire:loading.delay wire:target="search, perPage, sortBy, gotoPage, nextPage, previousPage"></div>
 
-            <table class="boq-table">
+        <x-ui.table>
+            <thead>
+                <tr>
+                    <th class="boq-check-col"><x-select-all :ids="$projects->pluck('id')" :selected="$selected" /></th>
+                    <x-ui.sort-header field="name" :sort-by="$sortBy" :sort-dir="$sortDir">{{ __('Name') }}</x-ui.sort-header>
+                    <x-ui.sort-header field="client" :sort-by="$sortBy" :sort-dir="$sortDir">{{ __('Client') }}</x-ui.sort-header>
+                    <x-ui.sort-header field="location" :sort-by="$sortBy" :sort-dir="$sortDir">{{ __('Location') }}</x-ui.sort-header>
+                    <x-ui.sort-header field="contract_value" :sort-by="$sortBy" :sort-dir="$sortDir" class="text-right">{{ __('Contract Value') }}</x-ui.sort-header>
+                    <x-ui.sort-header field="status" :sort-by="$sortBy" :sort-dir="$sortDir">{{ __('Status') }}</x-ui.sort-header>
+                    <x-ui.sort-header field="start_date" :sort-by="$sortBy" :sort-dir="$sortDir">{{ __('Start Date') }}</x-ui.sort-header>
+                    <th class="text-right">{{ __('Actions') }}</th>
+                </tr>
+            </thead>
 
-                <thead>
+            <tbody>
+                @forelse($projects as $project)
+                    <tr wire:key="project-{{ $project->id }}" @class(['is-selected' => in_array((string) $project->id, array_map('strval', $selected), true)])>
+                        <td class="boq-check-col"><x-select-row :id="$project->id" /></td>
 
-                    <tr>
-
-                        <th class="boq-check-col"><x-select-all :ids="$projects->pluck('id')" :selected="$selected" /></th>
-
-                        {{-- Name --}}
-                        <th
-                            wire:click="sortBy('name')"
-                            style="cursor:pointer;"
-                        >
-
-                            <span
-                                style="
-                                    display:inline-flex;
-                                    align-items:center;
-                                    gap:.3rem;
-                                "
-                            >
-                                Name
-
-                                @if($sortBy === 'name')
-
-                                    <i class="fas {{
-                                        $sortDir === 'asc'
-                                            ? 'fa-arrow-up'
-                                            : 'fa-arrow-down'
-                                    }}"></i>
-
+                        <td>
+                            <a href="{{ route('projects.show', $project->id) }}" class="boq-table-link">{{ $project->name }}</a>
+                            <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                                @if($project->code)
+                                    <span class="boq-code">{{ $project->code }}</span>
                                 @endif
+                                <span class="boq-table-meta mt-0">{{ trans_choice(':count BOQ|:count BOQs', $project->boqs_count ?? 0, ['count' => $project->boqs_count ?? 0]) }}</span>
+                            </div>
+                        </td>
+
+                        <td>
+                            @if($project->client)
+                                <span class="boq-cell-with-icon"><i class="fas fa-user-tie" aria-hidden="true"></i> {{ $project->client }}</span>
+                            @else
+                                <span class="boq-table-empty">—</span>
+                            @endif
+                        </td>
+
+                        <td>
+                            @if($project->location)
+                                <span class="boq-cell-with-icon"><i class="fas fa-location-dot" aria-hidden="true"></i> {{ $project->location }}</span>
+                            @else
+                                <span class="boq-table-empty">—</span>
+                            @endif
+                        </td>
+
+                        <td class="is-numeric">
+                            <span class="font-semibold text-slate-900">
+                                <x-money :amount="$project->contract_value ?? 0" :currency="$project->currency ?? \App\Support\Regional::currency()" />
                             </span>
+                            <x-boq-totals compact :totals="$totals[$project->id] ?? []" :currency="$project->currency" />
+                        </td>
 
-                        </th>
+                        <td><x-ui.status :status="$project->status" /></td>
 
+                        <td class="whitespace-nowrap">
+                            @if($project->start_date)
+                                <x-date :value="$project->start_date" />
+                            @else
+                                <span class="boq-table-empty">—</span>
+                            @endif
+                        </td>
 
-                        {{-- Code --}}
-                        <th
-                            wire:click="sortBy('code')"
-                            style="cursor:pointer;"
-                        >
-
-                            <span
-                                style="
-                                    display:inline-flex;
-                                    align-items:center;
-                                    gap:.3rem;
-                                "
-                            >
-                                Code
-
-                                @if($sortBy === 'code')
-
-                                    <i class="fas {{
-                                        $sortDir === 'asc'
-                                            ? 'fa-arrow-up'
-                                            : 'fa-arrow-down'
-                                    }}"></i>
-
-                                @endif
-
-                            </span>
-
-                        </th>
-
-
-                        {{-- Client --}}
-                        <th
-                            wire:click="sortBy('client')"
-                            style="cursor:pointer;"
-                        >
-                            {{ __('Client') }}
-                        </th>
-
-
-                        {{-- Location --}}
-                        <th
-                            wire:click="sortBy('location')"
-                            style="cursor:pointer;"
-                        >
-                            {{ __('Location') }}
-                        </th>
-
-
-                        {{-- Contract Value --}}
-                        <th
-                            wire:click="sortBy('contract_value')"
-                            style="cursor:pointer;"
-                        >
-                            {{ __('Contract Value') }}
-                        </th>
-
-
-                        {{-- Status --}}
-                        <th
-                            wire:click="sortBy('status')"
-                            style="cursor:pointer;"
-                        >
-                            {{ __('Status') }}
-                        </th>
-
-
-                        {{-- Start Date --}}
-                        <th
-                            wire:click="sortBy('start_date')"
-                            style="cursor:pointer;"
-                        >
-                            {{ __('Start Date') }}
-                        </th>
-
-
-                        {{-- Actions --}}
-                        <th class="text-right">
-                            {{ __('Actions') }}
-                        </th>
-
-                    </tr>
-
-                </thead>
-
-
-                <tbody>
-
-                    @forelse($projects as $project)
-
-                        <tr wire:key="project-{{ $project->id }}">
-
-                            <td class="boq-check-col"><x-select-row :id="$project->id" /></td>
-
-                            {{-- Project --}}
-                            <td>
-
-                                <a
-                                    href="{{ url('/projects/'.$project->id) }}"
-                                    style="
-                                        color:#05645b;
-                                        font-weight:700;
-                                        text-decoration:none;
-                                    "
-                                >
-                                    {{ $project->name }}
+                        <td class="text-right">
+                            <div class="boq-table-actions">
+                                <a href="{{ route('projects.show', $project->id) }}" class="boq-icon-btn" title="{{ __('View Project') }}" aria-label="{{ __('View Project') }}">
+                                    <i class="fas fa-eye" aria-hidden="true"></i>
                                 </a>
 
-                            </td>
-
-
-                            {{-- Code --}}
-                            <td>
-
-                                @if($project->code)
-
-                                    <span
-                                        style="
-                                            display:inline-flex;
-                                            border-radius:.4rem;
-                                            background:#f1f5f9;
-                                            padding:.2rem .45rem;
-                                            color:#475569;
-                                            font-size:.7rem;
-                                            font-weight:700;
-                                        "
-                                    >
-                                        {{ $project->code }}
-                                    </span>
-
-                                @else
-
-                                    <span style="color:#94a3b8;">
-                                        —
-                                    </span>
-
+                                @if($canEdit)
+                                    <a href="{{ route('projects.edit', $project->id) }}" class="boq-icon-btn" title="{{ __('Edit Project') }}" aria-label="{{ __('Edit Project') }}">
+                                        <i class="fas fa-pen" aria-hidden="true"></i>
+                                    </a>
                                 @endif
 
-                            </td>
-
-
-                            {{-- Client --}}
-                            <td>
-
-                                @if($project->client)
-
-                                    <span
-                                        style="
-                                            display:inline-flex;
-                                            align-items:center;
-                                            gap:.35rem;
-                                        "
-                                    >
-                                        <i
-                                            class="fas fa-user-tie"
-                                            style="
-                                                color:#94a3b8;
-                                                font-size:.7rem;
-                                            "
-                                        ></i>
-
-                                        {{ $project->client }}
-
-                                    </span>
-
-                                @else
-
-                                    <span style="color:#94a3b8;">
-                                        —
-                                    </span>
-
-                                @endif
-
-                            </td>
-
-
-                            {{-- Location --}}
-                            <td>
-
-                                @if($project->location)
-
-                                    <span
-                                        style="
-                                            display:inline-flex;
-                                            align-items:center;
-                                            gap:.35rem;
-                                        "
-                                    >
-
-                                        <i
-                                            class="fas fa-location-dot"
-                                            style="
-                                                color:#94a3b8;
-                                                font-size:.7rem;
-                                            "
-                                        ></i>
-
-                                        {{ $project->location }}
-
-                                    </span>
-
-                                @else
-
-                                    <span style="color:#94a3b8;">
-                                        —
-                                    </span>
-
-                                @endif
-
-                            </td>
-
-
-                            {{-- Contract Value --}}
-                            <td>
-
-                                <strong style="color:#0f172a;">
-
-                                    {{ $project->currency ?? \App\Support\Regional::currency() }}
-
-                                    {{ \App\Support\Format::number((float) ($project->contract_value ?? 0), 0) }}
-
-                                </strong>
-
-                                <x-boq-totals compact :totals="$totals[$project->id] ?? []" :currency="$project->currency" />
-
-                            </td>
-
-
-                            {{-- Status --}}
-                            <td>
-
-                                @php
-                                    $statusClass = match($project->status) {
-
-                                        'active'
-                                            => 'boq-badge-success',
-
-                                        'completed'
-                                            => 'boq-badge-info',
-
-                                        'archived'
-                                            => '',
-
-                                        'on_hold'
-                                            => 'boq-badge-warning',
-
-                                        default
-                                            => ''
-                                    };
-                                @endphp
-
-                                <span class="boq-badge {{ $statusClass }}">
-
-                                    @switch($project->status)
-
-                                        @case('active')
-                                            <i class="fas fa-circle-check"></i>
-                                            @break
-
-                                        @case('completed')
-                                            <i class="fas fa-check-double"></i>
-                                            @break
-
-                                        @case('on_hold')
-                                            <i class="fas fa-pause"></i>
-                                            @break
-
-                                        @case('archived')
-                                            <i class="fas fa-box-archive"></i>
-                                            @break
-
-                                        @default
-                                            <i class="fas fa-circle"></i>
-
-                                    @endswitch
-
-                                    {{ ucwords(
-                                        str_replace(
-                                            '_',
-                                            ' ',
-                                            $project->status ?? 'unknown'
-                                        )
-                                    ) }}
-
-                                </span>
-
-                            </td>
-
-
-                            {{-- Start date --}}
-                            <td>
-
-                                @if($project->start_date)
-
-                                    <span
-                                        style="
-                                            display:inline-flex;
-                                            align-items:center;
-                                            gap:.35rem;
-                                        "
-                                    >
-
-                                        <i
-                                            class="fas fa-calendar-day"
-                                            style="
-                                                color:#94a3b8;
-                                                font-size:.7rem;
-                                            "
-                                        ></i>
-
-                                        {{ $project->start_date->format('d M Y') }}
-
-                                    </span>
-
-                                @else
-
-                                    <span style="color:#94a3b8;">
-                                        —
-                                    </span>
-
-                                @endif
-
-                            </td>
-
-
-                            {{-- Actions --}}
-                            <td class="text-right">
-
-                                <div
-                                    style="
-                                        display:inline-flex;
-                                        align-items:center;
-                                        gap:.35rem;
-                                    "
+                                <button
+                                    type="button"
+                                    wire:click="delete({{ $project->id }})"
+                                    wire:confirm="{{ __('Are you sure you want to delete this project?') }}"
+                                    class="boq-icon-btn boq-icon-danger"
+                                    title="{{ __('Delete Project') }}"
+                                    aria-label="{{ __('Delete Project') }}"
                                 >
+                                    <i class="fas fa-trash" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="8" class="p-0">
+                            @if($search !== '')
+                                <x-ui.empty-state
+                                    icon="fa-magnifying-glass"
+                                    :title="__('No projects found.')"
+                                    :description="__('Try a different search term.')"
+                                >
+                                    <x-ui.button variant="secondary" size="sm" wire:click="$set('search', '')">{{ __('Clear search') }}</x-ui.button>
+                                </x-ui.empty-state>
+                            @else
+                                <x-ui.empty-state
+                                    icon="fa-folder-open"
+                                    :title="__('No projects yet.')"
+                                    :description="__('Create a project to organise your BOQs, pricing and reports.')"
+                                >
+                                    @if($canCreate)
+                                        <x-ui.button icon="fa-plus" :href="route('projects.create')">{{ __('Create your first project') }}</x-ui.button>
+                                    @endif
+                                </x-ui.empty-state>
+                            @endif
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </x-ui.table>
 
-                                    {{-- View --}}
-                                    <a
-                                        href="{{ url('/projects/'.$project->id) }}"
-                                        class="boq-icon-btn"
-                                        title="{{ __('View Project') }}"
-                                    >
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-
-
-                                    {{-- Edit --}}
-                                    <a
-                                        href="{{ url('/projects/'.$project->id.'/edit') }}"
-                                        class="boq-icon-btn"
-                                        title="{{ __('Edit Project') }}"
-                                    >
-                                        <i class="fas fa-pen"></i>
-                                    </a>
-
-
-                                    {{-- Delete --}}
-                                    <button
-                                        type="button"
-                                        wire:click="delete({{ $project->id }})"
-                                        wire:confirm="Are you sure you want to delete this project?"
-                                        class="boq-icon-btn boq-icon-danger"
-                                        title="{{ __('Delete Project') }}"
-                                    >
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-                    @empty
-
-                        <tr>
-
-                            <td
-                                colspan="9"
-                                class="boq-empty-table"
-                            >
-
-                                <i class="fas fa-folder-open"></i>
-
-                                <span>
-                                    {{ __('No projects found.') }}
-                                </span>
-
-                                <div style="margin-top:1rem;">
-
-                                    <a
-                                        href="{{ url('/projects/create') }}"
-                                        class="boq-btn-primary"
-                                    >
-                                        <i class="fas fa-plus"></i>
-                                        {{ __('Create your first project') }}
-                                    </a>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-                    @endforelse
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-
-        {{-- =================================================
-             PAGINATION
-        ================================================== --}}
         @if($projects->hasPages())
-
             <div class="boq-pagination">
-
                 {{ $projects->links() }}
-
             </div>
-
         @endif
-
     </div>
-
 </div>

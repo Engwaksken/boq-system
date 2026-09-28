@@ -65,16 +65,28 @@ class Index extends Component
             ->orderBy($this->sortBy, $this->sortDir)
             ->paginate($this->perPage);
 
+        $available = Plan::query()->where('is_active', true)->where('is_archived', false);
+
         $stats = [
+            // Shown on the page (these keys were missing, so the cards always read 0).
+            'available_plans' => (clone $available)->count(),
+            'monthly_plans' => (clone $available)->where('type', 'monthly')->count(),
+            'annual_plans' => (clone $available)->where('type', 'annual')->count(),
+
             'total_plans' => Plan::count(),
             'active_plans' => Plan::where('is_active', true)->where('is_archived', false)->count(),
             'archived_plans' => Plan::where('is_archived', true)->count(),
             'total_subscriptions' => Subscription::whereHas('plan')->count(),
         ];
 
+        $user = auth()->user();
+
         return view('livewire.plans.index', [
             'plans' => $plans,
             'stats' => $stats,
+            'currentPlanId' => $user
+                ? app(\App\Services\SubscriptionService::class)->currentSubscription($user, $user->organisation_id)?->plan_id
+                : null,
         ]);
     }
 }

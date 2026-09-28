@@ -1,94 +1,94 @@
-<div>
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">{{ __('AI Recommendations') }}</h1>
-            <p class="mt-1 text-sm text-gray-500">{{ __('Best-value hardware picks based on price, stability and freshness') }}</p>
-        </div>
-        <a href="{{ url('/hardware-prices') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition">
-            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-            {{ __('Back') }}
-        </a>
-    </div>
+@php
+    $fmt = fn ($value) => $value !== null && $value !== '' ? \App\Support\Format::number((float) $value, 2) : '—';
+@endphp
 
-    {{-- Filters --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-                <label for="location" class="block text-xs font-medium text-gray-500 mb-1">{{ __('Location') }}</label>
-                <input type="text" wire:model.live.debounce.300ms="location" id="location" placeholder="{{ __('e.g. city, town or market') }}"
-                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-            </div>
-            <div class="flex items-end">
-                <button type="button" wire:click="load"
-                        class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition">
-                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                    {{ __('Refresh Recommendations') }}
-                </button>
-            </div>
-        </div>
-    </div>
+<div class="boq-page-stack">
+    <x-ui.page-header
+        :title="__('AI Recommendations')"
+        icon="fa-lightbulb"
+        :subtitle="__('Best-value hardware picks based on price, stability and freshness')"
+    >
+        <x-slot:actions>
+            <x-ui.button variant="secondary" icon="fa-arrow-left" :href="route('hardware-prices.index')">{{ __('Back') }}</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    {{-- Recommendation Cards --}}
-    @if(isset($recommendations) && count($recommendations) > 0)
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @foreach($recommendations as $rec)
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold {{ isset($rec['rating']['overall']) && $rec['rating']['overall'] >= 80 ? 'bg-green-100 text-green-700' : (isset($rec['rating']['overall']) && $rec['rating']['overall'] >= 60 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700') }}">
-                                {{ $rec['rating']['overall'] ?? '?' }}
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-500">{{ __('AI Rating') }}</p>
-                                <p class="text-xs font-medium text-gray-700">{{ __('out of 100') }}</p>
-                            </div>
-                        </div>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ isset($rec['price_history']['trend']) && $rec['price_history']['trend'] === 'rising' ? 'bg-red-100 text-red-800' : (isset($rec['price_history']['trend']) && $rec['price_history']['trend'] === 'falling' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800') }}">
-                            {{ ucfirst($rec['price_history']['trend'] ?? 'stable') }}
-                        </span>
-                    </div>
-
-                    <h3 class="text-base font-semibold text-gray-900">{{ $rec['item_name'] }}</h3>
-                    <p class="text-sm text-gray-500">{{ $rec['brand'] ?? '' }}</p>
-                    <span class="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 w-fit">{{ $rec['category'] }}</span>
-
-                    <p class="mt-3 text-sm text-gray-500 line-clamp-2">{{ $rec['specification'] ?? '' }}</p>
-
-                    <p class="mt-4 text-xl font-bold text-gray-900">{{ \App\Support\Format::number((float) $rec['price'], 2) }} {{ $rec['currency'] }}</p>
-                    <p class="text-sm text-gray-500">{{ $rec['supplier'] ?? '' }} ? {{ $rec['location'] ?? '' }}</p>
-
-                    <div class="mt-4 grid grid-cols-2 gap-2 text-xs border-t border-gray-100 pt-4">
-                        <div>
-                            <p class="text-gray-500">{{ __('Lowest') }}</p>
-                            <p class="font-medium text-gray-900">{{ isset($rec['price_history']['lowest']) ? \App\Support\Format::number((float) $rec['price_history']['lowest'], 2) : '?' }}</p>
-                        </div>
-                        <div>
-                            <p class="text-gray-500">{{ __('Highest') }}</p>
-                            <p class="font-medium text-gray-900">{{ isset($rec['price_history']['highest']) ? \App\Support\Format::number((float) $rec['price_history']['highest'], 2) : '?' }}</p>
-                        </div>
-                        <div>
-                            <p class="text-gray-500">{{ __('Average') }}</p>
-                            <p class="font-medium text-gray-900">{{ isset($rec['price_history']['average']) ? \App\Support\Format::number((float) $rec['price_history']['average'], 2) : '?' }}</p>
-                        </div>
-                        <div>
-                            <p class="text-gray-500">{{ __('Change') }}</p>
-                            <p class="font-medium text-gray-900">{{ isset($rec['price_history']['change']) ? \App\Support\Format::number((float) $rec['price_history']['change'], 2) : '?' }}</p>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 pt-4 border-t border-gray-100">
-                        <a href="{{ url('/hardware-prices/' . $rec['id']) }}" class="inline-flex items-center justify-center w-full px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition">
-                            {{ __('View Details') }}
-                        </a>
-                    </div>
+    <div class="boq-panel">
+        <form wire:submit="load" class="boq-toolbar">
+            <x-ui.field :label="__('Location')" for="location" class="boq-toolbar-grow">
+                <div class="boq-input-icon-wrap">
+                    <i class="fas fa-location-dot boq-input-icon" aria-hidden="true"></i>
+                    <input type="text" wire:model.live.debounce.300ms="location" id="location" placeholder="{{ __('e.g. city, town or market') }}" class="boq-field boq-field-with-icon">
                 </div>
+            </x-ui.field>
+
+            <x-ui.button type="submit" icon="fa-rotate" loading="load">{{ __('Refresh Recommendations') }}</x-ui.button>
+        </form>
+    </div>
+
+    @if(isset($recommendations) && count($recommendations) > 0)
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3" wire:loading.class="opacity-60" wire:target="load">
+            @foreach($recommendations as $rec)
+                @php
+                    $overall = $rec['rating']['overall'] ?? null;
+                    $trend = $rec['price_history']['trend'] ?? 'stable';
+                    $ratingColor = $overall === null ? 'bg-slate-100 text-slate-600' : ($overall >= 80 ? 'bg-emerald-100 text-emerald-700' : ($overall >= 60 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'));
+                @endphp
+
+                <article class="boq-card flex flex-col" wire:key="recommendation-{{ $rec['id'] }}">
+                    <div class="boq-card-body flex flex-1 flex-col">
+                        <div class="mb-4 flex items-start justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                <span class="flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold {{ $ratingColor }}">{{ $overall ?? '—' }}</span>
+                                <div>
+                                    <p class="text-xs text-slate-500">{{ __('AI Rating') }}</p>
+                                    <p class="text-xs font-medium text-slate-700">{{ __('out of 100') }}</p>
+                                </div>
+                            </div>
+
+                            <x-ui.badge :color="$trend === 'rising' ? 'danger' : ($trend === 'falling' ? 'success' : 'neutral')" :icon="$trend === 'rising' ? 'fa-arrow-trend-up' : ($trend === 'falling' ? 'fa-arrow-trend-down' : 'fa-minus')">
+                                {{ __(ucfirst($trend)) }}
+                            </x-ui.badge>
+                        </div>
+
+                        <h3 class="text-base font-semibold text-slate-900">{{ $rec['item_name'] }}</h3>
+                        @if(! empty($rec['brand']))
+                            <p class="text-sm text-slate-500">{{ $rec['brand'] }}</p>
+                        @endif
+                        @if(! empty($rec['category']))
+                            <x-ui.badge class="mt-2 w-fit">{{ $rec['category'] }}</x-ui.badge>
+                        @endif
+
+                        @if(! empty($rec['specification']))
+                            <p class="mt-3 line-clamp-2 text-sm text-slate-500">{{ $rec['specification'] }}</p>
+                        @endif
+
+                        <p class="mt-4 text-xl font-bold tracking-tight text-slate-900"><x-money :amount="$rec['price'] ?? 0" :currency="$rec['currency'] ?? null" /></p>
+                        <p class="text-sm text-slate-500">{{ collect([$rec['supplier'] ?? null, $rec['location'] ?? null])->filter()->join(' · ') ?: '—' }}</p>
+
+                        <dl class="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4 text-xs">
+                            @foreach(['lowest' => __('Lowest'), 'highest' => __('Highest'), 'average' => __('Average'), 'change' => __('Change')] as $key => $label)
+                                <div>
+                                    <dt class="text-slate-500">{{ $label }}</dt>
+                                    <dd class="font-semibold tabular-nums text-slate-900">{{ $fmt($rec['price_history'][$key] ?? null) }}</dd>
+                                </div>
+                            @endforeach
+                        </dl>
+
+                        <div class="mt-auto pt-4">
+                            <x-ui.button variant="secondary" block :href="route('hardware-prices.show', $rec['id'])">{{ __('View Details') }}</x-ui.button>
+                        </div>
+                    </div>
+                </article>
             @endforeach
         </div>
     @else
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="text-center py-12">
-                <p class="text-gray-500">{{ __('No recommendations available yet.') }}</p>
-            </div>
-        </div>
+        <x-ui.card>
+            <x-ui.empty-state
+                icon="fa-lightbulb"
+                :title="__('No recommendations available yet.')"
+                :description="__('Recommendations appear once enough current prices are available. Try another location.')"
+            />
+        </x-ui.card>
     @endif
 </div>

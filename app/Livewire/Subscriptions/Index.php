@@ -130,6 +130,11 @@ class Index extends Component
 
     public function mount(): void
     {
+        // "Choose Plan" on the Plans page links here with ?tab=plans.
+        if (request()->query('tab') === 'plans') {
+            $this->activeTab = 'plans';
+        }
+
         $this->refreshCurrentSubscription();
     }
 

@@ -1,26 +1,38 @@
 {{-- Shared error page: no exception details, routes or permission names are ever shown. --}}
-<x-layouts.guest :title="$code.' '.$heading">
+@php
+    try {
+        $signedIn = auth()->check();
+    } catch (\Throwable) {
+        $signedIn = false;
+    }
 
-    <div class="text-center">
-        <x-auth-badge :icon="$icon" />
+    try {
+        $homeUrl = $signedIn ? route('dashboard') : route('login');
+    } catch (\Throwable) {
+        $homeUrl = url('/');
+    }
 
-        <p class="text-sm font-bold uppercase tracking-widest text-[#05645b]">{{ __('Error') }} {{ $code }}</p>
+    $backUrl = url()->previous() !== url()->current() ? url()->previous() : url('/');
+@endphp
 
-        <h1 class="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">{{ $code }} – {{ $heading }}</h1>
+@component('errors.shell', ['pageTitle' => $code.' '.$heading])
+    <span class="badge"><i class="fas {{ $icon }}" aria-hidden="true"></i></span>
 
-        <p class="mt-3 text-sm leading-6 text-slate-500">{{ $message }}</p>
+    <p class="eyebrow">{{ __('Error') }} {{ $code }}</p>
 
-        <div class="mt-7 flex flex-wrap justify-center gap-3">
-            <button type="button" onclick="history.length > 1 ? history.back() : location.assign('{{ url('/') }}')" class="auth-secondary w-auto px-5">
-                <i class="fas fa-arrow-left"></i>
-                {{ __('Back') }}
-            </button>
+    <h1>{{ $code }} – {{ $heading }}</h1>
 
-            <a href="{{ auth()->check() ? route('dashboard') : route('login') }}" class="auth-primary w-auto px-5">
-                <i class="fas {{ auth()->check() ? 'fa-gauge' : 'fa-right-to-bracket' }}"></i>
-                {{ auth()->check() ? __('Return to Dashboard') : __('Sign in') }}
-            </a>
-        </div>
+    <p class="message">{{ $message }}</p>
+
+    <div class="actions">
+        <a href="{{ $backUrl }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            {{ __('Back') }}
+        </a>
+
+        <a href="{{ $homeUrl }}" class="btn btn-primary">
+            <i class="fas {{ $signedIn ? 'fa-gauge' : 'fa-right-to-bracket' }}" aria-hidden="true"></i>
+            {{ $signedIn ? __('Return to Dashboard') : __('Sign in') }}
+        </a>
     </div>
-
-</x-layouts.guest>
+@endcomponent

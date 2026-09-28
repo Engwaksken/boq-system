@@ -1,38 +1,30 @@
 <div class="boq-page-stack" x-data="{ confirmDeactivate: false, deactivateId: null, deactivateName: '' }">
-    <div class="boq-page-header">
-        <div>
-            <h1 class="boq-page-title"><i class="fas fa-truck"></i> {{ __('Suppliers & Factories') }}</h1>
-            <p class="boq-page-subtitle">{{ __('Hardware suppliers and manufacturers, their websites for AI price research, price lists and quotations.') }}</p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-            <button type="button" wire:click="openImport" class="boq-btn-secondary"><i class="fas fa-file-csv"></i> {{ __('Import CSV') }}</button>
-            <button type="button" wire:click="create('factory')" class="boq-btn-secondary"><i class="fas fa-industry"></i> {{ __('Add Factory') }}</button>
-            <button type="button" wire:click="create('supplier')" class="boq-btn-primary"><i class="fas fa-plus"></i> {{ __('Add Supplier') }}</button>
-        </div>
-    </div>
+    <x-ui.page-header
+        :title="__('Suppliers & Factories')"
+        icon="fa-truck"
+        :subtitle="__('Hardware suppliers and manufacturers, their websites for AI price research, price lists and quotations.')"
+    >
+        <x-slot:actions>
+            <x-ui.button variant="secondary" icon="fa-file-csv" wire:click="openImport">{{ __('Import CSV') }}</x-ui.button>
+            <x-ui.button variant="secondary" icon="fa-industry" wire:click="create('factory')">{{ __('Add Factory') }}</x-ui.button>
+            <x-ui.button icon="fa-plus" wire:click="create('supplier')">{{ __('Add Supplier') }}</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    @if(session('message'))<div class="boq-flash"><i class="fas fa-circle-check"></i> {{ session('message') }}</div>@endif
+    <x-ui.flash :keys="['message', 'status', 'error']" />
 
     {{-- Statistics: supplier cards filter the list, price cards open the price lists --}}
     <div class="boq-stats-grid">
-        <button type="button" wire:click="filterBy('supplier')" class="boq-stat-link" aria-label="{{ __('Show suppliers') }}">
-            <x-stat-card :label="__('Total Suppliers')" :value="number_format($stats['suppliers'])" icon="fa-store" color="green" />
-        </button>
-        <button type="button" wire:click="filterBy('supplier', 'active')" class="boq-stat-link" aria-label="{{ __('Show active suppliers') }}">
-            <x-stat-card :label="__('Active Suppliers')" :value="number_format($stats['active_suppliers'])" icon="fa-circle-check" color="blue" />
-        </button>
-        <button type="button" wire:click="filterBy('factory')" class="boq-stat-link" aria-label="{{ __('Show factories') }}">
-            <x-stat-card :label="__('Total Factories')" :value="number_format($stats['factories'])" icon="fa-industry" color="purple" />
-        </button>
-        <button type="button" wire:click="filterBy('factory', 'active')" class="boq-stat-link" aria-label="{{ __('Show active factories') }}">
-            <x-stat-card :label="__('Active Factories')" :value="number_format($stats['active_factories'])" icon="fa-circle-check" color="amber" />
-        </button>
+        <x-stat-card wire:click="filterBy('supplier')" :active="$typeFilter === 'supplier' && $statusFilter === ''" :aria-label="__('Show suppliers')" :label="__('Total Suppliers')" :value="\App\Support\Format::number($stats['suppliers'], 0)" icon="fa-store" color="green" />
+        <x-stat-card wire:click="filterBy('supplier', 'active')" :active="$typeFilter === 'supplier' && $statusFilter === 'active'" :aria-label="__('Show active suppliers')" :label="__('Active Suppliers')" :value="\App\Support\Format::number($stats['active_suppliers'], 0)" icon="fa-circle-check" color="blue" />
+        <x-stat-card wire:click="filterBy('factory')" :active="$typeFilter === 'factory' && $statusFilter === ''" :aria-label="__('Show factories')" :label="__('Total Factories')" :value="\App\Support\Format::number($stats['factories'], 0)" icon="fa-industry" color="purple" />
+        <x-stat-card wire:click="filterBy('factory', 'active')" :active="$typeFilter === 'factory' && $statusFilter === 'active'" :aria-label="__('Show active factories')" :label="__('Active Factories')" :value="\App\Support\Format::number($stats['active_factories'], 0)" icon="fa-circle-check" color="amber" />
 
         <a href="{{ route('hardware-prices.index', ['priceType' => 'hardware']) }}" class="boq-stat-link">
-            <x-stat-card :label="__('Total Hardware Items')" :value="number_format($stats['hardware_items'])" icon="fa-screwdriver-wrench" color="green" />
+            <x-stat-card :label="__('Total Hardware Items')" :value="\App\Support\Format::number($stats['hardware_items'], 0)" icon="fa-screwdriver-wrench" color="green" />
         </a>
         <a href="{{ route('hardware-prices.index', ['priceType' => 'factory']) }}" class="boq-stat-link">
-            <x-stat-card :label="__('Total Factory Items')" :value="number_format($stats['factory_items'])" icon="fa-boxes-stacked" color="purple" />
+            <x-stat-card :label="__('Total Factory Items')" :value="\App\Support\Format::number($stats['factory_items'], 0)" icon="fa-boxes-stacked" color="purple" />
         </a>
         <a href="{{ route('hardware-prices.index') }}" class="boq-stat-link">
             <x-stat-card :label="__('Average Price').' ('.$stats['currency'].')'" :value="\App\Support\Format::money($stats['average'], $stats['currency'])" icon="fa-scale-balanced" color="blue" />
@@ -44,28 +36,26 @@
             <x-stat-card :label="__('Highest Price Available')" :value="$stats['highest'] ? \App\Support\Format::money($stats['highest']->price, $stats['highest']->currency) : '—'" :hint="$stats['highest']?->item_name" icon="fa-arrow-up" color="red" />
         </a>
         <a href="{{ route('hardware-prices.index', ['updated' => 'today']) }}" class="boq-stat-link">
-            <x-stat-card :label="__('Prices Updated Today')" :value="number_format($stats['updated_today'])" icon="fa-calendar-day" color="amber" />
+            <x-stat-card :label="__('Prices Updated Today')" :value="\App\Support\Format::number($stats['updated_today'], 0)" icon="fa-calendar-day" color="amber" />
         </a>
         <a href="{{ route('hardware-prices.index', ['updated' => 'week']) }}" class="boq-stat-link">
-            <x-stat-card :label="__('Prices Updated This Week')" :value="number_format($stats['updated_week'])" icon="fa-calendar-week" color="blue" />
+            <x-stat-card :label="__('Prices Updated This Week')" :value="\App\Support\Format::number($stats['updated_week'], 0)" icon="fa-calendar-week" color="blue" />
         </a>
     </div>
 
-    <div class="boq-panel overflow-hidden">
-        <div class="boq-tabs" role="tablist" aria-label="{{ __('Supplier type') }}">
+    <div class="boq-panel">
+        <x-ui.tabs :label="__('Supplier type')">
             @foreach(['' => [__('All'), 'fa-list'], 'supplier' => [__('Suppliers'), 'fa-store'], 'factory' => [__('Factories'), 'fa-industry']] as $value => [$label, $icon])
-                <button type="button" role="tab" wire:click="filterBy('{{ $value }}', '{{ $statusFilter }}')" class="boq-tab {{ $typeFilter === $value ? 'is-active' : '' }}" aria-selected="{{ $typeFilter === $value ? 'true' : 'false' }}">
-                    <i class="fas {{ $icon }}"></i> {{ $label }}
-                </button>
+                <x-ui.tab wire:click="filterBy('{{ $value }}', '{{ $statusFilter }}')" wire:key="supplier-tab-{{ $value ?: 'all' }}" :icon="$icon" :active="$typeFilter === $value">{{ $label }}</x-ui.tab>
             @endforeach
-        </div>
+        </x-ui.tabs>
 
-        <div class="boq-admin-filter-row">
-            <div class="boq-input-icon-wrap">
-                <i class="fas fa-magnifying-glass boq-input-icon"></i>
-                <input wire:model.live.debounce.300ms="search" placeholder="{{ __('Search name, contact, phone, email or website...') }}" class="boq-field boq-field-with-icon">
+        <div class="boq-toolbar border-b border-slate-200">
+            <div class="boq-input-icon-wrap boq-toolbar-grow">
+                <i class="fas fa-magnifying-glass boq-input-icon" aria-hidden="true"></i>
+                <input type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search name, contact, phone, email or website...') }}" aria-label="{{ __('Search') }}" class="boq-field boq-field-with-icon">
             </div>
-            <select wire:model.live="statusFilter" class="boq-field" aria-label="{{ __('Status') }}">
+            <select wire:model.live="statusFilter" class="boq-field w-full sm:w-44" aria-label="{{ __('Status') }}">
                 <option value="">{{ __('All statuses') }}</option>
                 <option value="active">{{ __('Active') }}</option>
                 <option value="inactive">{{ __('Inactive') }}</option>
@@ -115,8 +105,8 @@
                                 @endif
                             </td>
                             <td class="text-sm">{{ collect([$supplier->location, $supplier->country ? ($countries[$supplier->country] ?? $supplier->country) : null])->filter()->implode(', ') ?: '—' }}</td>
-                            <td class="text-sm">{{ $supplier->rates_count }}</td>
-                            <td><span class="boq-badge {{ $supplier->is_active ? 'boq-badge-success' : 'boq-badge-danger' }}">{{ $supplier->is_active ? __('Active') : __('Inactive') }}</span></td>
+                            <td>{{ \App\Support\Format::number($supplier->rates_count ?? 0, 0) }}</td>
+                            <td><x-ui.status :status="$supplier->is_active ? 'active' : 'inactive'" /></td>
                             <td>
                                 <div class="boq-table-actions justify-end">
                                     <button type="button" wire:click="edit({{ $supplier->id }})" class="boq-icon-btn" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><i class="fas fa-pen"></i></button>
@@ -125,7 +115,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="9" class="boq-table-empty">{{ __('No suppliers found.') }}</td></tr>
+                        <tr><td colspan="9" class="p-0"><x-ui.empty-state icon="fa-truck" :title="__('No suppliers found.')" /></td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -136,7 +126,7 @@
 
     {{-- Add / edit --}}
     @if($showForm)
-        <div class="boq-modal-backdrop" wire:key="supplier-form-modal" x-data @keydown.escape.window="$wire.cancel()" role="dialog" aria-modal="true" aria-labelledby="supplier-form-title">
+        <div class="boq-modal-backdrop" wire:key="supplier-form-modal" x-data x-trap.noscroll="true" @keydown.escape.window="$wire.cancel()" role="dialog" aria-modal="true" aria-labelledby="supplier-form-title">
             <form wire:submit="save" class="boq-modal boq-modal-lg">
                 <div class="boq-modal-head">
                     <h2 id="supplier-form-title">
@@ -148,12 +138,12 @@
 
                 <div class="boq-modal-body boq-form-grid">
                     <div class="boq-form-span-2">
-                        <label for="sup-name" class="boq-field-label">{{ __('Name') }} *</label>
+                        <label for="sup-name" class="boq-field-label">{{ __('Name') }} <span class="boq-field-required" aria-hidden="true">*</span></label>
                         <input id="sup-name" wire:model="form.name" class="boq-field" placeholder="{{ __('e.g. Example Hardware Ltd') }}">
                         @error('form.name') <p class="boq-field-error">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label for="sup-type" class="boq-field-label">{{ __('Type') }} *</label>
+                        <label for="sup-type" class="boq-field-label">{{ __('Type') }} <span class="boq-field-required" aria-hidden="true">*</span></label>
                         <select id="sup-type" wire:model.live="form.type" class="boq-field">
                             <option value="supplier">{{ __('Supplier / hardware shop') }}</option>
                             <option value="factory">{{ __('Factory / manufacturer') }}</option>
@@ -215,7 +205,7 @@
 
                 <div class="boq-modal-foot">
                     <button type="button" wire:click="cancel" class="boq-btn-secondary">{{ __('Cancel') }}</button>
-                    <button type="submit" class="boq-btn-primary"><i class="fas fa-floppy-disk"></i> {{ __('Save') }}</button>
+                    <button type="submit" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="save"><i class="fas fa-floppy-disk" wire:loading.remove wire:target="save"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="save"></i> {{ __('Save') }}</button>
                 </div>
             </form>
         </div>
@@ -223,7 +213,7 @@
 
     {{-- CSV import: upload -> preview -> confirm --}}
     @if($showImport)
-        <div class="boq-modal-backdrop" wire:key="supplier-import-modal" role="dialog" aria-modal="true" aria-labelledby="supplier-import-title">
+        <div class="boq-modal-backdrop" wire:key="supplier-import-modal" x-data x-trap.noscroll="true" @keydown.escape.window="$wire.closeImport()" role="dialog" aria-modal="true" aria-labelledby="supplier-import-title">
             <div class="boq-modal boq-modal-xl">
                 <div class="boq-modal-head">
                     <h2 id="supplier-import-title"><i class="fas fa-file-csv"></i> {{ __('Import Suppliers from CSV') }}</h2>
@@ -240,9 +230,9 @@
                     <div class="flex flex-wrap items-end gap-3">
                         <button type="button" wire:click="downloadTemplate" class="boq-btn-secondary"><i class="fas fa-download"></i> {{ __('Download CSV Template') }}</button>
 
-                        <label class="boq-btn-secondary cursor-pointer">
-                            <i class="fas fa-upload"></i> {{ __('Upload CSV') }}
-                            <input type="file" wire:model="importFile" accept=".csv,text/csv" class="hidden">
+                        <input id="supplier-import-file" type="file" wire:model="importFile" accept=".csv,text/csv" class="peer sr-only">
+                        <label for="supplier-import-file" class="boq-btn-secondary cursor-pointer peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-600">
+                            <i class="fas fa-upload" aria-hidden="true"></i> {{ __('Upload CSV') }}
                         </label>
 
                         <span wire:loading wire:target="importFile" class="text-sm text-slate-500"><i class="fas fa-spinner fa-spin"></i> {{ __('Uploading file...') }}</span>
@@ -251,14 +241,14 @@
                         @endif
 
                         <button type="button" wire:click="previewImport" wire:loading.attr="disabled" wire:target="previewImport,importFile" class="boq-btn-primary" @disabled(! $importFile)>
-                            <i class="fas fa-eye"></i> {{ __('Preview Import') }}
+                            <i class="fas fa-eye" wire:loading.remove wire:target="previewImport"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="previewImport"></i> {{ __('Preview Import') }}
                         </button>
                     </div>
                     @error('importFile') <p class="boq-field-error">{{ $message }}</p> @enderror
-                    @if($importError)<div class="boq-flash boq-flash-error"><i class="fas fa-circle-exclamation"></i> {{ $importError }}</div>@endif
+                    @if($importError)<x-ui.alert type="error">{{ $importError }}</x-ui.alert>@endif
 
                     @if($importPreview)
-                        <div class="boq-stats-grid">
+                        <div class="boq-stats-grid boq-stats-compact">
                             <x-stat-card :label="__('Ready to import')" :value="count($importPreview['valid'])" icon="fa-circle-check" color="green" />
                             <x-stat-card :label="__('Duplicates')" :value="count($importPreview['duplicates'])" icon="fa-clone" color="amber" />
                             <x-stat-card :label="__('Failed validation')" :value="count($importPreview['failed'])" icon="fa-circle-xmark" color="red" />
@@ -311,7 +301,7 @@
                     @endif
                     <button type="button" wire:click="closeImport" class="boq-btn-secondary">{{ __('Cancel') }}</button>
                     <button type="button" wire:click="confirmImport" wire:loading.attr="disabled" wire:target="confirmImport" class="boq-btn-primary" @disabled(! $importPreview || count($importPreview['valid']) === 0)>
-                        <i class="fas fa-check"></i> {{ __('Confirm Import') }}{{ $importPreview ? ' ('.count($importPreview['valid']).')' : '' }}
+                        <i class="fas fa-check" wire:loading.remove wire:target="confirmImport"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="confirmImport"></i> {{ __('Confirm Import') }}{{ $importPreview ? ' ('.count($importPreview['valid']).')' : '' }}
                     </button>
                 </div>
             </div>

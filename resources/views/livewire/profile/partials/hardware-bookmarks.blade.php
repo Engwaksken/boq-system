@@ -1,8 +1,8 @@
 <div>
     <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h3 class="text-lg font-semibold text-slate-900">{{ __('Hardware Price Bookmarks') }}</h3>
-            <p class="mt-1 text-sm text-slate-500">{{ __('Keep the hardware prices you check most often, by location.') }}</p>
+            <h3 class="boq-section-title"><i class="fas fa-bookmark" aria-hidden="true"></i> {{ __('Hardware Price Bookmarks') }}</h3>
+            <p class="boq-section-subtitle">{{ __('Keep the hardware prices you check most often, by location.') }}</p>
         </div>
 
         <button wire:click="bookmarkHardware" type="button" class="boq-btn-primary">
@@ -18,13 +18,13 @@
             </span>
             <h4 class="boq-empty-title">{{ __('No bookmarks yet') }}</h4>
             <p class="boq-empty-description">{{ __('Bookmark hardware prices by location for quick access.') }}</p>
-            <button wire:click="bookmarkHardware" type="button" class="boq-btn-primary boq-empty-action">
+            <button wire:click="bookmarkHardware" type="button" class="boq-btn-primary mt-4">
                 <i class="fas fa-plus"></i>
                 {{ __('Add Your First Bookmark') }}
             </button>
         </div>
     @else
-        <div class="boq-table-wrapper">
+        <div class="boq-table-wrapper rounded-lg border border-slate-200">
             <table class="boq-table">
                 <thead>
                     <tr>
@@ -52,8 +52,7 @@
                             <td>{{ $bookmark->location }}</td>
                             <td class="text-right font-semibold">
                                 @if($bookmark->hardwarePrice)
-                                    {{ $bookmark->hardwarePrice->currency }}
-                                    {{ \App\Support\Format::number((float) $bookmark->hardwarePrice->price, 2) }}
+                                    <x-money :amount="$bookmark->hardwarePrice->price" :currency="$bookmark->hardwarePrice->currency" />
                                 @else
                                     —
                                 @endif
@@ -66,7 +65,7 @@
                                     </button>
                                     <button
                                         wire:click="deleteBookmark({{ $bookmark->id }})"
-                                        wire:confirm="Remove this bookmark?"
+                                        wire:confirm="{{ __('Remove this bookmark?') }}"
                                         type="button"
                                         class="boq-icon-btn boq-icon-danger"
                                         title="{{ __('Remove bookmark') }}"
@@ -96,7 +95,7 @@
             <form wire:submit="saveBookmark" class="boq-modal boq-modal-sm">
                 <div class="boq-modal-head">
                     <h2 id="bookmark-modal-title">
-                        {{ $editingBookmarkId ? 'Edit Bookmark' : 'Bookmark Hardware' }}
+                        <i class="fas fa-bookmark" aria-hidden="true"></i> {{ $editingBookmarkId ? __('Edit Bookmark') : __('Bookmark Hardware') }}
                     </h2>
 
                     <button type="button" wire:click="closeBookmarkModal" class="boq-modal-close" aria-label="{{ __('Close') }}">
@@ -122,20 +121,20 @@
                     </div>
 
                     <x-select-with-other
-                        label="Location"
+                        :label="__('Location')"
                         choice="bookmarkLocationChoice"
                         value="hardwareBookmarkForm.location"
                         :current="$bookmarkLocationChoice"
                         :options="$bookmarkLocations"
-                        :placeholder="empty($hardwareBookmarkForm['hardware_price_id']) ? 'Select a hardware price first...' : 'Select location...'"
-                        other-placeholder="e.g. a market, town or supplier branch"
+                        :placeholder="empty($hardwareBookmarkForm['hardware_price_id']) ? __('Select a hardware price first...') : __('Select location...')"
+                        :other-placeholder="__('e.g. a market, town or supplier branch')"
                         error="hardwareBookmarkForm.location"
                         required
                     />
                     <p class="boq-field-help -mt-2">{{ __('Filled in from the selected price. Pick another location where this item is priced, or choose Other.') }}</p>
 
                     <div>
-                        <label for="bookmark-notes" class="boq-field-label">Notes (optional)</label>
+                        <label for="bookmark-notes" class="boq-field-label">{{ __('Notes (optional)') }}</label>
                         <textarea id="bookmark-notes" wire:model="hardwareBookmarkForm.notes" rows="3" class="boq-field" maxlength="500" placeholder="{{ __('Why did you bookmark this?') }}"></textarea>
                         @error('hardwareBookmarkForm.notes') <p class="boq-field-error">{{ $message }}</p> @enderror
                     </div>
@@ -149,7 +148,7 @@
                     <button type="submit" wire:loading.attr="disabled" wire:target="saveBookmark" class="boq-btn-primary">
                         <i wire:loading.remove wire:target="saveBookmark" class="fas fa-bookmark"></i>
                         <i wire:loading wire:target="saveBookmark" class="fas fa-spinner fa-spin"></i>
-                        {{ $editingBookmarkId ? 'Update' : 'Save' }} Bookmark
+                        {{ $editingBookmarkId ? __('Update Bookmark') : __('Save Bookmark') }}
                     </button>
                 </div>
             </form>

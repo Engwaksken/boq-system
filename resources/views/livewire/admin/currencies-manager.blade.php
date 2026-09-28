@@ -7,11 +7,11 @@
     </div>
 
     @if(session('currency-message'))
-        <div class="boq-flash mb-3"><i class="fas fa-circle-check"></i> {{ session('currency-message') }}</div>
+        <x-ui.alert type="success" class="mb-3" dismissible>{{ session('currency-message') }}</x-ui.alert>
     @endif
 
     <x-bulk-bar :count="count($selected)" class="mb-3">
-        <button type="button" wire:click="bulkDelete" wire:confirm="Delete the selected currencies? Existing records keep their currency code." class="boq-btn-danger">
+        <button type="button" wire:click="bulkDelete" wire:confirm="{{ __('Delete the selected currencies? Existing records keep their currency code.') }}" class="boq-btn-danger">
             <i class="fas fa-trash"></i> {{ __('Delete') }}
         </button>
     </x-bulk-bar>
@@ -47,20 +47,20 @@
                         <td>{{ $currency->symbol ?: '—' }}</td>
                         <td>{{ $currency->decimal_places }}</td>
                         <td>
-                            <span class="boq-badge {{ $currency->is_active ? 'boq-badge-success' : 'boq-badge-danger' }}">{{ $currency->is_active ? 'Active' : 'Inactive' }}</span>
+                            <span class="boq-badge {{ $currency->is_active ? 'boq-badge-success' : 'boq-badge-danger' }}">{{ $currency->is_active ? __('Active') : __('Inactive') }}</span>
                         </td>
                         <td>
                             <div class="boq-table-actions justify-end">
                                 <button type="button" wire:click="edit({{ $currency->id }})" class="boq-icon-btn" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><i class="fas fa-pen"></i></button>
                                 @unless($currency->is_default)
                                     <button type="button" wire:click="setDefault({{ $currency->id }})" class="boq-icon-btn" title="{{ __('Make default') }}" aria-label="{{ __('Make default') }}"><i class="far fa-star"></i></button>
-                                    <button type="button" wire:click="toggleActive({{ $currency->id }})" class="boq-icon-btn" title="{{ $currency->is_active ? 'Deactivate' : 'Activate' }}" aria-label="{{ $currency->is_active ? 'Deactivate' : 'Activate' }}"><i class="fas {{ $currency->is_active ? 'fa-ban' : 'fa-circle-check' }}"></i></button>
+                                    <button type="button" wire:click="toggleActive({{ $currency->id }})" class="boq-icon-btn" title="{{ $currency->is_active ? __('Deactivate') : __('Activate') }}" aria-label="{{ $currency->is_active ? __('Deactivate') : __('Activate') }}"><i class="fas {{ $currency->is_active ? 'fa-ban' : 'fa-circle-check' }}"></i></button>
                                 @endunless
                             </div>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="boq-table-empty">{{ __('No currencies yet.') }}</td></tr>
+                    <tr><td colspan="7" class="boq-empty-table">{{ __('No currencies yet.') }}</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -69,10 +69,10 @@
     @if($currencies->hasPages())<div class="boq-pagination">{{ $currencies->links() }}</div>@endif
 
     @if($showForm)
-        <div class="boq-modal-backdrop" wire:key="currency-modal" role="dialog" aria-modal="true" aria-labelledby="currency-modal-title">
+        <div class="boq-modal-backdrop" wire:key="currency-modal" x-data x-trap.noscroll="true" @keydown.escape.window="$wire.cancel()" role="dialog" aria-modal="true" aria-labelledby="currency-modal-title">
             <form wire:submit="save" class="boq-modal boq-modal-sm">
                 <div class="boq-modal-head">
-                    <h2 id="currency-modal-title"><i class="fas fa-coins"></i> {{ $editingId ? 'Edit Currency' : 'Add Currency' }}</h2>
+                    <h2 id="currency-modal-title"><i class="fas fa-coins"></i> {{ $editingId ? __('Edit Currency') : __('Add Currency') }}</h2>
                     <button type="button" wire:click="cancel" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
                 </div>
 
