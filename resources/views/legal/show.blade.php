@@ -1,4 +1,4 @@
-<x-layouts.guest :title="$title">
+<x-layouts.guest :title="$title" wide>
 
     <div class="text-center">
         <x-auth-badge :icon="$icon" />
@@ -13,7 +13,7 @@
         @if($content)
             {{ $content }}
         @else
-            This document has not been published yet. Please contact the system administrator for details.
+            <p>{{ __('This document has not been published yet. Please contact the system administrator for details.') }}</p>
         @endif
     </div>
 

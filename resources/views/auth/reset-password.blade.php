@@ -19,7 +19,7 @@
             <div class="auth-input-wrap">
                 <i class="fas fa-envelope auth-input-icon"></i>
 
-                <input placeholder="name@example.com"
+                <input placeholder="{{ __('e.g. name@example.com') }}"
                     id="email"
                     type="email"
                     name="email"
@@ -36,9 +36,9 @@
             @enderror
         </div>
 
-        <x-auth-password name="password" label="New password" autocomplete="new-password" placeholder="{{ __('At least 8 characters') }}" />
+        <x-auth-password name="password" :label="__('New password')" autocomplete="new-password" placeholder="{{ __('At least 8 characters') }}" />
 
-        <x-auth-password name="password_confirmation" label="Confirm new password" icon="fa-shield-halved" autocomplete="new-password" placeholder="{{ __('Re-enter your new password') }}" />
+        <x-auth-password name="password_confirmation" :label="__('Confirm new password')" icon="fa-shield-halved" autocomplete="new-password" placeholder="{{ __('Re-enter your new password') }}" />
 
         <button type="submit" class="auth-primary">
             <i class="fas fa-key"></i>
