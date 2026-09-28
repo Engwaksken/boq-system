@@ -123,32 +123,37 @@ class HardwarePriceController extends Controller
 
     public function compare(Request $request): JsonResponse
     {
-        $ids = $request->get('ids', []);
+        $ids = $request->input('ids', []);
+        $ids = is_array($ids)
+            ? array_values(array_unique(array_filter(array_map('intval', $ids))))
+            : [];
 
-        if (! is_array($ids) || count($ids) < 2 || count($ids) > 10) {
+        if (count($ids) < 2 || count($ids) > 10) {
             return response()->json([
                 'success' => false,
-                'message' => 'Please provide 2 to 10 item IDs to compare',
+                'message' => 'Choose 2 to 10 different prices to compare.',
             ], 422);
         }
 
         $items = HardwarePrice::active()
             ->where('organisation_id', $request->user()->organisation_id)
             ->whereIn('id', $ids)
-            ->with('priceHistories')
             ->get();
 
         if ($items->count() !== count($ids)) {
             return response()->json([
                 'success' => false,
-                'message' => 'One or more items not found',
+                'message' => 'One or more of the selected prices are no longer available.',
             ], 404);
         }
 
-        $comparison = $items->map(function ($item) {
-            $histories = $item->priceHistories()->orderBy('recorded_at')->get();
-            $prices = $histories->pluck('price')->toArray();
-            $prices[] = $item->price;
+        $comparison = $items->map(function (HardwarePrice $item) {
+            $prices = $item->priceHistories()->orderBy('recorded_at')->pluck('price')
+                ->map(fn ($price) => (float) $price)
+                ->push((float) $item->price)
+                ->all();
+            $first = $prices[0];
+            $last = $prices[count($prices) - 1];
 
             return [
                 'id' => $item->id,
@@ -157,43 +162,53 @@ class HardwarePriceController extends Controller
                 'category' => $item->category,
                 'specification' => $item->specification,
                 'unit' => $item->unit,
-                'price' => $item->price,
+                'price' => (float) $item->price,
                 'currency' => $item->currency,
                 'supplier' => $item->supplier,
                 'location' => $item->location,
                 'source_reference' => $item->source_reference,
-                'fetched_at' => $item->fetched_at->format('Y-m-d H:i'),
+                'fetched_at' => $item->fetched_at?->format('Y-m-d H:i'),
                 'price_history' => [
                     'records' => count($prices),
                     'lowest' => min($prices),
                     'highest' => max($prices),
                     'average' => round(array_sum($prices) / count($prices), 2),
-                    'change' => count($prices) > 1 ? round($prices[count($prices) - 1] - $prices[0], 2) : 0,
-                    'change_percent' => count($prices) > 1 && $prices[0] > 0
-                        ? round((($prices[count($prices) - 1] - $prices[0]) / $prices[0]) * 100, 2)
+                    'change' => round($last - $first, 2),
+                    'change_percent' => count($prices) > 1 && $first > 0
+                        ? round((($last - $first) / $first) * 100, 2)
                         : 0,
                     'trend' => $this->calculateTrend($prices),
                 ],
                 'rating' => $this->calculateRating($item, $prices),
+                'badges' => [],
             ];
+        })->values();
+
+        // Compare the items against each other, not only against their own history.
+        $cheapest = $comparison->min('price');
+        $comparison = $comparison->map(function (array $item) use ($cheapest) {
+            $item['variance_percent'] = $cheapest > 0 ? round((($item['price'] - $cheapest) / $cheapest) * 100, 2) : 0;
+
+            return $item;
         });
 
-        $bestValue = $comparison->sortBy(fn ($i) => $i['rating']['value_score'])->first();
+        $bestValue = $comparison->sortByDesc(fn ($i) => $i['rating']['value_score'] * 1000 - $i['price'] / max($cheapest, 1))->first();
         $lowestPrice = $comparison->sortBy('price')->first();
         $bestRated = $comparison->sortByDesc(fn ($i) => $i['rating']['overall'])->first();
 
-        foreach ($comparison as $item) {
-            $item['badges'] = [];
-            if ($item['id'] === $bestValue['id']) {
-                $item['badges'][] = 'Best Value';
-            }
+        $comparison = $comparison->map(function (array $item) use ($bestValue, $lowestPrice, $bestRated) {
             if ($item['id'] === $lowestPrice['id']) {
                 $item['badges'][] = 'Lowest Price';
+            }
+            if ($item['id'] === $bestValue['id']) {
+                $item['badges'][] = 'Best Value';
             }
             if ($item['id'] === $bestRated['id']) {
                 $item['badges'][] = 'Best Rated';
             }
-        }
+
+            return $item;
+        })->sortBy('price')->values();
 
         return response()->json([
             'success' => true,
@@ -203,6 +218,10 @@ class HardwarePriceController extends Controller
                     'best_value' => $bestValue['id'],
                     'lowest_price' => $lowestPrice['id'],
                     'best_rated' => $bestRated['id'],
+                    'lowest' => $lowestPrice['price'],
+                    'highest' => $comparison->max('price'),
+                    'saving' => round($comparison->max('price') - $lowestPrice['price'], 2),
+                    'currency' => $lowestPrice['currency'],
                 ],
             ],
         ]);
@@ -441,20 +460,21 @@ class HardwarePriceController extends Controller
 
     private function calculateRating(HardwarePrice $item, array $prices): array
     {
-        $currentPrice = $item->price;
-        $avgPrice = array_sum($prices) / count($prices);
+        $currentPrice = (float) $item->price;
+        $avgPrice = array_sum($prices) / max(count($prices), 1);
         $minPrice = min($prices);
         $maxPrice = max($prices);
         $priceStability = $maxPrice > 0 ? 1 - (($maxPrice - $minPrice) / $maxPrice) : 1;
-        $dataFreshness = $item->fetched_at->diffInDays(now()) <= 7 ? 1 : max(0, 1 - ($item->fetched_at->diffInDays(now()) / 30));
+        $age = $item->fetched_at ? $item->fetched_at->diffInDays(now()) : 30;
+        $dataFreshness = $age <= 7 ? 1 : max(0, 1 - ($age / 30));
 
-        $priceScore = $currentPrice <= $avgPrice ? 100 : max(0, 100 - (($currentPrice - $avgPrice) / $avgPrice) * 50);
+        $priceScore = $avgPrice <= 0 || $currentPrice <= $avgPrice ? 100 : max(0, 100 - (($currentPrice - $avgPrice) / $avgPrice) * 50);
         $stabilityScore = $priceStability * 100;
         $freshnessScore = $dataFreshness * 100;
         $supplierScore = 75;
         $availabilityScore = 80;
 
-        $overall = round(
+        $overall = (int) round(
             ($priceScore * 0.35) +
             ($stabilityScore * 0.25) +
             ($freshnessScore * 0.20) +
@@ -464,9 +484,9 @@ class HardwarePriceController extends Controller
 
         return [
             'overall' => $overall,
-            'value_score' => round($priceScore),
-            'stability_score' => round($stabilityScore),
-            'freshness_score' => round($freshnessScore),
+            'value_score' => (int) round($priceScore),
+            'stability_score' => (int) round($stabilityScore),
+            'freshness_score' => (int) round($freshnessScore),
             'supplier_score' => $supplierScore,
             'availability_score' => $availabilityScore,
             'factors' => [

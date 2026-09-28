@@ -109,4 +109,78 @@ class MobileAppFixesTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors('avatar');
     }
+
+    public function test_price_comparison_returns_numbers_badges_and_a_summary(): void
+    {
+        $permission = Permission::factory()->create(['slug' => 'hardware-prices.view']);
+        $role = Role::factory()->create(['slug' => 'price-comparer']);
+        $role->permissions()->attach($permission);
+        $user = User::factory()->create();
+        $user->roles()->attach($role);
+
+        $make = fn (float $price, string $supplier, $fetchedAt) => HardwarePrice::create([
+            'organisation_id' => $user->organisation_id,
+            'item_name' => 'Cement 50kg',
+            'category' => 'Cement',
+            'unit' => 'bag',
+            'price' => $price,
+            'currency' => 'UGX',
+            'supplier' => $supplier,
+            'location' => 'Kampala',
+            'is_active' => true,
+            'fetched_at' => $fetchedAt,
+        ]);
+        $cheap = $make(34000, 'Hima', now());
+        $dear = $make(38000, 'Tororo', now()->subMonths(2));
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/v1/hardware-prices/compare', ['ids' => [$dear->id, $cheap->id]])
+            ->assertOk()
+            ->assertJsonPath('data.items.0.id', $cheap->id)
+            ->assertJsonPath('data.summary.lowest_price', $cheap->id)
+            ->assertJsonPath('data.summary.saving', 4000);
+
+        $items = $response->json('data.items');
+        $this->assertIsNumeric($items[0]['price']);
+        $this->assertIsInt($items[0]['rating']['overall']);
+        $this->assertContains('Lowest Price', $items[0]['badges']);
+        $this->assertEqualsWithDelta(11.76, $items[1]['variance_percent'], 0.01);
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/v1/hardware-prices/compare', ['ids' => [$cheap->id, $cheap->id]])
+            ->assertUnprocessable();
+    }
+
+    public function test_boq_can_be_renamed_and_moved_but_only_into_own_projects(): void
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        $user = User::factory()->create();
+        $user->roles()->attach(Role::where('slug', 'user')->value('id'));
+        \App\Models\Entitlement::factory()->create([
+            'user_id' => $user->id,
+            'organisation_id' => $user->organisation_id,
+            'feature_id' => \App\Models\Feature::firstOrCreate(['code' => 'boq.management'], ['name' => 'BOQ management'])->id,
+            'status' => 'active',
+            'expires_at' => now()->addMonth(),
+        ]);
+        $first = Project::factory()->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
+        $second = Project::factory()->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
+        $foreign = Project::factory()->create();
+        $boq = Boq::factory()->create(['project_id' => $first->id, 'organisation_id' => $user->organisation_id, 'name' => 'Old']);
+
+        $this->actingAs($user, 'sanctum')
+            ->patchJson("/api/v1/boqs/{$boq->id}", ['name' => '  New name ', 'description' => 'Phase 2', 'project_id' => $second->id])
+            ->assertOk()
+            ->assertJsonPath('data.name', 'New name')
+            ->assertJsonPath('data.project_id', $second->id);
+
+        $this->actingAs($user, 'sanctum')
+            ->patchJson("/api/v1/boqs/{$boq->id}", ['name' => 'X', 'project_id' => $foreign->id])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('project_id');
+
+        $this->assertSame('Phase 2', $boq->fresh()->description);
+        $this->actingAs($user, 'sanctum')->deleteJson("/api/v1/boqs/{$boq->id}")->assertOk();
+        $this->assertSoftDeleted($boq);
+    }
 }

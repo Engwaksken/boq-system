@@ -302,6 +302,50 @@ public function show(Request $request, Boq $boq): JsonResponse
             ->response();
     }
 
+    /**
+     * Rename a BOQ, change its description or move it to another of the user's projects.
+     */
+    public function update(Request $request, Boq $boq): JsonResponse
+    {
+        $this->authorize('update', $boq);
+
+        $validated = $request->validate([
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'project_id' => ['sometimes', 'required', 'integer', 'exists:projects,id'],
+        ]);
+
+        $user = $request->user();
+        $changes = [];
+
+        if (array_key_exists('name', $validated)) {
+            $changes['name'] = trim($validated['name']);
+        }
+        if (array_key_exists('description', $validated)) {
+            $changes['description'] = $validated['description'] !== null ? trim($validated['description']) : null;
+        }
+        if (isset($validated['project_id']) && (int) $validated['project_id'] !== $boq->project_id) {
+            $project = Project::findOrFail($validated['project_id']);
+            // Only move a BOQ into a project the user can also access.
+            $canUseProject = $user->organisation_id !== null
+                ? $project->organisation_id === $user->organisation_id
+                : $project->user_id === $user->id && $project->organisation_id === null;
+
+            if (! $canUseProject) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['project_id' => __('Choose one of your projects.')]);
+            }
+
+            $changes['project_id'] = $project->id;
+            $changes['organisation_id'] = $project->organisation_id;
+        }
+
+        $boq->update($changes);
+
+        return (new BoqResource($boq->fresh()->load('project')))
+            ->additional(['success' => true, 'message' => __('BOQ updated.')])
+            ->response();
+    }
+
     public function destroy(Request $request, Boq $boq): JsonResponse
     {
         $this->authorize('delete', $boq);

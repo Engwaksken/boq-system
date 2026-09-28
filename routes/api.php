@@ -73,6 +73,9 @@ Route::prefix('v1')->group(function () {
             Route::post('boqs', [BoqController::class, 'store'])
                 ->middleware('throttle:10,1')
                 ->name('api.v1.boqs.store');
+            Route::patch('boqs/{boq}', [BoqController::class, 'update'])
+                ->middleware('throttle:30,1')
+                ->name('api.v1.boqs.update');
             Route::delete('boqs/{boq}', [BoqController::class, 'destroy'])
                 ->middleware('throttle:10,1')
                 ->name('api.v1.boqs.destroy');
