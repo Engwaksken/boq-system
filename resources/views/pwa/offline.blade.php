@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#05645b">
     <title>{{ __('You are offline') }} | {{ $name }}</title>
-    <link rel="icon" href="/icons/icon-192.png">
+    <link rel="icon" href="{{ $icon }}">
     {{-- Self-contained: this page is shown when nothing else can load. --}}
     <style>
         :root { color-scheme: light dark; }
@@ -37,7 +37,7 @@
 </head>
 <body>
     <main class="card">
-        <img src="/icons/icon-192.png" alt="">
+        <img src="{{ $icon }}" alt="">
         <h1>{{ __('You are offline') }}</h1>
         <p>{{ __('Check your Wi-Fi or mobile data. :name continues as soon as you are back online.', ['name' => $name]) }}</p>
         <button type="button" onclick="location.reload()">{{ __('Try again') }}</button>

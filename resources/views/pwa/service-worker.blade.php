@@ -67,7 +67,7 @@ self.addEventListener('fetch', (event) => {
     }
 
     // Compiled assets and icons never change for a given file name.
-    if (url.pathname.startsWith('/build/') || url.pathname.startsWith('/icons/')) {
+    if (url.pathname.startsWith('/build/') || url.pathname.startsWith('/icons/') || url.pathname.startsWith('/pwa/icons/')) {
         event.respondWith(cacheFirst(request));
 
         return;

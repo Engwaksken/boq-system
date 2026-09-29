@@ -77,6 +77,9 @@ Route::get('/health', \App\Http\Controllers\HealthController::class)->middleware
 Route::get('/manifest.webmanifest', [\App\Http\Controllers\PwaController::class, 'manifest'])->name('pwa.manifest');
 Route::get('/sw.js', [\App\Http\Controllers\PwaController::class, 'serviceWorker'])->name('pwa.sw');
 Route::get('/offline', [\App\Http\Controllers\PwaController::class, 'offline'])->name('pwa.offline');
+Route::get('/pwa/icons/{variant}.png', [\App\Http\Controllers\PwaController::class, 'icon'])
+    ->where('variant', 'icon-192|icon-512|maskable-512|apple-touch-icon')
+    ->name('pwa.icon');
 
 Route::get('/shared/boqs/{boq}/pdf', function (\App\Models\Boq $boq, \App\Services\BoqPdfService $pdfs) {
     try {

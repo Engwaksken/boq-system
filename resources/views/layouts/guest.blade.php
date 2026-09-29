@@ -15,7 +15,7 @@
 
     <title>{{ ($title ?? '') !== '' ? $title.' · ' : '' }}{{ $siteName }}</title>
 
-    <link rel="icon" href="{{ $siteFavicon ? asset('storage/'.$siteFavicon) : asset('favicon.ico') }}">
+    <link rel="icon" href="{{ $siteFavicon ? asset('storage/'.$siteFavicon) : (\App\Support\PwaIcons::source() ? \App\Support\PwaIcons::url('icon-192') : asset('favicon.ico')) }}">
     @include('pwa.head')
 
     <link rel="preconnect" href="https://fonts.bunny.net">

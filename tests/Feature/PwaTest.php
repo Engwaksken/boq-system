@@ -65,4 +65,39 @@ class PwaTest extends TestCase
             ->assertSee('data-pwa-install', false)
             ->assertSee('Install app');
     }
+
+    public function test_app_icons_are_made_from_the_system_logo(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+        // A wide logo drawn on a solid blue background.
+        $logo = imagecreatetruecolor(400, 200);
+        imagefill($logo, 0, 0, imagecolorallocate($logo, 20, 60, 200));
+        imagefilledrectangle($logo, 150, 60, 250, 140, imagecolorallocate($logo, 255, 255, 255));
+        ob_start();
+        imagepng($logo);
+        \Illuminate\Support\Facades\Storage::disk('public')->put('site/logo-test.png', ob_get_clean());
+        \App\Models\SiteSetting::set('logo', 'site/logo-test.png');
+
+        $icons = collect($this->get('/manifest.webmanifest')->assertOk()->json('icons'));
+        $maskable = $icons->firstWhere('purpose', 'maskable');
+        $this->assertStringContainsString('/pwa/icons/maskable-512.png?v=', $maskable['src']);
+
+        $response = $this->get(parse_url($maskable['src'], PHP_URL_PATH).'?'.parse_url($maskable['src'], PHP_URL_QUERY))->assertOk();
+        $png = $response->getFile()->getContent();
+        [$width, $height] = getimagesizefromstring($png);
+        $this->assertSame([512, 512], [$width, $height]);
+
+        // The logo's own background fills the icon, and the logo sits in the middle.
+        $icon = imagecreatefromstring($png);
+        $corner = imagecolorsforindex($icon, imagecolorat($icon, 2, 2));
+        $this->assertSame([20, 60, 200], [$corner['red'], $corner['green'], $corner['blue']]);
+        $centre = imagecolorsforindex($icon, imagecolorat($icon, 256, 256));
+        $this->assertSame(255, $centre['red']);
+
+        $this->get('/login')->assertSee('/pwa/icons/apple-touch-icon.png?v=', false);
+
+        // Without a logo the built-in icons are used.
+        \App\Models\SiteSetting::set('logo', '');
+        $this->assertStringEndsWith('/icons/icon-192.png', \App\Support\PwaIcons::url('icon-192'));
+    }
 }

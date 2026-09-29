@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SiteSetting;
+use App\Support\PwaIcons;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
@@ -32,31 +33,40 @@ class PwaController extends Controller
             'theme_color' => self::THEME_COLOR,
             'categories' => ['business', 'productivity'],
             'lang' => app()->getLocale(),
+            // Made from the system logo (Admin > Settings), else the built-in icons.
             'icons' => [
-                ['src' => asset('icons/icon-192.png'), 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
-                ['src' => asset('icons/icon-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
-                ['src' => asset('icons/maskable-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
+                ['src' => PwaIcons::url('icon-192'), 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
+                ['src' => PwaIcons::url('icon-512'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
+                ['src' => PwaIcons::url('maskable-512'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
             ],
             'shortcuts' => [
-                ['name' => __('Projects'), 'url' => '/projects', 'icons' => [['src' => asset('icons/icon-192.png'), 'sizes' => '192x192']]],
-                ['name' => __('BOQs'), 'url' => '/boqs', 'icons' => [['src' => asset('icons/icon-192.png'), 'sizes' => '192x192']]],
-                ['name' => __('Get Prices'), 'url' => '/hardware-prices', 'icons' => [['src' => asset('icons/icon-192.png'), 'sizes' => '192x192']]],
+                ['name' => __('Projects'), 'url' => '/projects', 'icons' => [['src' => PwaIcons::url('icon-192'), 'sizes' => '192x192']]],
+                ['name' => __('BOQs'), 'url' => '/boqs', 'icons' => [['src' => PwaIcons::url('icon-192'), 'sizes' => '192x192']]],
+                ['name' => __('Get Prices'), 'url' => '/hardware-prices', 'icons' => [['src' => PwaIcons::url('icon-192'), 'sizes' => '192x192']]],
             ],
-        ], 200, ['Content-Type' => 'application/manifest+json', 'Cache-Control' => 'public, max-age=3600']);
+        ], 200, ['Content-Type' => 'application/manifest+json', 'Cache-Control' => 'no-cache']);
+    }
+
+    /** App icon drawn from the system logo; the URL carries a version, so it can be cached for long. */
+    public function icon(string $variant): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        return response()->file(PwaIcons::path($variant), [
+            'Content-Type' => 'image/png',
+            'Cache-Control' => 'public, max-age=31536000, immutable',
+        ]);
     }
 
     public function serviceWorker(): Response
     {
         $assets = $this->buildAssets();
         // A new build gives the worker a new version, so old caches are replaced.
-        $version = substr(sha1(implode('|', $assets).'|'.filemtime(__FILE__)), 0, 12);
+        $version = substr(sha1(implode('|', $assets).'|'.filemtime(__FILE__).'|'.PwaIcons::url('icon-192')), 0, 12);
 
         $script = view('pwa.service-worker', [
             'version' => $version,
             'precache' => array_values(array_unique([
                 '/offline',
-                '/icons/icon-192.png',
-                '/icons/icon-512.png',
+                parse_url(PwaIcons::url('icon-192'), PHP_URL_PATH).(parse_url(PwaIcons::url('icon-192'), PHP_URL_QUERY) ? '?'.parse_url(PwaIcons::url('icon-192'), PHP_URL_QUERY) : ''),
                 ...$assets,
             ])),
         ])->render();
@@ -72,6 +82,7 @@ class PwaController extends Controller
     {
         return response()->view('pwa.offline', [
             'name' => SiteSetting::get('system_name', 'BOQ System') ?: 'BOQ System',
+            'icon' => PwaIcons::url('icon-192'),
         ]);
     }
 

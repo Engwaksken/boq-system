@@ -1,7 +1,7 @@
 {{-- How to install on iPhone/iPad (Safari has no install prompt). Opened by [data-pwa-install]. --}}
 <dialog data-pwa-ios-help class="boq-pwa-dialog" aria-labelledby="pwa-ios-title">
     <form method="dialog">
-        <div class="boq-pwa-dialog-icon"><img src="{{ asset('icons/icon-192.png') }}" alt=""></div>
+        <div class="boq-pwa-dialog-icon"><img src="{{ \App\Support\PwaIcons::url('icon-192') }}" alt=""></div>
         <h2 id="pwa-ios-title">{{ __('Install the app') }}</h2>
         <ol>
             <li>{!! __('Tap the :icon Share button in Safari.', ['icon' => '<i class="fas fa-arrow-up-from-bracket" aria-hidden="true"></i>']) !!}</li>
