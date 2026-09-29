@@ -734,6 +734,34 @@ class HardwareScanner extends Component
     private function safeError(
         Throwable $exception
     ): string {
+        // Explain the actual cause; provider error details can contain keys, so they
+        // are summarised, never shown raw.
+        $root = $exception;
+        while ($root->getPrevious() !== null) {
+            $root = $root->getPrevious();
+        }
+
+        if ($root instanceof \Illuminate\Http\Client\RequestException) {
+            return match (true) {
+                in_array($root->response->status(), [401, 403], true) => 'The AI provider rejected the API key. Check it under AI API Settings.',
+                $root->response->status() === 404 => 'The AI model was not found. Check the model name under AI API Settings.',
+                $root->response->status() === 429 => 'The AI provider rate limit or quota was reached. Try again later or use another provider.',
+                $root->response->status() === 402 => 'The AI provider account has no credit left. Top it up or use another provider.',
+                default => 'The AI provider returned an error ('.$root->response->status().'). Try again or use another provider.',
+            };
+        }
+
+        if ($root instanceof \Illuminate\Http\Client\ConnectionException) {
+            return 'The AI provider could not be reached (timeout). Try again.';
+        }
+
+        $message = $root->getMessage();
+        foreach (['No AI provider is set up', 'No enabled AI provider', 'invalid JSON', 'API key is missing'] as $known) {
+            if (str_contains($message, $known)) {
+                return Str::limit($message, 200);
+            }
+        }
+
         if (
             app()->environment(
                 'production'

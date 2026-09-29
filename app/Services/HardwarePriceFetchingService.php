@@ -74,7 +74,10 @@ class HardwarePriceFetchingService
                         $location,
 
                     priceType:
-                        $priceType
+                        $priceType,
+
+                    organisationId:
+                        $organisationId
                 );
 
             if ($result !== null) {
@@ -179,7 +182,8 @@ class HardwarePriceFetchingService
         string $itemName,
         string $category,
         string $location,
-        string $priceType
+        string $priceType,
+        ?int $organisationId = null
     ): ?array {
         // Prefer a managed supplier/factory that has a website the AI can use as a source.
         $sourceSupplier = Supplier::query()
@@ -219,28 +223,7 @@ class HardwarePriceFetchingService
             );
 
         try {
-            $response = $this->requestPrice($prompt, grounded: (bool) config('services.gemini.grounding', true));
-
-            if (! $response->successful() && config('services.gemini.grounding', true)) {
-                $response = $this->requestPrice($prompt, grounded: false);
-            }
-
-            if (
-                ! $response->successful()
-            ) {
-                throw new RuntimeException(
-                    $response->json(
-                        'error.message'
-                    )
-                    ?: 'AI price request failed.'
-                );
-            }
-
-            $text =
-                $response->json(
-                    'candidates.0.content.parts.0.text'
-                )
-                ?? '';
+            [$text, $grounded] = $this->askForPrice($prompt, $organisationId, $itemName, $category);
 
             $parsed = $this->parsePriceResponse(
                 text:
@@ -268,7 +251,7 @@ class HardwarePriceFetchingService
                     : Supplier::whereRaw('LOWER(name) = ?', [mb_strtolower((string) $parsed['supplier'])])->value('id');
 
                 $parsed['ai_metadata']['source_website'] = $sourceWebsite;
-                $parsed['ai_metadata']['grounded'] = (bool) config('services.gemini.grounding', true);
+                $parsed['ai_metadata']['grounded'] = $grounded;
             }
 
             return $parsed;
@@ -295,6 +278,49 @@ class HardwarePriceFetchingService
 
             throw $exception;
         }
+    }
+
+    /**
+     * Asks the AI providers configured under Admin > AI API Settings (default
+     * first, falling back to the next enabled one). Only when none is set up
+     * does it use the Gemini key from the environment.
+     *
+     * @return array{0: string, 1: bool} the JSON answer and whether web search was used
+     */
+    private function askForPrice(string $prompt, ?int $organisationId, string $itemName, string $category): array
+    {
+        $hasProviders = \App\Models\AiProvider::query()->enabled()->forOrganisation($organisationId)->exists();
+
+        if ($hasProviders) {
+            $result = app(\App\Services\AiProviderService::class)->json(
+                $prompt,
+                'hardware_price_scan',
+                $organisationId,
+                context: ['metadata' => ['item' => $itemName, 'category' => $category]],
+            );
+            $grounded = ! empty($result['_grounding']);
+            unset($result['_grounding']);
+
+            return [json_encode($result, JSON_UNESCAPED_UNICODE) ?: '', $grounded];
+        }
+
+        if (blank(config('services.gemini.key'))) {
+            throw new RuntimeException('No AI provider is set up. Add and enable one under Admin > AI API Settings.');
+        }
+
+        $grounded = (bool) config('services.gemini.grounding', true);
+        $response = $this->requestPrice($prompt, grounded: $grounded);
+
+        if (! $response->successful() && $grounded) {
+            $grounded = false;
+            $response = $this->requestPrice($prompt, grounded: false);
+        }
+
+        if (! $response->successful()) {
+            throw new RuntimeException($response->json('error.message') ?: 'AI price request failed.');
+        }
+
+        return [(string) ($response->json('candidates.0.content.parts.0.text') ?? ''), $grounded];
     }
 
     private function requestPrice(string $prompt, bool $grounded): \Illuminate\Http\Client\Response

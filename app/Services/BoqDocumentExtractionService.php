@@ -77,20 +77,42 @@ class BoqDocumentExtractionService
             throw ValidationException::withMessages(['boq' => 'The stored BOQ scan is not a valid image.']);
         }
 
-        $provider = strtolower((string) config('services.ai_provider'));
+        // Reading PDFs and photos needs a vision model: Gemini (PDFs and images) or
+        // OpenAI (images). Providers from Admin > AI API Settings come first, then .env.
+        $candidates = array_values(array_filter(
+            $this->documentProviders($boq->organisation_id),
+            fn (array $candidate) => $mime !== 'application/pdf' || $candidate['type'] === 'gemini',
+        ));
 
-        try {
-            $response = match ($provider) {
-                'gemini' => $this->extractWithGemini($contents, $mime),
-                'openai' => $this->extractWithOpenAi($contents, $mime),
-                default => throw new RuntimeException("Unsupported AI provider [{$provider}]."),
-            };
-            [$items, $warnings] = $this->validateResponse($response, $boq);
-        } catch (ValidationException $exception) {
-            throw $exception;
-        } catch (Throwable $exception) {
-            report($exception);
-            throw ValidationException::withMessages(['boq' => 'The BOQ document could not be extracted by the configured AI provider.']);
+        if ($candidates === []) {
+            throw ValidationException::withMessages(['boq' => $mime === 'application/pdf'
+                ? 'Reading PDF BOQs needs a Gemini AI provider. Add and enable one under Admin > AI API Settings, or upload the BOQ as Excel/CSV.'
+                : 'Reading BOQ photos needs a Gemini or OpenAI AI provider. Add and enable one under Admin > AI API Settings, or upload the BOQ as Excel/CSV.']);
+        }
+
+        $items = null;
+        $warnings = [];
+        $provider = null;
+        $lastError = null;
+
+        foreach ($candidates as $candidate) {
+            try {
+                $response = $candidate['type'] === 'gemini'
+                    ? $this->extractWithGemini($contents, $mime, $candidate)
+                    : $this->extractWithOpenAi($contents, $mime, $candidate);
+                [$items, $warnings] = $this->validateResponse($response, $boq, $candidate['type']);
+                $provider = $candidate['type'];
+                break;
+            } catch (ValidationException $exception) {
+                throw $exception;
+            } catch (Throwable $exception) {
+                report($exception);
+                $lastError = $exception;
+            }
+        }
+
+        if ($items === null) {
+            throw ValidationException::withMessages(['boq' => 'The BOQ document could not be extracted by the configured AI provider.'.($lastError instanceof \Illuminate\Http\Client\RequestException && in_array($lastError->response->status(), [401, 403], true) ? ' The API key was rejected.' : '')]);
         }
 
         try {
@@ -112,16 +134,56 @@ class BoqDocumentExtractionService
         return ['count' => count($items), 'warnings' => $warnings, 'provider' => $provider];
     }
 
-    private function extractWithGemini(string $contents, string $mime): array
+    /**
+     * Vision-capable providers to try, in order.
+     *
+     * @return list<array{type: string, key: string, base_url: string, model: string}>
+     */
+    private function documentProviders(?int $organisationId): array
     {
-        $key = config('services.gemini.key');
+        $candidates = [];
 
-        if (empty($key)) {
-            throw ValidationException::withMessages(['boq' => 'Gemini document extraction is not configured.']);
+        $configured = \App\Models\AiProvider::query()
+            ->enabled()
+            ->forOrganisation($organisationId)
+            ->whereIn('provider_type', ['gemini', 'google_gemini', 'openai'])
+            ->orderByDesc('is_default')
+            ->orderBy('sort_order')
+            ->get();
+
+        foreach ($configured as $record) {
+            if (blank($record->api_key)) {
+                continue;
+            }
+            $isGemini = in_array(strtolower($record->provider_type), ['gemini', 'google_gemini'], true);
+            $candidates[] = [
+                'type' => $isGemini ? 'gemini' : 'openai',
+                'key' => (string) $record->api_key,
+                'base_url' => rtrim((string) ($record->api_base_url ?: ($isGemini ? 'https://generativelanguage.googleapis.com' : 'https://api.openai.com')), '/'),
+                'model' => (string) ($record->default_model ?: ($isGemini ? 'gemini-2.5-flash' : 'gpt-4o-mini')),
+            ];
         }
 
+        $envProvider = strtolower((string) config('services.ai_provider'));
+        if (in_array($envProvider, ['gemini', 'openai'], true) && filled(config("services.{$envProvider}.key"))) {
+            $candidates[] = [
+                'type' => $envProvider,
+                'key' => (string) config("services.{$envProvider}.key"),
+                'base_url' => rtrim((string) config("services.{$envProvider}.base_url"), '/'),
+                'model' => (string) config("services.{$envProvider}.model"),
+            ];
+        }
+
+        return $candidates;
+    }
+
+    private function extractWithGemini(string $contents, string $mime, array $provider): array
+    {
+        // Accept base URLs saved with or without the API version.
+        $base = preg_replace('#/v1(beta)?$#', '', $provider['base_url']);
+
         return Http::timeout(90)->post(
-            config('services.gemini.base_url').'/v1/models/'.config('services.gemini.model').':generateContent?key='.$key,
+            $base.'/v1/models/'.$provider['model'].':generateContent?key='.$provider['key'],
             [
                 'contents' => [[
                     'parts' => [
@@ -134,20 +196,12 @@ class BoqDocumentExtractionService
         )->throw()->json();
     }
 
-    private function extractWithOpenAi(string $contents, string $mime): array
+    private function extractWithOpenAi(string $contents, string $mime, array $provider): array
     {
-        $key = config('services.openai.key');
+        $base = preg_replace('#/v1$#', '', $provider['base_url']);
 
-        if (empty($key)) {
-            throw ValidationException::withMessages(['boq' => 'OpenAI document extraction is not configured.']);
-        }
-
-        if ($mime === 'application/pdf') {
-            throw ValidationException::withMessages(['boq' => 'PDF extraction is not supported with the configured OpenAI provider. Use an image or configure Gemini.']);
-        }
-
-        return Http::timeout(90)->withToken($key)->post(config('services.openai.base_url').'/v1/chat/completions', [
-            'model' => config('services.openai.model'),
+        return Http::timeout(90)->withToken($provider['key'])->post($base.'/v1/chat/completions', [
+            'model' => $provider['model'],
             'messages' => [[
                 'role' => 'user',
                 'content' => [
@@ -171,9 +225,8 @@ PROMPT;
     /**
      * @return array{0: list<array<string, mixed>>, 1: list<string>}
      */
-    private function validateResponse(array $response, Boq $boq): array
+    private function validateResponse(array $response, Boq $boq, string $provider): array
     {
-        $provider = strtolower((string) config('services.ai_provider'));
         $text = $provider === 'gemini'
             ? ($response['candidates'][0]['content']['parts'][0]['text'] ?? null)
             : ($response['choices'][0]['message']['content'] ?? null);
