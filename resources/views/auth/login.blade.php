@@ -19,7 +19,7 @@
 
     @if(session('status'))
 
-        <div class="auth-status mt-6">
+        <div class="auth-status mt-6" data-autohide="5000">
             <i class="fas fa-circle-check mr-1"></i>
             {{ session('status') }}
         </div>

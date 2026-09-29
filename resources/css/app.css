@@ -3320,6 +3320,16 @@ button.boq-sort-th:hover {
     cursor: pointer;
 }
 
+
+/* Messages that fade out by themselves ([data-autohide]). */
+[data-autohide] {
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+[data-autohide].is-fading {
+    opacity: 0;
+    transform: translateY(-4px);
+}
+
 } /* end @layer components */
 
 /* ============================================================

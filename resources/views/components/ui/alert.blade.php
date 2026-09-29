@@ -1,12 +1,14 @@
 {{--
     Inline alert. type: success | error | warning | info
     dismissible: adds a close button (client-side only).
+    autohide: milliseconds after which the alert fades out (null = stays).
 --}}
 @props([
     'type' => 'info',
     'title' => null,
     'icon' => null,
     'dismissible' => false,
+    'autohide' => null,
 ])
 
 @php
@@ -29,6 +31,7 @@
     {{ $attributes->class(['boq-alert', $variant]) }}
     role="{{ in_array($type, ['error', 'danger', 'warning'], true) ? 'alert' : 'status' }}"
     @if($dismissible) x-data="{ shown: true }" x-show="shown" @endif
+    @if($autohide) data-autohide="{{ (int) $autohide }}" @endif
 >
     <i class="fas {{ $icon }}" aria-hidden="true"></i>
 

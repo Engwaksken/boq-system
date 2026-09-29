@@ -3,10 +3,13 @@
 
     keys:  session keys to show, in order (defaults cover the keys the app flashes).
     types: override the alert type per key, e.g. ['message' => 'warning'].
+    timeout: milliseconds before success and warning messages fade out
+             (errors stay until closed so they can be read).
 --}}
 @props([
     'keys' => ['status', 'success', 'message', 'warning', 'error'],
     'types' => [],
+    'timeout' => 5000,
 ])
 
 @php
@@ -38,7 +41,7 @@
                 $type = $types[$key] ?? $defaultTypes[$key] ?? (str_contains($key, 'error') ? 'error' : 'success');
             @endphp
 
-            <x-ui.alert :type="$type" dismissible wire:key="flash-{{ $key }}-{{ md5($text) }}">
+            <x-ui.alert :type="$type" dismissible :autohide="in_array($type, ['error', 'danger'], true) ? null : $timeout" wire:key="flash-{{ $key }}-{{ md5($text) }}">
                 {{ $text }}
             </x-ui.alert>
         @endforeach

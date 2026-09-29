@@ -11,7 +11,7 @@
     </div>
 
     @if (session('status') == 'verification-link-sent')
-        <div class="auth-status mt-6" role="status">
+        <div class="auth-status mt-6" data-autohide="5000" role="status">
             <i class="fas fa-circle-check mr-1"></i>
             {{ __('A new verification link has been sent to the email address you provided during registration.') }}
         </div>

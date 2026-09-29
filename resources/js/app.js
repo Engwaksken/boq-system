@@ -1,5 +1,6 @@
 import './bootstrap';
 import './pwa';
+import './autohide';
 import Webpass from '@laragear/webpass';
 
 /*
