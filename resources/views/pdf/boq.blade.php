@@ -45,8 +45,20 @@
         table.totals .grand td { border-top: 2px solid #05645b; font-size: 12px; font-weight: bold; color: #05645b; }
 
         .notes { margin-top: 16px; font-size: 9px; color: #475569; }
-        .signoff { margin-top: 26px; width: 100%; }
-        .signoff td { width: 50%; font-size: 9px; padding-top: 22px; border-top: 1px solid #94a3b8; }
+        /* Sign-off: two columns (preparer | client), kept together on one page. */
+        table.signatures { width: 100%; margin-top: 26px; border-collapse: collapse; page-break-inside: avoid; }
+        table.signatures td.sig { width: 47%; vertical-align: top; padding: 0; }
+        table.signatures td.gap { width: 6%; }
+        .sig-heading { font-size: 8.5px; font-weight: bold; letter-spacing: .6px; text-transform: uppercase; color: #05645b; padding-bottom: 4px; border-bottom: 1px solid #e2e8f0; margin-bottom: 6px; }
+        .sig-image { height: 58px; }
+        .sig-image img { max-height: 56px; max-width: 210px; }
+        .sig-line { border-bottom: 1px solid #475569; height: 1px; margin-bottom: 2px; }
+        .sig-caption { font-size: 7.5px; color: #94a3b8; }
+        table.sig-meta { width: 100%; margin-top: 6px; border-collapse: collapse; }
+        table.sig-meta td { font-size: 9px; padding: 5px 0 1px; vertical-align: bottom; }
+        table.sig-meta td.label { width: 22%; color: #64748b; }
+        table.sig-meta td.value { border-bottom: 1px dotted #94a3b8; color: #0f172a; }
+        .sig-note { margin-top: 4px; font-size: 7.5px; color: #64748b; }
     </style>
 </head>
 <body>
@@ -180,10 +192,42 @@
         {{ __('Rates are in :currency and are subject to market changes. Items marked "Not priced" are excluded from the totals.', ['currency' => $currency]) }}
     </div>
 
-    <table class="signoff">
+    @php
+        $signOff = [
+            'preparer' => ['heading' => __('Prepared by'), 'fallbackName' => $preparedBy, 'organisation' => $companyName],
+            'client' => ['heading' => __('Client / Approved by'), 'fallbackName' => null, 'organisation' => $project?->client],
+        ];
+    @endphp
+
+    <table class="signatures">
         <tr>
-            <td>{{ __('Prepared by') }}: {{ $preparedBy ?: '—' }}<br>{{ $companyName }}</td>
-            <td style="padding-left:24px">{{ __('Approved by') }}:<br>&nbsp;</td>
+            @foreach($signOff as $role => $part)
+                @php $signature = $signatures[$role] ?? []; @endphp
+                @if(! $loop->first)
+                    <td class="gap"></td>
+                @endif
+                <td class="sig">
+                    <div class="sig-heading">{{ $part['heading'] }}</div>
+                    <div class="sig-image">
+                        @if(! empty($signature['image']))
+                            <img src="{{ $signature['image'] }}" alt="{{ __('Signature') }}">
+                        @endif
+                    </div>
+                    <div class="sig-line"></div>
+                    <div class="sig-caption">{{ __('Signature') }}</div>
+                    <table class="sig-meta">
+                        <tr><td class="label">{{ __('Name') }}</td><td class="value">{{ $signature['name'] ?? $part['fallbackName'] ?? '' }}&nbsp;</td></tr>
+                        <tr><td class="label">{{ __('Title') }}</td><td class="value">{{ $signature['title'] ?? '' }}&nbsp;</td></tr>
+                        <tr><td class="label">{{ __('Date') }}</td><td class="value">{{ ! empty($signature['date']) ? \App\Support\Format::date($signature['date']) : '' }}&nbsp;</td></tr>
+                    </table>
+                    @if(! empty($part['organisation']))
+                        <div class="sig-note">{{ $part['organisation'] }}</div>
+                    @endif
+                    @if(! empty($signature['remote']))
+                        <div class="sig-note">{{ __('Signed electronically through a secure link.') }}</div>
+                    @endif
+                </td>
+            @endforeach
         </tr>
     </table>
 </body>

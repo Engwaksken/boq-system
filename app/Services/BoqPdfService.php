@@ -74,6 +74,7 @@ class BoqPdfService
             'total' => $subtotal + $tax,
             'currency' => $boq->currency ?: \App\Support\Regional::currency(),
             'preparedBy' => $boq->owner?->name,
+            'signatures' => $this->signatures($boq),
             'generatedAt' => now(),
         ])
             ->setPaper('a4', 'portrait')
@@ -108,6 +109,37 @@ class BoqPdfService
         $boq->forceFill(['company_snapshot' => $snapshot])->saveQuietly();
     }
 
+    /**
+     * The preparer and client sign-off, with signature images embedded as data
+     * URIs (dompdf has remote loading disabled). Missing parts stay null so the
+     * PDF prints a blank line to sign by hand.
+     *
+     * @return array<string, array{name: ?string, title: ?string, date: mixed, image: ?string, remote: bool}>
+     */
+    private function signatures(Boq $boq): array
+    {
+        $signed = $boq->signatures()->get()->keyBy('role');
+        $block = [];
+
+        foreach (\App\Models\BoqSignature::ROLES as $role) {
+            $signature = $signed->get($role);
+
+            $block[$role] = [
+                'name' => $signature?->name,
+                'title' => $signature?->title,
+                'date' => $signature?->signed_at,
+                'image' => $signature ? $this->logoDataUri($signature->image_path) : null,
+                'remote' => (bool) $signature?->signedRemotely(),
+            ];
+        }
+
+        return $block;
+    }
+
+    /**
+     * An image on the public disk (or "local:" path) as a data URI; also used
+     * for signature images.
+     */
     private function logoDataUri(?string $path): ?string
     {
         if (! $path) {
