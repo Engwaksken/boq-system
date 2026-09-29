@@ -47,6 +47,39 @@ class ProcessBoqJob implements ShouldQueue
             return;
         }
 
+        // One run per batch: the queue worker and the BOQ page's fallback never overlap.
+        $lock = \Illuminate\Support\Facades\Cache::lock(self::lockKey($this->processingBatchId), 900);
+        if (! $lock->get()) {
+            if ($this->job !== null) {
+                $this->release(60);
+            }
+
+            return;
+        }
+
+        try {
+            $this->process($batch, $extractor, $matcher, $providers);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    public static function lockKey(int $batchId): string
+    {
+        return 'boq-pricing-batch-'.$batchId;
+    }
+
+    private function process(
+        BoqPricingBatch $batch,
+        BoqExtractionService $extractor,
+        PriceMatchingService $matcher,
+        AiProviderService $providers
+    ): void {
+        $batch->refresh();
+        if ($this->isTerminalStatus($batch->status)) {
+            return;
+        }
+
         $initialTotalItems = (int) $batch->total_items;
         $batch->update([
             'status' => 'running',

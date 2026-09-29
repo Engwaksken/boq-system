@@ -267,7 +267,30 @@ class Show extends Component
 
     public function refreshProcessingStatus(): void
     {
+        $this->runStalledGeneration();
         $this->refreshBoq();
+    }
+
+    /**
+     * Safety net when no queue worker is running on the server: a Generate BOQ
+     * batch still waiting after 45 seconds is processed by this page instead.
+     */
+    private function runStalledGeneration(): void
+    {
+        $batch = $this->processingBatch;
+
+        if (! $batch || $batch->status !== 'queued' || ! $batch->created_at?->lt(now()->subSeconds(45))) {
+            return;
+        }
+
+        set_time_limit(300);
+        ignore_user_abort(true);
+
+        try {
+            \App\Jobs\ProcessBoqJob::dispatchSync($batch->id);
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
     }
 
     public function getProcessingBatchProperty(): ?BoqPricingBatch
