@@ -20,7 +20,7 @@ class HardwarePriceFetchingService
         string $category,
         string $location,
         int $limit,
-        int $organisationId,
+        ?int $organisationId,
         string $priceType = HardwarePrice::TYPE_HARDWARE
     ): array {
         $priceType =
@@ -104,17 +104,8 @@ class HardwarePriceFetchingService
             'errors' => [],
         ];
 
-        $organisationId =
-            $organisationId
-            ?? auth()
-                ->user()
-                ?->organisation_id;
-
-        if (! $organisationId) {
-            throw new RuntimeException(
-                'An organisation is required to store fetched prices.'
-            );
-        }
+        // No organisation = the general market prices everyone can use.
+        $organisationId ??= HardwarePrice::ownerOrganisationFor(auth()->user());
 
         $categories =
             HardwareCategory::query()
@@ -176,6 +167,105 @@ class HardwarePriceFetchingService
         }
 
         return $results;
+    }
+
+    /**
+     * Reads a supplier's or factory's own price list from its website with the AI
+     * provider and adds the items to the prices (general prices for super admins).
+     *
+     * @return array{found: int, created: int, updated: int, skipped: int, errors: list<string>}
+     */
+    public function scanSupplier(Supplier $supplier, ?int $organisationId, int $limit = 15): array
+    {
+        $website = trim((string) $supplier->website_url);
+        if ($website === '') {
+            throw new RuntimeException('Add the supplier\'s website first, then scan its prices.');
+        }
+
+        $priceType = $supplier->type === Supplier::TYPE_FACTORY ? HardwarePrice::TYPE_FACTORY : HardwarePrice::TYPE_HARDWARE;
+        $limit = max(1, min(40, $limit));
+        $location = trim((string) ($supplier->location ?: $supplier->region)) ?: Regional::marketLocation();
+        $currency = strtoupper((string) ($supplier->currency ?: Regional::currency()));
+        $categories = \App\Support\Categories::materialNames($organisationId);
+        $materials = is_array($supplier->materials) ? implode(', ', array_filter($supplier->materials)) : '';
+
+        $prompt = implode("\n", array_filter([
+            "You are a construction material price researcher.",
+            "Find the current prices of items sold by \"{$supplier->name}\" (".($priceType === HardwarePrice::TYPE_FACTORY ? 'a factory / manufacturer' : 'a hardware supplier').") on its website {$website} and its official price lists.",
+            $materials !== '' ? "They are known to sell: {$materials}." : null,
+            "Location: {$location}. Currency: {$currency} (convert if the source uses another currency).",
+            "Return at most {$limit} construction items that have a clearly stated price. Do not invent prices; leave out items without a price.",
+            $categories !== [] ? 'Use one of these categories when it fits: '.implode(', ', $categories).'.' : null,
+            'Return JSON only: {"items":[{"item_name":string,"brand":string|null,"category":string,"specification":string|null,"unit":string,"price":number,"currency":string,"source_url":string|null,"confidence":number}]}',
+        ]));
+
+        $result = ['found' => 0, 'created' => 0, 'updated' => 0, 'skipped' => 0, 'errors' => []];
+
+        $answer = app(\App\Services\AiProviderService::class)->json(
+            $prompt,
+            'supplier_price_scan',
+            $organisationId,
+            context: ['metadata' => ['supplier_id' => $supplier->id]],
+        );
+        $grounded = ! empty($answer['_grounding']);
+        $items = is_array($answer['items'] ?? null) ? array_slice($answer['items'], 0, $limit) : [];
+        $result['found'] = count($items);
+
+        $categoryByName = collect($categories)->keyBy(fn ($name) => mb_strtolower($name));
+
+        foreach ($items as $item) {
+            $name = trim((string) ($item['item_name'] ?? ''));
+            $price = is_numeric($item['price'] ?? null) ? (float) $item['price'] : 0.0;
+            if ($name === '' || $price <= 0) {
+                $result['skipped']++;
+                continue;
+            }
+
+            $category = trim((string) ($item['category'] ?? ''));
+            $category = $categoryByName->get(mb_strtolower($category), $category !== '' ? $category : 'General');
+
+            try {
+                $status = $this->storePrice($organisationId, [
+                    'item_name' => mb_substr($name, 0, 255),
+                    'brand' => $this->nullable($item['brand'] ?? null),
+                    'category' => mb_substr($category, 0, 255),
+                    'price_type' => $priceType,
+                    'specification' => $this->nullable($item['specification'] ?? null),
+                    'unit' => mb_substr(trim((string) ($item['unit'] ?? '')) ?: 'piece', 0, 50),
+                    'price' => round($price, 2),
+                    'currency' => strtoupper(trim((string) ($item['currency'] ?? ''))) ?: $currency,
+                    'supplier' => $supplier->name,
+                    'supplier_id' => $supplier->id,
+                    'location' => $location,
+                    'source_url' => $this->nullable($item['source_url'] ?? null) ?? $website,
+                    'source_reference' => 'Supplier website scan',
+                    'fetched_at' => now(),
+                    'is_active' => true,
+                    'ai_metadata' => [
+                        'confidence' => (float) ($item['confidence'] ?? 0.7),
+                        'source' => 'supplier_scan',
+                        'source_website' => $website,
+                        'grounded' => $grounded,
+                        'price_type' => $priceType,
+                    ],
+                ]);
+                $result[$status]++;
+            } catch (Throwable $exception) {
+                report($exception);
+                $result['errors'][] = $name;
+            }
+        }
+
+        $metadata = is_array($supplier->metadata) ? $supplier->metadata : [];
+        $metadata['last_price_scan'] = [
+            'at' => now()->toIso8601String(),
+            'found' => $result['found'],
+            'created' => $result['created'],
+            'updated' => $result['updated'],
+        ];
+        $supplier->forceFill(['metadata' => $metadata])->saveQuietly();
+
+        return $result;
     }
 
     private function fetchPriceForItem(
@@ -582,15 +672,12 @@ PROMPT;
     }
 
     private function storePrice(
-        int $organisationId,
+        ?int $organisationId,
         array $priceData
     ): string {
         $existing =
             HardwarePrice::query()
-                ->where(
-                    'organisation_id',
-                    $organisationId
-                )
+                ->ownedBy($organisationId)
                 ->where(
                     'price_type',
                     $priceData['price_type']
@@ -654,7 +741,7 @@ PROMPT;
     /**
      * Append an immutable history entry for the price's current value and source.
      */
-    private function recordHistory(HardwarePrice $price, int $organisationId): void
+    private function recordHistory(HardwarePrice $price, ?int $organisationId): void
     {
         PriceHistory::create([
             'organisation_id' => $organisationId,

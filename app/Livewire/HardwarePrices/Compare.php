@@ -23,7 +23,7 @@ class Compare extends Component
     {
         $this->prices = HardwarePrice::query()
             ->active()
-            ->where('organisation_id', auth()->user()->organisation_id)
+            ->visibleTo(auth()->user()->organisation_id)
             ->orderBy('item_name')
             ->get(['id', 'item_name', 'brand', 'category', 'price', 'currency', 'supplier', 'location']);
     }

@@ -43,6 +43,12 @@ class SuppliersManager extends Component
 
     public array $form = [];
 
+    /** Scan the website for prices right after saving a supplier that has one. */
+    public bool $scanAfterSave = true;
+
+    /** How many priced items a website scan may add. */
+    public int $scanLimit = 15;
+
     // CSV import
     public bool $showImport = false;
     public $importFile = null;
@@ -124,14 +130,69 @@ class SuppliersManager extends Component
         $payload['materials'] = array_values(array_filter(array_map('trim', explode(',', (string) ($validated['materials_text'] ?? '')))));
         $payload['rating'] = $validated['rating'] ?: 0;
 
-        $supplier = Supplier::updateOrCreate(['id' => $this->editingId], $payload);
-
-        if ($supplier->wasRecentlyCreated) {
-            $supplier->update(['code' => ($supplier->type === Supplier::TYPE_FACTORY ? 'FAC-' : 'SUP-').Str::upper(Str::random(6)), 'created_by' => auth()->id()]);
+        if ($this->editingId) {
+            $supplier = Supplier::findOrFail($this->editingId);
+            $supplier->update($payload);
+        } else {
+            // The code is required when the row is inserted.
+            $supplier = new Supplier($payload);
+            $supplier->forceFill([
+                'code' => ($payload['type'] === Supplier::TYPE_FACTORY ? 'FAC-' : 'SUP-').Str::upper(Str::random(6)),
+                'created_by' => auth()->id(),
+            ])->save();
         }
 
-        session()->flash('message', $this->editingId ? __('Supplier updated.') : __('Supplier created.'));
+        $message = $this->editingId ? __('Supplier updated.') : __('Supplier created.');
+        $scan = $this->scanAfterSave && filled($supplier->website_url);
         $this->cancel();
+
+        if ($scan) {
+            $this->scanPrices($supplier->id, $message);
+
+            return;
+        }
+
+        session()->flash('message', $message);
+    }
+
+    /**
+     * Reads the supplier's prices from its website with the AI provider and adds
+     * them to the general prices, so they are used for BOQ pricing too.
+     */
+    public function scanPrices(int $id, ?string $prefix = null): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+        $supplier = Supplier::findOrFail($id);
+        $prefix = $prefix ? $prefix.' ' : '';
+
+        try {
+            set_time_limit(180);
+            $result = app(\App\Services\HardwarePriceFetchingService::class)->scanSupplier(
+                $supplier,
+                HardwarePrice::ownerOrganisationFor(auth()->user()),
+                max(1, min(40, $this->scanLimit)),
+            );
+        } catch (\App\Exceptions\AiCreditExhaustedException) {
+            session()->flash('error', $prefix.__('Price scan stopped: the AI providers have no tokens or credit left. Top up under AI API Settings.'));
+
+            return;
+        } catch (\Throwable $exception) {
+            report($exception);
+            session()->flash('error', $prefix.__('The prices of :name could not be scanned: :reason', [
+                'name' => $supplier->name,
+                'reason' => $exception instanceof RuntimeException ? $exception->getMessage() : __('the AI provider did not answer. Check AI API Settings and try again.'),
+            ]));
+
+            return;
+        }
+
+        session()->flash('message', $prefix.($result['found'] === 0
+            ? __('No priced items were found on the website of :name.', ['name' => $supplier->name])
+            : __('Scanned :name: :created new and :updated updated prices added to the general prices.', [
+                'name' => $supplier->name,
+                'created' => $result['created'],
+                'updated' => $result['updated'],
+            ])));
     }
 
     public function bulkDelete(): void
@@ -282,7 +343,7 @@ class SuppliersManager extends Component
 
         return view('livewire.admin.suppliers-manager', [
             'suppliers' => Supplier::query()
-                ->withCount('rates')
+                ->withCount(['rates', 'hardwarePrices'])
                 ->when($this->typeFilter !== '', fn ($q) => $q->where('type', $this->typeFilter))
                 ->when($this->statusFilter !== '', fn ($q) => $q->where('is_active', $this->statusFilter === 'active'))
                 ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w

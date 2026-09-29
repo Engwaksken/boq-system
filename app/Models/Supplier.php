@@ -72,6 +72,12 @@ class Supplier extends Model
     /**
      * Quotations received from this supplier.
      */
+    /** Prices recorded for this supplier or factory (for example from a website scan). */
+    public function hardwarePrices(): HasMany
+    {
+        return $this->hasMany(HardwarePrice::class);
+    }
+
     public function quotations(): HasMany
     {
         return $this->hasMany(Quotation::class);

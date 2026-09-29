@@ -103,12 +103,11 @@ class HardwareScanner extends Component
             ],
         ]);
 
-        $organisationId =
-            auth()
-                ->user()
-                ?->organisation_id;
+        // Super admins scan into the general market prices everyone can use.
+        $user = auth()->user();
+        $organisationId = HardwarePrice::ownerOrganisationFor($user);
 
-        if (! $organisationId) {
+        if ($organisationId === null && ! $user?->isSuperAdmin()) {
             session()->flash(
                 'modal_error',
                 'Your account is not assigned to an organisation.'
@@ -135,7 +134,7 @@ class HardwareScanner extends Component
                             (int) $this->scanForm['limit'],
 
                         organisationId:
-                            (int) $organisationId,
+                            $organisationId,
 
                         priceType:
                             $this->scanForm['price_type']
@@ -147,10 +146,7 @@ class HardwareScanner extends Component
             ) {
                 $existing =
                     HardwarePrice::query()
-                        ->where(
-                            'organisation_id',
-                            $organisationId
-                        )
+                        ->ownedBy($organisationId)
                         ->where(
                             'price_type',
                             $item['price_type']

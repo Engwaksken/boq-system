@@ -38,7 +38,7 @@ class Dashboard extends Component
             ->count();
 
         $this->hardwarePricesCount = HardwarePrice::query()
-            ->where('organisation_id', $organisationId)
+            ->visibleTo($organisationId)
             ->where('is_active', true)
             ->count();
 

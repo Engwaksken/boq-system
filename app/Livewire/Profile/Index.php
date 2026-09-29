@@ -170,7 +170,7 @@ class Index extends Component
         }
 
         return HardwarePrice::query()
-            ->where('organisation_id', Auth::user()?->organisation_id)
+            ->visibleTo(Auth::user()?->organisation_id)
             ->find($priceId);
     }
 
@@ -188,7 +188,7 @@ class Index extends Component
         }
 
         return HardwarePrice::query()
-            ->where('organisation_id', $price->organisation_id)
+            ->visibleTo(Auth::user()?->organisation_id)
             ->where('item_name', $price->item_name)
             ->where('price_type', $price->price_type)
             ->whereNotNull('location')
@@ -613,7 +613,7 @@ class Index extends Component
             'bookmarkLocations' => $this->showBookmarkModal ? $this->bookmarkLocationOptions() : [],
             'bookmarkablePrices' => $this->activeTab === 'hardware-bookmarks'
                 ? HardwarePrice::active()
-                    ->where('organisation_id', $user->organisation_id)
+                    ->visibleTo($user->organisation_id)
                     ->orderBy('item_name')
                     ->get()
                 : collect(),

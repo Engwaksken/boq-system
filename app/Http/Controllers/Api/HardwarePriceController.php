@@ -21,7 +21,7 @@ class HardwarePriceController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = HardwarePrice::active()
-            ->where('organisation_id', $request->user()->organisation_id)
+            ->visibleTo($request->user()->organisation_id)
             ->with('organisation');
 
         if ($request->filled('category')) {
@@ -81,7 +81,7 @@ class HardwarePriceController extends Controller
 
     public function show(Request $request, HardwarePrice $hardwarePrice): JsonResponse
     {
-        abort_unless($hardwarePrice->organisation_id === $request->user()->organisation_id, 403);
+        abort_unless($hardwarePrice->isVisibleTo($request->user()->organisation_id), 403);
 
         $hardwarePrice->load(['priceHistories' => fn ($q) => $q->orderBy('recorded_at', 'desc')->limit(50)]);
 
@@ -93,10 +93,9 @@ class HardwarePriceController extends Controller
 
     public function history(Request $request, HardwarePrice $hardwarePrice): JsonResponse
     {
-        abort_unless($hardwarePrice->organisation_id === $request->user()->organisation_id, 403);
+        abort_unless($hardwarePrice->isVisibleTo($request->user()->organisation_id), 403);
 
-        $histories = PriceHistory::where('organisation_id', $request->user()->organisation_id)
-            ->where('hardware_price_id', $hardwarePrice->id)
+        $histories = PriceHistory::where('hardware_price_id', $hardwarePrice->id)
             ->orderBy('recorded_at', 'desc')
             ->paginate($request->get('per_page', 50));
 
@@ -136,7 +135,7 @@ class HardwarePriceController extends Controller
         }
 
         $items = HardwarePrice::active()
-            ->where('organisation_id', $request->user()->organisation_id)
+            ->visibleTo($request->user()->organisation_id)
             ->whereIn('id', $ids)
             ->get();
 
@@ -234,7 +233,7 @@ class HardwarePriceController extends Controller
         $limit = min($request->get('limit', 10), 50);
 
         $query = HardwarePrice::active()
-            ->where('organisation_id', $request->user()->organisation_id);
+            ->visibleTo($request->user()->organisation_id);
 
         if ($category) {
             $query->byCategory($category);
@@ -316,12 +315,7 @@ class HardwarePriceController extends Controller
 
         $boqItem = BoqItem::with('boq.project')->findOrFail($boqItemId);
 
-        abort_unless(
-            $user->organisation_id !== null
-            && $boqItem->boq->organisation_id === $user->organisation_id
-            && $boqItem->boq->project->organisation_id === $user->organisation_id,
-            403
-        );
+        abort_unless($user->can('update', $boqItem->boq), 403);
 
         $hardwarePrice = HardwarePrice::findOrFail($request->hardware_price_id);
 
@@ -338,7 +332,9 @@ class HardwarePriceController extends Controller
     {
         $request->user()->authorizeRoles(['admin', 'manager']);
 
-        $results = $this->fetchingService->fetchDailyPrices();
+        $results = $this->fetchingService->fetchDailyPrices(
+            organisationId: HardwarePrice::ownerOrganisationFor($request->user()),
+        );
 
         return response()->json([
             'success' => true,
@@ -351,27 +347,27 @@ class HardwarePriceController extends Controller
     {
         $orgId = $request->user()->organisation_id;
 
-        $totalItems = HardwarePrice::where('organisation_id', $orgId)->where('is_active', true)->count();
-        $todayPrices = HardwarePrice::where('organisation_id', $orgId)
+        $totalItems = HardwarePrice::visibleTo($orgId)->where('is_active', true)->count();
+        $todayPrices = HardwarePrice::visibleTo($orgId)
             ->where('is_active', true)
             ->whereDate('fetched_at', today())
             ->count();
-        $suppliers = HardwarePrice::where('organisation_id', $orgId)
+        $suppliers = HardwarePrice::visibleTo($orgId)
             ->where('is_active', true)
             ->distinct('supplier')
             ->count('supplier');
 
-        $avgChange = HardwarePrice::where('organisation_id', $orgId)
+        $avgChange = HardwarePrice::visibleTo($orgId)
             ->where('is_active', true)
             ->whereNotNull('price_change_percent')
             ->avg('price_change_percent') ?? 0;
 
-        $lowestOpportunities = HardwarePrice::where('organisation_id', $orgId)
+        $lowestOpportunities = HardwarePrice::visibleTo($orgId)
             ->where('is_active', true)
-            ->whereRaw('price < (SELECT AVG(price) FROM hardware_prices hp2 WHERE hp2.category = hardware_prices.category AND hp2.organisation_id = ?)', [$orgId])
+            ->whereRaw('price < (SELECT AVG(price) FROM hardware_prices hp2 WHERE hp2.category = hardware_prices.category AND (hp2.organisation_id IS NULL OR hp2.organisation_id = ?))', [$orgId])
             ->count();
 
-        $boqItemsWithMatches = BoqItem::whereHas('boq.project', fn ($q) => $q->where('organisation_id', $orgId))
+        $boqItemsWithMatches = BoqItem::whereHas('boq.project', fn ($q) => $q->visibleTo($orgId))
             ->whereNotNull('ai_rate')
             ->count();
 
@@ -391,7 +387,7 @@ class HardwarePriceController extends Controller
     public function categories(Request $request): JsonResponse
     {
         $organisationId = $request->user()->organisation_id;
-        $counts = HardwarePrice::where('organisation_id', $organisationId)
+        $counts = HardwarePrice::visibleTo($organisationId)
             ->where('is_active', true)
             ->selectRaw('category, COUNT(*) AS total')
             ->groupBy('category')
@@ -419,7 +415,7 @@ class HardwarePriceController extends Controller
      */
     public function filters(Request $request): JsonResponse
     {
-        $base = HardwarePrice::active()->where('organisation_id', $request->user()->organisation_id);
+        $base = HardwarePrice::active()->visibleTo($request->user()->organisation_id);
 
         $distinct = fn (string $column) => (clone $base)
             ->whereNotNull($column)

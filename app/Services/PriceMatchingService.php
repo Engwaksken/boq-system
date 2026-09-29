@@ -20,7 +20,7 @@ class PriceMatchingService
 
         $query = HardwarePrice::query()
             ->active()
-            ->where('organisation_id', $organisationId)
+            ->visibleTo($organisationId)
             ->whereRaw('LOWER(currency) = ?', [strtolower($boqItem->currency)]);
 
         if (trim($search) !== '') {
@@ -42,7 +42,7 @@ class PriceMatchingService
         $location = trim((string) ($location ?? $boqItem->boq->project->location));
 
         $query = HardwarePrice::active()
-            ->where('organisation_id', $organisationId)
+            ->visibleTo($organisationId)
             ->whereRaw('LOWER(currency) = ?', [strtolower($boqItem->currency)]);
 
         $matches = $query->get()->map(function ($price) use ($boqItem, $location) {
@@ -212,7 +212,7 @@ class PriceMatchingService
 
         abort_unless(
             $price->is_active
-            && $price->organisation_id === $this->organisationId($boqItem)
+            && $price->isVisibleTo($this->organisationId($boqItem))
             && strtolower($price->currency) === strtolower($boqItem->currency),
             403
         );

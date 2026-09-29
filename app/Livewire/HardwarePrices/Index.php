@@ -151,7 +151,7 @@ class Index extends Component
             ->pluck('name')
             ->merge(
                 HardwarePrice::query()
-                    ->where('organisation_id', $organisationId)
+                    ->visibleTo($organisationId)
                     ->distinct()
                     ->pluck('category')
             )
@@ -184,7 +184,7 @@ class Index extends Component
         return $defaults
             ->merge(
                 HardwarePrice::query()
-                    ->where('organisation_id', $organisationId)
+                    ->visibleTo($organisationId)
                     ->where('category', $category)
                     ->distinct()
                     ->pluck('item_name')
@@ -227,10 +227,7 @@ class Index extends Component
 
         $price =
             HardwarePrice::query()
-                ->where(
-                    'organisation_id',
-                    $user->organisation_id
-                )
+                ->manageableBy($user)
                 ->findOrFail($id);
 
         $this->editingId =
@@ -302,16 +299,13 @@ class Index extends Component
             if ($this->editingId) {
                 $price =
                     HardwarePrice::query()
-                        ->where(
-                            'organisation_id',
-                            $user->organisation_id
-                        )
+                        ->manageableBy($user)
                         ->findOrFail(
                             $this->editingId
                         );
 
                 $manager->update(
-                    $user->organisation_id,
+                    $price->organisation_id,
                     $price,
                     $this->form
                 );
@@ -322,7 +316,7 @@ class Index extends Component
                 );
             } else {
                 $manager->create(
-                    $user->organisation_id,
+                    HardwarePrice::ownerOrganisationFor($user),
                     $this->form
                 );
 
@@ -361,7 +355,7 @@ class Index extends Component
 
     public function bulkDelete(): void
     {
-        $this->deleteSelectedUnlessInUse(HardwarePrice::class, ['boqItems'], 'hardware-price-message', fn ($query) => $query->where('organisation_id', $this->managementUser()->organisation_id));
+        $this->deleteSelectedUnlessInUse(HardwarePrice::class, ['boqItems'], 'hardware-price-message', fn ($query) => $query->manageableBy($this->managementUser()));
     }
 
     public function bulkSetActive(
@@ -371,15 +365,15 @@ class Index extends Component
         $user = $this->managementUser();
 
         $prices = HardwarePrice::query()
-            ->where('organisation_id', $user->organisation_id)
+            ->manageableBy($user)
             ->whereKey($this->selectedIds())
             ->where('is_active', ! $active)
             ->get();
 
         foreach ($prices as $price) {
             $active
-                ? $manager->activate($user->organisation_id, $price)
-                : $manager->deactivate($user->organisation_id, $price);
+                ? $manager->activate($price->organisation_id, $price)
+                : $manager->deactivate($price->organisation_id, $price);
         }
 
         $this->finishBulkAction($prices->count(), $active ? 'activated' : 'deactivated', 'hardware-price-message');
@@ -390,7 +384,7 @@ class Index extends Component
         $user = auth()->user();
 
         $prices = HardwarePrice::query()
-            ->where('organisation_id', $user->organisation_id)
+            ->visibleTo($user->organisation_id)
             ->whereKey($this->selectedIds())
             ->get();
 
@@ -413,10 +407,7 @@ class Index extends Component
 
         $price =
             HardwarePrice::query()
-                ->where(
-                    'organisation_id',
-                    $user->organisation_id
-                )
+                ->manageableBy($user)
                 ->findOrFail($id);
 
         $wasActive =
@@ -424,12 +415,12 @@ class Index extends Component
 
         if ($wasActive) {
             $manager->deactivate(
-                $user->organisation_id,
+                $price->organisation_id,
                 $price
             );
         } else {
             $manager->activate(
-                $user->organisation_id,
+                $price->organisation_id,
                 $price
             );
         }
@@ -463,7 +454,7 @@ class Index extends Component
                     $this
                         ->csvFile
                         ->getRealPath(),
-                    $user->organisation_id
+                    HardwarePrice::ownerOrganisationFor($user)
                 );
 
             $this->csvFile = null;
@@ -503,7 +494,7 @@ class Index extends Component
         $user = auth()->user();
 
         $price = HardwarePrice::query()
-            ->where('organisation_id', $user->organisation_id)
+            ->visibleTo($user->organisation_id)
             ->findOrFail($priceId);
 
         $location = $price->location ?: 'Any location';
@@ -546,10 +537,7 @@ class Index extends Component
 
         $baseQuery =
             HardwarePrice::query()
-                ->where(
-                    'organisation_id',
-                    $organisationId
-                );
+                ->visibleTo($organisationId);
 
         $prices =
             (clone $baseQuery)
@@ -629,7 +617,7 @@ class Index extends Component
 
         // Lowest / highest active price for each item on this page (same unit and currency).
         $extremes = $prices->isEmpty() ? collect() : HardwarePrice::query()
-            ->where('organisation_id', $organisationId)
+            ->visibleTo($organisationId)
             ->where('is_active', true)
             ->whereIn('item_name', $prices->pluck('item_name')->unique())
             ->selectRaw('item_name, unit, currency, MIN(price) as min_price, MAX(price) as max_price, COUNT(*) as offers')
@@ -777,7 +765,7 @@ class Index extends Component
 
         abort_unless(
             $user
-            && $user->organisation_id
+            && ($user->organisation_id || $user->isSuperAdmin())
             && $user->hasPermission(
                 'hardware-prices.manage'
             ),

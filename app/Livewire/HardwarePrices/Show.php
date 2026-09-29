@@ -14,7 +14,7 @@ class Show extends Component
     public function mount(HardwarePrice $hardwarePrice): void
     {
         abort_unless(
-            $hardwarePrice->organisation_id === auth()->user()->organisation_id,
+            $hardwarePrice->isVisibleTo(auth()->user()->organisation_id),
             403
         );
 

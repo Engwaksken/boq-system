@@ -25,15 +25,11 @@ class FetchDailyHardwarePrices extends Command
 
         $organisationOption = $this->option('organisation');
 
+        // By default the general market prices (shared by everyone) are refreshed
+        // once, instead of spending AI tokens on the same prices per organisation.
         $organisationIds = filled($organisationOption)
             ? collect([(int) $organisationOption])
-            : Organisation::query()->orderBy('id')->pluck('id');
-
-        if ($organisationIds->isEmpty()) {
-            $this->error('No organisation exists. Daily hardware fetch cannot run.');
-
-            return self::FAILURE;
-        }
+            : collect([null]);
 
         $totalFetched = 0;
         $totalCreated = 0;
@@ -43,7 +39,7 @@ class FetchDailyHardwarePrices extends Command
         foreach ($organisationIds as $organisationId) {
             try {
                 $results = $service->fetchDailyPrices(
-                    organisationId: (int) $organisationId,
+                    organisationId: $organisationId === null ? null : (int) $organisationId,
                     location: $location,
                     limit: $limit
                 );
@@ -54,7 +50,7 @@ class FetchDailyHardwarePrices extends Command
                 $totalErrors += count($results['errors']);
 
                 $this->info(
-                    "Organisation {$organisationId}: ".
+                    ($organisationId === null ? 'General prices: ' : "Organisation {$organisationId}: ").
                     "{$results['fetched']} fetched, ".
                     "{$results['created']} created, ".
                     "{$results['updated']} updated, ".
@@ -70,7 +66,7 @@ class FetchDailyHardwarePrices extends Command
                 report($exception);
 
                 $this->error(
-                    "Organisation {$organisationId}: {$exception->getMessage()}"
+                    ($organisationId === null ? 'General prices' : "Organisation {$organisationId}").": {$exception->getMessage()}"
                 );
             }
         }

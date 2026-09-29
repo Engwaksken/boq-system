@@ -47,6 +47,65 @@ class HardwarePrice extends Model
         'ai_metadata' => 'array',
     ];
 
+    /**
+     * Prices a viewer can use: general market prices (no organisation, kept by
+     * the platform admins) plus the viewer's organisation's own prices.
+     */
+    public function scopeVisibleTo(\Illuminate\Database\Eloquent\Builder $query, ?int $organisationId): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where(function ($inner) use ($organisationId) {
+            $inner->whereNull($inner->qualifyColumn('organisation_id'));
+
+            if ($organisationId !== null) {
+                $inner->orWhere($inner->qualifyColumn('organisation_id'), $organisationId);
+            }
+        });
+    }
+
+    /** Prices owned (editable) by an organisation; null = the general market prices. */
+    public function scopeOwnedBy(\Illuminate\Database\Eloquent\Builder $query, ?int $organisationId): \Illuminate\Database\Eloquent\Builder
+    {
+        return $organisationId === null
+            ? $query->whereNull($query->qualifyColumn('organisation_id'))
+            : $query->where($query->qualifyColumn('organisation_id'), $organisationId);
+    }
+
+    /**
+     * Prices a user may edit: super admins the general prices and their own
+     * organisation's, everyone else only their organisation's.
+     */
+    public function scopeManageableBy(\Illuminate\Database\Eloquent\Builder $query, ?User $user): \Illuminate\Database\Eloquent\Builder
+    {
+        if ($user?->isSuperAdmin()) {
+            return $query->visibleTo($user->organisation_id);
+        }
+
+        return $query->where($query->qualifyColumn('organisation_id'), $user?->organisation_id ?? 0);
+    }
+
+    /**
+     * Where a user's new or edited prices belong: super admins keep the general
+     * market prices, everyone else their own organisation's.
+     */
+    public static function ownerOrganisationFor(?User $user): ?int
+    {
+        if ($user === null || $user->isSuperAdmin()) {
+            return null;
+        }
+
+        return $user->organisation_id;
+    }
+
+    public function isGeneral(): bool
+    {
+        return $this->organisation_id === null;
+    }
+
+    public function isVisibleTo(?int $organisationId): bool
+    {
+        return $this->organisation_id === null || $this->organisation_id === $organisationId;
+    }
+
     public function organisation(): BelongsTo
     {
         return $this->belongsTo(

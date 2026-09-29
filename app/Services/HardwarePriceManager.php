@@ -14,7 +14,7 @@ use Illuminate\Validation\Rule;
 class HardwarePriceManager
 {
     public function create(
-        int $organisationId,
+        ?int $organisationId,
         array $attributes
     ): HardwarePrice {
         $validated =
@@ -33,7 +33,7 @@ class HardwarePriceManager
     }
 
     public function update(
-        int $organisationId,
+        ?int $organisationId,
         HardwarePrice $hardwarePrice,
         array $attributes
     ): HardwarePrice {
@@ -57,10 +57,7 @@ class HardwarePriceManager
             ) {
                 $price =
                     HardwarePrice::query()
-                        ->where(
-                            'organisation_id',
-                            $organisationId
-                        )
+                        ->ownedBy($organisationId)
                         ->lockForUpdate()
                         ->findOrFail(
                             $hardwarePrice->id
@@ -135,7 +132,7 @@ class HardwarePriceManager
     }
 
     public function deactivate(
-        int $organisationId,
+        ?int $organisationId,
         HardwarePrice $hardwarePrice
     ): HardwarePrice {
         return $this->setActive(
@@ -146,7 +143,7 @@ class HardwarePriceManager
     }
 
     public function activate(
-        int $organisationId,
+        ?int $organisationId,
         HardwarePrice $hardwarePrice
     ): HardwarePrice {
         return $this->setActive(
@@ -157,7 +154,7 @@ class HardwarePriceManager
     }
 
     private function setActive(
-        int $organisationId,
+        ?int $organisationId,
         HardwarePrice $hardwarePrice,
         bool $active
     ): HardwarePrice {
@@ -176,10 +173,7 @@ class HardwarePriceManager
             ) {
                 $price =
                     HardwarePrice::query()
-                        ->where(
-                            'organisation_id',
-                            $organisationId
-                        )
+                        ->ownedBy($organisationId)
                         ->lockForUpdate()
                         ->findOrFail(
                             $hardwarePrice->id

@@ -79,6 +79,7 @@
                         <th>{{ __('Website') }}</th>
                         <th>{{ __('Location') }}</th>
                         <th>{{ __('Rates') }}</th>
+                        <th>{{ __('Prices') }}</th>
                         <th>{{ __('Status') }}</th>
                         <th class="text-right">{{ __('Actions') }}</th>
                     </tr>
@@ -106,16 +107,28 @@
                             </td>
                             <td class="text-sm">{{ collect([$supplier->location, $supplier->country ? ($countries[$supplier->country] ?? $supplier->country) : null])->filter()->implode(', ') ?: '—' }}</td>
                             <td>{{ \App\Support\Format::number($supplier->rates_count ?? 0, 0) }}</td>
+                            <td>
+                                {{ \App\Support\Format::number($supplier->hardware_prices_count ?? 0, 0) }}
+                                @if($scanned = data_get($supplier->metadata, 'last_price_scan.at'))
+                                    <div class="boq-table-subtitle">{{ __('Scanned') }} {{ \Illuminate\Support\Carbon::parse($scanned)->diffForHumans() }}</div>
+                                @endif
+                            </td>
                             <td><x-ui.status :status="$supplier->is_active ? 'active' : 'inactive'" /></td>
                             <td>
                                 <div class="boq-table-actions justify-end">
+                                    @if($supplier->website_url)
+                                        <button type="button" wire:click="scanPrices({{ $supplier->id }})" wire:loading.attr="disabled" wire:target="scanPrices({{ $supplier->id }})" class="boq-icon-btn" title="{{ __('Scan website prices') }}" aria-label="{{ __('Scan website prices') }}">
+                                            <i class="fas fa-magnifying-glass-dollar" wire:loading.remove wire:target="scanPrices({{ $supplier->id }})" aria-hidden="true"></i>
+                                            <i class="fas fa-spinner fa-spin" wire:loading wire:target="scanPrices({{ $supplier->id }})" aria-hidden="true"></i>
+                                        </button>
+                                    @endif
                                     <button type="button" wire:click="edit({{ $supplier->id }})" class="boq-icon-btn" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><i class="fas fa-pen"></i></button>
                                     <button type="button" wire:click="toggleActive({{ $supplier->id }})" class="boq-icon-btn" title="{{ $supplier->is_active ? __('Deactivate') : __('Activate') }}" aria-label="{{ $supplier->is_active ? __('Deactivate') : __('Activate') }}"><i class="fas {{ $supplier->is_active ? 'fa-ban' : 'fa-circle-check' }}"></i></button>
                                 </div>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="9" class="p-0"><x-ui.empty-state icon="fa-truck" :title="__('No suppliers found.')" /></td></tr>
+                        <tr><td colspan="10" class="p-0"><x-ui.empty-state icon="fa-truck" :title="__('No suppliers found.')" /></td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -158,6 +171,10 @@
                         <input id="sup-website" type="url" wire:model="form.website_url" class="boq-field" placeholder="https://example.com">
                         <p class="boq-field-help">{{ __('The AI price scanner uses this website as a price source.') }}</p>
                         @error('form.website_url') <p class="boq-field-error">{{ $message }}</p> @enderror
+                        <label class="boq-check mt-2">
+                            <input type="checkbox" wire:model="scanAfterSave">
+                            {{ __('Scan this website for prices after saving and add them to the general prices') }}
+                        </label>
                     </div>
                     <div>
                         <label for="sup-contact" class="boq-field-label">{{ __('Contact person') }}</label>

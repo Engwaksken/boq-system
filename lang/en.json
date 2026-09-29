@@ -1320,5 +1320,13 @@
     "Credit warning cleared. The provider will be used again.": "Credit warning cleared. The provider will be used again.",
     ":count request|:count requests": ":count request|:count requests",
     ":count failed|:count failed": ":count failed|:count failed",
-    ":count item|:count items": ":count item|:count items"
+    ":count item|:count items": ":count item|:count items",
+    "Scanned": "Scanned",
+    "Scan website prices": "Scan website prices",
+    "Scan this website for prices after saving and add them to the general prices": "Scan this website for prices after saving and add them to the general prices",
+    "Price scan stopped: the AI providers have no tokens or credit left. Top up under AI API Settings.": "Price scan stopped: the AI providers have no tokens or credit left. Top up under AI API Settings.",
+    "The prices of :name could not be scanned: :reason": "The prices of :name could not be scanned: :reason",
+    "the AI provider did not answer. Check AI API Settings and try again.": "the AI provider did not answer. Check AI API Settings and try again.",
+    "No priced items were found on the website of :name.": "No priced items were found on the website of :name.",
+    "Scanned :name: :created new and :updated updated prices added to the general prices.": "Scanned :name: :created new and :updated updated prices added to the general prices."
 }

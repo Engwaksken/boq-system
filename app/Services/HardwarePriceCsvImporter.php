@@ -55,7 +55,7 @@ class HardwarePriceCsvImporter
 
     public function import(
         string $path,
-        int $organisationId
+        ?int $organisationId
     ): array {
         if (
             ! is_file($path)
@@ -332,15 +332,12 @@ class HardwarePriceCsvImporter
     }
 
     private function findExisting(
-        int $organisationId,
+        ?int $organisationId,
         array $attributes
     ): ?HardwarePrice {
         $query =
             HardwarePrice::query()
-                ->where(
-                    'organisation_id',
-                    $organisationId
-                );
+                ->ownedBy($organisationId);
 
         $allowedFields = [
             'item_name',
