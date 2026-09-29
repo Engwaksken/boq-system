@@ -578,6 +578,8 @@
         @endif
     </section>
 
+    <livewire:boqs.signatures :boq="$boq" wire:key="boq-signatures-{{ $boq->id }}" />
+
     {{-- ============================ MODALS ============================ --}}
     @if($showPdfPreview)
         <x-ui.modal wire:key="pdf-preview" id="pdf-preview" :title="__('PDF Preview')" icon="fa-file-pdf" size="xl" close="closePdfPreview" body-class="!p-0">

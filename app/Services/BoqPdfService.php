@@ -37,6 +37,28 @@ class BoqPdfService
 
         $boq->loadMissing(['project', 'owner']);
         $company = $boq->brandingIdentity() ?? [];
+
+        return Pdf::loadView('pdf.boq', $this->totals($boq) + [
+            'boq' => $boq,
+            'project' => $boq->project,
+            'company' => $company,
+            'logo' => $this->logoDataUri($company['logo_path'] ?? null),
+            'preparedBy' => $boq->owner?->name,
+            'signatures' => $this->signatures($boq),
+            'generatedAt' => now(),
+        ])
+            ->setPaper('a4', 'portrait')
+            ->setOption(['isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans']);
+    }
+
+    /**
+     * The priced lines and totals exactly as the PDF shows them (also used for
+     * the summary on the client signing page).
+     *
+     * @return array{lines: \Illuminate\Support\Collection, subtotal: float, taxRate: float, taxLabel: string, tax: float, total: float, currency: string}
+     */
+    public function totals(Boq $boq): array
+    {
         $items = $boq->items()->orderBy('id')->get();
 
         $lines = $items->map(function ($item) {
@@ -61,11 +83,7 @@ class BoqPdfService
         $taxLabel = (string) ($boq->metadata['tax_label'] ?? SiteSetting::get('tax_label', 'VAT'));
         $tax = $taxRate > 0 ? round($subtotal * $taxRate / 100, 2) : 0.0;
 
-        return Pdf::loadView('pdf.boq', [
-            'boq' => $boq,
-            'project' => $boq->project,
-            'company' => $company,
-            'logo' => $this->logoDataUri($company['logo_path'] ?? null),
+        return [
             'lines' => $lines,
             'subtotal' => $subtotal,
             'taxRate' => $taxRate,
@@ -73,12 +91,7 @@ class BoqPdfService
             'tax' => $tax,
             'total' => $subtotal + $tax,
             'currency' => $boq->currency ?: \App\Support\Regional::currency(),
-            'preparedBy' => $boq->owner?->name,
-            'signatures' => $this->signatures($boq),
-            'generatedAt' => now(),
-        ])
-            ->setPaper('a4', 'portrait')
-            ->setOption(['isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans']);
+        ];
     }
 
     /**
