@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\BoqController;
 use App\Http\Controllers\LegalPageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ThemePreferenceController;
 
 use App\Livewire\Admin\AiProviders;
 use App\Livewire\Admin\HardwareScanner as AdminHardwareScanner;
@@ -34,6 +35,7 @@ use App\Livewire\HardwarePrices\Recommendations as HardwarePricesRecommendations
 use App\Livewire\HardwarePrices\Show as HardwarePricesShow;
 
 use App\Livewire\Plans\Index as PlansIndex;
+use App\Livewire\Preferences;
 use App\Livewire\Profile\Index as ProfileIndex;
 
 use App\Livewire\Projects\Create as ProjectsCreate;
@@ -373,6 +375,25 @@ Route::middleware('auth')->group(function (): void {
             'delete',
         ]
     )->name('profile.delete');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Interface preferences (theme, accent, density, sidebar, font size)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/preferences',
+        Preferences::class
+    )->name('preferences');
+
+    Route::post(
+        '/preferences/theme',
+        ThemePreferenceController::class
+    )
+        ->middleware('throttle:30,1')
+        ->name('preferences.theme');
 
 
     /*
