@@ -4,6 +4,8 @@ use App\Http\Controllers\Api\AiProviderController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BoqController;
 use App\Http\Controllers\Api\BoqPricingJobController;
+use App\Http\Controllers\Api\BoqSignatureController;
+use App\Http\Controllers\Api\BoqSignedDocumentController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\HardwareCategoryController;
 use App\Http\Controllers\Api\HardwarePriceController;
@@ -113,6 +115,32 @@ Route::prefix('v1')->group(function () {
         Route::get('pricing-batches/{batch}', [BoqController::class, 'pricingBatch']);
         Route::get('boqs/{boq}/pricing-history/{location}', [BoqController::class, 'pricingHistory']);
         Route::get('boqs/{boq}/pricing-history', [BoqController::class, 'pricingHistory']);
+
+        // BOQ signatures and signed copies (authorised per BOQ with BoqPolicy view/update).
+        Route::middleware('entitlement:boq.management')->group(function () {
+            Route::get('boqs/{boq}/signatures', [BoqSignatureController::class, 'index'])->name('api.v1.boqs.signatures.index');
+            Route::post('boqs/{boq}/signatures', [BoqSignatureController::class, 'store'])
+                ->middleware('throttle:20,1')
+                ->name('api.v1.boqs.signatures.store');
+            Route::post('boqs/{boq}/signatures/client-request', [BoqSignatureController::class, 'requestClient'])
+                ->middleware('throttle:10,1')
+                ->name('api.v1.boqs.signatures.client-request');
+            Route::delete('boqs/{boq}/signatures/client-request', [BoqSignatureController::class, 'cancelClientRequest'])
+                ->name('api.v1.boqs.signatures.client-request.cancel');
+            Route::delete('boqs/{boq}/signatures/{role}', [BoqSignatureController::class, 'destroy'])
+                ->whereIn('role', \App\Models\BoqSignature::ROLES)
+                ->name('api.v1.boqs.signatures.destroy');
+
+            Route::get('boqs/{boq}/signed-documents', [BoqSignedDocumentController::class, 'index'])->name('api.v1.boqs.signed-documents.index');
+            Route::post('boqs/{boq}/signed-documents', [BoqSignedDocumentController::class, 'store'])
+                ->middleware('throttle:10,1')
+                ->name('api.v1.boqs.signed-documents.store');
+            Route::get('boqs/{boq}/signed-documents/{document}/download', [BoqSignedDocumentController::class, 'download'])
+                ->middleware('throttle:30,1')
+                ->name('api.v1.boqs.signed-documents.download');
+            Route::delete('boqs/{boq}/signed-documents/{document}', [BoqSignedDocumentController::class, 'destroy'])
+                ->name('api.v1.boqs.signed-documents.destroy');
+        });
 
         // BOQ Pricing Jobs
         Route::middleware(['permission:boq.edit', 'entitlement:boq.management'])->group(function () {
