@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <title>{{ $boq->reference }} – {{ $boq->name }}</title>
     <style>
-        @page { margin: 110px 36px 60px 36px; }
+        /* The top margin leaves room for the fixed header on every page. */
+        @page { margin: 158px 36px 64px 36px; }
         body { font-family: "DejaVu Sans", sans-serif; font-size: 10px; color: #1e293b; }
 
         /* Repeated on every page (dompdf repeats fixed elements). */
@@ -12,19 +13,22 @@
         .watermark img { width: 100%; }
         .watermark .name { font-size: 54px; font-weight: bold; color: #05645b; transform: rotate(-30deg); }
 
-        header { position: fixed; top: -92px; left: 0; right: 0; height: 80px; border-bottom: 2px solid #05645b; }
-        header table { width: 100%; }
-        header .logo { width: 70px; height: 60px; }
-        header .logo img { max-width: 70px; max-height: 60px; }
-        header .company { font-size: 14px; font-weight: bold; color: #0f172a; }
-        header .contact { font-size: 8.5px; color: #475569; line-height: 1.45; }
-        header .doc { text-align: right; font-size: 9px; color: #475569; }
-        header .doc strong { display: block; font-size: 13px; color: #05645b; }
+        /* Header: logo | company details | document details, with the rule below it. */
+        header { position: fixed; top: -134px; left: 0; right: 0; height: 112px; border-bottom: 2px solid #05645b; }
+        header table { width: 100%; border-collapse: collapse; }
+        header td { vertical-align: top; padding: 0; }
+        header .logo { width: 78px; padding-right: 12px; }
+        header .logo img { max-width: 76px; max-height: 76px; }
+        header .company { font-size: 15px; font-weight: bold; color: #0f172a; margin: 0 0 5px; line-height: 1.2; }
+        header .contact { font-size: 8.5px; color: #475569; line-height: 1.55; }
+        header .contact span.sep { color: #94a3b8; padding: 0 3px; }
+        header .doc { width: 34%; text-align: right; font-size: 9px; color: #475569; line-height: 1.6; padding-left: 12px; }
+        header .doc strong { display: block; font-size: 14px; letter-spacing: .5px; color: #05645b; margin-bottom: 4px; }
 
         footer { position: fixed; bottom: -44px; left: 0; right: 0; height: 30px; border-top: 1px solid #cbd5e1; font-size: 8px; color: #64748b; }
         footer .page:after { content: "Page " counter(page) " of " counter(pages); }
 
-        h1 { font-size: 16px; margin: 0 0 4px; color: #0f172a; }
+        h1 { font-size: 16px; margin: 0 0 8px; color: #0f172a; }
         .meta { width: 100%; margin-bottom: 12px; border-collapse: collapse; }
         .meta td { padding: 3px 6px; vertical-align: top; font-size: 9.5px; }
         .meta .label { color: #64748b; width: 18%; }
@@ -49,16 +53,21 @@
     @php
         $companyName = $company['company_name'] ?? ($preparedBy ?: config('app.name'));
         $money = fn ($value) => \App\Support\Format::money($value, $currency);
+        // Company details grouped into at most four short lines.
         $contact = collect([
-            collect([$company['physical_address'] ?? null, $company['city'] ?? null, $company['country_name'] ?? null])->filter()->implode(', '),
-            $company['postal_address'] ?? null,
-            collect([$company['telephone'] ?? null, $company['alt_telephone'] ?? null])->filter()->implode(' / '),
-            collect([$company['email'] ?? null, $company['website'] ?? null])->filter()->implode(' · '),
-            collect([
+            [collect([$company['physical_address'] ?? null, $company['city'] ?? null, $company['country_name'] ?? null])->filter()->implode(', ')],
+            [
+                $company['postal_address'] ?? null,
+                collect([$company['telephone'] ?? null, $company['alt_telephone'] ?? null])->filter()->implode(' / ') ?: null,
+            ],
+            [$company['email'] ?? null, $company['website'] ?? null],
+            [
                 ! empty($company['registration_number']) ? __('Reg. No.').' '.$company['registration_number'] : null,
                 ! empty($company['tin']) ? __('TIN').' '.$company['tin'] : null,
-            ])->filter()->implode(' · '),
-        ])->filter();
+            ],
+        ])
+            ->map(fn (array $parts) => collect($parts)->map(fn ($part) => trim((string) $part))->filter()->map(fn ($part) => e($part))->implode('<span class="sep">|</span>'))
+            ->filter();
     @endphp
 
     <div class="watermark">
@@ -77,7 +86,7 @@
                 @endif
                 <td>
                     <div class="company">{{ $companyName }}</div>
-                    <div class="contact">{!! $contact->map(fn ($line) => e($line))->implode('<br>') !!}</div>
+                    <div class="contact">{!! $contact->implode('<br>') !!}</div>
                 </td>
                 <td class="doc">
                     <strong>{{ __('BILL OF QUANTITIES') }}</strong>
