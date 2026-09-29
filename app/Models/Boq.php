@@ -77,6 +77,35 @@ class Boq extends Model
      *
      * @return array<string, mixed>|null
      */
+    /**
+     * Where the BOQ is priced: the project's location, district or country, then
+     * the user's own location, the market location from Admin > Settings and the
+     * site's country. Empty only when none of these is known.
+     */
+    public function pricingLocation(?User $user = null): string
+    {
+        $this->loadMissing('project');
+        $project = $this->project;
+
+        $candidates = [
+            $project?->location,
+            $project?->district,
+            $project?->country,
+            $user?->location,
+            \App\Support\Regional::marketLocation(),
+            \App\Support\Regional::countryName(),
+        ];
+
+        foreach ($candidates as $candidate) {
+            $value = trim((string) $candidate);
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return '';
+    }
+
     public function brandingIdentity(): ?array
     {
         if (! empty($this->company_snapshot)) {

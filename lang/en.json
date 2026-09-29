@@ -1338,5 +1338,12 @@
     "You are offline": "You are offline",
     "Tap the :icon Share button in Safari.": "Tap the :icon Share button in Safari.",
     "Check your Wi-Fi or mobile data. :name continues as soon as you are back online.": "Check your Wi-Fi or mobile data. :name continues as soon as you are back online.",
-    "Bills of quantities, market prices and project costs.": "Bills of quantities, market prices and project costs."
+    "Bills of quantities, market prices and project costs.": "Bills of quantities, market prices and project costs.",
+    "Where is this project?": "Where is this project?",
+    "Prices depend on the location. Enter the town or district where the project will be built; it is saved to the project.": "Prices depend on the location. Enter the town or district where the project will be built; it is saved to the project.",
+    "Project location": "Project location",
+    "e.g. Kampala, Wakiso": "e.g. Kampala, Wakiso",
+    "Save and generate BOQ": "Save and generate BOQ",
+    "Enter the project location so prices can be looked up.": "Enter the project location so prices can be looked up.",
+    "project location": "project location"
 }

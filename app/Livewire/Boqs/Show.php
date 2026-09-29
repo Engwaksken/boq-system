@@ -24,6 +24,9 @@ class Show extends Component
     /** File of estimated rates (one per item). */
     public $estimatesFile = null;
 
+    /** Asked for when no pricing location is known (saved to the project). */
+    public string $projectLocation = '';
+
     public Boq $boq;
 
     public string $pdfUrl = '';
@@ -123,6 +126,22 @@ class Show extends Component
         $this->resetPage('itemsPage');
     }
 
+    /** Saves the location typed on the BOQ page to the project. */
+    public function saveProjectLocation(): bool
+    {
+        $boq = $this->authorisedBoq('boq.edit');
+        $this->projectLocation = trim($this->projectLocation);
+
+        $this->validate(['projectLocation' => ['required', 'string', 'max:255']], [], ['projectLocation' => __('project location')]);
+
+        $boq->project()->update(['location' => $this->projectLocation]);
+        $this->boq->refresh();
+        $this->boq->load('project');
+        $this->projectLocation = '';
+
+        return true;
+    }
+
     public function generateBoq(
         BoqProcessingService $processor
     ): void {
@@ -131,6 +150,18 @@ class Show extends Component
         $boq = $this->authorisedBoq(
             'boq.edit'
         );
+
+        // No location anywhere yet: use the one typed on this page, or ask for it.
+        if ($boq->pricingLocation($user) === '') {
+            if (trim($this->projectLocation) === '') {
+                $this->addError('projectLocation', __('Enter the project location so prices can be looked up.'));
+
+                return;
+            }
+
+            $this->saveProjectLocation();
+            $boq = $this->authorisedBoq('boq.edit');
+        }
 
         $gate = app(\App\Services\EntitlementGate::class);
         // Items already imported (e.g. a spreadsheet on upload) cost no further import.
@@ -1317,6 +1348,9 @@ class Show extends Component
 
                 'totals' =>
                     app(\App\Services\BoqTotals::class)->forBoq($this->boq),
+
+                'needsLocation' =>
+                    $this->boq->pricingLocation(auth()->user()) === '',
             ]
         );
     }

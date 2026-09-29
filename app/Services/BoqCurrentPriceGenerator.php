@@ -34,11 +34,11 @@ class BoqCurrentPriceGenerator
             throw new AuthorizationException;
         }
 
-        $location = trim((string) ($boq->project->location ?: $boq->project->district ?: $boq->project->country));
+        $location = $boq->pricingLocation(\App\Models\User::find($userId));
 
         if ($location === '') {
             throw ValidationException::withMessages([
-                'boq' => 'Add a location to the project before generating this BOQ.',
+                'boq' => 'Add the project location (the town or district where it will be built) so prices can be looked up, then generate the BOQ again.',
             ]);
         }
 

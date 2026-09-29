@@ -61,7 +61,7 @@ class ProcessBoqJob implements ShouldQueue
         try {
             $boq = Boq::with('project')->findOrFail($batch->boq_id);
             $projectId = (int) ($boq->project_id ?: ($batch->project_id ?? 0));
-            $projectLocation = trim((string) ($boq->project->location ?: $boq->project->district ?: $boq->project->country));
+            $projectLocation = $boq->pricingLocation(\App\Models\User::find($batch->user_id));
             $location = trim((string) ($batch->location ?: $projectLocation));
 
             if (! $boq->items()->exists()) {

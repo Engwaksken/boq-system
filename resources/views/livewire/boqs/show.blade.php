@@ -104,6 +104,23 @@
         </x-slot:actions>
     </x-ui.page-header>
 
+    {{-- No pricing location is known yet: ask for it here instead of failing. --}}
+    @if(($needsLocation ?? false) && $canEdit)
+        <x-ui.alert type="warning" :title="__('Where is this project?')">
+            <p>{{ __('Prices depend on the location. Enter the town or district where the project will be built; it is saved to the project.') }}</p>
+            <form wire:submit="generateBoq" class="mt-3 flex flex-wrap items-start gap-2">
+                <div class="min-w-[14rem] flex-1">
+                    <label for="boq-project-location" class="sr-only">{{ __('Project location') }}</label>
+                    <input id="boq-project-location" type="text" wire:model="projectLocation" maxlength="255" required class="boq-field @error('projectLocation') has-error @enderror" placeholder="{{ __('e.g. Kampala, Wakiso') }}">
+                    @error('projectLocation') <p class="boq-field-error">{{ $message }}</p> @enderror
+                </div>
+                <button type="submit" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="generateBoq">
+                    <i class="fas fa-location-dot" aria-hidden="true"></i> {{ __('Save and generate BOQ') }}
+                </button>
+            </form>
+        </x-ui.alert>
+    @endif
+
     {{-- ============================ MESSAGES ============================ --}}
     @foreach(['boq', 'approval', 'review'] as $errorKey)
         @error($errorKey)
