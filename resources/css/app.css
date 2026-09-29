@@ -3330,6 +3330,188 @@ button.boq-sort-th:hover {
     transform: translateY(-4px);
 }
 
+
+/* Signatures: drawing pad, previews and the sign-off panels on a BOQ.
+   The pad and previews stay white with dark ink in every theme, like paper,
+   so what is drawn is exactly what prints on the PDF. */
+.boq-signature-grid {
+    display: grid;
+    gap: 1rem;
+}
+@media (min-width: 768px) {
+    .boq-signature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.boq-signature-slot {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    border: 1px solid var(--boq-border);
+    border-radius: var(--boq-radius-lg);
+    background: var(--boq-surface-soft);
+    padding: 1rem;
+}
+.boq-signature-slot-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+.boq-signature-slot-title {
+    font-size: var(--boq-text-xs);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--boq-primary-text);
+}
+.boq-signature-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 6rem;
+    border: 1px solid var(--boq-border);
+    border-radius: var(--boq-radius);
+    background: #ffffff;
+    padding: 0.75rem;
+}
+.boq-signature-preview img {
+    max-height: 5rem;
+    max-width: 100%;
+    object-fit: contain;
+}
+.boq-signature-preview.is-empty {
+    border-style: dashed;
+    border-color: var(--boq-border-dark);
+    background: var(--boq-surface);
+    color: var(--boq-text-soft);
+    font-size: var(--boq-text-sm);
+}
+.boq-signature-meta {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.25rem 0.75rem;
+    font-size: var(--boq-text-sm);
+}
+.boq-signature-meta dt { color: var(--boq-text-muted); }
+.boq-signature-meta dd { color: var(--boq-text); font-weight: 500; overflow-wrap: anywhere; }
+
+.boq-signature-pad {
+    position: relative;
+    border: 1px dashed var(--boq-border-strong);
+    border-radius: var(--boq-radius);
+    background: #ffffff;
+    color: #0f172a;
+    overflow: hidden;
+}
+.boq-signature-pad canvas {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 1;
+    min-height: 9rem;
+    max-height: 16rem;
+    cursor: crosshair;
+    touch-action: none;
+    background: transparent;
+    position: relative;
+    z-index: 1;
+}
+.boq-signature-pad-hint {
+    position: absolute;
+    left: 1rem;
+    right: 1rem;
+    bottom: 26%;
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 0.25rem;
+    color: #94a3b8;
+    font-size: 0.8125rem;
+    pointer-events: none;
+    user-select: none;
+}
+.boq-signature-pad-hint i { font-size: 0.875rem; }
+.boq-signature-pad.has-ink .boq-signature-pad-hint span { visibility: hidden; }
+.boq-signature-pad-actions {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.4rem;
+    z-index: 2;
+    display: flex;
+    gap: 0.25rem;
+}
+.boq-signature-pad-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.92);
+    padding: 0.2rem 0.6rem;
+    color: #334155;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.boq-signature-pad-actions button:hover:not(:disabled) { background: #f1f5f9; color: #0f172a; }
+.boq-signature-pad-actions button:disabled { opacity: 0.45; cursor: default; }
+.boq-signature-pad-actions button:focus-visible { outline: 2px solid var(--boq-primary); outline-offset: 1px; }
+
+.boq-signature-methods {
+    display: inline-flex;
+    gap: 0.25rem;
+    border: 1px solid var(--boq-border);
+    border-radius: 999px;
+    background: var(--boq-surface-sunken);
+    padding: 0.2rem;
+}
+.boq-signature-methods button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    padding: 0.3rem 0.8rem;
+    color: var(--boq-text-secondary);
+    font-size: var(--boq-text-sm);
+    font-weight: 600;
+    cursor: pointer;
+}
+.boq-signature-methods button.is-active {
+    background: var(--boq-surface);
+    color: var(--boq-primary-text);
+    box-shadow: var(--boq-shadow);
+}
+.boq-signature-link {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+}
+.boq-signature-link input { min-width: 0; flex: 1; font-size: var(--boq-text-xs); }
+
+.boq-record-list { display: flex; flex-direction: column; }
+.boq-record {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    border-top: 1px solid var(--boq-row-divider);
+    padding: 0.75rem 0;
+}
+.boq-record:first-child { border-top: 0; }
+.boq-record-icon {
+    display: inline-flex;
+    height: 2.25rem;
+    width: 2.25rem;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--boq-radius);
+    background: var(--boq-primary-soft);
+    color: var(--boq-primary-text);
+}
+
 } /* end @layer components */
 
 /* ============================================================
