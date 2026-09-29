@@ -84,6 +84,10 @@
                     $item('Payment Gateways', 'admin.payment-gateways', 'fa-building-columns'),
                     $item('Rate Library', 'admin.rates', 'fa-book'),
                     $item('Suppliers', 'admin.suppliers', 'fa-truck'),
+                    // Project types and BOQ work sections (route lives on main).
+                    ...(\Illuminate\Support\Facades\Route::has('admin.categories')
+                        ? [$item('Categories', 'admin.categories', 'fa-list-check', true, 'admin.categories')]
+                        : []),
                     $item('Quotations', 'admin.quotations', 'fa-file-invoice'),
                     $item('Hardware Scanner', 'admin.hardware-scanner', 'fa-magnifying-glass-dollar'),
                     $item('AI API Settings', 'admin.ai-providers', 'fa-robot'),
