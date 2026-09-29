@@ -49,6 +49,33 @@ class PricingLocationTest extends TestCase
         $this->assertSame('Wakiso', $boq->fresh()->pricingLocation($user));
     }
 
+    public function test_generate_boq_opens_a_location_popup_prefilled_and_saves_the_location(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $user = User::factory()->create(['location' => null]);
+        $user->roles()->attach(\App\Models\Role::where('slug', 'user')->value('id'));
+        $project = Project::factory()->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id, 'location' => 'Entebbe']);
+        $boq = Boq::factory()->create(['project_id' => $project->id, 'organisation_id' => $user->organisation_id]);
+
+        Livewire::actingAs($user)
+            ->test(Show::class, ['boq' => $boq])
+            ->assertDontSee('generate-location-options', false)
+            ->call('openGenerate')
+            ->assertSet('showGenerateModal', true)
+            ->assertSet('projectLocation', 'Entebbe')
+            ->assertSee('generate-location-options', false)
+            ->set('projectLocation', '')
+            ->call('generateBoq')
+            ->assertHasErrors('projectLocation')
+            ->assertSet('showGenerateModal', true)
+            ->set('projectLocation', 'Jinja')
+            ->call('generateBoq')
+            ->assertHasNoErrors('projectLocation')
+            ->assertSet('showGenerateModal', false);
+
+        $this->assertSame('Jinja', $project->fresh()->location);
+    }
+
     public function test_boq_page_asks_for_the_location_and_saves_it_to_the_project(): void
     {
         $this->seed(RolesAndPermissionsSeeder::class);
@@ -61,7 +88,8 @@ class PricingLocationTest extends TestCase
 
         $page = Livewire::actingAs($user)
             ->test(Show::class, ['boq' => $boq])
-            ->assertSee('Where is this project?')
+            ->call('openGenerate')
+            ->assertSet('projectLocation', '')
             ->call('generateBoq')
             ->assertHasErrors('projectLocation');
 

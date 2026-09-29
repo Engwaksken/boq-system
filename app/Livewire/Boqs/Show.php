@@ -24,8 +24,10 @@ class Show extends Component
     /** File of estimated rates (one per item). */
     public $estimatesFile = null;
 
-    /** Asked for when no pricing location is known (saved to the project). */
+    /** Location confirmed in the Generate BOQ popup (saved to the project). */
     public string $projectLocation = '';
+
+    public bool $showGenerateModal = false;
 
     public Boq $boq;
 
@@ -142,6 +144,51 @@ class Show extends Component
         return true;
     }
 
+    /** Generate BOQ opens a popup to confirm where the project is. */
+    public function openGenerate(): void
+    {
+        $boq = $this->authorisedBoq('boq.edit');
+        $this->projectLocation = $boq->pricingLocation(auth()->user());
+        $this->resetValidation();
+        $this->showGenerateModal = true;
+    }
+
+    /** @return list<string> places offered in the popup (project fields and recent projects). */
+    private function locationSuggestions(): array
+    {
+        $user = auth()->user();
+        $project = $this->boq->project;
+
+        return collect([
+            $project?->location,
+            $project?->district,
+            $project?->country,
+            $user?->location,
+            \App\Support\Regional::marketLocation(),
+        ])
+            ->merge(
+                \App\Models\Project::query()
+                    ->where(fn ($q) => $q->where('user_id', $user?->id)
+                        ->when($user?->organisation_id, fn ($inner) => $inner->orWhere('organisation_id', $user->organisation_id)))
+                    ->whereNotNull('location')
+                    ->latest('updated_at')
+                    ->limit(20)
+                    ->pluck('location')
+            )
+            ->map(fn ($place) => trim((string) $place))
+            ->filter()
+            ->unique(fn ($place) => mb_strtolower($place))
+            ->take(12)
+            ->values()
+            ->all();
+    }
+
+    public function closeGenerate(): void
+    {
+        $this->showGenerateModal = false;
+        $this->resetValidation();
+    }
+
     public function generateBoq(
         BoqProcessingService $processor
     ): void {
@@ -151,17 +198,22 @@ class Show extends Component
             'boq.edit'
         );
 
-        // No location anywhere yet: use the one typed on this page, or ask for it.
-        if ($boq->pricingLocation($user) === '') {
-            if (trim($this->projectLocation) === '') {
-                $this->addError('projectLocation', __('Enter the project location so prices can be looked up.'));
+        // Prices are looked up for the location confirmed in the popup.
+        $this->resetErrorBag('projectLocation');
+        $this->projectLocation = trim($this->projectLocation);
+        if ($this->projectLocation === '') {
+            $this->addError('projectLocation', __('Enter the project location so prices can be looked up.'));
 
-                return;
-            }
+            return;
+        }
 
-            $this->saveProjectLocation();
+        if ($this->projectLocation !== trim((string) $boq->project?->location)) {
+            $boq->project()->update(['location' => mb_substr($this->projectLocation, 0, 255)]);
+            $this->boq->refresh();
             $boq = $this->authorisedBoq('boq.edit');
         }
+
+        $this->showGenerateModal = false;
 
         $gate = app(\App\Services\EntitlementGate::class);
         // Items already imported (e.g. a spreadsheet on upload) cost no further import.
@@ -1349,8 +1401,8 @@ class Show extends Component
                 'totals' =>
                     app(\App\Services\BoqTotals::class)->forBoq($this->boq),
 
-                'needsLocation' =>
-                    $this->boq->pricingLocation(auth()->user()) === '',
+                'locationSuggestions' =>
+                    $this->showGenerateModal ? $this->locationSuggestions() : [],
             ]
         );
     }

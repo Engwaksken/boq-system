@@ -89,9 +89,9 @@
 
             @if($canEdit)
                 <button
-                    wire:click="generateBoq"
+                    wire:click="openGenerate"
                     wire:loading.attr="disabled"
-                    wire:target="generateBoq"
+                    wire:target="generateBoq,openGenerate"
                     type="button"
                     class="boq-btn-primary"
                 >
@@ -103,23 +103,6 @@
             @endif
         </x-slot:actions>
     </x-ui.page-header>
-
-    {{-- No pricing location is known yet: ask for it here instead of failing. --}}
-    @if(($needsLocation ?? false) && $canEdit)
-        <x-ui.alert type="warning" :title="__('Where is this project?')">
-            <p>{{ __('Prices depend on the location. Enter the town or district where the project will be built; it is saved to the project.') }}</p>
-            <form wire:submit="generateBoq" class="mt-3 flex flex-wrap items-start gap-2">
-                <div class="min-w-[14rem] flex-1">
-                    <label for="boq-project-location" class="sr-only">{{ __('Project location') }}</label>
-                    <input id="boq-project-location" type="text" wire:model="projectLocation" maxlength="255" required class="boq-field @error('projectLocation') has-error @enderror" placeholder="{{ __('e.g. Kampala, Wakiso') }}">
-                    @error('projectLocation') <p class="boq-field-error">{{ $message }}</p> @enderror
-                </div>
-                <button type="submit" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="generateBoq">
-                    <i class="fas fa-location-dot" aria-hidden="true"></i> {{ __('Save and generate BOQ') }}
-                </button>
-            </form>
-        </x-ui.alert>
-    @endif
 
     {{-- ============================ MESSAGES ============================ --}}
     @foreach(['boq', 'approval', 'review'] as $errorKey)
@@ -588,6 +571,24 @@
             <x-slot:footer>
                 <x-ui.button variant="secondary" wire:click="closePdfPreview">{{ __('Close') }}</x-ui.button>
                 <x-ui.button icon="fa-download" :href="$pdfUrl">{{ __('Download PDF') }}</x-ui.button>
+            </x-slot:footer>
+        </x-ui.modal>
+    @endif
+
+    @if($showGenerateModal)
+        <x-ui.modal wire:key="generate-boq" id="generate-boq" :title="__('Generate BOQ')" :subtitle="__('Prices are looked up for the project location.')" icon="fa-location-dot" size="sm" close="closeGenerate" submit="generateBoq">
+            <x-ui.field :label="__('Project location')" for="generate-location" error="projectLocation" :hint="__('Town, district or market where the project will be built. It is saved to the project.')" required>
+                <input id="generate-location" type="text" wire:model="projectLocation" list="generate-location-options" maxlength="255" required autofocus autocomplete="off" class="boq-field @error('projectLocation') has-error @enderror" placeholder="{{ __('e.g. Kampala, Wakiso') }}">
+                <datalist id="generate-location-options">
+                    @foreach($locationSuggestions as $place)
+                        <option value="{{ $place }}"></option>
+                    @endforeach
+                </datalist>
+            </x-ui.field>
+
+            <x-slot:footer>
+                <x-ui.button variant="secondary" wire:click="closeGenerate">{{ __('Cancel') }}</x-ui.button>
+                <x-ui.button type="submit" icon="fa-wand-magic-sparkles" loading="generateBoq">{{ __('Generate BOQ') }}</x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
     @endif

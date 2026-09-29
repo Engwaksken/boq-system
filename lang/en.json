@@ -1345,5 +1345,7 @@
     "e.g. Kampala, Wakiso": "e.g. Kampala, Wakiso",
     "Save and generate BOQ": "Save and generate BOQ",
     "Enter the project location so prices can be looked up.": "Enter the project location so prices can be looked up.",
-    "project location": "project location"
+    "project location": "project location",
+    "Prices are looked up for the project location.": "Prices are looked up for the project location.",
+    "Town, district or market where the project will be built. It is saved to the project.": "Town, district or market where the project will be built. It is saved to the project."
 }
