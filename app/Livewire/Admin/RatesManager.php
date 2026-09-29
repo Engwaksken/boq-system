@@ -65,8 +65,13 @@ class RatesManager extends Component
     /** @return list<string> */
     private function categoryOptions(): array
     {
-        return Rate::query()->whereNotNull('category')->where('category', '!=', '')
-            ->distinct()->orderBy('category')->pluck('category')->all();
+        // Managed material categories first, then any other category already used on rates.
+        return collect(\App\Support\Categories::materialNames(auth()->user()?->organisation_id))
+            ->merge(Rate::query()->whereNotNull('category')->where('category', '!=', '')->distinct()->pluck('category'))
+            ->filter()
+            ->unique(fn ($name) => mb_strtolower(trim($name)))
+            ->values()
+            ->all();
     }
 
     /** @return list<string> */

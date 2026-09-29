@@ -110,6 +110,8 @@ class Create extends Component
 
     public function render()
     {
-        return view('livewire.projects.create');
+        return view('livewire.projects.create', [
+            'projectTypes' => \App\Support\Categories::projectTypes(),
+        ]);
     }
 }

@@ -416,14 +416,18 @@ public function show(Request $request, Boq $boq): JsonResponse
         ]);
     }
 
-    public function process(ProcessBoqRequest $request, Boq $boq, BoqSpreadsheetImporter $importer): JsonResponse
+    public function process(ProcessBoqRequest $request, Boq $boq, \App\Services\BoqExtractionService $extractor): JsonResponse
     {
         set_time_limit(300);
-        $created = $importer->import($boq);
+        // Finish even if the phone loses its connection, so the items are not lost.
+        ignore_user_abort(true);
+        // Spreadsheets are read directly; PDFs and photos are extracted with the AI provider.
+        $result = $extractor->extract($boq);
+        $created = $result['count'];
         $boq->update(['status' => 'under_review']);
 
         return (new BoqResource($this->loadPhaseFourRelations($boq->fresh() ?? $boq)))
-            ->additional(['success' => true, 'meta' => ['items_imported' => $created]])
+            ->additional(['success' => true, 'meta' => ['items_imported' => $created, 'warnings' => $result['warnings'], 'provider' => $result['provider']]])
             ->response();
     }
 

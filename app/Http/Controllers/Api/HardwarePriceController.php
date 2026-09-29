@@ -390,12 +390,23 @@ class HardwarePriceController extends Controller
 
     public function categories(Request $request): JsonResponse
     {
-        $categories = HardwarePrice::where('organisation_id', $request->user()->organisation_id)
+        $organisationId = $request->user()->organisation_id;
+        $counts = HardwarePrice::where('organisation_id', $organisationId)
             ->where('is_active', true)
-            ->distinct('category')
-            ->pluck('category')
-            ->map(fn ($c) => ['name' => $c, 'count' => HardwarePrice::where('organisation_id', $request->user()->organisation_id)->where('category', $c)->where('is_active', true)->count()])
-            ->values();
+            ->selectRaw('category, COUNT(*) AS total')
+            ->groupBy('category')
+            ->pluck('total', 'category');
+
+        // Every managed category (even without prices yet), then any other category in use.
+        $names = collect(\App\Support\Categories::materialNames($organisationId))
+            ->merge($counts->keys())
+            ->filter()
+            ->unique(fn ($name) => mb_strtolower(trim($name)));
+
+        $categories = $names->map(fn ($name) => [
+            'name' => $name,
+            'count' => (int) ($counts->first(fn ($total, $category) => mb_strtolower(trim((string) $category)) === mb_strtolower(trim($name))) ?? 0),
+        ])->values();
 
         return response()->json([
             'success' => true,

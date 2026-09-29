@@ -65,6 +65,7 @@ class BoqSpreadsheetImporter
             foreach ($reader->getSheetIterator() as $sheetIndex => $sheet) {
                 $columns = null;
                 $headerScan = 0;
+                $previousRow = [];
                 $sheetItems = 0;
                 $facility = null;
                 $bill = null;
@@ -89,7 +90,9 @@ class BoqSpreadsheetImporter
                         if (++$headerScan > self::HEADER_SCAN_ROWS) {
                             break;
                         }
-                        $columns = $this->detectColumns($values);
+                        $columns = $this->detectColumns($values)
+                            ?? $this->detectColumns($this->mergeHeaderRows($previousRow, $values));
+                        $previousRow = $values;
                         continue;
                     }
 
@@ -291,11 +294,24 @@ class BoqSpreadsheetImporter
             }
         }
 
-        if (! isset($columns['description'], $columns['quantity'])) {
+        // A BOQ table needs descriptions plus a quantity or an amount column.
+        if (! isset($columns['description']) || (! isset($columns['quantity']) && ! isset($columns['amount']))) {
             return null;
         }
 
         return $columns + ['headers' => $headers];
+    }
+
+    /** Joins a heading split over two rows, cell by cell ("Rate" + "(UGX)"). */
+    private function mergeHeaderRows(array $top, array $bottom): array
+    {
+        $merged = [];
+        foreach (array_keys($top + $bottom) as $index) {
+            $merged[$index] = trim(($top[$index] ?? '').' '.($bottom[$index] ?? ''));
+        }
+        ksort($merged);
+
+        return $merged;
     }
 
     private function columnKey(string $header): ?string
@@ -308,12 +324,12 @@ class BoqSpreadsheetImporter
         }
 
         return match (true) {
-            (bool) preg_match('/^(ITEM )?(DESCRIPTION|DESC|PARTICULARS|WORK ITEM|DETAILS)\b/', $name) => 'description',
-            (bool) preg_match('/^(QUANTITY|QTY|QUANTITIES|QNTY|QTTY)\b/', $name) => 'quantity',
-            (bool) preg_match('/^(UNIT RATE|RATE|PRICE|UNIT PRICE|UNIT COST)\b/', $name) => 'rate',
-            (bool) preg_match('/^(AMOUNT|TOTAL|TOTAL AMOUNT|COST|TOTAL COST|VALUE)\b/', $name) => 'amount',
-            (bool) preg_match('/^(UNIT|UNITS|UOM)$/', $name) => 'unit',
-            (bool) preg_match('/^(ITEM|ITEM NO|ITEM CODE|NO|REF|CODE|S N|SN)$/', $name) => 'item',
+            (bool) preg_match('/^(ITEM |WORK )?(DESCRIPTION|DESCRIPTIONS|DESC|PARTICULARS|WORK ITEM|WORKS|DETAILS|SPECIFICATION|SCOPE|NARRATION|ITEM DETAILS)\b/', $name) => 'description',
+            (bool) preg_match('/^(QUANTITY|QTY|QTYS|QUANTITIES|QNTY|QTTY|QUANT|QTE)\b/', $name) => 'quantity',
+            (bool) preg_match('/^(UNIT RATE|RATE|RATES|PRICE|UNIT PRICE|UNIT COST|COST PER UNIT)\b/', $name) => 'rate',
+            (bool) preg_match('/^(AMOUNT|AMT|TOTAL|TOTAL AMOUNT|COST|TOTAL COST|VALUE|EXTENSION|SUM)\b/', $name) => 'amount',
+            (bool) preg_match('/^(UNIT|UNITS|UOM|UNIT OF MEASURE|MEASURE)$/', $name) => 'unit',
+            (bool) preg_match('/^(ITEM|ITEMS|ITEM NO|ITEM NUMBER|ITEM CODE|NO|REF|REF NO|CODE|S N|SN|SR NO|SL NO)$/', $name) => 'item',
             default => null,
         };
     }

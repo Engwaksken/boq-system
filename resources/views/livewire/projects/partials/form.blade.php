@@ -35,7 +35,13 @@
             </x-ui.field>
 
             <x-ui.field :label="__('Project Type')" for="projectType" error="projectType">
-                <input type="text" wire:model="projectType" id="projectType" placeholder="{{ __('e.g. Commercial building, road or water works') }}" class="boq-field @error('projectType') has-error @enderror">
+                {{-- Choose a project type from the database, or type another one. --}}
+                <input type="text" wire:model="projectType" id="projectType" list="project-type-options" autocomplete="off" placeholder="{{ __('Choose or type a project type') }}" class="boq-field @error('projectType') has-error @enderror">
+                <datalist id="project-type-options">
+                    @foreach ($projectTypes ?? [] as $type)
+                        <option value="{{ $type }}"></option>
+                    @endforeach
+                </datalist>
             </x-ui.field>
 
             <x-ui.field :label="__('Description')" for="description" error="description" class="boq-form-span-2">

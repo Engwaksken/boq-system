@@ -447,6 +447,8 @@ Route::middleware('auth')->group(function (): void {
                 RatesManager::class
             )->name('rates');
 
+            Route::get('/categories', \App\Livewire\Admin\CategoriesManager::class)->name('categories');
+
 
             /*
             |--------------------------------------------------------------------------

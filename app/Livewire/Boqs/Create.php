@@ -82,16 +82,12 @@ class Create extends Component
     }
 
     /**
-     * Excel/CSV rows are imported immediately (no AI needed), using one BOQ import
-     * from the plan, the same as the API's process endpoint. PDFs and scans are
-     * extracted later with "Generate BOQ".
+     * The BOQ items are read straight away, using one BOQ import from the plan
+     * (the same as the API's process endpoint): spreadsheets directly, PDFs and
+     * photos with the configured AI provider.
      */
     private function importNow(Boq $boq, $user): string
     {
-        if ($boq->source_type !== 'excel') {
-            return 'BOQ uploaded. Press "Generate BOQ" to extract the items from this document.';
-        }
-
         $gate = app(\App\Services\EntitlementGate::class);
         $allowance = $gate->find($user, 'boq.import.excel', 'boq_imports');
 
@@ -100,7 +96,8 @@ class Create extends Component
         }
 
         try {
-            $count = app(\App\Services\BoqSpreadsheetImporter::class)->import($boq);
+            set_time_limit(300);
+            $count = app(\App\Services\BoqExtractionService::class)->extract($boq)['count'];
         } catch (\Illuminate\Validation\ValidationException $e) {
             return 'BOQ uploaded, but the items could not be read: '.collect($e->errors())->flatten()->first();
         } catch (\Throwable $e) {
