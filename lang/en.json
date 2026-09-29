@@ -1328,5 +1328,15 @@
     "The prices of :name could not be scanned: :reason": "The prices of :name could not be scanned: :reason",
     "the AI provider did not answer. Check AI API Settings and try again.": "the AI provider did not answer. Check AI API Settings and try again.",
     "No priced items were found on the website of :name.": "No priced items were found on the website of :name.",
-    "Scanned :name: :created new and :updated updated prices added to the general prices.": "Scanned :name: :created new and :updated updated prices added to the general prices."
+    "Scanned :name: :created new and :updated updated prices added to the general prices.": "Scanned :name: :created new and :updated updated prices added to the general prices.",
+    "Install the app on this device": "Install the app on this device",
+    "Install app": "Install app",
+    "Install the app": "Install the app",
+    "Choose \"Add to Home Screen\".": "Choose \"Add to Home Screen\".",
+    "Tap \"Add\". The app opens from your home screen like any other app.": "Tap \"Add\". The app opens from your home screen like any other app.",
+    "Got it": "Got it",
+    "You are offline": "You are offline",
+    "Tap the :icon Share button in Safari.": "Tap the :icon Share button in Safari.",
+    "Check your Wi-Fi or mobile data. :name continues as soon as you are back online.": "Check your Wi-Fi or mobile data. :name continues as soon as you are back online.",
+    "Bills of quantities, market prices and project costs.": "Bills of quantities, market prices and project costs."
 }

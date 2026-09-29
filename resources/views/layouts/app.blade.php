@@ -159,6 +159,7 @@
     <title>{{ $documentTitle ? $documentTitle.' | '.$siteName : $siteName }}</title>
 
     <link rel="icon" href="{{ $siteFavicon ? asset('storage/'.$siteFavicon) : asset('favicon.ico') }}">
+    @include('pwa.head')
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link rel="stylesheet" href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap">
@@ -343,6 +344,12 @@
             </div>
 
             <div class="boq-topbar-actions">
+                {{-- Shown only when the browser can install the app (or on iPhone/iPad). --}}
+                <button type="button" data-pwa-install hidden class="boq-pwa-install-btn" title="{{ __('Install the app on this device') }}">
+                    <i class="fas fa-download" aria-hidden="true"></i>
+                    <span>{{ __('Install app') }}</span>
+                </button>
+
                 <livewire:shell.notifications-menu />
 
                 {{-- User menu --}}
@@ -490,6 +497,8 @@
         </footer>
     </div>
 </div>
+
+@include('pwa.install-help')
 
 @livewireScripts
 

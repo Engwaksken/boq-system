@@ -3233,6 +3233,93 @@ button.boq-sort-th:hover {
     scrollbar-color: rgb(255 255 255 / 0.25) transparent;
 }
 
+
+/* ------------------------------------------------------------
+   Install app (PWA) button and iPhone/iPad instructions.
+   ------------------------------------------------------------ */
+.boq-pwa-install-btn[hidden] {
+    display: none !important;
+}
+.boq-pwa-install-btn {
+    display: inline-flex;
+    height: 2.25rem;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1px solid var(--color-brand-200);
+    border-radius: 999px;
+    background: var(--color-brand-50);
+    padding: 0 0.9rem;
+    color: var(--color-brand-800);
+    font-size: var(--boq-text-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.boq-pwa-install-btn:hover {
+    background: var(--color-brand-100);
+    box-shadow: var(--boq-shadow);
+}
+.boq-pwa-install-btn:focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+}
+@media (max-width: 639px) {
+    .boq-topbar-actions .boq-pwa-install-btn span {
+        display: none;
+    }
+    .boq-topbar-actions .boq-pwa-install-btn {
+        width: 2.25rem;
+        justify-content: center;
+        padding: 0;
+    }
+}
+.boq-pwa-install-guest {
+    height: 2.6rem;
+    padding: 0 1.2rem;
+}
+.boq-pwa-dialog {
+    width: min(92vw, 380px);
+    border: 0;
+    border-radius: 18px;
+    background: var(--boq-surface, #fff);
+    padding: 1.6rem 1.4rem 1.2rem;
+    color: var(--boq-text, #0f172a);
+    box-shadow: 0 20px 50px rgb(15 23 42 / 0.25);
+}
+.boq-pwa-dialog::backdrop {
+    background: rgb(15 23 42 / 0.45);
+}
+.boq-pwa-dialog-icon {
+    text-align: center;
+}
+.boq-pwa-dialog-icon img {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+}
+.boq-pwa-dialog h2 {
+    margin: 0.8rem 0 0.6rem;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+.boq-pwa-dialog ol {
+    margin: 0 0 1.1rem;
+    padding-left: 1.2rem;
+    line-height: 1.6;
+    list-style: decimal;
+}
+.boq-pwa-dialog-close {
+    width: 100%;
+    border: 0;
+    border-radius: 12px;
+    background: var(--color-brand-700);
+    padding: 0.7rem;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
 } /* end @layer components */
 
 /* ============================================================

@@ -1,4 +1,5 @@
 import './bootstrap';
+import './pwa';
 import Webpass from '@laragear/webpass';
 
 /*

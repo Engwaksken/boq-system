@@ -16,6 +16,7 @@
     <title>{{ ($title ?? '') !== '' ? $title.' · ' : '' }}{{ $siteName }}</title>
 
     <link rel="icon" href="{{ $siteFavicon ? asset('storage/'.$siteFavicon) : asset('favicon.ico') }}">
+    @include('pwa.head')
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link rel="stylesheet" href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap">
@@ -62,6 +63,14 @@
                     {{ $slot }}
                 </section>
 
+                {{-- Install the web app (shown only when this browser supports it). --}}
+                <div class="mt-5 flex justify-center">
+                    <button type="button" data-pwa-install hidden class="boq-pwa-install-btn boq-pwa-install-guest">
+                        <i class="fas fa-mobile-screen-button" aria-hidden="true"></i>
+                        <span>{{ __('Install the app') }}</span>
+                    </button>
+                </div>
+
                 {{-- Language switcher (guests; signed-in users choose in Profile > Preferences) --}}
                 @php
                     $guestLanguages = \App\Models\Language::where('is_active', true)->orderByDesc('is_default')->orderBy('name')->get(['code', 'native_name']);
@@ -92,5 +101,6 @@
         </main>
     </div>
 
+    @include('pwa.install-help')
 </body>
 </html>

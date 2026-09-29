@@ -73,6 +73,11 @@ WebAuthnRoutes::register()->middleware('throttle:20,1');
 Route::get('/health', \App\Http\Controllers\HealthController::class)->middleware('throttle:30,1')->name('health');
 
 // Signed, time-limited PDF links created by "Share" (WhatsApp / chat apps).
+// Progressive Web App (installable site, offline page).
+Route::get('/manifest.webmanifest', [\App\Http\Controllers\PwaController::class, 'manifest'])->name('pwa.manifest');
+Route::get('/sw.js', [\App\Http\Controllers\PwaController::class, 'serviceWorker'])->name('pwa.sw');
+Route::get('/offline', [\App\Http\Controllers\PwaController::class, 'offline'])->name('pwa.offline');
+
 Route::get('/shared/boqs/{boq}/pdf', function (\App\Models\Boq $boq, \App\Services\BoqPdfService $pdfs) {
     try {
         return $pdfs->pdf($boq)->stream($pdfs->filename($boq));
