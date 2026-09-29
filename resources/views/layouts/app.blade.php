@@ -1,10 +1,25 @@
+@php
+    // Interface preferences, applied server side so the first paint already
+    // has the right theme, accent, density and font size.
+    $uiPrefs = Auth::user()?->interfacePreferences() ?? [
+        'theme' => 'light', 'accent' => 'green', 'density' => 'comfortable', 'sidebar' => 'expanded', 'font' => 'default',
+    ];
+@endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html
+    lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    data-theme="{{ $uiPrefs['theme'] }}"
+    data-accent="{{ $uiPrefs['accent'] }}"
+    data-density="{{ $uiPrefs['density'] }}"
+    data-font="{{ $uiPrefs['font'] }}"
+    data-sidebar="{{ $uiPrefs['sidebar'] }}"
+>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#05645b">
+    <meta name="color-scheme" content="{{ ['dark' => 'dark', 'system' => 'light dark'][$uiPrefs['theme']] ?? 'light' }}">
     <meta name="description" content="{{ $metaDescription ?? 'BOQ System for project cost planning, BOQ management and market pricing.' }}">
     <meta name="robots" content="noindex,nofollow">
 
@@ -47,6 +62,12 @@
                     $item('Top-ups', 'topups.index', 'fa-gift', true, 'topups.*'),
                 ],
             ],
+            [
+                'label' => 'Account',
+                'items' => [
+                    $item('Preferences', 'preferences', 'fa-palette'),
+                ],
+            ],
         ];
 
         if ($authUser->isSuperAdmin()) {
@@ -63,6 +84,10 @@
                     $item('Payment Gateways', 'admin.payment-gateways', 'fa-building-columns'),
                     $item('Rate Library', 'admin.rates', 'fa-book'),
                     $item('Suppliers', 'admin.suppliers', 'fa-truck'),
+                    // Project types and BOQ work sections (route lives on main).
+                    ...(\Illuminate\Support\Facades\Route::has('admin.categories')
+                        ? [$item('Categories', 'admin.categories', 'fa-list-check', true, 'admin.categories')]
+                        : []),
                     $item('Quotations', 'admin.quotations', 'fa-file-invoice'),
                     $item('Hardware Scanner', 'admin.hardware-scanner', 'fa-magnifying-glass-dollar'),
                     $item('AI API Settings', 'admin.ai-providers', 'fa-robot'),
@@ -151,17 +176,23 @@
 <div
     x-data="{
         sidebarOpen: false,
-        collapsed: false,
+        {{-- Default from Preferences; a manual toggle is remembered in this browser. --}}
+        collapsed: @js($uiPrefs['sidebar'] === 'collapsed'),
         init() {
-            try { this.collapsed = localStorage.getItem('boq.sidebar.collapsed') === '1'; } catch (e) {}
-            this.$watch('collapsed', (value) => {
-                try { localStorage.setItem('boq.sidebar.collapsed', value ? '1' : '0'); } catch (e) {}
-            });
+            try {
+                const remembered = localStorage.getItem('boq.sidebar.collapsed');
+                if (remembered !== null) { this.collapsed = remembered === '1'; }
+            } catch (e) {}
+        },
+        toggleCollapsed() {
+            this.collapsed = ! this.collapsed;
+            try { localStorage.setItem('boq.sidebar.collapsed', this.collapsed ? '1' : '0'); } catch (e) {}
         },
     }"
     x-on:keydown.escape.window="sidebarOpen = false"
+    x-on:boq-sidebar-preference.window="collapsed = $event.detail === 'collapsed'"
     :class="{ 'boq-shell-collapsed': collapsed }"
-    class="min-h-screen"
+    class="min-h-screen {{ $uiPrefs['sidebar'] === 'collapsed' ? 'boq-shell-collapsed' : '' }}"
 >
     {{-- Mobile overlay --}}
     <div
@@ -261,7 +292,7 @@
             <button
                 type="button"
                 class="boq-nav-item w-full border-0 bg-transparent"
-                @click="collapsed = ! collapsed"
+                @click="toggleCollapsed()"
                 :aria-pressed="collapsed.toString()"
                 :title="collapsed ? @js(__('Expand sidebar')) : null"
             >
@@ -378,6 +409,57 @@
 
                         <a href="{{ route('plans.index') }}" class="boq-menu-item" role="menuitem">
                             <i class="fas fa-layer-group" aria-hidden="true"></i> {{ __('Plans') }}
+                        </a>
+
+                        <div class="boq-menu-sep" role="separator"></div>
+
+                        {{-- Quick light/dark switch: applied at once, saved in the background. --}}
+                        <form
+                            method="POST"
+                            action="{{ route('preferences.theme') }}"
+                            x-data="{
+                                isDark: @js($uiPrefs['theme'] === 'dark'),
+                                effectiveDark() {
+                                    const theme = document.documentElement.dataset.theme;
+
+                                    return theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                                },
+                                init() {
+                                    const sync = () => { this.isDark = this.effectiveDark(); };
+                                    sync();
+                                    {{-- Stay right when Preferences previews a theme or the OS switches. --}}
+                                    new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+                                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', sync);
+                                },
+                                toggle() {
+                                    const theme = this.effectiveDark() ? 'light' : 'dark';
+                                    document.documentElement.dataset.theme = theme;
+                                    this.isDark = theme === 'dark';
+
+                                    fetch(this.$el.action, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Accept': 'application/json',
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content ?? '',
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                        },
+                                        body: JSON.stringify({ theme }),
+                                    }).catch(() => {});
+                                },
+                            }"
+                            x-on:submit.prevent="toggle()"
+                        >
+                            @csrf
+                            <input type="hidden" name="theme" value="{{ $uiPrefs['theme'] === 'dark' ? 'light' : 'dark' }}">
+                            <button type="submit" class="boq-menu-item" role="menuitem" data-theme-toggle>
+                                <i class="fas" :class="isDark ? 'fa-sun' : 'fa-moon'" aria-hidden="true"></i>
+                                <span x-text="isDark ? @js(__('Light mode')) : @js(__('Dark mode'))">{{ $uiPrefs['theme'] === 'dark' ? __('Light mode') : __('Dark mode') }}</span>
+                            </button>
+                        </form>
+
+                        <a href="{{ route('preferences') }}" class="boq-menu-item" role="menuitem">
+                            <i class="fas fa-palette" aria-hidden="true"></i> {{ __('Preferences') }}
                         </a>
 
                         <div class="boq-menu-sep" role="separator"></div>

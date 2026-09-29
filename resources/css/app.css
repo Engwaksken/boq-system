@@ -20,6 +20,8 @@
    5. Page modules (plans, hardware, profile, checkout, company)
    6. Authentication and public pages
    7. Responsive rules
+   8. Themes and interface preferences (dark mode, accents,
+      density, font size)
    Everything in the dashboard is scoped under .boq-app-shell so
    the auth/public pages and the error pages are not affected.
    ============================================================ */
@@ -59,10 +61,14 @@
     --boq-primary: var(--color-brand-600);
     --boq-primary-dark: var(--color-brand-700);
     --boq-primary-soft: var(--color-brand-50);
-    --boq-primary-lighter: #f5fbfa;
-    --boq-primary-ring: rgb(5 100 91 / 0.18);
+    --boq-primary-lighter: color-mix(in srgb, var(--color-brand-50) 50%, #fff);
+    /* Text in the primary colour: links, icons, active items. */
+    --boq-primary-link: var(--boq-primary);
+    --boq-primary-text: var(--color-brand-700);
+    --boq-primary-ring: color-mix(in srgb, var(--boq-primary) 18%, transparent);
 
     --boq-accent: var(--color-accent-500);
+    --boq-on-accent: #0f172a;
 
     --boq-bg: #f5f7f9;
     --boq-surface: #ffffff;
@@ -71,27 +77,45 @@
 
     --boq-border: #e2e8f0;
     --boq-border-dark: #cbd5e1;
+    --boq-border-strong: #94a3b8;
+
+    --boq-input-bg: #ffffff;
+    --boq-switch-knob: #ffffff;
+    --boq-topbar-bg: rgb(255 255 255 / 0.92);
+    --boq-row-divider: #eef2f6;
+    --boq-row-hover: #f9fbfb;
+    --boq-hover-tint: rgb(15 23 42 / 0.06);
+    --boq-overlay-soft: rgb(15 23 42 / 0.45);
+    --boq-overlay: rgb(15 23 42 / 0.55);
 
     --boq-text: #0f172a;
     --boq-text-body: #334155;
+    --boq-text-secondary: #475569;
     --boq-text-muted: #64748b;
     --boq-text-soft: #94a3b8;
 
     --boq-success: #059669;
     --boq-success-soft: #ecfdf5;
     --boq-success-text: #065f46;
+    --boq-success-border: #a7f3d0;
     --boq-info: #2563eb;
     --boq-info-soft: #eff6ff;
     --boq-info-text: #1e40af;
+    --boq-info-border: #bfdbfe;
     --boq-warning: #d97706;
     --boq-warning-soft: #fffbeb;
     --boq-warning-text: #92400e;
+    --boq-warning-border: #fde68a;
     --boq-danger: #dc2626;
     --boq-danger-soft: #fef2f2;
     --boq-danger-text: #991b1b;
+    --boq-danger-border: #fecaca;
+    --boq-danger-solid: #dc2626;
+    --boq-danger-hover: #b91c1c;
     --boq-purple: #7c3aed;
     --boq-purple-soft: #f5f3ff;
     --boq-purple-text: #5b21b6;
+    --boq-purple-border: #ddd6fe;
 
     --boq-radius-sm: 0.375rem;
     --boq-radius: var(--radius-control);
@@ -187,7 +211,7 @@ a:visited {
         min-height: var(--boq-field-height);
         border: 1px solid var(--boq-border-dark);
         border-radius: var(--boq-radius);
-        background-color: #fff;
+        background-color: var(--boq-input-bg);
         padding: 0.5rem 0.75rem;
         color: var(--boq-text);
         font-size: var(--boq-text-base);
@@ -240,7 +264,7 @@ a:visited {
         border-radius: var(--boq-radius);
         background: var(--boq-surface-soft);
         padding: 0.55rem;
-        color: #475569;
+        color: var(--boq-text-secondary);
         font-size: var(--boq-text-sm);
     }
 
@@ -248,7 +272,7 @@ a:visited {
         margin-right: 0.75rem;
         border: 1px solid var(--boq-border-dark);
         border-radius: var(--boq-radius-sm);
-        background: #fff;
+        background: var(--boq-input-bg);
         padding: 0.35rem 0.75rem;
         color: var(--boq-text-body);
         font-weight: 600;
@@ -312,7 +336,7 @@ a:visited {
     position: fixed;
     inset: 0;
     z-index: 40;
-    background: rgb(15 23 42 / 0.45);
+    background: var(--boq-overlay-soft);
     backdrop-filter: blur(2px);
 }
 
@@ -451,7 +475,7 @@ button.boq-nav-heading:hover {
     gap: 0.7rem;
     border-radius: var(--boq-radius);
     padding: 0.45rem 0.65rem;
-    color: #475569;
+    color: var(--boq-text-secondary);
     font-size: var(--boq-text-sm);
     font-weight: 500;
     text-align: left;
@@ -465,7 +489,7 @@ button.boq-nav-heading:hover {
 
 .boq-nav-item.is-active {
     background: var(--boq-primary-soft);
-    color: var(--boq-primary-dark);
+    color: var(--boq-primary-text);
     font-weight: 600;
 }
 
@@ -494,7 +518,7 @@ button.boq-nav-heading:hover {
 }
 
 .boq-nav-item.is-active .boq-nav-icon {
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
 }
 
 .boq-nav-label {
@@ -528,7 +552,7 @@ button.boq-nav-heading:hover {
     align-items: center;
     gap: 0.5rem;
     border-bottom: 1px solid var(--boq-border);
-    background: rgb(255 255 255 / 0.92);
+    background: var(--boq-topbar-bg);
     padding: 0 1rem;
     backdrop-filter: blur(8px);
 }
@@ -553,7 +577,7 @@ button.boq-nav-heading:hover {
 }
 
 .boq-breadcrumb a:hover {
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
 }
 
 .boq-breadcrumb-sep {
@@ -604,9 +628,9 @@ button.boq-nav-heading:hover {
     height: 1rem;
     align-items: center;
     justify-content: center;
-    border: 2px solid #fff;
+    border: 2px solid var(--boq-surface);
     border-radius: 999px;
-    background: var(--boq-danger);
+    background: var(--boq-danger-solid);
     padding: 0 0.2rem;
     color: #fff;
     font-size: 0.55rem;
@@ -649,7 +673,7 @@ button.boq-nav-heading:hover {
     overflow: hidden;
     border-radius: 999px;
     background: var(--boq-accent);
-    color: var(--boq-text);
+    color: var(--boq-on-accent);
     font-size: 0.75rem;
     font-weight: 700;
     line-height: 1;
@@ -694,7 +718,7 @@ button.boq-nav-heading:hover {
 }
 
 .boq-footer a:hover {
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
 }
 
 /* Desktop: sidebar is always visible and can collapse to icons. */
@@ -789,7 +813,7 @@ button.boq-nav-heading:hover {
 
 .boq-page-eyebrow {
     margin-bottom: 0.2rem;
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
     font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -818,7 +842,7 @@ button.boq-nav-heading:hover {
     justify-content: center;
     border-radius: 0.6rem;
     background: var(--color-brand-100);
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
     font-size: 0.95rem;
 }
 
@@ -847,7 +871,7 @@ button.boq-nav-heading:hover {
 }
 
 .boq-section-title i {
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
 }
 
 .boq-section-subtitle {
@@ -894,7 +918,7 @@ button.boq-nav-heading:hover {
 }
 
 .boq-card-title > i {
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
     font-size: 0.85rem;
 }
 
@@ -994,7 +1018,7 @@ button.boq-nav-heading:hover {
     justify-content: center;
     border-radius: 0.65rem;
     background: var(--boq-primary-soft);
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
     font-size: 0.95rem;
 }
 
@@ -1106,7 +1130,7 @@ button.boq-nav-heading:hover {
     min-height: var(--boq-field-height);
     border: 1px solid var(--boq-border-dark);
     border-radius: var(--boq-radius);
-    background-color: #fff;
+    background-color: var(--boq-input-bg);
     padding: 0 0.75rem;
     color: var(--boq-text);
     font-size: var(--boq-text-base);
@@ -1139,7 +1163,7 @@ select.boq-field[multiple] {
 }
 
 .boq-field:hover:not(:disabled):not(:focus) {
-    border-color: #94a3b8;
+    border-color: var(--boq-border-strong);
 }
 
 .boq-field:focus {
@@ -1268,7 +1292,7 @@ select.boq-field[multiple] {
 
 .boq-password-toggle:hover {
     background: var(--boq-surface-sunken);
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
 }
 
 /* Toggle rows, switches and radio cards. */
@@ -1279,7 +1303,7 @@ select.boq-field[multiple] {
     gap: 1rem;
     border: 1px solid var(--boq-border);
     border-radius: var(--boq-radius);
-    background: #fff;
+    background: var(--boq-surface);
     padding: 0.8rem 1rem;
     cursor: pointer;
 }
@@ -1308,7 +1332,7 @@ input[type="checkbox"].boq-switch::after {
     width: 1.05rem;
     height: 1.05rem;
     border-radius: 999px;
-    background: #fff;
+    background: var(--boq-switch-knob);
     box-shadow: 0 1px 2px rgb(15 23 42 / 0.25);
     transition: transform 0.2s ease;
 }
@@ -1332,7 +1356,7 @@ input[type="checkbox"].boq-switch:focus-visible {
     gap: 0.6rem;
     border: 1px solid var(--boq-border);
     border-radius: var(--boq-radius);
-    background: #fff;
+    background: var(--boq-surface);
     padding: 0.75rem 0.9rem;
     cursor: pointer;
     transition: border-color 0.15s ease, background-color 0.15s ease;
@@ -1364,7 +1388,7 @@ input[type="checkbox"].boq-switch:focus-visible {
     gap: 0.75rem;
     border: 1px solid var(--boq-border);
     border-radius: var(--boq-radius);
-    background: #fff;
+    background: var(--boq-surface);
     padding: 0.65rem 0.8rem;
     color: inherit;
     transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
@@ -1399,7 +1423,7 @@ input[type="checkbox"].boq-switch:focus-visible {
     justify-content: center;
     border: 1px solid var(--boq-border);
     border-radius: var(--boq-radius);
-    background: #fff;
+    background: var(--boq-surface);
     object-fit: contain;
     padding: 0.3rem;
     color: var(--boq-text-soft);
@@ -1459,7 +1483,7 @@ input[type="checkbox"].boq-switch:focus-visible {
     border-color: var(--boq-primary);
     background: var(--boq-primary);
     color: #fff;
-    box-shadow: 0 1px 2px rgb(5 100 91 / 0.25);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--boq-primary) 25%, transparent);
 }
 
 .boq-btn-primary:hover {
@@ -1470,26 +1494,26 @@ input[type="checkbox"].boq-switch:focus-visible {
 
 .boq-btn-secondary {
     border-color: var(--boq-border-dark);
-    background: #fff;
+    background: var(--boq-surface);
     color: var(--boq-text-body);
     box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
 }
 
 .boq-btn-secondary:hover {
-    border-color: #94a3b8;
+    border-color: var(--boq-border-strong);
     background: var(--boq-surface-soft);
     color: var(--boq-text);
 }
 
 .boq-btn-danger {
-    border-color: var(--boq-danger);
-    background: var(--boq-danger);
+    border-color: var(--boq-danger-solid);
+    background: var(--boq-danger-solid);
     color: #fff;
 }
 
 .boq-btn-danger:hover {
-    border-color: #b91c1c;
-    background: #b91c1c;
+    border-color: var(--boq-danger-hover);
+    background: var(--boq-danger-hover);
     color: #fff;
 }
 
@@ -1505,7 +1529,7 @@ input[type="checkbox"].boq-switch:focus-visible {
 
 .boq-btn-soft {
     background: var(--boq-primary-soft);
-    color: var(--boq-primary-dark);
+    color: var(--boq-primary-text);
 }
 
 .boq-btn-soft:hover {
@@ -1561,14 +1585,14 @@ input[type="checkbox"].boq-switch:focus-visible {
     border: 0;
     background: transparent;
     padding: 0;
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
     font-size: var(--boq-text-sm);
     font-weight: 600;
     cursor: pointer;
 }
 
 .boq-link-button:hover {
-    color: var(--boq-primary-dark);
+    color: var(--boq-primary-text);
 }
 
 /* Icon buttons */
@@ -1581,7 +1605,7 @@ input[type="checkbox"].boq-switch:focus-visible {
     justify-content: center;
     border: 1px solid var(--boq-border);
     border-radius: var(--boq-radius);
-    background: #fff;
+    background: var(--boq-surface);
     color: var(--boq-text-muted);
     font-size: 0.8rem;
     cursor: pointer;
@@ -1591,7 +1615,7 @@ input[type="checkbox"].boq-switch:focus-visible {
 .boq-icon-btn:hover {
     border-color: var(--boq-primary);
     background: var(--boq-primary-lighter);
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
 }
 
 .boq-icon-btn:disabled {
@@ -1604,7 +1628,7 @@ input[type="checkbox"].boq-switch:focus-visible {
 }
 
 .boq-icon-success:hover {
-    border-color: #a7f3d0;
+    border-color: var(--boq-success-border);
     background: var(--boq-success-soft);
     color: var(--boq-success);
 }
@@ -1614,15 +1638,15 @@ input[type="checkbox"].boq-switch:focus-visible {
 }
 
 .boq-icon-danger:hover {
-    border-color: #fecaca;
+    border-color: var(--boq-danger-border);
     background: var(--boq-danger-soft);
     color: var(--boq-danger);
 }
 
 .boq-icon-btn.is-bookmarked {
-    border-color: #a7f3d0;
+    border-color: var(--boq-success-border);
     background: var(--boq-primary-soft);
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
 }
 
 .boq-segmented {
@@ -1659,8 +1683,8 @@ input[type="checkbox"].boq-switch:focus-visible {
 }
 
 .boq-segmented > .is-active {
-    background: #fff;
-    color: var(--boq-primary-dark);
+    background: var(--boq-surface);
+    color: var(--boq-primary-text);
     box-shadow: var(--boq-shadow);
 }
 
@@ -1738,7 +1762,7 @@ input[type="checkbox"].boq-switch:focus-visible {
     border-radius: 999px;
     background: var(--boq-surface-sunken);
     padding: 0.15rem 0.55rem;
-    color: #475569;
+    color: var(--boq-text-secondary);
     font-size: 0.7rem;
     font-weight: 600;
     line-height: 1.4;
@@ -1750,32 +1774,32 @@ input[type="checkbox"].boq-switch:focus-visible {
 }
 
 .boq-badge-success {
-    border-color: #bbf7d0;
-    background: #f0fdf4;
-    color: #166534;
+    border-color: var(--boq-success-border);
+    background: var(--boq-success-soft);
+    color: var(--boq-success-text);
 }
 
 .boq-badge-info {
-    border-color: #bfdbfe;
+    border-color: var(--boq-info-border);
     background: var(--boq-info-soft);
     color: var(--boq-info-text);
 }
 
 .boq-badge-warning {
-    border-color: #fde68a;
+    border-color: var(--boq-warning-border);
     background: var(--boq-warning-soft);
     color: var(--boq-warning-text);
 }
 
 .boq-badge-danger {
-    border-color: #fecaca;
+    border-color: var(--boq-danger-border);
     background: var(--boq-danger-soft);
     color: var(--boq-danger-text);
 }
 
 .boq-badge-factory,
 .boq-badge-purple {
-    border-color: #ddd6fe;
+    border-color: var(--boq-purple-border);
     background: var(--boq-purple-soft);
     color: var(--boq-purple-text);
 }
@@ -1783,7 +1807,7 @@ input[type="checkbox"].boq-switch:focus-visible {
 .boq-badge-brand {
     border-color: var(--color-brand-200);
     background: var(--boq-primary-soft);
-    color: var(--boq-primary-dark);
+    color: var(--boq-primary-text);
 }
 
 .boq-badge-dot::before {
@@ -1797,7 +1821,7 @@ input[type="checkbox"].boq-switch:focus-visible {
 .boq-currency-badge {
     border-color: var(--color-brand-200);
     background: var(--boq-primary-soft);
-    color: var(--boq-primary-dark);
+    color: var(--boq-primary-text);
 }
 
 .boq-cell-with-icon,
@@ -1815,7 +1839,7 @@ input[type="checkbox"].boq-switch:focus-visible {
 }
 
 .boq-item-count {
-    color: #475569;
+    color: var(--boq-text-secondary);
     font-size: var(--boq-text-xs);
     font-weight: 600;
 }
@@ -1825,7 +1849,7 @@ input[type="checkbox"].boq-switch:focus-visible {
     border-radius: var(--boq-radius-sm);
     background: var(--boq-surface-sunken);
     padding: 0.1rem 0.4rem;
-    color: #475569;
+    color: var(--boq-text-secondary);
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     font-size: 0.72rem;
     font-weight: 600;
@@ -1868,7 +1892,7 @@ input[type="checkbox"].boq-switch:focus-visible {
 }
 
 .boq-table td {
-    border-bottom: 1px solid #eef2f6;
+    border-bottom: 1px solid var(--boq-row-divider);
     padding: 0.75rem 0.9rem;
     color: var(--boq-text-body);
     font-size: var(--boq-text-sm);
@@ -1884,7 +1908,7 @@ input[type="checkbox"].boq-switch:focus-visible {
 }
 
 .boq-table tbody tr:hover {
-    background: #f9fbfb;
+    background: var(--boq-row-hover);
 }
 
 .boq-table tbody tr.is-selected {
@@ -1927,12 +1951,12 @@ input[type="checkbox"].boq-switch:focus-visible {
 }
 
 .boq-table-link {
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
     font-weight: 600;
 }
 
 .boq-table-link:hover {
-    color: var(--boq-primary-dark);
+    color: var(--boq-primary-text);
 }
 
 .boq-table-empty,
@@ -1983,7 +2007,7 @@ button.boq-sort-th {
 }
 
 button.boq-sort-th:hover {
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
 }
 
 /* ------------------------------------------------------------
@@ -1998,7 +2022,7 @@ button.boq-sort-th:hover {
     gap: 0.25rem;
     overflow-x: auto;
     border-bottom: 1px solid var(--boq-border);
-    background: #fff;
+    background: var(--boq-surface);
     padding: 0 0.9rem;
     scrollbar-width: thin;
 }
@@ -2038,7 +2062,7 @@ button.boq-sort-th:hover {
 .boq-profile-tab.is-active,
 .boq-tab[aria-selected="true"] {
     border-bottom-color: var(--boq-primary);
-    color: var(--boq-primary-dark);
+    color: var(--boq-primary-text);
 }
 
 .boq-tab-count {
@@ -2054,7 +2078,7 @@ button.boq-sort-th:hover {
 
 .boq-tab.is-active .boq-tab-count {
     background: var(--boq-primary-soft);
-    color: var(--boq-primary-dark);
+    color: var(--boq-primary-text);
 }
 
 .boq-tab-loading {
@@ -2071,7 +2095,7 @@ button.boq-sort-th:hover {
     display: flex;
     align-items: flex-start;
     gap: 0.6rem;
-    border: 1px solid #a7f3d0;
+    border: 1px solid var(--boq-success-border);
     border-radius: var(--boq-radius);
     background: var(--boq-success-soft);
     padding: 0.75rem 0.9rem;
@@ -2095,19 +2119,19 @@ button.boq-sort-th:hover {
 }
 
 .boq-alert-error {
-    border-color: #fecaca;
+    border-color: var(--boq-danger-border);
     background: var(--boq-danger-soft);
     color: var(--boq-danger-text);
 }
 
 .boq-alert-warning {
-    border-color: #fde68a;
+    border-color: var(--boq-warning-border);
     background: var(--boq-warning-soft);
     color: var(--boq-warning-text);
 }
 
 .boq-alert-info {
-    border-color: #bfdbfe;
+    border-color: var(--boq-info-border);
     background: var(--boq-info-soft);
     color: var(--boq-info-text);
 }
@@ -2128,7 +2152,7 @@ button.boq-sort-th:hover {
 }
 
 .boq-flash-close:hover {
-    background: rgb(15 23 42 / 0.06);
+    background: var(--boq-hover-tint);
     opacity: 1;
 }
 
@@ -2163,7 +2187,7 @@ button.boq-sort-th:hover {
     margin-bottom: 0.85rem;
     border-radius: 0.8rem;
     background: var(--boq-primary-soft);
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
     font-size: 1.1rem;
 }
 
@@ -2257,7 +2281,7 @@ button.boq-sort-th:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgb(15 23 42 / 0.55);
+    background: var(--boq-overlay);
     padding: 1rem;
     backdrop-filter: blur(3px);
 }
@@ -2269,7 +2293,7 @@ button.boq-sort-th:hover {
     overflow-y: auto;
     overscroll-behavior: contain;
     border-radius: var(--boq-radius-lg);
-    background: #fff;
+    background: var(--boq-surface);
     box-shadow: var(--shadow-overlay);
 }
 
@@ -2294,7 +2318,7 @@ button.boq-sort-th:hover {
     justify-content: space-between;
     gap: 1rem;
     border-bottom: 1px solid var(--boq-border);
-    background: #fff;
+    background: var(--boq-surface);
     padding: 0.95rem 1.2rem;
 }
 
@@ -2311,7 +2335,7 @@ button.boq-sort-th:hover {
 
 .boq-modal-head h2 i,
 .boq-modal-head h3 i {
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
 }
 
 .boq-modal-body {
@@ -2351,7 +2375,7 @@ button.boq-sort-th:hover {
 }
 
 .boq-modal-message {
-    color: #475569;
+    color: var(--boq-text-secondary);
     font-size: var(--boq-text-base);
     line-height: 1.55;
 }
@@ -2385,7 +2409,7 @@ button.boq-sort-th:hover {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    color: var(--boq-primary-dark);
+    color: var(--boq-primary-text);
     font-size: var(--boq-text-sm);
     font-weight: 700;
 }
@@ -2412,7 +2436,7 @@ button.boq-sort-th:hover {
     margin-left: auto;
     border: 0;
     background: transparent;
-    color: #475569;
+    color: var(--boq-text-secondary);
     font-size: var(--boq-text-xs);
     font-weight: 600;
     cursor: pointer;
@@ -2435,7 +2459,7 @@ button.boq-sort-th:hover {
     overflow: hidden;
     border: 1px solid var(--boq-border);
     border-radius: var(--boq-radius-lg);
-    background: #fff;
+    background: var(--boq-surface);
     padding: 0.35rem;
     box-shadow: var(--shadow-raised);
 }
@@ -2551,7 +2575,7 @@ button.boq-sort-th:hover {
     overflow: hidden;
     border: 1px solid var(--boq-border);
     border-radius: var(--boq-radius-lg);
-    background: #fff;
+    background: var(--boq-surface);
     box-shadow: var(--boq-shadow);
     transition: box-shadow 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
 }
@@ -2588,7 +2612,7 @@ button.boq-sort-th:hover {
     margin-bottom: 0.7rem;
     border-radius: 0.65rem;
     background: var(--boq-primary-soft);
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
 }
 
 .boq-plan-name {
@@ -2613,7 +2637,7 @@ button.boq-sort-th:hover {
     border-radius: 999px;
     background: var(--boq-surface-sunken);
     padding: 0.25rem 0.6rem;
-    color: #475569;
+    color: var(--boq-text-secondary);
     font-size: 0.7rem;
     font-weight: 600;
 }
@@ -2697,13 +2721,13 @@ button.boq-sort-th:hover {
     border-radius: 999px;
     background: var(--boq-surface-soft);
     padding: 0.2rem 0.6rem;
-    color: #475569;
+    color: var(--boq-text-secondary);
     font-size: 0.72rem;
     font-weight: 500;
 }
 
 .boq-plan-secondary-limits i {
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
     font-size: 0.68rem;
 }
 
@@ -2728,7 +2752,7 @@ button.boq-sort-th:hover {
     display: flex;
     align-items: flex-start;
     gap: 0.5rem;
-    color: #475569;
+    color: var(--boq-text-secondary);
     font-size: var(--boq-text-sm);
 }
 
@@ -2740,14 +2764,14 @@ button.boq-sort-th:hover {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: #dcfce7;
-    color: #15803d;
+    background: var(--boq-success-soft);
+    color: var(--boq-success);
     font-size: 0.6rem;
 }
 
 .boq-plan-more-features {
     margin-top: 0.6rem;
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
     font-size: var(--boq-text-xs);
     font-weight: 600;
 }
@@ -2795,7 +2819,7 @@ button.boq-sort-th:hover {
 .boq-current-plan-button {
     border-color: var(--color-brand-200);
     background: var(--boq-primary-soft);
-    color: var(--boq-primary-dark);
+    color: var(--boq-primary-text);
     cursor: default;
 }
 
@@ -2804,7 +2828,7 @@ button.boq-sort-th:hover {
     border: 1px solid var(--boq-border);
     border-left: 3px solid var(--boq-primary);
     border-radius: var(--boq-radius);
-    background: #fff;
+    background: var(--boq-surface);
     padding: 0.6rem 0.9rem;
 }
 
@@ -2870,7 +2894,7 @@ button.boq-sort-th:hover {
     overflow: hidden;
     border: 1px solid var(--boq-border);
     border-radius: var(--boq-radius);
-    background: #fff;
+    background: var(--boq-surface);
 }
 
 .boq-company-preview-head {
@@ -2903,7 +2927,7 @@ button.boq-sort-th:hover {
 
 .boq-company-preview-doc {
     margin-left: auto;
-    color: var(--boq-primary);
+    color: var(--boq-primary-link);
     font-size: 0.6rem;
     font-weight: 800;
     letter-spacing: 0.06em;
@@ -3153,18 +3177,6 @@ button.boq-sort-th:hover {
     color: #fff;
 }
 
-.auth-aside::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image:
-        linear-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgb(255 255 255 / 0.05) 1px, transparent 1px);
-    background-size: 32px 32px;
-    mask-image: linear-gradient(180deg, transparent, #000 30%, #000 70%, transparent);
-    pointer-events: none;
-}
-
 .auth-aside > * {
     position: relative;
     z-index: 1;
@@ -3225,19 +3237,16 @@ button.boq-sort-th:hover {
     gap: 0.7rem;
     color: rgb(255 255 255 / 0.88);
     font-size: 0.875rem;
+    line-height: 1.5;
 }
 
 .auth-aside-points i {
-    display: inline-flex;
-    width: 1.6rem;
-    height: 1.6rem;
+    width: 1.1rem;
     flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    border-radius: 0.45rem;
-    background: rgb(255 255 255 / 0.12);
+    margin-top: 0.15rem;
     color: var(--color-accent-400);
-    font-size: 0.75rem;
+    font-size: 0.95rem;
+    text-align: center;
 }
 
 .auth-main {
@@ -3542,7 +3551,6 @@ select.auth-field {
    ------------------------------------------------------------ */
 
 .boq-page-title > i.fas,
-.auth-aside-points i.fas,
 .boq-plan-main-icon.fas,
 .boq-empty-icon > i.fas {
     display: inline-flex;
@@ -3553,3 +3561,502 @@ select.auth-field {
 .boq-empty-table > i.fas {
     display: block;
 }
+
+/* ============================================================
+   8. THEMES & INTERFACE PREFERENCES
+   ------------------------------------------------------------
+   The app layout puts the signed-in user's choices on <html>:
+     data-theme   light | dark | system (follows the OS)
+     data-accent  green | blue | indigo | purple | teal | orange | rose
+     data-density comfortable | compact
+     data-font    default | large
+   Guest, auth and error pages have none of these attributes and
+   always render in the default light theme.
+   ============================================================ */
+
+/*
+ * `dark:` means "dark theme chosen, or System while the OS is dark".
+ * It replaces Tailwind's default media-only dark variant.
+ */
+@custom-variant dark {
+    &:where([data-theme="dark"], [data-theme="dark"] *) {
+        @slot;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        &:where([data-theme="system"], [data-theme="system"] *) {
+            @slot;
+        }
+    }
+}
+
+/* ---------- Accent presets (override the brand scale) ---------- */
+
+[data-accent="green"] {
+    --color-brand-50: #eef8f6;
+    --color-brand-100: #d5eee9;
+    --color-brand-200: #acdcd3;
+    --color-brand-300: #76c2b5;
+    --color-brand-400: #3f9a8f;
+    --color-brand-500: #0b7a6e;
+    --color-brand-600: #05645b;
+    --color-brand-700: #044f48;
+    --color-brand-800: #033d38;
+    --color-brand-900: #022e2a;
+}
+
+[data-accent="blue"] {
+    --color-brand-50: oklch(97% 0.014 254.604);
+    --color-brand-100: oklch(93.2% 0.032 255.585);
+    --color-brand-200: oklch(88.2% 0.059 254.128);
+    --color-brand-300: oklch(80.9% 0.105 251.813);
+    --color-brand-400: oklch(70.7% 0.165 254.624);
+    --color-brand-500: oklch(62.3% 0.214 259.815);
+    --color-brand-600: oklch(54.6% 0.245 262.881);
+    --color-brand-700: oklch(48.8% 0.243 264.376);
+    --color-brand-800: oklch(42.4% 0.199 265.638);
+    --color-brand-900: oklch(37.9% 0.146 265.522);
+}
+
+[data-accent="indigo"] {
+    --color-brand-50: oklch(96.2% 0.018 272.314);
+    --color-brand-100: oklch(93% 0.034 272.788);
+    --color-brand-200: oklch(87% 0.065 274.039);
+    --color-brand-300: oklch(78.5% 0.115 274.713);
+    --color-brand-400: oklch(67.3% 0.182 276.935);
+    --color-brand-500: oklch(58.5% 0.233 277.117);
+    --color-brand-600: oklch(51.1% 0.262 276.966);
+    --color-brand-700: oklch(45.7% 0.24 277.023);
+    --color-brand-800: oklch(39.8% 0.195 277.366);
+    --color-brand-900: oklch(35.9% 0.144 278.697);
+}
+
+[data-accent="purple"] {
+    --color-brand-50: oklch(97.7% 0.014 308.299);
+    --color-brand-100: oklch(94.6% 0.033 307.174);
+    --color-brand-200: oklch(90.2% 0.063 306.703);
+    --color-brand-300: oklch(82.7% 0.119 306.383);
+    --color-brand-400: oklch(71.4% 0.203 305.504);
+    --color-brand-500: oklch(62.7% 0.265 303.9);
+    --color-brand-600: oklch(55.8% 0.288 302.321);
+    --color-brand-700: oklch(49.6% 0.265 301.924);
+    --color-brand-800: oklch(43.8% 0.218 303.724);
+    --color-brand-900: oklch(38.1% 0.176 304.987);
+}
+
+[data-accent="teal"] {
+    --color-brand-50: oklch(98.4% 0.014 180.72);
+    --color-brand-100: oklch(95.3% 0.051 180.801);
+    --color-brand-200: oklch(91% 0.096 180.426);
+    --color-brand-300: oklch(85.5% 0.138 181.071);
+    --color-brand-400: oklch(70.4% 0.14 182.503);
+    --color-brand-500: oklch(60% 0.118 184.704);
+    --color-brand-600: oklch(51.1% 0.096 186.391);
+    --color-brand-700: oklch(43.7% 0.078 188.216);
+    --color-brand-800: oklch(38.6% 0.063 188.416);
+    --color-brand-900: oklch(27.7% 0.046 192.524);
+}
+
+[data-accent="orange"] {
+    --color-brand-50: oklch(98% 0.016 73.684);
+    --color-brand-100: oklch(95.4% 0.038 75.164);
+    --color-brand-200: oklch(90.1% 0.076 70.697);
+    --color-brand-300: oklch(83.7% 0.128 66.29);
+    --color-brand-400: oklch(70.5% 0.213 47.604);
+    --color-brand-500: oklch(64.6% 0.222 41.116);
+    --color-brand-600: oklch(55.3% 0.195 38.402);
+    --color-brand-700: oklch(47% 0.157 37.304);
+    --color-brand-800: oklch(40.8% 0.123 38.172);
+    --color-brand-900: oklch(26.6% 0.079 36.259);
+}
+
+[data-accent="rose"] {
+    --color-brand-50: oklch(96.9% 0.015 12.422);
+    --color-brand-100: oklch(94.1% 0.03 12.58);
+    --color-brand-200: oklch(89.2% 0.058 10.001);
+    --color-brand-300: oklch(81% 0.117 11.638);
+    --color-brand-400: oklch(64.5% 0.246 16.439);
+    --color-brand-500: oklch(58.6% 0.253 17.585);
+    --color-brand-600: oklch(51.4% 0.222 16.935);
+    --color-brand-700: oklch(45.5% 0.188 13.697);
+    --color-brand-800: oklch(41% 0.159 10.272);
+    --color-brand-900: oklch(27.1% 0.105 12.094);
+}
+
+/* ---------- Dark theme ---------- */
+
+:root {
+    @variant dark {
+        color-scheme: dark;
+
+        --boq-bg: #0b1120;
+        --boq-surface: #111a2c;
+        --boq-surface-soft: #152033;
+        --boq-surface-sunken: #0d1526;
+
+        --boq-border: #233046;
+        --boq-border-dark: #33425b;
+        --boq-border-strong: #4a5b76;
+
+        --boq-input-bg: #0d1526;
+        --boq-switch-knob: #e8edf5;
+        --boq-topbar-bg: rgb(17 26 44 / 0.9);
+        --boq-row-divider: #1c283c;
+        --boq-row-hover: color-mix(in srgb, var(--color-brand-500) 7%, #111a2c);
+        --boq-hover-tint: rgb(255 255 255 / 0.08);
+        --boq-overlay-soft: rgb(2 6 23 / 0.6);
+        --boq-overlay: rgb(2 6 23 / 0.7);
+
+        --boq-text: #e8edf5;
+        --boq-text-body: #c5cfdc;
+        --boq-text-secondary: #b3bfcf;
+        --boq-text-muted: #94a3b8;
+        --boq-text-soft: #71819a;
+
+        /* Buttons keep the brand-600 fill (white text stays readable);
+           text, icons and links in the primary colour get lighter. */
+        --boq-primary-dark: color-mix(in oklab, var(--color-brand-600) 78%, black);
+        --boq-primary-soft: var(--color-brand-50);
+        --boq-primary-lighter: color-mix(in oklab, var(--color-brand-500) 10%, #111a2c);
+        --boq-primary-link: color-mix(in oklab, var(--color-brand-300) 85%, white);
+        --boq-primary-text: color-mix(in oklab, var(--color-brand-300) 70%, white);
+        --boq-primary-ring: color-mix(in srgb, var(--color-brand-400) 35%, transparent);
+
+        --boq-success: #34d399;
+        --boq-success-soft: color-mix(in srgb, #10b981 15%, #111a2c);
+        --boq-success-text: #6ee7b7;
+        --boq-success-border: color-mix(in srgb, #10b981 38%, #111a2c);
+        --boq-info: #60a5fa;
+        --boq-info-soft: color-mix(in srgb, #3b82f6 16%, #111a2c);
+        --boq-info-text: #93c5fd;
+        --boq-info-border: color-mix(in srgb, #3b82f6 40%, #111a2c);
+        --boq-warning: #fbbf24;
+        --boq-warning-soft: color-mix(in srgb, #f59e0b 14%, #111a2c);
+        --boq-warning-text: #fcd34d;
+        --boq-warning-border: color-mix(in srgb, #f59e0b 38%, #111a2c);
+        --boq-danger: #f87171;
+        --boq-danger-soft: color-mix(in srgb, #ef4444 15%, #111a2c);
+        --boq-danger-text: #fca5a5;
+        --boq-danger-border: color-mix(in srgb, #ef4444 40%, #111a2c);
+        --boq-purple: #a78bfa;
+        --boq-purple-soft: color-mix(in srgb, #8b5cf6 16%, #111a2c);
+        --boq-purple-text: #c4b5fd;
+        --boq-purple-border: color-mix(in srgb, #8b5cf6 40%, #111a2c);
+
+        --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 1px 3px rgb(0 0 0 / 0.25);
+        --shadow-raised: 0 10px 28px rgb(0 0 0 / 0.45), 0 2px 6px rgb(0 0 0 / 0.3);
+        --shadow-overlay: 0 24px 64px rgb(0 0 0 / 0.6);
+        --boq-shadow: var(--shadow-card);
+        --boq-shadow-hover: var(--shadow-raised);
+
+        /* Brand tints: light backgrounds become dark tints, dark text becomes light. */
+        --color-brand-50: color-mix(in oklab, var(--color-brand-500) 18%, #111a2c);
+        --color-brand-100: color-mix(in oklab, var(--color-brand-500) 28%, #111a2c);
+        --color-brand-200: color-mix(in oklab, var(--color-brand-500) 45%, #111a2c);
+        --color-brand-700: color-mix(in oklab, var(--color-brand-300) 85%, white);
+        --color-brand-800: color-mix(in oklab, var(--color-brand-300) 70%, white);
+        --color-brand-900: color-mix(in oklab, var(--color-brand-300) 55%, white);
+
+        /* Slate/gray utilities used directly in views (text-slate-900,
+           bg-slate-50, border-slate-200 ...) flip to the dark scale. */
+        --color-slate-50: #152033;
+        --color-slate-100: #1a2638;
+        --color-slate-200: #26334a;
+        --color-slate-300: #33425b;
+        --color-slate-400: #6f7f97;
+        --color-slate-500: #94a3b8;
+        --color-slate-600: #a9b5c6;
+        --color-slate-700: #c5cfdc;
+        --color-slate-800: #d8e0ea;
+        --color-slate-900: #e8edf5;
+        --color-slate-950: #f4f7fb;
+
+        /* Other palettes: pale fills become dark tints, deep text becomes pale. */
+        --color-red-50: color-mix(in oklab, oklch(63.7% 0.237 25.331) 14%, #111a2c);
+        --color-red-100: color-mix(in oklab, oklch(63.7% 0.237 25.331) 22%, #111a2c);
+        --color-red-200: color-mix(in oklab, oklch(63.7% 0.237 25.331) 36%, #111a2c);
+        --color-red-600: oklch(70.4% 0.191 22.216);
+        --color-red-700: oklch(80.8% 0.114 19.571);
+        --color-red-800: oklch(88.5% 0.062 18.334);
+        --color-red-900: oklch(93.6% 0.032 17.717);
+        --color-orange-50: color-mix(in oklab, oklch(70.5% 0.213 47.604) 14%, #111a2c);
+        --color-orange-100: color-mix(in oklab, oklch(70.5% 0.213 47.604) 22%, #111a2c);
+        --color-orange-200: color-mix(in oklab, oklch(70.5% 0.213 47.604) 36%, #111a2c);
+        --color-orange-600: oklch(75% 0.183 55.934);
+        --color-orange-700: oklch(83.7% 0.128 66.29);
+        --color-orange-800: oklch(90.1% 0.076 70.697);
+        --color-orange-900: oklch(95.4% 0.038 75.164);
+        --color-amber-50: color-mix(in oklab, oklch(76.9% 0.188 70.08) 14%, #111a2c);
+        --color-amber-100: color-mix(in oklab, oklch(76.9% 0.188 70.08) 22%, #111a2c);
+        --color-amber-200: color-mix(in oklab, oklch(76.9% 0.188 70.08) 36%, #111a2c);
+        --color-amber-600: oklch(82.8% 0.189 84.429);
+        --color-amber-700: oklch(87.9% 0.169 91.605);
+        --color-amber-800: oklch(92.4% 0.12 95.746);
+        --color-amber-900: oklch(96.2% 0.059 95.617);
+        --color-yellow-50: color-mix(in oklab, oklch(79.5% 0.184 86.047) 14%, #111a2c);
+        --color-yellow-100: color-mix(in oklab, oklch(79.5% 0.184 86.047) 22%, #111a2c);
+        --color-yellow-200: color-mix(in oklab, oklch(79.5% 0.184 86.047) 36%, #111a2c);
+        --color-yellow-600: oklch(85.2% 0.199 91.936);
+        --color-yellow-700: oklch(90.5% 0.182 98.111);
+        --color-yellow-800: oklch(94.5% 0.129 101.54);
+        --color-yellow-900: oklch(97.3% 0.071 103.193);
+        --color-lime-50: color-mix(in oklab, oklch(76.8% 0.233 130.85) 14%, #111a2c);
+        --color-lime-100: color-mix(in oklab, oklch(76.8% 0.233 130.85) 22%, #111a2c);
+        --color-lime-200: color-mix(in oklab, oklch(76.8% 0.233 130.85) 36%, #111a2c);
+        --color-lime-600: oklch(84.1% 0.238 128.85);
+        --color-lime-700: oklch(89.7% 0.196 126.665);
+        --color-lime-800: oklch(93.8% 0.127 124.321);
+        --color-lime-900: oklch(96.7% 0.067 122.328);
+        --color-green-50: color-mix(in oklab, oklch(72.3% 0.219 149.579) 14%, #111a2c);
+        --color-green-100: color-mix(in oklab, oklch(72.3% 0.219 149.579) 22%, #111a2c);
+        --color-green-200: color-mix(in oklab, oklch(72.3% 0.219 149.579) 36%, #111a2c);
+        --color-green-600: oklch(79.2% 0.209 151.711);
+        --color-green-700: oklch(87.1% 0.15 154.449);
+        --color-green-800: oklch(92.5% 0.084 155.995);
+        --color-green-900: oklch(96.2% 0.044 156.743);
+        --color-emerald-50: color-mix(in oklab, oklch(69.6% 0.17 162.48) 14%, #111a2c);
+        --color-emerald-100: color-mix(in oklab, oklch(69.6% 0.17 162.48) 22%, #111a2c);
+        --color-emerald-200: color-mix(in oklab, oklch(69.6% 0.17 162.48) 36%, #111a2c);
+        --color-emerald-600: oklch(76.5% 0.177 163.223);
+        --color-emerald-700: oklch(84.5% 0.143 164.978);
+        --color-emerald-800: oklch(90.5% 0.093 164.15);
+        --color-emerald-900: oklch(95% 0.052 163.051);
+        --color-teal-50: color-mix(in oklab, oklch(70.4% 0.14 182.503) 14%, #111a2c);
+        --color-teal-100: color-mix(in oklab, oklch(70.4% 0.14 182.503) 22%, #111a2c);
+        --color-teal-200: color-mix(in oklab, oklch(70.4% 0.14 182.503) 36%, #111a2c);
+        --color-teal-600: oklch(77.7% 0.152 181.912);
+        --color-teal-700: oklch(85.5% 0.138 181.071);
+        --color-teal-800: oklch(91% 0.096 180.426);
+        --color-teal-900: oklch(95.3% 0.051 180.801);
+        --color-cyan-50: color-mix(in oklab, oklch(71.5% 0.143 215.221) 14%, #111a2c);
+        --color-cyan-100: color-mix(in oklab, oklch(71.5% 0.143 215.221) 22%, #111a2c);
+        --color-cyan-200: color-mix(in oklab, oklch(71.5% 0.143 215.221) 36%, #111a2c);
+        --color-cyan-600: oklch(78.9% 0.154 211.53);
+        --color-cyan-700: oklch(86.5% 0.127 207.078);
+        --color-cyan-800: oklch(91.7% 0.08 205.041);
+        --color-cyan-900: oklch(95.6% 0.045 203.388);
+        --color-sky-50: color-mix(in oklab, oklch(68.5% 0.169 237.323) 14%, #111a2c);
+        --color-sky-100: color-mix(in oklab, oklch(68.5% 0.169 237.323) 22%, #111a2c);
+        --color-sky-200: color-mix(in oklab, oklch(68.5% 0.169 237.323) 36%, #111a2c);
+        --color-sky-600: oklch(74.6% 0.16 232.661);
+        --color-sky-700: oklch(82.8% 0.111 230.318);
+        --color-sky-800: oklch(90.1% 0.058 230.902);
+        --color-sky-900: oklch(95.1% 0.026 236.824);
+        --color-blue-50: color-mix(in oklab, oklch(62.3% 0.214 259.815) 14%, #111a2c);
+        --color-blue-100: color-mix(in oklab, oklch(62.3% 0.214 259.815) 22%, #111a2c);
+        --color-blue-200: color-mix(in oklab, oklch(62.3% 0.214 259.815) 36%, #111a2c);
+        --color-blue-600: oklch(70.7% 0.165 254.624);
+        --color-blue-700: oklch(80.9% 0.105 251.813);
+        --color-blue-800: oklch(88.2% 0.059 254.128);
+        --color-blue-900: oklch(93.2% 0.032 255.585);
+        --color-violet-50: color-mix(in oklab, oklch(60.6% 0.25 292.717) 14%, #111a2c);
+        --color-violet-100: color-mix(in oklab, oklch(60.6% 0.25 292.717) 22%, #111a2c);
+        --color-violet-200: color-mix(in oklab, oklch(60.6% 0.25 292.717) 36%, #111a2c);
+        --color-violet-600: oklch(70.2% 0.183 293.541);
+        --color-violet-700: oklch(81.1% 0.111 293.571);
+        --color-violet-800: oklch(89.4% 0.057 293.283);
+        --color-violet-900: oklch(94.3% 0.029 294.588);
+        --color-purple-50: color-mix(in oklab, oklch(62.7% 0.265 303.9) 14%, #111a2c);
+        --color-purple-100: color-mix(in oklab, oklch(62.7% 0.265 303.9) 22%, #111a2c);
+        --color-purple-200: color-mix(in oklab, oklch(62.7% 0.265 303.9) 36%, #111a2c);
+        --color-purple-600: oklch(71.4% 0.203 305.504);
+        --color-purple-700: oklch(82.7% 0.119 306.383);
+        --color-purple-800: oklch(90.2% 0.063 306.703);
+        --color-purple-900: oklch(94.6% 0.033 307.174);
+        --color-fuchsia-50: color-mix(in oklab, oklch(66.7% 0.295 322.15) 14%, #111a2c);
+        --color-fuchsia-100: color-mix(in oklab, oklch(66.7% 0.295 322.15) 22%, #111a2c);
+        --color-fuchsia-200: color-mix(in oklab, oklch(66.7% 0.295 322.15) 36%, #111a2c);
+        --color-fuchsia-600: oklch(74% 0.238 322.16);
+        --color-fuchsia-700: oklch(83.3% 0.145 321.434);
+        --color-fuchsia-800: oklch(90.3% 0.076 319.62);
+        --color-fuchsia-900: oklch(95.2% 0.037 318.852);
+        --color-pink-50: color-mix(in oklab, oklch(65.6% 0.241 354.308) 14%, #111a2c);
+        --color-pink-100: color-mix(in oklab, oklch(65.6% 0.241 354.308) 22%, #111a2c);
+        --color-pink-200: color-mix(in oklab, oklch(65.6% 0.241 354.308) 36%, #111a2c);
+        --color-pink-600: oklch(71.8% 0.202 349.761);
+        --color-pink-700: oklch(82.3% 0.12 346.018);
+        --color-pink-800: oklch(89.9% 0.061 343.231);
+        --color-pink-900: oklch(94.8% 0.028 342.258);
+        --color-rose-50: color-mix(in oklab, oklch(64.5% 0.246 16.439) 14%, #111a2c);
+        --color-rose-100: color-mix(in oklab, oklch(64.5% 0.246 16.439) 22%, #111a2c);
+        --color-rose-200: color-mix(in oklab, oklch(64.5% 0.246 16.439) 36%, #111a2c);
+        --color-rose-600: oklch(71.2% 0.194 13.428);
+        --color-rose-700: oklch(81% 0.117 11.638);
+        --color-rose-800: oklch(89.2% 0.058 10.001);
+        --color-rose-900: oklch(94.1% 0.03 12.58);
+    }
+}
+
+/* Utilities whose light-mode value has no token of its own. */
+@layer utilities {
+    .boq-app-shell .bg-white {
+        @variant dark {
+            background-color: var(--boq-surface);
+        }
+    }
+
+    .boq-app-shell .text-brand-600 {
+        @variant dark {
+            color: var(--boq-primary-link);
+        }
+    }
+
+    .boq-app-shell .bg-slate-900\/50,
+    .boq-app-shell .bg-gray-500 {
+        @variant dark {
+            background-color: var(--boq-overlay);
+        }
+    }
+
+    .boq-app-shell .bg-gray-800 {
+        @variant dark {
+            background-color: #334155;
+        }
+    }
+}
+
+/* ---------- Font size ---------- */
+
+:root[data-font="large"] {
+    font-size: 112.5%;
+}
+
+/* ---------- Density ---------- */
+
+:root[data-density="compact"] {
+    --boq-field-height: 2.125rem;
+}
+
+@layer components {
+    [data-density="compact"] .boq-content {
+        padding: 0.875rem 0.875rem 2rem;
+    }
+
+    @media (min-width: 1024px) {
+        [data-density="compact"] .boq-content {
+            padding: 1.25rem 1.5rem 2rem;
+        }
+    }
+
+    [data-density="compact"] .boq-page-stack,
+    [data-density="compact"] .boq-subscriptions-page {
+        gap: 0.875rem;
+    }
+
+    [data-density="compact"] .boq-card-header {
+        padding: 0.6rem 0.9rem;
+    }
+
+    [data-density="compact"] .boq-card-body,
+    [data-density="compact"] .boq-panel-body {
+        padding: 0.8rem 0.9rem;
+    }
+
+    [data-density="compact"] .boq-card-footer,
+    [data-density="compact"] .boq-panel-footer {
+        padding: 0.55rem 0.9rem;
+    }
+
+    [data-density="compact"] .boq-filter-section {
+        padding: 0.7rem 0.9rem;
+    }
+
+    [data-density="compact"] .boq-stat-card {
+        min-height: 4.5rem;
+        padding: 0.75rem 0.9rem;
+    }
+
+    [data-density="compact"] .boq-table th {
+        padding: 0.45rem 0.7rem;
+    }
+
+    [data-density="compact"] .boq-table td {
+        padding: 0.45rem 0.7rem;
+    }
+
+    [data-density="compact"] .boq-form-grid {
+        gap: 0.75rem;
+    }
+
+    [data-density="compact"] .boq-radio-card {
+        padding: 0.55rem 0.75rem;
+    }
+
+    [data-density="compact"] .boq-totals-cell {
+        padding: 0.6rem 0.75rem;
+    }
+
+    [data-density="compact"] .boq-modal-body {
+        padding: 0.9rem;
+    }
+
+    [data-density="compact"] :is(.boq-btn-primary, .boq-btn-secondary, .boq-btn-danger, .boq-btn-ghost, .boq-btn-soft):not(.boq-btn-sm):not(.boq-btn-lg) {
+        min-height: 2.125rem;
+        padding: 0.35rem 0.8rem;
+    }
+
+    /* ---------- Preferences page: accent swatches ---------- */
+
+    .boq-swatch-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+        gap: 0.5rem;
+    }
+
+    .boq-swatch-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+        border: 1px solid var(--boq-border);
+        border-radius: var(--boq-radius);
+        background: var(--boq-surface);
+        padding: 0.7rem 0.5rem 0.6rem;
+        cursor: pointer;
+        transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .boq-swatch-option:hover {
+        border-color: var(--boq-border-dark);
+    }
+
+    .boq-swatch-option:has(input:checked) {
+        border-color: var(--boq-primary);
+        background: var(--boq-primary-lighter);
+        box-shadow: 0 0 0 1px var(--boq-primary);
+    }
+
+    .boq-swatch-option:has(input:focus-visible) {
+        outline: 2px solid var(--boq-primary);
+        outline-offset: 2px;
+    }
+
+    .boq-swatch {
+        display: inline-flex;
+        width: 2rem;
+        height: 2rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--color-brand-400), var(--color-brand-700));
+        box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
+        color: #fff;
+        font-size: 0.75rem;
+    }
+
+    .boq-swatch > i {
+        opacity: 0;
+        transition: opacity 0.15s ease;
+    }
+
+    .boq-swatch-option:has(input:checked) .boq-swatch > i {
+        opacity: 1;
+    }
+
+    .boq-swatch-label {
+        color: var(--boq-text-body);
+        font-size: var(--boq-text-sm);
+        font-weight: 600;
+    }
+}
+

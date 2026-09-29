@@ -39,6 +39,7 @@ class User extends Authenticatable implements WebAuthnAuthenticatable
         'is_active',
         'last_login_at',
         'avatar_path',
+        'preferences',
     ];
 
     /**
@@ -70,6 +71,7 @@ class User extends Authenticatable implements WebAuthnAuthenticatable
             'last_login_at' => 'datetime',
             'notification_preferences' => 'array',
             'display_preferences' => 'array',
+            'preferences' => 'array',
         ];
     }
 
@@ -100,6 +102,53 @@ class User extends Authenticatable implements WebAuthnAuthenticatable
             'number_format' => '1,234.56',
             'per_page' => 20,
         ], $this->display_preferences ?? []);
+    }
+
+    /**
+     * Interface preferences and the values each one accepts. The first value
+     * of every list is the default.
+     *
+     * @var array<string, list<string>>
+     */
+    public const INTERFACE_PREFERENCES = [
+        'theme' => ['light', 'dark', 'system'],
+        'accent' => ['green', 'blue', 'indigo', 'purple', 'teal', 'orange', 'rose'],
+        'density' => ['comfortable', 'compact'],
+        'sidebar' => ['expanded', 'collapsed'],
+        'font' => ['default', 'large'],
+    ];
+
+    /**
+     * One interface preference (theme, accent, density, sidebar, font).
+     * A missing or no-longer-allowed stored value falls back to $default,
+     * or to the preference's own default when $default is null.
+     */
+    public function preference(string $key, mixed $default = null): mixed
+    {
+        $value = ($this->preferences ?? [])[$key] ?? null;
+        $allowed = self::INTERFACE_PREFERENCES[$key] ?? null;
+
+        if ($value === null || ($allowed !== null && ! in_array($value, $allowed, true))) {
+            return $default ?? ($allowed[0] ?? null);
+        }
+
+        return $value;
+    }
+
+    /**
+     * Every interface preference, with defaults filled in.
+     *
+     * @return array<string, string>
+     */
+    public function interfacePreferences(): array
+    {
+        $preferences = [];
+
+        foreach (array_keys(self::INTERFACE_PREFERENCES) as $key) {
+            $preferences[$key] = $this->preference($key);
+        }
+
+        return $preferences;
     }
 
     public const DEFAULT_NOTIFICATION_PREFERENCES = [
