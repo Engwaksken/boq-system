@@ -11,7 +11,10 @@ use Illuminate\Validation\ValidationException;
 
 class BoqProcessingService
 {
-    public function start(Boq $boq, int $userId, ?int $organisationId): BoqPricingBatch
+    /**
+     * @param  list<int>|null  $itemIds  price only these items (again), e.g. selected by an admin
+     */
+    public function start(Boq $boq, int $userId, ?int $organisationId, ?array $itemIds = null): BoqPricingBatch
     {
         $boq->loadMissing('project');
 
@@ -44,11 +47,12 @@ class BoqProcessingService
             'organisation_id' => $organisationId ?? $boq->organisation_id,
             'user_id' => $userId,
             'location' => $location,
-            'operation' => 'generation',
+            'operation' => $itemIds === null ? 'generation' : 'selection',
+            'item_ids' => $itemIds === null ? null : array_values(array_map('intval', $itemIds)),
             'provider' => config('services.ai_provider'),
             'status' => 'queued',
             'current_stage' => 'queued',
-            'total_items' => $boq->items()->count(),
+            'total_items' => $itemIds === null ? $boq->items()->count() : count($itemIds),
             'processed_items' => 0,
             'failed_items' => 0,
         ]);

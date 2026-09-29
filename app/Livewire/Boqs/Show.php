@@ -14,10 +14,12 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use App\Livewire\Concerns\WithBulkSelection;
 
 #[Layout('layouts.app')]
 class Show extends Component
 {
+    use WithBulkSelection;
     use WithFileUploads;
     use WithPagination;
 
@@ -279,18 +281,70 @@ class Show extends Component
     {
         $batch = $this->processingBatch;
 
-        if (! $batch || $batch->status !== 'queued' || ! $batch->created_at?->lt(now()->subSeconds(45))) {
+        if (! $batch) {
             return;
         }
 
-        set_time_limit(300);
+        // Waiting with no worker to pick it up, or a chunk finished and nobody continued.
+        $stalledQueued = $batch->status === 'queued' && $batch->created_at?->lt(now()->subSeconds(45));
+        $stalledRunning = $batch->status === 'running' && $batch->updated_at?->lt(now()->subSeconds(15));
+
+        if ($stalledQueued || $stalledRunning) {
+            $this->runChunkNow($batch->id);
+        }
+    }
+
+    /** Prices a short chunk of the batch in this request (well inside any time limit). */
+    private function runChunkNow(int $batchId): void
+    {
+        set_time_limit(120);
         ignore_user_abort(true);
 
         try {
-            \App\Jobs\ProcessBoqJob::dispatchSync($batch->id);
+            \App\Jobs\ProcessBoqJob::dispatchSync($batchId, \App\Jobs\ProcessBoqJob::PAGE_BUDGET_SECONDS);
         } catch (\Throwable $exception) {
             report($exception);
         }
+    }
+
+    /**
+     * Admins: get prices for the selected items now (market prices first, then
+     * the AI provider). Priced items are priced again; approved ones are kept.
+     */
+    public function priceSelected(BoqProcessingService $processor): void
+    {
+        $user = auth()->user()->fresh();
+        $boq = $this->authorisedBoq('boq.edit');
+
+        $ids = $boq->items()
+            ->whereIn('id', array_map('intval', $this->selected))
+            ->where(fn ($q) => $q->whereNull('status')->orWhere('status', '!=', 'approved'))
+            ->orderBy('id')
+            ->pluck('id')
+            ->all();
+
+        if ($ids === []) {
+            session()->flash('message', __('Select items that are not approved to get their prices.'));
+
+            return;
+        }
+
+        if ($boq->pricingLocation($user) === '') {
+            $this->openGenerate();
+            $this->addError('projectLocation', __('Enter the project location so prices can be looked up.'));
+
+            return;
+        }
+
+        $batch = $processor->start($boq, $user->id, $user->organisation_id, $ids);
+
+        if ($batch->status === 'queued' || $batch->status === 'running') {
+            $this->runChunkNow($batch->id);
+        }
+
+        $this->clearSelection();
+        $this->refreshBoq();
+        session()->flash('status', trans_choice('Getting prices for :count item. You can keep working; the list updates as prices arrive.|Getting prices for :count items. You can keep working; the list updates as prices arrive.', count($ids), ['count' => count($ids)]));
     }
 
     public function getProcessingBatchProperty(): ?BoqPricingBatch

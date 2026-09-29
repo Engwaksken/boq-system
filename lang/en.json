@@ -1347,5 +1347,8 @@
     "Town, district or market where the project will be built. It is saved to the project.": "Town, district or market where the project will be built. It is saved to the project.",
     "Provider has no tokens or credit left": "Provider has no tokens or credit left",
     "Provider is running low": "Provider is running low",
-    "The provider refused a request because its credit or quota is used up:detail. BOQ pricing and price scans fall back to other enabled providers; top up the account, then clear the warning under AI API Settings.": "The provider refused a request because its credit or quota is used up:detail. BOQ pricing and price scans fall back to other enabled providers; top up the account, then clear the warning under AI API Settings."
+    "The provider refused a request because its credit or quota is used up:detail. BOQ pricing and price scans fall back to other enabled providers; top up the account, then clear the warning under AI API Settings.": "The provider refused a request because its credit or quota is used up:detail. BOQ pricing and price scans fall back to other enabled providers; top up the account, then clear the warning under AI API Settings.",
+    "Get prices": "Get prices",
+    "Select items that are not approved to get their prices.": "Select items that are not approved to get their prices.",
+    "Getting prices for :count item. You can keep working; the list updates as prices arrive.|Getting prices for :count items. You can keep working; the list updates as prices arrive.": "Getting prices for :count item. You can keep working; the list updates as prices arrive.|Getting prices for :count items. You can keep working; the list updates as prices arrive."
 }

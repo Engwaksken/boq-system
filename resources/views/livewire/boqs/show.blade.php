@@ -305,9 +305,23 @@
         <div class="boq-loading-bar" wire:loading.delay wire:target="itemSearch, itemStatus, itemsPerPage, clearItemFilters, gotoPage, nextPage, previousPage"></div>
 
         @if($items->count() > 0)
+            {{-- Admins: select items and get their prices now. --}}
+            @if($canEdit)
+                <x-bulk-bar :count="count($selected)">
+                    <button type="button" wire:click="priceSelected" wire:loading.attr="disabled" wire:target="priceSelected" class="boq-btn-primary">
+                        <i class="fas fa-tags" wire:loading.remove wire:target="priceSelected" aria-hidden="true"></i>
+                        <i class="fas fa-spinner fa-spin" wire:loading wire:target="priceSelected" aria-hidden="true"></i>
+                        {{ __('Get prices') }}
+                    </button>
+                </x-bulk-bar>
+            @endif
+
             <x-ui.table>
                 <thead>
                     <tr>
+                        @if($canEdit)
+                            <th class="boq-check-col"><x-select-all :ids="$items->pluck('id')" :selected="$selected" /></th>
+                        @endif
                         <th>{{ __('Item Code') }}</th>
                         <th>{{ __('Description') }}</th>
                         <th>{{ __('Unit') }}</th>
@@ -325,6 +339,9 @@
                 <tbody>
                     @foreach($items as $item)
                         <tr wire:key="boq-item-{{ $item->id }}" @class(['is-selected' => in_array($item->id, [$matchingItemId, $reviewingItemId, $rejectingItemId], true)])>
+                            @if($canEdit)
+                                <td class="boq-check-col"><x-select-row :id="$item->id" /></td>
+                            @endif
                             <td class="whitespace-nowrap"><span class="boq-code">{{ $item->item_code ?: '—' }}</span></td>
 
                             <td class="min-w-[13rem] max-w-[22rem]">
@@ -422,7 +439,7 @@
 
                         @if($matchingItemId === $item->id)
                             <tr wire:key="match-item-{{ $item->id }}" class="bg-brand-50/50 hover:bg-brand-50/50">
-                                <td colspan="11" class="!p-0">
+                                <td colspan="{{ $canEdit ? 12 : 11 }}" class="!p-0">
                                     <div class="sticky left-0 max-w-[calc(100vw-2.5rem)] p-4 sm:p-5 lg:max-w-none">
                                         <div class="flex flex-wrap items-start justify-between gap-3">
                                             <div class="min-w-0">
@@ -473,7 +490,7 @@
                             </tr>
                         @elseif($reviewingItemId === $item->id)
                             <tr wire:key="review-item-{{ $item->id }}" class="bg-brand-50/50 hover:bg-brand-50/50">
-                                <td colspan="11" class="!p-0">
+                                <td colspan="{{ $canEdit ? 12 : 11 }}" class="!p-0">
                                     <div class="sticky left-0 grid max-w-[calc(100vw-2.5rem)] gap-3 p-4 sm:p-5 md:grid-cols-[minmax(10rem,1fr)_minmax(16rem,2fr)_auto] md:items-end lg:max-w-none">
                                         <x-ui.field :label="__('Reviewed Rate')" for="manual-rate-{{ $item->id }}" error="manualRate">
                                             <input
@@ -512,7 +529,7 @@
                             </tr>
                         @elseif($rejectingItemId === $item->id)
                             <tr wire:key="reject-item-{{ $item->id }}" class="bg-red-50/60 hover:bg-red-50/60">
-                                <td colspan="11" class="!p-0">
+                                <td colspan="{{ $canEdit ? 12 : 11 }}" class="!p-0">
                                     <div class="sticky left-0 max-w-[calc(100vw-2.5rem)] p-4 sm:p-5 lg:max-w-none">
                                         <x-ui.field :label="__('Rejection Reason')" for="rejection-reason-{{ $item->id }}" error="rejectionReason">
                                             <textarea

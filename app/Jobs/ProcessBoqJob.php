@@ -30,11 +30,26 @@ class ProcessBoqJob implements ShouldQueue
 
     public array $backoff = [30, 120, 300];
 
-    public int $timeout = 300;
+    /** Kept below the database queue's retry_after (90 s) so a run is never started twice. */
+    public int $timeout = 80;
+
+    /** Seconds of pricing per run; the next run continues where this one stopped. */
+    public const QUEUE_BUDGET_SECONDS = 40;
+
+    /** A shorter run when the BOQ page itself does the work (no queue worker). */
+    public const PAGE_BUDGET_SECONDS = 20;
+
+    /** Set when this run stopped because its time was up (more items remain). */
+    private bool $needsContinuation = false;
 
     private const AI_FAILURE_MESSAGE = 'AI pricing is unavailable. Retry the item or enter a manual rate.';
 
-    public function __construct(public int $processingBatchId) {}
+    public function __construct(public int $processingBatchId, public ?int $budgetSeconds = null) {}
+
+    private function budget(): int
+    {
+        return $this->budgetSeconds ?? self::QUEUE_BUDGET_SECONDS;
+    }
 
     public function handle(
         BoqExtractionService $extractor,
@@ -48,19 +63,21 @@ class ProcessBoqJob implements ShouldQueue
         }
 
         // One run per batch: the queue worker and the BOQ page's fallback never overlap.
-        $lock = \Illuminate\Support\Facades\Cache::lock(self::lockKey($this->processingBatchId), 900);
+        $lock = \Illuminate\Support\Facades\Cache::lock(self::lockKey($this->processingBatchId), 180);
         if (! $lock->get()) {
-            if ($this->job !== null) {
-                $this->release(60);
-            }
-
-            return;
+            return; // another run is pricing this batch right now
         }
 
         try {
             $this->process($batch, $extractor, $matcher, $providers);
         } finally {
             $lock->release();
+        }
+
+        // Time was up with items left: queue the next chunk (the BOQ page's poll
+        // continues instead when there is no queue worker).
+        if ($this->needsContinuation && $this->job !== null) {
+            self::dispatch($this->processingBatchId);
         }
     }
 
@@ -81,13 +98,17 @@ class ProcessBoqJob implements ShouldQueue
         }
 
         $initialTotalItems = (int) $batch->total_items;
-        $batch->update([
-            'status' => 'running',
-            'started_at' => $batch->started_at ?? now(),
-            'current_stage' => 'extracting',
-            'provider' => null,
-            'error_message' => null,
-        ]);
+        $continuing = $batch->last_item_id !== null;
+        $started = microtime(true);
+        $batch->update($continuing
+            ? ['status' => 'running', 'error_message' => null]
+            : [
+                'status' => 'running',
+                'started_at' => $batch->started_at ?? now(),
+                'current_stage' => 'extracting',
+                'provider' => null,
+                'error_message' => null,
+            ]);
 
         $boq = null;
 
@@ -97,7 +118,7 @@ class ProcessBoqJob implements ShouldQueue
             $projectLocation = $boq->pricingLocation(\App\Models\User::find($batch->user_id));
             $location = trim((string) ($batch->location ?: $projectLocation));
 
-            if (! $boq->items()->exists()) {
+            if (! $continuing && ! $boq->items()->exists()) {
                 $batch->update(['current_stage' => 'extracting', 'message' => 'Extracting BOQ items...']);
                 $extractor->extract($boq);
                 $boq->refresh();
@@ -105,7 +126,15 @@ class ProcessBoqJob implements ShouldQueue
 
             $batch->update(['current_stage' => 'matching', 'message' => 'Matching current prices...']);
 
-            $items = $boq->items()->with('boq.project')->get();
+            // Continue after the last item handled; a selection prices only its items.
+            $selection = is_array($batch->item_ids) && $batch->item_ids !== [] ? array_map('intval', $batch->item_ids) : null;
+            $items = $boq->items()
+                ->with('boq.project')
+                ->when($batch->last_item_id !== null, fn ($q) => $q->where('id', '>', $batch->last_item_id))
+                ->when($selection !== null, fn ($q) => $q->whereIn('id', $selection))
+                ->orderBy('id')
+                ->get();
+            $lastDone = null;
             $organisationId = $batch->organisation_id === null ? null : (int) $batch->organisation_id;
             $providerKeys = null;
             $requestedProviderKey = null;
@@ -114,6 +143,25 @@ class ProcessBoqJob implements ShouldQueue
             $aiCreditExhausted = false;
 
             foreach ($items as $item) {
+                if ($lastDone !== null) {
+                    $batch->forceFill(['last_item_id' => $lastDone])->save();
+                }
+
+                // Each run prices at least one item, so the batch always moves on.
+                if ($lastDone !== null && microtime(true) - $started >= $this->budget()) {
+                    $done = $selection !== null
+                        ? count(array_filter($selection, fn ($id) => $id <= (int) $lastDone))
+                        : $boq->items()->where('id', '<=', (int) $lastDone)->count();
+                    $batch->update([
+                        'current_stage' => 'matching',
+                        'message' => "Pricing items... {$done} of {$batch->total_items} done.",
+                    ]);
+                    $this->needsContinuation = true;
+
+                    return;
+                }
+                $lastDone = $item->id;
+
                 if ($this->batch() && $this->batch()->cancelled()) {
                     $batch->update([
                         'status' => 'cancelled',
@@ -126,7 +174,11 @@ class ProcessBoqJob implements ShouldQueue
 
                 $item->refresh();
 
-                if ($item->pricing_status === 'priced') {
+                if ($item->status === 'approved') {
+                    continue; // approved rates are never changed
+                }
+
+                if ($item->pricing_status === 'priced' && $selection === null) {
                     continue;
                 }
 
@@ -241,7 +293,11 @@ class ProcessBoqJob implements ShouldQueue
             report($exception);
 
             if ($this->shouldMarkBatchFailed()) {
-                $this->markBatchFailed($batch, $boq, $initialTotalItems);
+                // Validation messages are written for users (e.g. "PDF BOQs need a Gemini provider").
+                $reason = $exception instanceof \Illuminate\Validation\ValidationException
+                    ? (string) collect($exception->errors())->flatten()->first()
+                    : null;
+                $this->markBatchFailed($batch, $boq, $initialTotalItems, $reason);
             } else {
                 $this->markRetryableFailure($batch);
             }
@@ -257,6 +313,12 @@ class ProcessBoqJob implements ShouldQueue
         if (! $batch || $this->isTerminalStatus($batch->status)) {
             return;
         }
+
+        $lock = \Illuminate\Support\Facades\Cache::lock(self::lockKey($this->processingBatchId), 5);
+        if (! $lock->get()) {
+            return; // another run is still pricing this batch
+        }
+        $lock->release();
 
         report($exception);
 
@@ -898,7 +960,8 @@ class ProcessBoqJob implements ShouldQueue
     private function markBatchFailed(
         BoqPricingBatch $batch,
         ?Boq $boq,
-        int $initialTotalItems
+        int $initialTotalItems,
+        ?string $reason = null
     ): void {
         $fresh = BoqPricingBatch::find($batch->id);
 
@@ -924,7 +987,8 @@ class ProcessBoqJob implements ShouldQueue
             'status' => 'failed',
             'current_stage' => 'failed',
             'message' => 'BOQ pricing stopped before all items were processed.',
-            'error_message' => 'BOQ pricing could not be completed. Retry the batch or process the remaining items manually.',
+            'error_message' => $reason
+                ?: 'BOQ pricing could not be completed. Select the items without prices and press "Get prices" to price them now.',
             'completed_at' => now(),
             'failed_items' => $failed,
         ]);
