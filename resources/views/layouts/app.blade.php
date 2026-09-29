@@ -421,7 +421,11 @@
                                     return theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
                                 },
                                 init() {
-                                    this.isDark = this.effectiveDark();
+                                    const sync = () => { this.isDark = this.effectiveDark(); };
+                                    sync();
+                                    {{-- Stay right when Preferences previews a theme or the OS switches. --}}
+                                    new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+                                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', sync);
                                 },
                                 toggle() {
                                     const theme = this.effectiveDark() ? 'light' : 'dark';

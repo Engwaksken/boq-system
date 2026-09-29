@@ -49,7 +49,7 @@
         :subtitle="__('Choose how the app looks for you. Changes preview straight away; press Save to keep them.')"
     />
 
-    <x-ui.flash :keys="['success', 'error']" />
+    <x-ui.flash :keys="['success', 'error']" class="max-w-4xl" />
 
     <form wire:submit="save" class="boq-page-stack max-w-4xl">
 
