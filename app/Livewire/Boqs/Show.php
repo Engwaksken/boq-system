@@ -31,6 +31,11 @@ class Show extends Component
 
     public bool $showGenerateModal = false;
 
+    /** Bulk rejection of the selected items asks for one reason. */
+    public bool $showBulkReject = false;
+
+    public string $bulkRejectionReason = '';
+
     public Boq $boq;
 
     public string $pdfUrl = '';
@@ -841,6 +846,57 @@ class Show extends Component
         $this->refreshBoq();
     }
 
+    private function finishBulk(string $message): void
+    {
+        $this->clearSelection();
+        $this->closeEditor();
+        $this->refreshBoq();
+        session()->flash('status', $message);
+    }
+
+    /** Selected items: accept the suggested price as the reviewed price. */
+    public function bulkAcceptSuggested(\App\Services\BoqItemReview $review): void
+    {
+        $boq = $this->authorisedBoq('boq.edit');
+        $result = $review->acceptSuggested($boq, array_map('intval', $this->selected), (int) auth()->id());
+
+        $this->finishBulk(__(':done suggested price(s) accepted as reviewed.', ['done' => $result['done']])
+            .($result['skipped'] ? ' '.__(':count skipped (approved or without a suggested price).', ['count' => $result['skipped']]) : ''));
+    }
+
+    /** Selected items: approve them (a suggested price is accepted first when needed). */
+    public function bulkApprove(\App\Services\BoqItemReview $review): void
+    {
+        $boq = $this->authorisedBoq('boq.approve');
+        $result = $review->approve($boq, array_map('intval', $this->selected), (int) auth()->id());
+
+        $this->finishBulk(__(':done item(s) approved.', ['done' => $result['done']])
+            .($result['skipped'] ? ' '.__(':count skipped (already approved or without a price).', ['count' => $result['skipped']]) : ''));
+    }
+
+    public function openBulkReject(): void
+    {
+        $this->authorisedBoq('boq.edit');
+        $this->bulkRejectionReason = '';
+        $this->resetValidation();
+        $this->showBulkReject = $this->selected !== [];
+    }
+
+    /** Selected items: reject the price with one reason. */
+    public function bulkReject(\App\Services\BoqItemReview $review): void
+    {
+        $boq = $this->authorisedBoq('boq.edit');
+        $reason = trim($this->validate([
+            'bulkRejectionReason' => ['required', 'string', 'max:2000'],
+        ], [], ['bulkRejectionReason' => __('reason')])['bulkRejectionReason']);
+
+        $result = $review->reject($boq, array_map('intval', $this->selected), $reason, (int) auth()->id());
+
+        $this->showBulkReject = false;
+        $this->finishBulk(__(':done item(s) rejected.', ['done' => $result['done']])
+            .($result['skipped'] ? ' '.__(':count approved item(s) kept.', ['count' => $result['skipped']]) : ''));
+    }
+
     public function approveAllReviewed(): void
     {
         $boq = $this->authorisedBoq(
@@ -1246,6 +1302,13 @@ class Show extends Component
                     ? 'approved'
                     : 'under_review',
         ]);
+    }
+
+    /** Location prices changed (priced for another place, or switched). */
+    #[\Livewire\Attributes\On('boq-prices-updated')]
+    public function onPricesUpdated(): void
+    {
+        $this->refreshBoq();
     }
 
     private function refreshBoq(): void

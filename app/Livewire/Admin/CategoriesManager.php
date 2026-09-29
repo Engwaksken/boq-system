@@ -33,7 +33,7 @@ class CategoriesManager extends Component
 
     private function authoriseManager(): void
     {
-        abort_unless(auth()->user()?->hasAnyRole(['super-admin', 'super_admin', 'admin']), 403);
+        abort_unless(auth()->user()?->hasAnyRole(['super-admin', 'super_admin', 'administrator', 'admin']), 403);
     }
 
     private function isMaterial(): bool

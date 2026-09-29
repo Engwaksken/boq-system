@@ -255,7 +255,7 @@ class AiUsageMonitor
         $provider->forceFill(['last_credit_alert_at' => now()])->saveQuietly();
 
         $admins = User::query()
-            ->whereHas('roles', fn ($q) => $q->whereIn('slug', ['super-admin', 'super_admin', 'admin']))
+            ->whereHas('roles', fn ($q) => $q->whereIn('slug', ['super-admin', 'super_admin', 'administrator', 'admin']))
             ->when($provider->organisation_id, fn ($q) => $q->where(function ($inner) use ($provider) {
                 $inner->where('organisation_id', $provider->organisation_id)
                     ->orWhereHas('roles', fn ($r) => $r->whereIn('slug', ['super-admin', 'super_admin']));

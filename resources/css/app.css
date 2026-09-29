@@ -3330,6 +3330,29 @@ button.boq-sort-th:hover {
     transform: translateY(-4px);
 }
 
+
+/* Location prices (one BOQ priced for several locations). */
+.boq-location-card {
+    display: block;
+    border: 1px solid var(--boq-border);
+    border-left: 4px solid var(--color-brand-300);
+    border-radius: var(--boq-radius-lg);
+    background: var(--boq-surface);
+    padding: 0.85rem 1rem;
+    cursor: pointer;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.boq-location-card:hover {
+    box-shadow: var(--boq-shadow);
+}
+.boq-location-card:has(input:checked) {
+    border-color: var(--color-brand-500);
+    box-shadow: 0 0 0 1px var(--color-brand-500);
+}
+.boq-location-card.is-current {
+    border-left-color: var(--boq-success);
+}
+
 } /* end @layer components */
 
 /* ============================================================

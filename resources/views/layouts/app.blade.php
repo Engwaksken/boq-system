@@ -97,12 +97,12 @@
             ];
         }
 
-        if ($authUser->hasAnyRole(['admin', 'manager', 'super-admin'])) {
+        if ($authUser->hasAnyRole(['administrator', 'admin', 'manager', 'super-admin'])) {
             $navGroups[] = [
                 'label' => 'System',
                 'items' => [
                     // Super admins find Categories under Administration.
-                    $item('Categories', 'admin.categories', 'fa-list-check', ! $authUser->isSuperAdmin() && $authUser->hasRole('admin'), 'admin.categories'),
+                    $item('Categories', 'admin.categories', 'fa-list-check', ! $authUser->isSuperAdmin() && $authUser->hasAnyRole(['administrator', 'admin']), 'admin.categories'),
                     $item('AI Activity', 'system.mcp-activity', 'fa-wave-square'),
                 ],
             ];

@@ -166,7 +166,8 @@ class AiCreditMonitoringTest extends TestCase
     public function test_admins_can_manage_categories_including_materials(): void
     {
         $admin = User::factory()->create();
-        $admin->roles()->attach(Role::firstOrCreate(['slug' => 'admin'], ['name' => 'Admin']));
+        // The seeded organisation admin role.
+        $admin->roles()->attach(Role::firstOrCreate(['slug' => 'administrator'], ['name' => 'Administrator']));
 
         $this->actingAs($admin)->get('/admin/categories')->assertOk();
 

@@ -330,7 +330,7 @@ class HardwarePriceController extends Controller
 
     public function fetchNow(Request $request): JsonResponse
     {
-        $request->user()->authorizeRoles(['admin', 'manager']);
+        $request->user()->authorizeRoles(['administrator', 'admin', 'manager']);
 
         $results = $this->fetchingService->fetchDailyPrices(
             organisationId: HardwarePrice::ownerOrganisationFor($request->user()),

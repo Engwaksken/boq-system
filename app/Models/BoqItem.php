@@ -19,6 +19,14 @@ class BoqItem extends Model
         static::saving(function (self $boqItem): void {
             $boqItem->recalculateAmount();
         });
+
+        // Keep the price for each location, so a BOQ can be priced for several.
+        static::saved(function (self $boqItem): void {
+            if ($boqItem->ai_suggested_rate !== null
+                && ($boqItem->wasRecentlyCreated || $boqItem->wasChanged(['ai_suggested_rate', 'location', 'pricing_source']))) {
+                BoqLocationPrice::record($boqItem);
+            }
+        });
     }
 
     /**

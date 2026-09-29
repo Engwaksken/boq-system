@@ -247,6 +247,9 @@
         <x-ui.alert type="error">{{ $message }}</x-ui.alert>
     @enderror
 
+    {{-- Prices of this BOQ for several locations, and comparing them. --}}
+    <livewire:boqs.location-prices :boq="$boq" :key="'location-prices-'.$boq->id" />
+
     {{-- ============================ PRICE REVIEW ============================ --}}
     <section class="boq-panel">
         <div class="boq-card-header">
@@ -312,6 +315,17 @@
                         <i class="fas fa-tags" wire:loading.remove wire:target="priceSelected" aria-hidden="true"></i>
                         <i class="fas fa-spinner fa-spin" wire:loading wire:target="priceSelected" aria-hidden="true"></i>
                         {{ __('Get prices') }}
+                    </button>
+                    <button type="button" wire:click="bulkAcceptSuggested" wire:loading.attr="disabled" wire:target="bulkAcceptSuggested" class="boq-btn-secondary" title="{{ __('Use the suggested price as the reviewed price') }}">
+                        <i class="fas fa-clipboard-check" aria-hidden="true"></i> {{ __('Review (use suggested)') }}
+                    </button>
+                    @if(Auth::user()->hasPermission('boq.approve'))
+                        <button type="button" wire:click="bulkApprove" wire:loading.attr="disabled" wire:target="bulkApprove" wire:confirm="{{ __('Approve the selected items? Approved prices can no longer be changed.') }}" class="boq-btn-secondary">
+                            <i class="fas fa-circle-check text-emerald-600" aria-hidden="true"></i> {{ __('Approve') }}
+                        </button>
+                    @endif
+                    <button type="button" wire:click="openBulkReject" class="boq-btn-danger">
+                        <i class="fas fa-circle-xmark" aria-hidden="true"></i> {{ __('Reject') }}
                     </button>
                 </x-bulk-bar>
             @endif
@@ -588,6 +602,20 @@
             <x-slot:footer>
                 <x-ui.button variant="secondary" wire:click="closePdfPreview">{{ __('Close') }}</x-ui.button>
                 <x-ui.button icon="fa-download" :href="$pdfUrl">{{ __('Download PDF') }}</x-ui.button>
+            </x-slot:footer>
+        </x-ui.modal>
+    @endif
+
+    @if($showBulkReject)
+        <x-ui.modal wire:key="bulk-reject" id="bulk-reject" :title="__('Reject selected prices')" icon="fa-circle-xmark" size="sm" close="$set('showBulkReject', false)" submit="bulkReject">
+            <p class="mb-3 text-sm text-slate-600">{{ trans_choice(':count item will be rejected. Approved items are kept.|:count items will be rejected. Approved items are kept.', count($selected), ['count' => count($selected)]) }}</p>
+            <x-ui.field :label="__('Reason')" for="bulk-reject-reason" error="bulkRejectionReason" required>
+                <textarea id="bulk-reject-reason" wire:model="bulkRejectionReason" rows="3" maxlength="2000" required class="boq-field boq-textarea @error('bulkRejectionReason') has-error @enderror" placeholder="{{ __('e.g. Rates too high for this location') }}"></textarea>
+            </x-ui.field>
+
+            <x-slot:footer>
+                <x-ui.button variant="secondary" wire:click="$set('showBulkReject', false)">{{ __('Cancel') }}</x-ui.button>
+                <x-ui.button type="submit" variant="danger" icon="fa-circle-xmark" loading="bulkReject">{{ __('Reject') }}</x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
     @endif

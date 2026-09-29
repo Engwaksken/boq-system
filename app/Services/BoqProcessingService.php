@@ -14,7 +14,7 @@ class BoqProcessingService
     /**
      * @param  list<int>|null  $itemIds  price only these items (again), e.g. selected by an admin
      */
-    public function start(Boq $boq, int $userId, ?int $organisationId, ?array $itemIds = null): BoqPricingBatch
+    public function start(Boq $boq, int $userId, ?int $organisationId, ?array $itemIds = null, ?string $location = null): BoqPricingBatch
     {
         $boq->loadMissing('project');
 
@@ -30,7 +30,8 @@ class BoqProcessingService
             throw new AuthorizationException;
         }
 
-        $location = $boq->pricingLocation(\App\Models\User::find($userId));
+        // A given location prices the BOQ for another place (the project keeps its own).
+        $location = trim((string) $location) ?: $boq->pricingLocation(\App\Models\User::find($userId));
 
         if ($location === '') {
             throw ValidationException::withMessages(['boq' => 'Add the project location (the town or district where it will be built) so prices can be looked up, then generate the BOQ again.']);

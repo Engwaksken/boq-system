@@ -390,6 +390,70 @@ public function show(Request $request, Boq $boq): JsonResponse
         ]);
     }
 
+    /**
+     * Review, approve or reject the suggested prices of several items at once.
+     * action: accept (use the suggested price as reviewed) | approve | reject (reason required)
+     */
+    public function bulkReview(Request $request, Boq $boq, \App\Services\BoqItemReview $review): JsonResponse
+    {
+        $this->authorize('update', $boq);
+        $data = $request->validate([
+            'action' => ['required', 'in:accept,approve,reject'],
+            'item_ids' => ['required', 'array', 'min:1', 'max:1000'],
+            'item_ids.*' => ['integer'],
+            'reason' => ['required_if:action,reject', 'nullable', 'string', 'max:2000'],
+        ]);
+        $user = $request->user();
+        abort_if($data['action'] === 'approve' && ! $user->hasPermission('boq.approve'), 403);
+
+        $ids = array_map('intval', $data['item_ids']);
+        $result = match ($data['action']) {
+            'accept' => $review->acceptSuggested($boq, $ids, $user->id),
+            'approve' => $review->approve($boq, $ids, $user->id),
+            'reject' => $review->reject($boq, $ids, (string) $data['reason'], $user->id),
+        };
+
+        return response()->json(['success' => true, 'data' => $result]);
+    }
+
+    /** Locations this BOQ has prices for, with totals. */
+    public function locations(Request $request, Boq $boq, \App\Services\BoqLocationPricing $pricing): JsonResponse
+    {
+        $this->authorize('view', $boq);
+
+        return response()->json(['success' => true, 'data' => $pricing->locations($boq)]);
+    }
+
+    /** Item rates side by side for 2 to 4 locations (keys from the locations list). */
+    public function compareLocations(Request $request, Boq $boq, \App\Services\BoqLocationPricing $pricing): JsonResponse
+    {
+        $this->authorize('view', $boq);
+        $keys = $request->validate(['locations' => ['required', 'array', 'min:2', 'max:4'], 'locations.*' => ['string', 'max:191']])['locations'];
+        $comparison = $pricing->compare($boq, $keys);
+
+        return response()->json(['success' => true, 'data' => [
+            'locations' => $comparison['locations'],
+            'rows' => array_map(fn ($row) => [
+                'item_id' => $row['item']->id,
+                'item_code' => $row['item']->item_code,
+                'description' => $row['item']->description,
+                'unit' => $row['item']->unit,
+                'quantity' => (float) $row['item']->quantity,
+                'rates' => $row['rates'],
+                'lowest' => $row['lowest'],
+            ], $comparison['rows']),
+        ]]);
+    }
+
+    /** Use one location's saved prices as the BOQ's suggested prices. */
+    public function useLocation(Request $request, Boq $boq, \App\Services\BoqLocationPricing $pricing): JsonResponse
+    {
+        $this->authorize('update', $boq);
+        $key = \App\Models\BoqLocationPrice::keyFor($request->validate(['location' => ['required', 'string', 'max:255']])['location']);
+
+        return response()->json(['success' => true, 'data' => $pricing->apply($boq, $key)]);
+    }
+
     public function destroy(Request $request, Boq $boq): JsonResponse
     {
         $this->authorize('delete', $boq);
