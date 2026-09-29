@@ -1311,10 +1311,7 @@
     "No credit left.": "No credit left.",
     "Credit is low.": "Credit is low.",
     "The provider reported no credit or quota on :date.": "The provider reported no credit or quota on :date.",
-    "AI provider :name has no tokens or credit left": "AI provider :name has no tokens or credit left",
-    "AI provider :name is running low": "AI provider :name is running low",
     "Top up the account before it runs out.": "Top up the account before it runs out.",
-    ":name refused a request because its credit or quota is used up:detail. BOQ pricing and price scans fall back to other enabled providers; top up the account, then clear the warning under AI API Settings.": ":name refused a request because its credit or quota is used up:detail. BOQ pricing and price scans fall back to other enabled providers; top up the account, then clear the warning under AI API Settings.",
     "Balance updated for :name.": "Balance updated for :name.",
     ":name does not report its balance automatically. Enter the credit and expiry date in the provider settings.": ":name does not report its balance automatically. Enter the credit and expiry date in the provider settings.",
     "Credit warning cleared. The provider will be used again.": "Credit warning cleared. The provider will be used again.",
@@ -1347,5 +1344,8 @@
     "Enter the project location so prices can be looked up.": "Enter the project location so prices can be looked up.",
     "project location": "project location",
     "Prices are looked up for the project location.": "Prices are looked up for the project location.",
-    "Town, district or market where the project will be built. It is saved to the project.": "Town, district or market where the project will be built. It is saved to the project."
+    "Town, district or market where the project will be built. It is saved to the project.": "Town, district or market where the project will be built. It is saved to the project.",
+    "Provider has no tokens or credit left": "Provider has no tokens or credit left",
+    "Provider is running low": "Provider is running low",
+    "The provider refused a request because its credit or quota is used up:detail. BOQ pricing and price scans fall back to other enabled providers; top up the account, then clear the warning under AI API Settings.": "The provider refused a request because its credit or quota is used up:detail. BOQ pricing and price scans fall back to other enabled providers; top up the account, then clear the warning under AI API Settings."
 }

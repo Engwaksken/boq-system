@@ -65,6 +65,8 @@ class GenerateBoqEndToEndTest extends TestCase
             ->assertHasNoErrors();
 
 
+        $batch = \App\Models\BoqPricingBatch::where('boq_id', $boq->id)->latest()->first();
+        $this->assertSame('Pricing completed: 0 manual, 1 hardware, 1 items, 0 failed.', $batch->message);
         $this->assertEquals(36000, (float) $cement->fresh()->ai_suggested_rate);
         $this->assertNotNull($labour->fresh()->ai_suggested_rate);
     }

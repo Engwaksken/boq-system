@@ -69,7 +69,8 @@ class AiCreditMonitoringTest extends TestCase
         $this->assertNotNull($provider->fresh()->credit_exhausted_at);
         $notification = UserNotification::where('user_id', $admin->id)->where('type', 'ai_provider_credit')->first();
         $this->assertNotNull($notification);
-        $this->assertStringContainsString('no tokens or credit', $notification->title);
+        $this->assertSame('Provider has no tokens or credit left', $notification->title);
+        $this->assertStringNotContainsString('DeepSeek', $notification->title.' '.$notification->message);
 
         // The next request does not call the empty provider again, and no duplicate alert is sent.
         Http::fake();

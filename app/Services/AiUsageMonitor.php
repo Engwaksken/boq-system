@@ -160,9 +160,8 @@ class AiUsageMonitor
 
         $this->alertAdmins(
             $provider,
-            __('AI provider :name has no tokens or credit left', ['name' => $provider->name]),
-            __(':name refused a request because its credit or quota is used up:detail. BOQ pricing and price scans fall back to other enabled providers; top up the account, then clear the warning under AI API Settings.', [
-                'name' => $provider->name,
+            __('Provider has no tokens or credit left'),
+            __('The provider refused a request because its credit or quota is used up:detail. BOQ pricing and price scans fall back to other enabled providers; top up the account, then clear the warning under AI API Settings.', [
                 'detail' => $detail !== '' ? ' ('.$detail.')' : '',
             ]),
         );
@@ -187,8 +186,8 @@ class AiUsageMonitor
         $this->alertAdmins(
             $provider,
             $status['state'] === 'exhausted'
-                ? __('AI provider :name has no tokens or credit left', ['name' => $provider->name])
-                : __('AI provider :name is running low', ['name' => $provider->name]),
+                ? __('Provider has no tokens or credit left')
+                : __('Provider is running low'),
             implode(' ', $status['reasons']).' '.__('Top up the account before it runs out.'),
         );
     }

@@ -9,7 +9,7 @@ use RuntimeException;
  */
 class AiCreditExhaustedException extends RuntimeException
 {
-    public function __construct(string $message = 'The AI providers have no tokens or credit left. An administrator has been notified.', ?\Throwable $previous = null)
+    public function __construct(string $message = 'The provider has no tokens or credit left. An administrator has been notified.', ?\Throwable $previous = null)
     {
         parent::__construct($message, 0, $previous);
     }

@@ -234,7 +234,7 @@ class ProcessBoqJob implements ShouldQueue
 
             if ($aiCreditExhausted) {
                 BoqPricingBatch::query()->whereKey($batch->getKey())->update([
-                    'error_message' => 'AI pricing stopped: the AI provider has no tokens or credit left. An administrator has been notified; the items can be priced again once it is topped up.',
+                    'error_message' => 'Pricing stopped: the provider has no tokens or credit left. An administrator has been notified; the items can be priced again once it is topped up.',
                 ]);
             }
         } catch (Throwable $exception) {
@@ -820,7 +820,7 @@ class ProcessBoqJob implements ShouldQueue
         $processed = array_sum($distribution);
         $status = $failed > 0 ? 'completed_with_errors' : 'completed';
         $message = sprintf(
-            'Pricing completed: %d manual, %d hardware, %d AI, %d failed.',
+            'Pricing completed: %d manual, %d hardware, %d items, %d failed.',
             $distribution['manual'],
             $distribution['hardware'],
             $distribution['ai'],
