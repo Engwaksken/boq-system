@@ -159,6 +159,9 @@
     @elseif($processingBatch && $processingBatch->status === 'completed_with_errors')
         <x-ui.alert type="warning" :title="trans_choice('Completed with :count error|Completed with :count errors', (int) $processingBatch->failed_items, ['count' => (int) $processingBatch->failed_items])">
             {{ $processingBatch->message }}
+            @if($processingBatch->error_message)
+                <p class="mt-1 font-medium">{{ $processingBatch->error_message }}</p>
+            @endif
         </x-ui.alert>
     @elseif($processingBatch && $processingBatch->status === 'completed')
         <x-ui.alert type="success" :title="__('BOQ processed')">

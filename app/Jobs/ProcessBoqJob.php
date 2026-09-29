@@ -76,6 +76,9 @@ class ProcessBoqJob implements ShouldQueue
             $organisationId = $batch->organisation_id === null ? null : (int) $batch->organisation_id;
             $providerKeys = null;
             $requestedProviderKey = null;
+            // Set once the AI providers report no tokens/credit: the rest of the
+            // items are not sent, and the admins have been notified.
+            $aiCreditExhausted = false;
 
             foreach ($items as $item) {
                 if ($this->batch() && $this->batch()->cancelled()) {
@@ -126,6 +129,15 @@ class ProcessBoqJob implements ShouldQueue
 
                 $wasFailed = $item->pricing_status === 'failed';
 
+                if ($aiCreditExhausted) {
+                    $this->markAiFailed($item);
+                    if (! $wasFailed) {
+                        $batch->increment('failed_items');
+                    }
+
+                    continue;
+                }
+
                 try {
                     $this->clearAiState($item);
                     $attemptId = (string) Str::uuid();
@@ -167,11 +179,15 @@ class ProcessBoqJob implements ShouldQueue
                     $pricing = $this->pricingPayload($response, $currency);
                     $batch->update(['provider' => $providerKey]);
                     $this->markAiPriced($item, $pricing, $providerKey, $location);
-                } catch (Throwable) {
+                } catch (Throwable $exception) {
                     $this->markAiFailed($item);
 
                     if (! $wasFailed) {
                         $batch->increment('failed_items');
+                    }
+
+                    if ($exception instanceof \App\Exceptions\AiCreditExhaustedException) {
+                        $aiCreditExhausted = true;
                     }
                 }
             }
@@ -182,6 +198,12 @@ class ProcessBoqJob implements ShouldQueue
             $boq->update(['status' => $allApproved ? 'approved' : 'under_review']);
 
             $this->completeBatch($batch, $boq);
+
+            if ($aiCreditExhausted) {
+                BoqPricingBatch::query()->whereKey($batch->getKey())->update([
+                    'error_message' => 'AI pricing stopped: the AI provider has no tokens or credit left. An administrator has been notified; the items can be priced again once it is topped up.',
+                ]);
+            }
         } catch (Throwable $exception) {
             report($exception);
 

@@ -101,6 +101,8 @@
             $navGroups[] = [
                 'label' => 'System',
                 'items' => [
+                    // Super admins find Categories under Administration.
+                    $item('Categories', 'admin.categories', 'fa-list-check', ! $authUser->isSuperAdmin() && $authUser->hasRole('admin'), 'admin.categories'),
                     $item('AI Activity', 'system.mcp-activity', 'fa-wave-square'),
                 ],
             ];

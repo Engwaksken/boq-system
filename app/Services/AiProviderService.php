@@ -13,6 +13,11 @@ use Throwable;
 
 class AiProviderService
 {
+    public function __construct(private ?AiUsageMonitor $monitor = null)
+    {
+        $this->monitor ??= new AiUsageMonitor();
+    }
+
     public function json(
         string $prompt,
         string $operation,
@@ -20,13 +25,25 @@ class AiProviderService
         ?string $requestedProvider = null,
         array $context = []
     ): array {
-        $providers = $this->candidates($organisationId, $requestedProvider);
+        $enabled = $this->candidates($organisationId, $requestedProvider);
 
-        if ($providers->isEmpty()) {
+        if ($enabled->isEmpty()) {
             throw new RuntimeException('No enabled AI provider is configured.');
         }
 
+        // Skip providers known to have no tokens/credit left.
+        $providers = $enabled->reject(fn (AiProvider $provider) => $this->monitor->isExhausted($provider))->values();
+
+        if ($providers->isEmpty()) {
+            foreach ($enabled as $provider) {
+                $this->monitor->warnIfLow($provider);
+            }
+
+            throw new \App\Exceptions\AiCreditExhaustedException();
+        }
+
         $lastException = null;
+        $creditFailures = 0;
 
         foreach ($providers as $provider) {
             $started = hrtime(true);
@@ -46,11 +63,19 @@ class AiProviderService
                 );
 
                 unset($result['_usage']);
+                $this->afterSuccess($provider);
 
                 return $result;
             } catch (Throwable $exception) {
                 $lastException = $exception;
                 $category = $this->categorise($exception);
+
+                if ($category === 'insufficient_credit') {
+                    $creditFailures++;
+                    $this->monitor->markExhausted($provider, $this->httpStatusLabel($exception));
+
+                    continue;
+                }
 
                 $this->recordUsage(
                     $provider,
@@ -85,6 +110,7 @@ class AiProviderService
                         );
 
                         unset($result['_usage']);
+                        $this->afterSuccess($provider);
 
                         return $result;
                     } catch (Throwable) {
@@ -98,10 +124,40 @@ class AiProviderService
             }
         }
 
+        if ($creditFailures === $providers->count()) {
+            throw new \App\Exceptions\AiCreditExhaustedException(previous: $lastException);
+        }
+
         throw new RuntimeException(
             'AI service is temporarily unavailable. Please try again later.',
             previous: $lastException
         );
+    }
+
+    /** Only connection problems and server errors are worth retrying (not 4xx such as "no balance"). */
+    private function isTransient(Throwable $exception): bool
+    {
+        return $exception instanceof ConnectionException
+            || ($exception instanceof RequestException && $exception->response->serverError());
+    }
+
+    private function afterSuccess(AiProvider $provider): void
+    {
+        try {
+            $this->monitor->markWorking($provider);
+
+            // Only providers with a limit, balance or expiry set can be running low.
+            if ($provider->monthly_token_limit || $provider->credit_expires_at || $provider->credit_balance !== null) {
+                $this->monitor->warnIfLow($provider);
+            }
+        } catch (Throwable) {
+            // Monitoring must never break the request that just succeeded.
+        }
+    }
+
+    private function httpStatusLabel(Throwable $exception): string
+    {
+        return $exception instanceof RequestException ? 'HTTP '.$exception->response->status() : '';
     }
 
     public function test(AiProvider $provider): array
@@ -126,6 +182,7 @@ class AiProviderService
             $category = $this->categorise($exception);
             $message = match ($category) {
                 'authentication' => 'Authentication failed.',
+                'insufficient_credit' => 'No tokens or credit left on this account. Top it up.',
                 'model_not_found' => 'Model not found.',
                 'rate_limit' => 'Provider rate limit reached.',
                 'timeout' => 'Provider connection timed out.',
@@ -216,7 +273,7 @@ class AiProviderService
         }
 
         $response = Http::timeout($timeout)
-            ->retry(2, 400, throw: false)
+            ->retry(2, 400, fn (Throwable $e): bool => $this->isTransient($e), throw: false)
             ->post(
                 "{$base}/v1beta/models/{$model}:generateContent?key=".urlencode($provider->api_key),
                 $body
@@ -265,7 +322,7 @@ class AiProviderService
             ? "{$base}/chat/completions"
             : "{$base}/v1/chat/completions";
 
-        $request = Http::timeout($timeout)->retry(2, 400, throw: false);
+        $request = Http::timeout($timeout)->retry(2, 400, fn (Throwable $e): bool => $this->isTransient($e), throw: false);
 
         if (filled($provider->api_key)) {
             $request = $request->withToken($provider->api_key);
@@ -348,6 +405,13 @@ class AiProviderService
 
         if ($exception instanceof RequestException) {
             $status = $exception->response->status();
+            $body = strtolower((string) $exception->response->body());
+
+            // 402 Payment Required (DeepSeek "Insufficient Balance"), OpenAI
+            // "insufficient_quota", billing and credit errors.
+            if ($status === 402 || (in_array($status, [400, 403, 429], true) && preg_match('/insufficient[_ ](quota|balance|credit|funds)|billing|credit balance|out of credit|quota exceeded|exceeded your current quota/', $body))) {
+                return 'insufficient_credit';
+            }
 
             return match (true) {
                 in_array($status, [401, 403], true) => 'authentication',

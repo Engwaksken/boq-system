@@ -34,3 +34,6 @@ Schedule::command('subscriptions:remind')
 Schedule::command('payments:reconcile')
     ->everyFiveMinutes()
     ->withoutOverlapping();
+
+// Warn admins before AI provider credit runs out or expires.
+Schedule::command('ai:check-credit')->dailyAt('07:00')->withoutOverlapping();

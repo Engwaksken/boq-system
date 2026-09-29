@@ -61,6 +61,7 @@
                     <th>{{ __('Status') }}</th>
                     <th>{{ __('Default') }}</th>
                     <th>{{ __('Last Test') }}</th>
+                    <th>{{ __('AI Usage (this month)') }}</th>
                     <th class="text-right">{{ __('Actions') }}</th>
                 </tr>
             </thead>
@@ -91,8 +92,61 @@
                                 <span class="boq-table-empty">{{ __('Never tested') }}</span>
                             @endif
                         </td>
+                        <td class="min-w-[14rem]">
+                            @php
+                                $u = $usage[$provider->id] ?? ['tokens' => 0, 'requests' => 0, 'failed' => 0, 'input' => 0, 'output' => 0, 'last_used_at' => null];
+                                $c = $creditStatus[$provider->id] ?? ['state' => 'ok', 'reasons' => [], 'used_share' => null, 'days_left' => null];
+                            @endphp
+                            <div class="text-sm font-semibold">
+                                {{ \App\Support\Format::compact($u['tokens']) }} {{ __('tokens') }}
+                                <span class="font-normal text-slate-500">· {{ trans_choice(':count request|:count requests', $u['requests'], ['count' => $u['requests']]) }}</span>
+                            </div>
+                            <div class="boq-table-subtitle">
+                                {{ __('In') }} {{ \App\Support\Format::compact($u['input']) }} · {{ __('Out') }} {{ \App\Support\Format::compact($u['output']) }}
+                                @if($u['failed'] > 0)
+                                    · <span class="text-rose-600">{{ trans_choice(':count failed|:count failed', $u['failed'], ['count' => $u['failed']]) }}</span>
+                                @endif
+                            </div>
+                            @if($provider->monthly_token_limit)
+                                <div class="boq-progress mt-1.5" title="{{ __('Monthly token limit') }}: {{ \App\Support\Format::number($provider->monthly_token_limit, 0) }}">
+                                    <span style="width: {{ min(100, (int) round(($c['used_share'] ?? 0) * 100)) }}%"></span>
+                                </div>
+                                <div class="boq-table-subtitle">{{ (int) round(($c['used_share'] ?? 0) * 100) }}% {{ __('of') }} {{ \App\Support\Format::compact($provider->monthly_token_limit) }}</div>
+                            @endif
+                            <div class="mt-1 flex flex-wrap items-center gap-1">
+                                @if($provider->credit_balance !== null)
+                                    <x-ui.badge :color="$c['state'] === 'exhausted' ? 'danger' : ($c['state'] === 'warning' ? 'warning' : 'success')" icon="fa-wallet">
+                                        {{ $provider->credit_currency }} {{ \App\Support\Format::number((float) $provider->credit_balance, 2) }}
+                                    </x-ui.badge>
+                                @endif
+                                @if($provider->credit_expires_at)
+                                    <x-ui.badge :color="($c['days_left'] ?? 99) < 0 ? 'danger' : (($c['days_left'] ?? 99) <= 7 ? 'warning' : 'neutral')" icon="fa-calendar">
+                                        {{ ($c['days_left'] ?? 0) < 0 ? __('Expired') : __('Expires') }} <x-date :value="$provider->credit_expires_at" />
+                                    </x-ui.badge>
+                                @endif
+                                @if($c['state'] === 'exhausted')
+                                    <x-ui.badge color="danger" icon="fa-circle-exclamation">{{ __('No credit') }}</x-ui.badge>
+                                @elseif($c['state'] === 'warning')
+                                    <x-ui.badge color="warning" icon="fa-triangle-exclamation">{{ __('Top up soon') }}</x-ui.badge>
+                                @endif
+                            </div>
+                            @if($c['reasons'] !== [])
+                                <div class="boq-table-subtitle mt-0.5 {{ $c['state'] === 'exhausted' ? 'text-rose-600' : 'text-amber-700' }}">{{ implode(' ', $c['reasons']) }}</div>
+                            @endif
+                            @if($u['last_used_at'])
+                                <div class="boq-table-subtitle">{{ __('Last used') }} {{ \Illuminate\Support\Carbon::parse($u['last_used_at'])->diffForHumans() }}</div>
+                            @endif
+                        </td>
                         <td class="text-right">
                             <div class="boq-table-actions">
+                                <button type="button" wire:click="refreshBalance({{ $provider->id }})" wire:loading.attr="disabled" wire:target="refreshBalance({{ $provider->id }})" class="boq-icon-btn" title="{{ __('Refresh balance') }}" aria-label="{{ __('Refresh balance') }}">
+                                    <i class="fas fa-rotate" aria-hidden="true"></i>
+                                </button>
+                                @if($provider->credit_exhausted_at)
+                                    <button type="button" wire:click="clearCreditWarning({{ $provider->id }})" class="boq-icon-btn" title="{{ __('Topped up: use again') }}" aria-label="{{ __('Topped up: use again') }}">
+                                        <i class="fas fa-circle-check" aria-hidden="true"></i>
+                                    </button>
+                                @endif
                                 <button type="button" wire:click="testConnection({{ $provider->id }})" wire:loading.attr="disabled" wire:target="testConnection({{ $provider->id }})" class="boq-icon-btn" title="{{ __('Test Connection') }}" aria-label="{{ __('Test Connection') }}">
                                     <i class="fas fa-plug-circle-check" wire:loading.remove wire:target="testConnection({{ $provider->id }})" aria-hidden="true"></i>
                                     <i class="fas fa-spinner fa-spin" wire:loading wire:target="testConnection({{ $provider->id }})" aria-hidden="true"></i>
@@ -111,7 +165,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="p-0">
+                        <td colspan="8" class="p-0">
                             <x-ui.empty-state icon="fa-robot" :title="__('No AI providers configured.')">
                                 <x-ui.button size="sm" icon="fa-plus" wire:click="create">{{ __('Add Provider') }}</x-ui.button>
                             </x-ui.empty-state>
@@ -172,6 +226,28 @@
                 <x-ui.field :label="__('Sort Order')" for="ai-sort" error="form.sort_order">
                     <input id="ai-sort" placeholder="10" type="number" min="0" wire:model="form.sort_order" class="boq-field">
                 </x-ui.field>
+
+                <div class="boq-form-span-2 rounded-lg border border-slate-200 p-3">
+                    <p class="mb-2 text-sm font-semibold"><i class="fas fa-wallet" aria-hidden="true"></i> {{ __('Credit and limits') }}</p>
+                    <p class="boq-field-help mb-3">{{ __('Admins are notified when the credit is low, the token limit is nearly used or the credit is about to expire. DeepSeek and OpenRouter balances can be refreshed automatically.') }}</p>
+                    <div class="boq-form-grid">
+                        <x-ui.field :label="__('Credit balance')" for="ai-credit" error="form.credit_balance">
+                            <input id="ai-credit" type="number" min="0" step="0.01" wire:model="form.credit_balance" class="boq-field" placeholder="25.00">
+                        </x-ui.field>
+                        <x-ui.field :label="__('Currency')" for="ai-credit-currency" error="form.credit_currency">
+                            <input id="ai-credit-currency" type="text" maxlength="8" wire:model="form.credit_currency" class="boq-field" placeholder="USD">
+                        </x-ui.field>
+                        <x-ui.field :label="__('Warn when credit is below')" for="ai-credit-low" error="form.low_credit_threshold">
+                            <input id="ai-credit-low" type="number" min="0" step="0.01" wire:model="form.low_credit_threshold" class="boq-field" placeholder="5.00">
+                        </x-ui.field>
+                        <x-ui.field :label="__('Credit / plan expires on')" for="ai-credit-expiry" error="form.credit_expires_at">
+                            <input id="ai-credit-expiry" type="date" wire:model="form.credit_expires_at" class="boq-field">
+                        </x-ui.field>
+                        <x-ui.field :label="__('Monthly token limit')" for="ai-token-limit" error="form.monthly_token_limit" :hint="__('Input plus output tokens. Leave empty for no limit.')" class="boq-form-span-2">
+                            <input id="ai-token-limit" type="number" min="1" wire:model="form.monthly_token_limit" class="boq-field" placeholder="1000000">
+                        </x-ui.field>
+                    </div>
+                </div>
 
                 <div class="boq-form-span-2 flex flex-wrap items-center gap-x-6 gap-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <label class="boq-check"><input type="checkbox" wire:model="form.is_enabled"> {{ __('Enabled') }}</label>

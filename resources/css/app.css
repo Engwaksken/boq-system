@@ -3141,6 +3141,98 @@ button.boq-sort-th:hover {
     }
 }
 
+
+/* ------------------------------------------------------------
+   Statistics cards: coloured left border in the card's tone.
+   ------------------------------------------------------------ */
+.boq-stat-card {
+    --boq-stat-accent: var(--boq-primary);
+    border-left: 4px solid var(--boq-stat-accent);
+}
+.boq-stat-green { --boq-stat-accent: var(--boq-success); }
+.boq-stat-blue { --boq-stat-accent: var(--boq-info); }
+.boq-stat-amber { --boq-stat-accent: var(--boq-warning); }
+.boq-stat-purple { --boq-stat-accent: var(--boq-purple); }
+.boq-stat-red { --boq-stat-accent: var(--boq-danger); }
+.boq-stat-link.is-active .boq-stat-card {
+    border-left-color: var(--boq-stat-accent);
+}
+
+/* ------------------------------------------------------------
+   Sidebar: a deep brand-coloured panel, so navigation stands
+   apart from the page. Follows the user's accent colour.
+   ------------------------------------------------------------ */
+.boq-sidebar {
+    --boq-side-text: rgb(255 255 255 / 0.78);
+    --boq-side-strong: #fff;
+    --boq-side-soft: rgb(255 255 255 / 0.5);
+    --boq-side-hover: rgb(255 255 255 / 0.08);
+    --boq-side-active: rgb(255 255 255 / 0.15);
+    --boq-side-line: rgb(255 255 255 / 0.1);
+    border-right-color: transparent;
+    background:
+        radial-gradient(120% 60% at 0% 0%, rgb(255 255 255 / 0.08), transparent 60%),
+        linear-gradient(180deg, var(--color-brand-800), var(--color-brand-900));
+    color: var(--boq-side-text);
+}
+.boq-sidebar .boq-sidebar-brand,
+.boq-sidebar .boq-sidebar-footer {
+    border-color: var(--boq-side-line);
+}
+.boq-sidebar .boq-brand,
+.boq-sidebar .boq-brand-name {
+    color: var(--boq-side-strong);
+}
+.boq-sidebar .boq-brand-tagline,
+.boq-sidebar .boq-nav-heading {
+    color: var(--boq-side-soft);
+}
+.boq-sidebar button.boq-nav-heading:hover {
+    color: var(--boq-side-strong);
+}
+.boq-sidebar .boq-brand-mark:not(:has(img)) {
+    background: rgb(255 255 255 / 0.14);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
+}
+.boq-sidebar .boq-nav-item {
+    color: var(--boq-side-text);
+}
+.boq-sidebar .boq-nav-item .boq-nav-icon {
+    color: var(--boq-side-soft);
+}
+.boq-sidebar .boq-nav-item:hover {
+    background: var(--boq-side-hover);
+    color: var(--boq-side-strong);
+}
+.boq-sidebar .boq-nav-item:hover .boq-nav-icon {
+    color: var(--boq-side-strong);
+}
+.boq-sidebar .boq-nav-item.is-active {
+    background: var(--boq-side-active);
+    color: var(--boq-side-strong);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+}
+.boq-sidebar .boq-nav-item.is-active .boq-nav-icon {
+    color: var(--color-brand-200);
+}
+.boq-sidebar .boq-nav-item.is-active::before {
+    background: var(--color-brand-300);
+}
+.boq-sidebar .boq-nav-item:focus-visible {
+    outline: 2px solid var(--color-brand-200);
+    outline-offset: 1px;
+}
+.boq-sidebar .boq-topbar-btn {
+    color: var(--boq-side-strong);
+}
+.boq-sidebar .boq-nav-badge {
+    background: rgb(255 255 255 / 0.18);
+    color: var(--boq-side-strong);
+}
+.boq-sidebar-nav {
+    scrollbar-color: rgb(255 255 255 / 0.25) transparent;
+}
+
 } /* end @layer components */
 
 /* ============================================================

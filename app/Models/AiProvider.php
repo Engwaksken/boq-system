@@ -27,6 +27,11 @@ class AiProvider extends Model
         'last_tested_at',
         'last_test_status',
         'last_test_message',
+        'credit_balance',
+        'credit_currency',
+        'credit_expires_at',
+        'monthly_token_limit',
+        'low_credit_threshold',
     ];
 
     protected $hidden = [
@@ -42,6 +47,13 @@ class AiProvider extends Model
             'is_default' => 'boolean',
             'sort_order' => 'integer',
             'last_tested_at' => 'datetime',
+            'credit_balance' => 'decimal:4',
+            'credit_expires_at' => 'date',
+            'monthly_token_limit' => 'integer',
+            'low_credit_threshold' => 'decimal:4',
+            'balance_checked_at' => 'datetime',
+            'credit_exhausted_at' => 'datetime',
+            'last_credit_alert_at' => 'datetime',
         ];
     }
 

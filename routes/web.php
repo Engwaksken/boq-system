@@ -402,6 +402,11 @@ Route::middleware('auth')->group(function (): void {
     |--------------------------------------------------------------------------
     */
 
+    // Categories are managed by admins as well as super admins.
+    Route::get('/admin/categories', \App\Livewire\Admin\CategoriesManager::class)
+        ->middleware('role:super-admin,admin')
+        ->name('admin.categories');
+
     Route::middleware(
         'role:super-admin'
     )
@@ -468,7 +473,6 @@ Route::middleware('auth')->group(function (): void {
                 RatesManager::class
             )->name('rates');
 
-            Route::get('/categories', \App\Livewire\Admin\CategoriesManager::class)->name('categories');
 
 
             /*

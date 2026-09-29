@@ -199,6 +199,13 @@ class AiProviders extends Component
                 'web_search',
                 false
             ),
+
+            // Credit tracking, so admins can top up before it runs out.
+            'credit_balance' => $provider->credit_balance !== null ? (float) $provider->credit_balance : null,
+            'credit_currency' => (string) ($provider->credit_currency ?? ''),
+            'credit_expires_at' => $provider->credit_expires_at?->format('Y-m-d'),
+            'monthly_token_limit' => $provider->monthly_token_limit,
+            'low_credit_threshold' => $provider->low_credit_threshold !== null ? (float) $provider->low_credit_threshold : null,
         ];
 
         $this->showForm = true;
@@ -351,6 +358,12 @@ class AiProviders extends Component
                         $form['web_search'] ?? false
                     ),
                 ],
+
+                'credit_balance' => filled($form['credit_balance'] ?? null) ? (float) $form['credit_balance'] : null,
+                'credit_currency' => filled($form['credit_currency'] ?? null) ? strtoupper(trim($form['credit_currency'])) : null,
+                'credit_expires_at' => filled($form['credit_expires_at'] ?? null) ? $form['credit_expires_at'] : null,
+                'monthly_token_limit' => filled($form['monthly_token_limit'] ?? null) ? (int) $form['monthly_token_limit'] : null,
+                'low_credit_threshold' => filled($form['low_credit_threshold'] ?? null) ? (float) $form['low_credit_threshold'] : null,
 
                 'updated_by' => auth()->id(),
             ];
@@ -705,7 +718,30 @@ class AiProviders extends Component
             'form.web_search' => [
                 'boolean',
             ],
+
+            'form.credit_balance' => ['nullable', 'numeric', 'min:0', 'max:9999999999'],
+            'form.credit_currency' => ['nullable', 'string', 'max:8'],
+            'form.credit_expires_at' => ['nullable', 'date'],
+            'form.monthly_token_limit' => ['nullable', 'integer', 'min:1', 'max:1000000000000'],
+            'form.low_credit_threshold' => ['nullable', 'numeric', 'min:0', 'max:9999999999'],
         ];
+    }
+
+    /** Reads the live balance for providers that report it (DeepSeek, OpenRouter). */
+    public function refreshBalance(int $id, \App\Services\AiUsageMonitor $monitor): void
+    {
+        $provider = AiProvider::query()->findOrFail($id);
+
+        session()->flash('message', $monitor->refreshBalance($provider)
+            ? __('Balance updated for :name.', ['name' => $provider->name])
+            : __(':name does not report its balance automatically. Enter the credit and expiry date in the provider settings.', ['name' => $provider->name]));
+    }
+
+    /** After a top-up: let the provider be used again straight away. */
+    public function clearCreditWarning(int $id): void
+    {
+        AiProvider::query()->whereKey($id)->update(['credit_exhausted_at' => null, 'last_credit_alert_at' => null]);
+        session()->flash('message', __('Credit warning cleared. The provider will be used again.'));
     }
 
     protected function validationMessages(): array
@@ -828,6 +864,12 @@ class AiProviders extends Component
             'max_tokens' => null,
 
             'web_search' => false,
+
+            'credit_balance' => null,
+            'credit_currency' => '',
+            'credit_expires_at' => null,
+            'monthly_token_limit' => null,
+            'low_credit_threshold' => null,
         ];
     }
 
@@ -924,11 +966,23 @@ class AiProviders extends Component
                 $this->perPage
             );
 
+        $monitor = app(\App\Services\AiUsageMonitor::class);
+        $usage = $monitor->monthlyUsage($providers->getCollection());
+        $creditStatus = $providers->getCollection()
+            ->mapWithKeys(fn (AiProvider $provider) => [$provider->id => $monitor->status($provider, $usage[$provider->id])])
+            ->all();
+
         return view(
             'livewire.admin.ai-providers',
             [
                 'providers' =>
                     $providers,
+
+                'usage' =>
+                    $usage,
+
+                'creditStatus' =>
+                    $creditStatus,
 
                 'providerTypes' =>
                     $this->providerTypes(),
