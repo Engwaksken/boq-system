@@ -1,6 +1,7 @@
 import './bootstrap';
 import './pwa';
 import './autohide';
+import './signature-pad';
 import Webpass from '@laragear/webpass';
 
 /*

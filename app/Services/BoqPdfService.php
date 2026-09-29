@@ -28,15 +28,56 @@ class BoqPdfService
         return $this->pdf($boq)->output();
     }
 
+    /** The document's HTML before the PDF layout (also handy for checks). */
+    public function html(Boq $boq): string
+    {
+        $this->freezeBranding($boq);
+
+        $boq->loadMissing(['project', 'owner']);
+        $company = $boq->brandingIdentity() ?? [];
+
+        return view('pdf.boq', $this->totals($boq) + [
+            'boq' => $boq,
+            'project' => $boq->project,
+            'company' => $company,
+            'logo' => $this->logoDataUri($company['logo_path'] ?? null),
+            'preparedBy' => $boq->owner?->name,
+            'signatures' => $this->signatures($boq),
+            'generatedAt' => now(),
+        ])->render();
+    }
+
     public function pdf(Boq $boq): \Barryvdh\DomPDF\PDF
     {
         ini_set('memory_limit', '1024M');
         set_time_limit(300);
 
-        $this->freezeBranding($boq);
+        $pdf = Pdf::loadHTML($this->html($boq))
+            ->setPaper('a4', 'portrait')
+            ->setOption(['isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans']);
 
-        $boq->loadMissing(['project', 'owner']);
-        $company = $boq->brandingIdentity() ?? [];
+        // "Page X of Y": the total is only known after layout (CSS counter(pages)
+        // is not supported), so it is stamped on every page once rendered.
+        $pdf->render();
+        $dompdf = $pdf->getDomPDF();
+        $canvas = $dompdf->getCanvas();
+        $font = $dompdf->getFontMetrics()->getFont('DejaVu Sans');
+        $label = __('Page :current of :total', ['current' => '{PAGE_NUM}', 'total' => '{PAGE_COUNT}']);
+        $size = 6;
+        $width = $dompdf->getFontMetrics()->getTextWidth(str_replace(['{PAGE_NUM}', '{PAGE_COUNT}'], ['00', '00'], $label), $font, $size);
+        $canvas->page_text($canvas->get_width() - 27 - $width, $canvas->get_height() - 34.5, $label, $font, $size, [0.39, 0.45, 0.55]);
+
+        return $pdf;
+    }
+
+    /**
+     * The priced lines and totals exactly as the PDF shows them (also used for
+     * the summary on the client signing page).
+     *
+     * @return array{lines: \Illuminate\Support\Collection, subtotal: float, taxRate: float, taxLabel: string, tax: float, total: float, currency: string}
+     */
+    public function totals(Boq $boq): array
+    {
         $items = $boq->items()->orderBy('id')->get();
 
         $lines = $items->map(function ($item) {
@@ -61,11 +102,7 @@ class BoqPdfService
         $taxLabel = (string) ($boq->metadata['tax_label'] ?? SiteSetting::get('tax_label', 'VAT'));
         $tax = $taxRate > 0 ? round($subtotal * $taxRate / 100, 2) : 0.0;
 
-        return Pdf::loadView('pdf.boq', [
-            'boq' => $boq,
-            'project' => $boq->project,
-            'company' => $company,
-            'logo' => $this->logoDataUri($company['logo_path'] ?? null),
+        return [
             'lines' => $lines,
             'subtotal' => $subtotal,
             'taxRate' => $taxRate,
@@ -73,11 +110,7 @@ class BoqPdfService
             'tax' => $tax,
             'total' => $subtotal + $tax,
             'currency' => $boq->currency ?: \App\Support\Regional::currency(),
-            'preparedBy' => $boq->owner?->name,
-            'generatedAt' => now(),
-        ])
-            ->setPaper('a4', 'portrait')
-            ->setOption(['isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans']);
+        ];
     }
 
     /**
@@ -108,6 +141,37 @@ class BoqPdfService
         $boq->forceFill(['company_snapshot' => $snapshot])->saveQuietly();
     }
 
+    /**
+     * The preparer and client sign-off, with signature images embedded as data
+     * URIs (dompdf has remote loading disabled). Missing parts stay null so the
+     * PDF prints a blank line to sign by hand.
+     *
+     * @return array<string, array{name: ?string, title: ?string, date: mixed, image: ?string, remote: bool}>
+     */
+    private function signatures(Boq $boq): array
+    {
+        $signed = $boq->signatures()->get()->keyBy('role');
+        $block = [];
+
+        foreach (\App\Models\BoqSignature::ROLES as $role) {
+            $signature = $signed->get($role);
+
+            $block[$role] = [
+                'name' => $signature?->name,
+                'title' => $signature?->title,
+                'date' => $signature?->signed_at,
+                'image' => $signature ? $this->logoDataUri($signature->image_path) : null,
+                'remote' => (bool) $signature?->signedRemotely(),
+            ];
+        }
+
+        return $block;
+    }
+
+    /**
+     * An image on the public disk (or "local:" path) as a data URI; also used
+     * for signature images.
+     */
     private function logoDataUri(?string $path): ?string
     {
         if (! $path) {

@@ -90,6 +90,16 @@ Route::get('/shared/boqs/{boq}/pdf', function (\App\Models\Boq $boq, \App\Servic
     }
 })->middleware(['signed', 'throttle:30,1'])->name('boqs.shared-pdf');
 
+// One-time, 14-day signed links that let a client review and sign a BOQ without an account.
+Route::get('/sign/boqs/{token}', [\App\Http\Controllers\BoqClientSignatureController::class, 'show'])
+    ->where('token', '[A-Za-z0-9]{32,64}')
+    ->middleware('throttle:30,1')
+    ->name('boqs.client-sign');
+Route::post('/sign/boqs/{token}', [\App\Http\Controllers\BoqClientSignatureController::class, 'store'])
+    ->where('token', '[A-Za-z0-9]{32,64}')
+    ->middleware('throttle:10,1')
+    ->name('boqs.client-sign.store');
+
 Route::get('/privacy-policy', [LegalPageController::class, 'privacy'])->name('legal.privacy');
 Route::get('/terms-of-use', [LegalPageController::class, 'terms'])->name('legal.terms');
 
@@ -251,6 +261,11 @@ Route::middleware('auth')->group(function (): void {
     })
         ->middleware('entitlement:boq.management')
         ->name('boqs.estimates-template');
+
+    // Private copies of the physically signed BOQ (BoqPolicy::view).
+    Route::get('/boqs/{boq}/signed-documents/{document}', [\App\Http\Controllers\BoqSignedDocumentController::class, 'download'])
+        ->middleware('entitlement:boq.management')
+        ->name('boqs.signed-documents.download');
 
 
     /*

@@ -169,6 +169,14 @@ class User extends Authenticatable implements WebAuthnAuthenticatable
             : null;
     }
 
+    /** The user's saved default signature (public disk), for reuse on any BOQ. */
+    public function signatureUrl(): ?string
+    {
+        return $this->signature_path
+            ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->signature_path)
+            : null;
+    }
+
     public function companyProfile(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(CompanyProfile::class);

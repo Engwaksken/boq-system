@@ -24,6 +24,7 @@ class Index extends Component
         'notifications' => 'Notifications',
         'hardware-bookmarks' => 'Hardware Bookmarks',
         'company' => 'Company Profile',
+        'signature' => 'Signature',
     ];
 
     /** @var array<string, string|null> */

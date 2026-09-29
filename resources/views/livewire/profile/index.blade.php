@@ -6,6 +6,7 @@
         'notifications' => 'fa-bell',
         'hardware-bookmarks' => 'fa-bookmark',
         'company' => 'fa-building',
+        'signature' => 'fa-signature',
     ];
     $initials = collect(preg_split('/\s+/', trim((string) ($user->name ?? ''))) ?: [])
         ->filter()->take(2)->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('') ?: 'U';
@@ -72,6 +73,10 @@
 
                     @case('company')
                         @include('livewire.profile.partials.company')
+                        @break
+
+                    @case('signature')
+                        <livewire:profile.signature wire:key="profile-signature" />
                         @break
 
                     @case('security')

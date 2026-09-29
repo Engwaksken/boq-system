@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Boq extends Model
@@ -153,5 +154,39 @@ class Boq extends Model
     public function summaries(): HasMany
     {
         return $this->hasMany(BoqSummary::class);
+    }
+
+    /**
+     * Sign-offs on this BOQ (at most one preparer and one client signature).
+     */
+    public function signatures(): HasMany
+    {
+        return $this->hasMany(BoqSignature::class);
+    }
+
+    public function preparerSignature(): HasOne
+    {
+        return $this->hasOne(BoqSignature::class)->where('role', BoqSignature::ROLE_PREPARER);
+    }
+
+    public function clientSignature(): HasOne
+    {
+        return $this->hasOne(BoqSignature::class)->where('role', BoqSignature::ROLE_CLIENT);
+    }
+
+    /**
+     * Links sent to the client to sign this BOQ remotely.
+     */
+    public function signatureRequests(): HasMany
+    {
+        return $this->hasMany(SignatureRequest::class);
+    }
+
+    /**
+     * Uploaded copies of the physically signed BOQ, newest first.
+     */
+    public function signedDocuments(): HasMany
+    {
+        return $this->hasMany(BoqSignedDocument::class)->latest()->latest('id');
     }
 }
