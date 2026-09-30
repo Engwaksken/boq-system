@@ -183,6 +183,17 @@ Route::prefix('v1')->group(function () {
                 ->name('api.v1.pricing-jobs.unlock');
         });
 
+        // Supplier & factory ratings (top 10, performance charts, rating)
+        Route::middleware('permission:hardware-prices.view')->prefix('supplier-ratings')->group(function () {
+            Route::get('leaderboard', [\App\Http\Controllers\Api\SupplierRatingController::class, 'leaderboard'])->name('api.v1.supplier-ratings.leaderboard');
+            Route::get('summary', [\App\Http\Controllers\Api\SupplierRatingController::class, 'summary'])->name('api.v1.supplier-ratings.summary');
+            Route::get('mine', [\App\Http\Controllers\Api\SupplierRatingController::class, 'mine'])->name('api.v1.supplier-ratings.mine');
+            Route::get('suppliers', [\App\Http\Controllers\Api\SupplierRatingController::class, 'suppliers'])->name('api.v1.supplier-ratings.suppliers');
+            Route::get('suppliers/{supplier}', [\App\Http\Controllers\Api\SupplierRatingController::class, 'show'])->name('api.v1.supplier-ratings.show');
+            Route::post('suppliers/{supplier}', [\App\Http\Controllers\Api\SupplierRatingController::class, 'store'])->middleware('throttle:30,1')->name('api.v1.supplier-ratings.store');
+            Route::patch('{rating}/visibility', [\App\Http\Controllers\Api\SupplierRatingController::class, 'visibility'])->name('api.v1.supplier-ratings.visibility');
+        });
+
         // Hardware Prices
         // Category filter is available to any authenticated user (mobile client filter dropdown).
         Route::get('hardware-prices/categories', [HardwarePriceController::class, 'categories']);

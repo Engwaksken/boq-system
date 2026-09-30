@@ -31,6 +31,7 @@ use App\Livewire\Dashboard;
 
 use App\Livewire\HardwarePrices\Compare as HardwarePricesCompare;
 use App\Livewire\HardwarePrices\Index as HardwarePricesIndex;
+use App\Livewire\SupplierRatings\Index as SupplierRatingsIndex;
 use App\Livewire\HardwarePrices\Recommendations as HardwarePricesRecommendations;
 use App\Livewire\HardwarePrices\Show as HardwarePricesShow;
 
@@ -287,6 +288,13 @@ Route::middleware('auth')->group(function (): void {
             '/hardware-prices',
             HardwarePricesIndex::class
         )->name('hardware-prices.index');
+
+
+        // Users rate hardware suppliers and factories; top 10 and performance charts.
+        Route::get(
+            '/supplier-ratings',
+            SupplierRatingsIndex::class
+        )->name('supplier-ratings.index');
 
 
         Route::get(

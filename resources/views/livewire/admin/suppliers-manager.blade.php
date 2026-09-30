@@ -97,6 +97,7 @@
                         <th>{{ __('Location') }}</th>
                         <th>{{ __('Rates') }}</th>
                         <th>{{ __('Prices') }}</th>
+                        <th>{{ __('Rating') }}</th>
                         <th>{{ __('Status') }}</th>
                         <th class="text-right">{{ __('Actions') }}</th>
                     </tr>
@@ -135,6 +136,13 @@
                                     <div class="boq-table-subtitle">{{ __('Scanned') }} {{ \Illuminate\Support\Carbon::parse($scanned)->diffForHumans() }}</div>
                                 @endif
                             </td>
+                            <td>
+                                @if($supplier->ratings_count)
+                                    <a href="{{ route('supplier-ratings.index', ['supplier' => $supplier->id]) }}" class="boq-table-link"><x-stars :value="$supplier->rating" :count="$supplier->ratings_count" /></a>
+                                @else
+                                    <span class="text-xs text-slate-400">{{ __('Not rated') }}</span>
+                                @endif
+                            </td>
                             <td><x-ui.status :status="$supplier->is_active ? 'active' : 'inactive'" /></td>
                             <td>
                                 <div class="boq-table-actions justify-end">
@@ -150,7 +158,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="10" class="p-0"><x-ui.empty-state icon="fa-truck" :title="__('No suppliers found.')" /></td></tr>
+                        <tr><td colspan="11" class="p-0"><x-ui.empty-state icon="fa-truck" :title="__('No suppliers found.')" /></td></tr>
                     @endforelse
                 </tbody>
             </table>

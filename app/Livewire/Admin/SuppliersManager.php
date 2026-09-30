@@ -166,6 +166,10 @@ class SuppliersManager extends Component
 
         if ($this->editingId) {
             $supplier = Supplier::findOrFail($this->editingId);
+            // Once users have rated it, the rating is their average.
+            if ($supplier->ratings_count > 0) {
+                unset($payload['rating']);
+            }
             $supplier->update($payload);
         } else {
             // The code is required when the row is inserted.

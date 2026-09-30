@@ -56,9 +56,16 @@ class Supplier extends Model
             'name_translations' => 'array',
             'notes_translations' => 'array',
             'rating' => 'decimal:2',
+            'ratings_count' => 'integer',
             'is_active' => 'boolean',
             'metadata' => 'array',
         ];
+    }
+
+    /** Ratings users gave this supplier or factory (not the rate library). */
+    public function userRatings(): HasMany
+    {
+        return $this->hasMany(SupplierRating::class);
     }
 
     /**

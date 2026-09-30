@@ -4453,3 +4453,62 @@ select.auth-field {
     }
 }
 
+
+/* ---------------------------------------------------------------- ratings & charts */
+@layer components {
+    .boq-stars { display: inline-flex; align-items: center; gap: 0.1rem; color: #f59e0b; white-space: nowrap; font-size: 0.8rem; }
+    .boq-stars .far { color: var(--boq-border-strong); }
+    .boq-stars-md { font-size: 1rem; }
+    .boq-stars-lg { font-size: 1.35rem; }
+    .boq-stars-value { margin-left: 0.3rem; color: var(--boq-text); font-weight: 600; }
+    .boq-stars-count { margin-left: 0.2rem; color: var(--boq-text-muted); font-size: 0.75rem; }
+
+    .boq-star-input { display: inline-flex; align-items: center; gap: 0.15rem; }
+    .boq-star-input button { padding: 0.1rem; color: var(--boq-border-strong); line-height: 1; border-radius: var(--boq-radius-sm); }
+    .boq-star-input button.is-on { color: #f59e0b; }
+    .boq-star-input button:focus-visible { outline: 2px solid var(--boq-primary); outline-offset: 2px; }
+    .boq-star-input-text { margin-left: 0.5rem; font-size: 0.8rem; color: var(--boq-text-muted); }
+
+    .boq-rank { display: inline-flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; border-radius: 999px; background: var(--boq-surface-sunken); color: var(--boq-text-secondary); font-weight: 700; font-size: 0.8rem; }
+    .boq-rank-gold { background: #fde68a; color: #78350f; }
+    .boq-rank-silver { background: #e2e8f0; color: #334155; }
+    .boq-rank-bronze { background: #fed7aa; color: #7c2d12; }
+
+    .boq-chart { margin: 0; min-width: 0; }
+    .boq-chart-empty { padding: 1.5rem 0; text-align: center; font-size: 0.875rem; color: var(--boq-text-muted); }
+
+    .boq-chart-bars { display: grid; gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
+    .boq-chart-bar-row { display: grid; grid-template-columns: minmax(6rem, 34%) 1fr 2.75rem; align-items: center; gap: 0.6rem; }
+    .boq-chart-bar-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8rem; color: var(--boq-text-body); }
+    .boq-chart-bar-label small { display: block; font-size: 0.7rem; color: var(--boq-text-muted); }
+    .boq-chart-bar-track { height: 0.7rem; border-radius: 999px; background: var(--boq-surface-sunken); overflow: hidden; }
+    .boq-chart-bar-fill { display: block; height: 100%; border-radius: 999px; transition: width 0.4s ease; }
+    .boq-chart-bar-value { text-align: right; font-size: 0.8rem; font-weight: 600; color: var(--boq-text); font-variant-numeric: tabular-nums; }
+
+    .boq-chart-pie { display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem; }
+    .boq-chart-pie-svg { width: 9.5rem; height: 9.5rem; flex: none; transform: none; }
+    .boq-chart-pie-center { font-size: 0.5rem; font-weight: 700; fill: var(--boq-text); }
+    .boq-chart-pie-center-label { font-size: 0.22rem; fill: var(--boq-text-muted); text-transform: uppercase; letter-spacing: 0.02em; }
+
+    .boq-chart-legend { display: grid; gap: 0.4rem; flex: 1; min-width: 10rem; margin: 0; padding: 0; list-style: none; font-size: 0.8rem; }
+    .boq-chart-legend li { display: flex; align-items: center; gap: 0.5rem; }
+    .boq-chart-legend-label { flex: 1; color: var(--boq-text-body); }
+    .boq-chart-legend-value { color: var(--boq-text-muted); font-variant-numeric: tabular-nums; }
+    .boq-chart-legend-inline { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 0.5rem; color: var(--boq-text-muted); }
+    .boq-chart-legend-inline > span { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .boq-chart-swatch { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 3px; flex: none; }
+    .boq-chart-swatch-line { height: 3px; width: 1rem; background: var(--boq-primary); }
+    .boq-chart-swatch-column { background: color-mix(in srgb, var(--boq-info) 25%, transparent); }
+
+    .boq-chart-line-svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .boq-chart-grid { stroke: var(--boq-border); stroke-width: 1; }
+    .boq-chart-axis { font-size: 10px; fill: var(--boq-text-muted); }
+    .boq-chart-column { fill: color-mix(in srgb, var(--boq-info) 25%, transparent); }
+    .boq-chart-polyline { fill: none; stroke: var(--boq-primary); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+    .boq-chart-dot { fill: var(--boq-surface); stroke: var(--boq-primary); stroke-width: 2.5; }
+
+    @media (max-width: 480px) {
+        .boq-chart-bar-row { grid-template-columns: minmax(5rem, 40%) 1fr 2.5rem; }
+        .boq-chart-pie { justify-content: center; }
+    }
+}

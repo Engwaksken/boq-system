@@ -51,6 +51,7 @@
                     $item('Projects', 'projects.index', 'fa-folder-open', $authUser->hasPermission('projects.view'), 'projects.*'),
                     $item('BOQs', 'boqs.index', 'fa-file-invoice-dollar', $authUser->hasPermission('boq.view'), 'boqs.*'),
                     $item('Get Prices', 'hardware-prices.index', 'fa-tags', $authUser->hasPermission('hardware-prices.view'), 'hardware-prices.*'),
+                    $item('Top Suppliers', 'supplier-ratings.index', 'fa-ranking-star', $authUser->hasPermission('hardware-prices.view'), 'supplier-ratings.*'),
                 ],
             ],
             [
