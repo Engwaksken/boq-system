@@ -318,7 +318,6 @@ class Show extends Component
      */
     public function priceSelected(BoqProcessingService $processor): void
     {
-        $user = auth()->user()->fresh();
         $boq = $this->authorisedBoq('boq.edit');
 
         $ids = $boq->items()
@@ -330,6 +329,58 @@ class Show extends Component
 
         if ($ids === []) {
             session()->flash('message', __('Select items that are not approved to get their prices.'));
+
+            return;
+        }
+
+        $this->startPricing($processor, $boq, $ids);
+    }
+
+    /** Scan the price of one item that has no suggested price (or a new one). */
+    public function scanItem(int $itemId, BoqProcessingService $processor): void
+    {
+        $boq = $this->authorisedBoq('boq.edit');
+        $item = $boq->items()->whereKey($itemId)->firstOrFail();
+
+        if ($item->status === 'approved') {
+            session()->flash('message', __('Approved items keep their price.'));
+
+            return;
+        }
+
+        $this->startPricing($processor, $boq, [$item->id]);
+    }
+
+    /** Scan prices for every item of this BOQ that has no suggested price. */
+    public function scanUnpriced(BoqProcessingService $processor): void
+    {
+        $boq = $this->authorisedBoq('boq.edit');
+        $ids = $this->unpricedQuery($boq->items())->orderBy('id')->pluck('id')->all();
+
+        if ($ids === []) {
+            session()->flash('message', __('Every item already has a suggested price.'));
+
+            return;
+        }
+
+        $this->startPricing($processor, $boq, $ids);
+    }
+
+    /** Items without a suggested price that can still be priced (not approved). */
+    private function unpricedQuery($query)
+    {
+        return $query
+            ->where(fn ($q) => $q->whereNull('ai_suggested_rate')->orWhere('ai_suggested_rate', '<=', 0))
+            ->where(fn ($q) => $q->whereNull('status')->orWhere('status', '!=', 'approved'));
+    }
+
+    /** @param  list<int>  $ids */
+    private function startPricing(BoqProcessingService $processor, Boq $boq, array $ids): void
+    {
+        $user = auth()->user()->fresh();
+
+        if ($this->isProcessing) {
+            session()->flash('message', __('Prices are already being fetched for this BOQ. Wait for it to finish, then scan again.'));
 
             return;
         }
@@ -1422,6 +1473,11 @@ class Show extends Component
                 )
 
                 ->when(
+                    $this->itemStatus === 'unpriced',
+                    fn ($query) => $this->unpricedQuery($query)
+                )
+
+                ->when(
                     in_array(
                         $this->itemStatus,
                         [
@@ -1476,6 +1532,9 @@ class Show extends Component
                 ->selectRaw(
                     "SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected"
                 )
+                ->selectRaw(
+                    "SUM(CASE WHEN (ai_suggested_rate IS NULL OR ai_suggested_rate <= 0) AND (status IS NULL OR status != 'approved') THEN 1 ELSE 0 END) as unpriced"
+                )
                 ->first();
 
         $itemStats = [
@@ -1527,6 +1586,8 @@ class Show extends Component
                     $stats->rejected
                     ?? 0
                 ),
+
+            'unpriced' => (int) ($stats->unpriced ?? 0),
         ];
 
         return view(

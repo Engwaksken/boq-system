@@ -114,4 +114,50 @@ class ChunkedBoqPricingTest extends TestCase
         $this->assertSame([$chosen->id, $alsoChosen->id], $batch->item_ids);
         $this->assertSame(2, $batch->total_items);
     }
+    public function test_items_without_a_suggested_price_can_be_filtered_and_scanned(): void
+    {
+        [$unpriced, $failed] = $this->items(2);
+        $failed->forceFill(['pricing_status' => 'failed', 'pricing_error' => 'No market price was found.'])->save();
+        $priced = $this->items(1, ['ai_suggested_rate' => 30000, 'description' => 'Already priced sand'])[0];
+        $approved = $this->items(1, ['status' => 'approved', 'approved_rate' => 1000, 'description' => 'Approved steel'])[0];
+
+        $page = Livewire::actingAs($this->user)
+            ->test(Show::class, ['boq' => $this->boq])
+            ->assertSee('No price yet')
+            ->assertSee('No price found')
+            ->assertSee('No market price was found.')
+            ->assertSee('Scan all 2 unpriced items')
+            ->set('itemStatus', 'unpriced')
+            ->assertDontSee('Already priced sand')
+            ->assertDontSee('Approved steel');
+        $this->assertSame(2, $page->viewData('itemStats')['unpriced']);
+        $this->assertSame(2, $page->viewData('items')->total());
+
+        // One item.
+        $page->call('scanItem', $unpriced->id);
+        $this->assertEquals(36000, (float) $unpriced->fresh()->ai_suggested_rate);
+        $this->assertNull($failed->fresh()->ai_suggested_rate);
+
+        // Every remaining unpriced item; priced and approved ones are left alone.
+        Livewire::actingAs($this->user)->test(Show::class, ['boq' => $this->boq])->call('scanUnpriced');
+        $this->assertEquals(36000, (float) $failed->fresh()->ai_suggested_rate);
+        $this->assertEquals(30000, (float) $priced->fresh()->ai_suggested_rate);
+        $this->assertNull($approved->fresh()->ai_suggested_rate);
+
+        Livewire::actingAs($this->user)->test(Show::class, ['boq' => $this->boq])
+            ->assertDontSee('unpriced items')
+            ->call('scanUnpriced')
+            ->assertSee('Every item already has a suggested price.');
+    }
+
+    public function test_approved_items_are_not_scanned_one_by_one(): void
+    {
+        $approved = $this->items(1, ['status' => 'approved', 'approved_rate' => 1000])[0];
+
+        Livewire::actingAs($this->user)->test(Show::class, ['boq' => $this->boq])
+            ->call('scanItem', $approved->id)
+            ->assertSee('Approved items keep their price.');
+
+        $this->assertNull($approved->fresh()->ai_suggested_rate);
+    }
 }

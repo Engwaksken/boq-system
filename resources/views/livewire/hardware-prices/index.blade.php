@@ -1,5 +1,5 @@
 @php
-    $hasFilters = $search !== '' || $priceType !== '' || filled($category) || filled($supplier) || filled($location) || filled($brand) || $updated !== '' || $sort !== 'latest';
+    $hasFilters = $search !== '' || $priceType !== '' || filled($category) || filled($supplier) || filled($location) || filled($region) || filled($brand) || $updated !== '' || $sort !== 'latest';
 @endphp
 
 <div class="boq-page-stack">
@@ -95,13 +95,22 @@
                     </select>
                 </x-ui.field>
 
-                <x-ui.field :label="__('Location')" for="price-location">
-                    <select id="price-location" wire:model.live="location" class="boq-field">
-                        <option value="">{{ __('All Locations') }}</option>
-                        @foreach($locations as $locationOption)
-                            <option value="{{ $locationOption }}">{{ $locationOption }}</option>
+                <x-ui.field :label="__('Region')" for="price-region">
+                    <select id="price-region" wire:model.live="region" class="boq-field">
+                        <option value="">{{ __('All Regions') }}</option>
+                        @foreach($regions as $regionOption)
+                            <option value="{{ $regionOption }}">{{ $regionOption }}</option>
                         @endforeach
                     </select>
+                </x-ui.field>
+
+                <x-ui.field :label="__('Location')" for="price-location">
+                    <input id="price-location" type="search" list="price-location-options" wire:model.live.debounce.400ms="location" class="boq-field" placeholder="{{ __('Search location or region...') }}" autocomplete="off">
+                    <datalist id="price-location-options">
+                        @foreach($locations as $locationOption)
+                            <option value="{{ $locationOption }}"></option>
+                        @endforeach
+                    </datalist>
                 </x-ui.field>
 
                 <x-ui.field :label="__('Brand')" for="price-brand">
@@ -239,6 +248,9 @@
                         <td>
                             @if($price->location)
                                 <span class="boq-cell-with-icon"><i class="fas fa-location-dot" aria-hidden="true"></i> {{ $price->location }}</span>
+                                @if($price->region && strcasecmp($price->region, $price->location) !== 0)
+                                    <div class="boq-table-subtitle">{{ $price->region }}</div>
+                                @endif
                             @else
                                 <span class="boq-table-empty">—</span>
                             @endif
@@ -381,6 +393,11 @@
 
                 <x-ui.field :label="__('Location')" for="form-location" error="form.location">
                     <input id="form-location" wire:model="form.location" class="boq-field @error('form.location') has-error @enderror" placeholder="{{ __('e.g. city, town or market') }}">
+                </x-ui.field>
+
+                <x-ui.field :label="__('Region')" for="form-region" error="form.region" :hint="__('Leave empty to take the region from the supplier or the location.')">
+                    <input id="form-region" wire:model="form.region" list="price-region-options" class="boq-field @error('form.region') has-error @enderror" placeholder="{{ __('e.g. Central region') }}">
+                    <datalist id="price-region-options">@foreach($regions as $regionOption)<option value="{{ $regionOption }}"></option>@endforeach</datalist>
                 </x-ui.field>
 
                 <x-ui.field :label="__('Specification')" for="form-specification" error="form.specification" class="boq-form-span-2">

@@ -207,6 +207,7 @@ class HardwarePriceManager
                     'currency',
                     'supplier',
                     'location',
+                    'region',
                     'source_url',
                     'source_reference',
                     'fetched_at',
@@ -229,6 +230,7 @@ class HardwarePriceManager
                 'currency',
                 'supplier',
                 'location',
+                'region',
                 'source_url',
                 'source_reference',
             ]
@@ -255,6 +257,7 @@ class HardwarePriceManager
                 'brand',
                 'specification',
                 'location',
+                'region',
                 'source_url',
                 'source_reference',
             ]
@@ -335,6 +338,12 @@ class HardwarePriceManager
                     'nullable',
                     'string',
                     'max:150',
+                ],
+
+                'region' => [
+                    'nullable',
+                    'string',
+                    'max:100',
                 ],
 
                 'source_url' => [

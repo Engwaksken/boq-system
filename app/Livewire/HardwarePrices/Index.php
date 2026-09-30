@@ -37,8 +37,12 @@ class Index extends Component
     #[Url]
     public ?string $supplier = null;
 
+    /** Location search: part of a location or region name. */
     #[Url]
     public ?string $location = null;
+
+    #[Url]
+    public ?string $region = null;
 
     #[Url]
     public ?string $brand = null;
@@ -111,12 +115,19 @@ class Index extends Component
 
     public function clearFilters(): void
     {
-        $this->reset(['search', 'priceType', 'category', 'supplier', 'location', 'brand', 'updated', 'sort']);
+        $this->reset(['search', 'priceType', 'category', 'supplier', 'location', 'region', 'brand', 'updated', 'sort']);
         $this->resetPage();
     }
 
     public function updatedLocation(): void
     {
+        $this->resetPage();
+    }
+
+    public function updatedRegion(): void
+    {
+        // A location from another region would hide everything.
+        $this->location = null;
         $this->resetPage();
     }
 
@@ -264,6 +275,9 @@ class Index extends Component
 
             'location' =>
                 $price->location,
+
+            'region' =>
+                $price->region,
 
             'source_url' =>
                 $price->source_url,
@@ -589,11 +603,12 @@ class Index extends Component
                         )
                 )
                 ->when(
-                    $this->location,
-                    fn ($query) =>
-                        $query->byLocation(
-                            $this->location
-                        )
+                    filled($this->region),
+                    fn ($query) => $query->inRegion($this->region)
+                )
+                ->when(
+                    filled(trim((string) $this->location)),
+                    fn ($query) => $query->locationLike($this->location)
                 )
                 ->when(
                     filled($this->brand),
@@ -658,12 +673,15 @@ class Index extends Component
                 ->filter()
                 ->values();
 
+        $regions = HardwarePrice::regionsOf((clone $baseQuery)->where('is_active', true));
+
         $locations =
             (clone $baseQuery)
                 ->where(
                     'is_active',
                     true
                 )
+                ->when(filled($this->region), fn ($q) => $q->where('region', $this->region))
                 ->distinct()
                 ->orderBy('location')
                 ->pluck('location')
@@ -724,6 +742,9 @@ class Index extends Component
 
                 'locations' =>
                     $locations,
+
+                'regions' =>
+                    $regions,
 
                 'canManage' =>
                     $canManage,
@@ -795,6 +816,7 @@ class Index extends Component
             'currency' => \App\Support\Regional::currency(),
             'supplier' => '',
             'location' => '',
+            'region' => '',
             'source_url' => '',
             'source_reference' => '',
             'fetched_at' =>

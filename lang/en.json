@@ -1680,5 +1680,20 @@
     "Delivery": "Delivery",
     "Service": "Service",
     "Top Suppliers": "Top Suppliers",
-    ":count supplier rated|:count suppliers rated": ":count supplier rated|:count suppliers rated"
+    ":count supplier rated|:count suppliers rated": ":count supplier rated|:count suppliers rated",
+    "Approved items keep their price.": "Approved items keep their price.",
+    "Every item already has a suggested price.": "Every item already has a suggested price.",
+    "Prices are already being fetched for this BOQ. Wait for it to finish, then scan again.": "Prices are already being fetched for this BOQ. Wait for it to finish, then scan again.",
+    "No price": "No price",
+    "No suggested price": "No suggested price",
+    "Scan prices for every item without a suggested price": "Scan prices for every item without a suggested price",
+    "Scan :count unpriced item|Scan all :count unpriced items": "Scan :count unpriced item|Scan all :count unpriced items",
+    "No price found": "No price found",
+    "No price yet": "No price yet",
+    "Scan again": "Scan again",
+    "Scan price": "Scan price",
+    "All Regions": "All Regions",
+    "Search location or region...": "Search location or region...",
+    "per :unit": "per :unit",
+    "Leave empty to take the region from the supplier or the location.": "Leave empty to take the region from the supplier or the location."
 }

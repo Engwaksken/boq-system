@@ -32,8 +32,17 @@ class HardwarePriceController extends Controller
             $query->bySupplier($request->supplier);
         }
 
+        // location: an exact location or region name; location_search: part of either.
         if ($request->filled('location')) {
             $query->byLocation($request->location);
+        }
+
+        if ($request->filled('region')) {
+            $query->inRegion((string) $request->input('region'));
+        }
+
+        if ($request->filled('location_search')) {
+            $query->locationLike((string) $request->input('location_search'));
         }
 
         if (in_array($request->input('price_type'), [HardwarePrice::TYPE_HARDWARE, HardwarePrice::TYPE_FACTORY], true)) {
@@ -165,6 +174,7 @@ class HardwarePriceController extends Controller
                 'currency' => $item->currency,
                 'supplier' => $item->supplier,
                 'location' => $item->location,
+                'region' => $item->region,
                 'source_reference' => $item->source_reference,
                 'fetched_at' => $item->fetched_at?->format('Y-m-d H:i'),
                 'price_history' => [
@@ -263,6 +273,7 @@ class HardwarePriceController extends Controller
                 'currency' => $item->currency,
                 'supplier' => $item->supplier,
                 'location' => $item->location,
+                'region' => $item->region,
                 'source_reference' => $item->source_reference,
                 'fetched_at' => $item->fetched_at->format('Y-m-d H:i'),
                 'rating' => $rating,
@@ -432,6 +443,7 @@ class HardwarePriceController extends Controller
             'data' => [
                 'suppliers' => $distinct('supplier'),
                 'locations' => $distinct('location'),
+                'regions' => $distinct('region'),
                 'brands' => $distinct('brand'),
             ],
         ]);

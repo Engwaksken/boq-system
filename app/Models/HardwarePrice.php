@@ -31,6 +31,7 @@ class HardwarePrice extends Model
         'supplier',
         'supplier_id',
         'location',
+        'region',
         'source_url',
         'source_reference',
         'fetched_at',
@@ -46,6 +47,47 @@ class HardwarePrice extends Model
         'is_active' => 'boolean',
         'ai_metadata' => 'array',
     ];
+
+    /** A price without a region takes it from its supplier or its location. */
+    protected static function booted(): void
+    {
+        static::saving(function (self $price) {
+            if (blank($price->region) && ($price->isDirty('location') || $price->isDirty('supplier_id') || ! $price->exists)) {
+                $price->region = self::guessRegion($price->location, $price->supplier_id);
+            }
+        });
+    }
+
+    /**
+     * The region of a location: the supplier's region, else the region of a
+     * supplier or price already recorded at that location. A location that is
+     * itself a known region name is its own region.
+     */
+    public static function guessRegion(?string $location, ?int $supplierId = null): ?string
+    {
+        if ($supplierId && filled($region = Supplier::whereKey($supplierId)->value('region'))) {
+            return trim($region);
+        }
+
+        $location = trim((string) $location);
+        if ($location === '') {
+            return null;
+        }
+        $lower = mb_strtolower($location);
+
+        $region = Supplier::whereRaw('LOWER(location) = ?', [$lower])->whereNotNull('region')->where('region', '!=', '')->value('region')
+            ?? self::query()->whereRaw('LOWER(location) = ?', [$lower])->whereNotNull('region')->where('region', '!=', '')->value('region')
+            ?? Supplier::whereRaw('LOWER(region) = ?', [$lower])->value('region');
+
+        return filled($region) ? mb_substr(trim($region), 0, 100) : null;
+    }
+
+    /** Distinct regions of the given prices (for the filters). */
+    public static function regionsOf(\Illuminate\Database\Eloquent\Builder $query): array
+    {
+        return (clone $query)->whereNotNull('region')->where('region', '!=', '')
+            ->distinct()->orderBy('region')->pluck('region')->filter()->values()->all();
+    }
 
     /**
      * Prices a viewer can use: general market prices (no organisation, kept by
@@ -194,10 +236,23 @@ class HardwarePrice extends Model
         $query,
         string $location
     ) {
-        return $query->where(
-            'location',
-            $location
-        );
+        // A region name (e.g. "Central") matches every location in that region.
+        return $query->where(fn ($q) => $q
+            ->where('location', $location)
+            ->orWhere('region', $location));
+    }
+
+    public function scopeInRegion($query, string $region)
+    {
+        return $query->where('region', $region);
+    }
+
+    /** Partial search on the location or its region. */
+    public function scopeLocationLike($query, string $term)
+    {
+        $like = '%'.trim($term).'%';
+
+        return $query->where(fn ($q) => $q->where('location', 'like', $like)->orWhere('region', 'like', $like));
     }
 
     public function scopeSearch(

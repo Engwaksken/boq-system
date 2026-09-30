@@ -12,6 +12,7 @@
             ['key' => 'all', 'label' => __('Total Items'), 'value' => $itemStats['total'], 'icon' => 'fa-list', 'color' => 'green'],
             ['key' => 'matched', 'label' => __('Matched'), 'value' => $itemStats['matched'], 'icon' => 'fa-link', 'color' => 'blue'],
             ['key' => 'unmatched', 'label' => __('Unmatched'), 'value' => $itemStats['unmatched'], 'icon' => 'fa-link-slash', 'color' => 'amber'],
+            ['key' => 'unpriced', 'label' => __('No price'), 'value' => $itemStats['unpriced'], 'icon' => 'fa-tag', 'color' => 'red'],
             ['key' => 'pending', 'label' => __('Pending'), 'value' => $itemStats['pending'], 'icon' => 'fa-hourglass-half', 'color' => 'amber'],
             ['key' => 'reviewed', 'label' => __('Reviewed'), 'value' => $itemStats['reviewed'], 'icon' => 'fa-eye', 'color' => 'purple'],
             ['key' => 'approved', 'label' => __('Approved'), 'value' => $itemStats['approved'], 'icon' => 'fa-circle-check', 'color' => 'green'],
@@ -212,7 +213,7 @@
     </x-ui.card>
 
     {{-- Item statistics (click to filter the price review table) --}}
-    <div class="boq-stats-compact grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
+    <div class="boq-stats-compact grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
         @foreach($statFilters as $stat)
             <x-stat-card
                 :label="$stat['label']"
@@ -282,6 +283,7 @@
                     <option value="all">{{ __('All Items') }}</option>
                     <option value="matched">{{ __('Matched') }}</option>
                     <option value="unmatched">{{ __('Unmatched') }}</option>
+                    <option value="unpriced">{{ __('No suggested price') }}</option>
                     <option value="pending">{{ __('Pending') }}</option>
                     <option value="reviewed">{{ __('Reviewed') }}</option>
                     <option value="approved">{{ __('Approved') }}</option>
@@ -297,6 +299,15 @@
                 </select>
             </x-ui.field>
 
+            @if($canEdit && $itemStats['unpriced'] > 0)
+                <button type="button" wire:click="scanUnpriced" wire:loading.attr="disabled" wire:target="scanUnpriced" @disabled($isProcessing) class="boq-btn-secondary"
+                    title="{{ __('Scan prices for every item without a suggested price') }}">
+                    <i class="fas fa-magnifying-glass-dollar" wire:loading.remove wire:target="scanUnpriced" aria-hidden="true"></i>
+                    <i class="fas fa-spinner fa-spin" wire:loading wire:target="scanUnpriced" aria-hidden="true"></i>
+                    {{ trans_choice('Scan :count unpriced item|Scan all :count unpriced items', $itemStats['unpriced'], ['count' => \App\Support\Format::number($itemStats['unpriced'], 0)]) }}
+                </button>
+            @endif
+
             @if($itemSearch !== '' || $itemStatus !== 'all')
                 <button type="button" wire:click="clearItemFilters" class="boq-btn-ghost">
                     <i class="fas fa-filter-circle-xmark" aria-hidden="true"></i>
@@ -311,10 +322,10 @@
             {{-- Admins: select items and get their prices now. --}}
             @if($canEdit)
                 <x-bulk-bar :count="count($selected)">
-                    <button type="button" wire:click="priceSelected" wire:loading.attr="disabled" wire:target="priceSelected" class="boq-btn-primary">
-                        <i class="fas fa-tags" wire:loading.remove wire:target="priceSelected" aria-hidden="true"></i>
+                    <button type="button" wire:click="priceSelected" wire:loading.attr="disabled" wire:target="priceSelected" @disabled($isProcessing) class="boq-btn-primary">
+                        <i class="fas fa-magnifying-glass-dollar" wire:loading.remove wire:target="priceSelected" aria-hidden="true"></i>
                         <i class="fas fa-spinner fa-spin" wire:loading wire:target="priceSelected" aria-hidden="true"></i>
-                        {{ __('Get prices') }}
+                        {{ __('Scan prices') }}
                     </button>
                     <button type="button" wire:click="bulkAcceptSuggested" wire:loading.attr="disabled" wire:target="bulkAcceptSuggested" class="boq-btn-secondary" title="{{ __('Use the suggested price as the reviewed price') }}">
                         <i class="fas fa-clipboard-check" aria-hidden="true"></i> {{ __('Review (use suggested)') }}
@@ -369,9 +380,33 @@
                             <td class="is-numeric">{{ $rate($item->original_rate) }}</td>
 
                             <td class="is-numeric">
-                                <div class="font-semibold text-brand-700">{{ $rate($item->ai_suggested_rate) }}</div>
+                                @if($item->ai_suggested_rate === null || (float) $item->ai_suggested_rate <= 0)
+                                    @php
+                                        $scanning = $isProcessing && in_array($item->pricing_status, ['pending', 'pricing'], true);
+                                        $failed = $item->pricing_status === 'failed' || filled($item->pricing_error);
+                                    @endphp
+                                    <div class="flex flex-col items-end gap-1 whitespace-normal">
+                                        @if($scanning)
+                                            <span class="boq-badge boq-badge-info"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> {{ __('Scanning...') }}</span>
+                                        @else
+                                            <span class="boq-badge {{ $failed ? 'boq-badge-danger' : 'boq-badge-warning' }}">{{ $failed ? __('No price found') : __('No price yet') }}</span>
+                                            @if($failed && $item->pricing_error)
+                                                <span class="boq-table-subtitle max-w-[11rem] text-right" title="{{ $item->pricing_error }}">{{ \Illuminate\Support\Str::limit($item->pricing_error, 60) }}</span>
+                                            @endif
+                                            @if($canEdit && $item->status !== 'approved')
+                                                <button type="button" wire:click="scanItem({{ $item->id }})" wire:loading.attr="disabled" wire:target="scanItem({{ $item->id }})" @disabled($isProcessing) class="boq-btn-secondary boq-btn-sm">
+                                                    <i class="fas fa-magnifying-glass-dollar" wire:loading.remove wire:target="scanItem({{ $item->id }})" aria-hidden="true"></i>
+                                                    <i class="fas fa-spinner fa-spin" wire:loading wire:target="scanItem({{ $item->id }})" aria-hidden="true"></i>
+                                                    {{ $failed ? __('Scan again') : __('Scan price') }}
+                                                </button>
+                                            @endif
+                                        @endif
+                                    </div>
+                                @else
+                                    <div class="font-semibold text-brand-700">{{ $rate($item->ai_suggested_rate) }}</div>
+                                @endif
 
-                                @if($item->ai_suggested_rate !== null)
+                                @if($item->ai_suggested_rate !== null && (float) $item->ai_suggested_rate > 0)
                                     <div class="boq-table-subtitle whitespace-normal">
                                         {{ $item->ai_confidence !== null ? \App\Support\Format::number((float) $item->ai_confidence, 0).'%' : __('No confidence') }}
                                         · {{ $item->location ?: __('No location') }}
