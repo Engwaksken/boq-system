@@ -38,7 +38,21 @@ class HardwareScanner extends Component
         'location' => '',
 
         'limit' => 5,
+
+        // 'location' = one town or market; 'region' = towns across a region
+        'scope' => 'location',
+
+        'region' => '',
+
+        /** @var list<string> towns of the region to cover (none = whole region) */
+        'towns' => [],
+
+        // Region scans: also scan the websites of the region's suppliers/factories.
+        'scan_websites' => false,
     ];
+
+    /** Result of the last region scan (websites queued). */
+    public int $queuedWebsites = 0;
 
     public $csvFile = null;
 
@@ -71,9 +85,91 @@ class HardwareScanner extends Component
         $this->ensureSelectedCategory();
     }
 
+    public function updatedScanFormRegion(): void
+    {
+        // Towns of another region no longer apply.
+        $this->scanForm['towns'] = [];
+    }
+
+    public function selectAllTowns(): void
+    {
+        $this->scanForm['towns'] = \App\Services\RegionPriceScanner::towns((string) $this->scanForm['region']);
+    }
+
+    public function clearTowns(): void
+    {
+        $this->scanForm['towns'] = [];
+    }
+
+    /**
+     * Region scan: prices from different hardware shops and factories across the
+     * region's towns in one AI request, plus (optionally) website scans of the
+     * region's suppliers, queued in the background.
+     */
+    public function scanRegion(\App\Services\RegionPriceScanner $scanner, \App\Services\SupplierScanQueue $websites): void
+    {
+        $this->validate([
+            'scanForm.price_type' => ['required', Rule::in([HardwarePrice::TYPE_HARDWARE, HardwarePrice::TYPE_FACTORY])],
+            'scanForm.category' => ['required', 'string', 'max:100'],
+            'scanForm.region' => ['required', 'string', 'max:100'],
+            'scanForm.towns' => ['array', 'max:'.\App\Services\RegionPriceScanner::MAX_TOWNS],
+            'scanForm.towns.*' => ['string', 'max:150'],
+            'scanForm.limit' => ['required', 'integer', 'min:1', 'max:'.\App\Services\RegionPriceScanner::MAX_ITEMS],
+        ], [], ['scanForm.region' => __('region')]);
+
+        $organisationId = HardwarePrice::ownerOrganisationFor(auth()->user());
+        $this->scanResults = [];
+        $this->queuedWebsites = 0;
+        $region = trim((string) $this->scanForm['region']);
+
+        try {
+            @set_time_limit(180);
+            $this->scanResults = $scanner->scan(
+                (string) $this->scanForm['category'],
+                $region,
+                (array) $this->scanForm['towns'],
+                (int) $this->scanForm['limit'],
+                $organisationId,
+                (string) $this->scanForm['price_type'],
+            );
+        } catch (\App\Exceptions\AiCreditExhaustedException) {
+            session()->flash('modal_error', __('Price scan stopped: the AI providers have no tokens or credit left. Top up under AI API Settings.'));
+
+            return;
+        } catch (Throwable $exception) {
+            report($exception);
+            session()->flash('modal_error', 'Price scan failed. '.$this->safeError($exception));
+
+            return;
+        }
+
+        if (! empty($this->scanForm['scan_websites'])) {
+            $this->queuedWebsites = $websites->queue(
+                \App\Services\RegionPriceScanner::suppliersInRegion($region, (string) $this->scanForm['price_type'])->get(),
+                $organisationId,
+            );
+        }
+
+        $towns = collect($this->scanResults)->pluck('location')->unique()->count();
+        $message = $this->scanResults === []
+            ? __('No prices were found in the :region region for this category.', ['region' => $region])
+            : trans_choice('Region scan completed: :count price from :towns location in :region.|Region scan completed: :count prices from :towns locations in :region.', count($this->scanResults), ['count' => count($this->scanResults), 'towns' => $towns, 'region' => $region]);
+        if ($this->queuedWebsites > 0) {
+            $message .= ' '.trans_choice('The website of :count supplier in the region is being scanned too.|The websites of :count suppliers in the region are being scanned too.', $this->queuedWebsites, ['count' => $this->queuedWebsites]);
+        }
+
+        session()->flash($this->scanResults === [] ? 'modal_error' : 'modal_success', $message);
+    }
+
     public function scanPrices(
         HardwarePriceFetchingService $service
     ): void {
+        if (($this->scanForm['scope'] ?? 'location') === 'region') {
+            $this->scanRegion(app(\App\Services\RegionPriceScanner::class), app(\App\Services\SupplierScanQueue::class));
+
+            return;
+        }
+
         $this->validate([
             'scanForm.price_type' => [
                 'required',
@@ -215,6 +311,10 @@ class HardwareScanner extends Component
                     'supplier' =>
                         $item['supplier']
                         ?? null,
+
+                    'location' =>
+                        $item['location']
+                        ?? $this->scanForm['location'],
                 ];
             }
 
@@ -652,6 +752,19 @@ class HardwareScanner extends Component
 
                 'stats' =>
                     $stats,
+
+                'regions' =>
+                    \App\Services\RegionPriceScanner::regions(),
+
+                'regionTowns' =>
+                    filled($this->scanForm['region'] ?? null)
+                        ? \App\Services\RegionPriceScanner::towns((string) $this->scanForm['region'])
+                        : [],
+
+                'regionWebsites' =>
+                    ($this->scanForm['scope'] ?? '') === 'region' && filled($this->scanForm['region'] ?? null)
+                        ? \App\Services\RegionPriceScanner::suppliersInRegion((string) $this->scanForm['region'], (string) $this->scanForm['price_type'])->count()
+                        : 0,
             ]
         );
     }

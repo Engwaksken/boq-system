@@ -1695,5 +1695,22 @@
     "All Regions": "All Regions",
     "Search location or region...": "Search location or region...",
     "per :unit": "per :unit",
-    "Leave empty to take the region from the supplier or the location.": "Leave empty to take the region from the supplier or the location."
+    "Leave empty to take the region from the supplier or the location.": "Leave empty to take the region from the supplier or the location.",
+    "region": "region",
+    "No prices were found in the :region region for this category.": "No prices were found in the :region region for this category.",
+    "Region scan completed: :count price from :towns location in :region.|Region scan completed: :count prices from :towns locations in :region.": "Region scan completed: :count price from :towns location in :region.|Region scan completed: :count prices from :towns locations in :region.",
+    "The website of :count supplier in the region is being scanned too.|The websites of :count suppliers in the region are being scanned too.": "The website of :count supplier in the region is being scanned too.|The websites of :count suppliers in the region are being scanned too.",
+    "Scan by": "Scan by",
+    "e.g. Central, Northern...": "e.g. Central, Northern...",
+    "Choose a region. The scan collects prices from different hardware shops and factories across its towns, so you can compare them.": "Choose a region. The scan collects prices from different hardware shops and factories across its towns, so you can compare them.",
+    "Towns to cover": "Towns to cover",
+    "Select all": "Select all",
+    "No towns are recorded for this region yet, so the main towns of the region will be scanned. Add suppliers with this region to choose towns.": "No towns are recorded for this region yet, so the main towns of the region will be scanned. Add suppliers with this region to choose towns.",
+    ":count town selected.|:count towns selected.": ":count town selected.|:count towns selected.",
+    "None selected: all towns of the region are covered.": "None selected: all towns of the region are covered.",
+    "Also scan the website of the :count :type in this region|Also scan the websites of the :count :types in this region": "Also scan the website of the :count :type in this region|Also scan the websites of the :count :types in this region",
+    "factory": "factory",
+    "supplier": "supplier",
+    "factories": "factories",
+    "suppliers": "suppliers"
 }

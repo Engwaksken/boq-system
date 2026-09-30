@@ -21,6 +21,14 @@
 
     <x-ui.card :title="__('AI Price Scanner')" icon="fa-robot" :subtitle="__('Select whether the AI should research hardware supplier prices or direct factory/manufacturer prices.')">
         <form wire:submit.prevent="scanPrices">
+            <div class="mb-4">
+                <span class="boq-field-label">{{ __('Scan by') }}</span>
+                <x-ui.tabs :label="__('Scan by')">
+                    <x-ui.tab wire:click="$set('scanForm.scope', 'location')" icon="fa-location-dot" :active="($scanForm['scope'] ?? 'location') === 'location'">{{ __('Location') }}</x-ui.tab>
+                    <x-ui.tab wire:click="$set('scanForm.scope', 'region')" icon="fa-map" :active="($scanForm['scope'] ?? '') === 'region'">{{ __('Region') }}</x-ui.tab>
+                </x-ui.tabs>
+            </div>
+
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <x-ui.field :label="__('Price Type')" for="scan-price-type" error="scanForm.price_type">
                     <select id="scan-price-type" wire:model="scanForm.price_type" class="boq-field">
@@ -38,14 +46,58 @@
                     </select>
                 </x-ui.field>
 
-                <x-ui.field :label="__('Location')" for="scan-location" error="scanForm.location">
-                    <input id="scan-location" wire:model="scanForm.location" class="boq-field @error('scanForm.location') has-error @enderror" placeholder="{{ __('e.g. city, town or market') }}">
-                </x-ui.field>
+                @if(($scanForm['scope'] ?? 'location') === 'region')
+                    <x-ui.field :label="__('Region')" for="scan-region" error="scanForm.region" required>
+                        <input id="scan-region" list="scan-region-options" wire:model.live.debounce.400ms="scanForm.region" class="boq-field @error('scanForm.region') has-error @enderror" placeholder="{{ __('e.g. Central, Northern...') }}" autocomplete="off">
+                        <datalist id="scan-region-options">@foreach($regions as $regionOption)<option value="{{ $regionOption }}"></option>@endforeach</datalist>
+                    </x-ui.field>
+                @else
+                    <x-ui.field :label="__('Location')" for="scan-location" error="scanForm.location">
+                        <input id="scan-location" wire:model="scanForm.location" class="boq-field @error('scanForm.location') has-error @enderror" placeholder="{{ __('e.g. city, town or market') }}">
+                    </x-ui.field>
+                @endif
 
                 <x-ui.field :label="__('Items to Scan')" for="scan-limit" error="scanForm.limit">
                     <input id="scan-limit" placeholder="10" type="number" min="1" max="50" wire:model="scanForm.limit" class="boq-field @error('scanForm.limit') has-error @enderror">
                 </x-ui.field>
             </div>
+
+            @if(($scanForm['scope'] ?? 'location') === 'region')
+                <div class="mt-4 space-y-3 rounded-lg border border-slate-200 p-4">
+                    @if(blank($scanForm['region'] ?? null))
+                        <p class="text-sm text-slate-500">{{ __('Choose a region. The scan collects prices from different hardware shops and factories across its towns, so you can compare them.') }}</p>
+                    @else
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span class="boq-field-label !mb-0">{{ __('Towns to cover') }}</span>
+                            @if($regionTowns !== [])
+                                <span class="flex gap-2">
+                                    <button type="button" wire:click="selectAllTowns" class="boq-btn-ghost boq-btn-sm">{{ __('Select all') }}</button>
+                                    <button type="button" wire:click="clearTowns" class="boq-btn-ghost boq-btn-sm">{{ __('Clear') }}</button>
+                                </span>
+                            @endif
+                        </div>
+                        @if($regionTowns === [])
+                            <p class="text-sm text-slate-500">{{ __('No towns are recorded for this region yet, so the main towns of the region will be scanned. Add suppliers with this region to choose towns.') }}</p>
+                        @else
+                            <div class="flex flex-wrap gap-2">
+                                @foreach($regionTowns as $town)
+                                    <label class="boq-check rounded-full border border-slate-200 px-3 py-1" wire:key="town-{{ md5($town) }}">
+                                        <input type="checkbox" value="{{ $town }}" wire:model.live="scanForm.towns">
+                                        {{ $town }}
+                                    </label>
+                                @endforeach
+                            </div>
+                            <p class="text-xs text-slate-500">{{ count($scanForm['towns'] ?? []) ? trans_choice(':count town selected.|:count towns selected.', count($scanForm['towns']), ['count' => count($scanForm['towns'])]) : __('None selected: all towns of the region are covered.') }}</p>
+                        @endif
+                        @error('scanForm.towns') <p class="boq-field-error">{{ $message }}</p> @enderror
+
+                        <label class="boq-check">
+                            <input type="checkbox" wire:model="scanForm.scan_websites" @disabled($regionWebsites === 0)>
+                            {{ trans_choice('Also scan the website of the :count :type in this region|Also scan the websites of the :count :types in this region', $regionWebsites, ['count' => $regionWebsites, 'type' => ($scanForm['price_type'] ?? '') === 'factory' ? __('factory') : __('supplier'), 'types' => ($scanForm['price_type'] ?? '') === 'factory' ? __('factories') : __('suppliers')]) }}
+                        </label>
+                    @endif
+                </div>
+            @endif
 
             <div class="hardware-card-actions">
                 <button type="submit" wire:loading.attr="disabled" wire:target="scanPrices" class="boq-btn-primary">
@@ -68,6 +120,7 @@
                                 <th>{{ __('Item') }}</th>
                                 <th>{{ __('Type') }}</th>
                                 <th>{{ __('Supplier / Factory') }}</th>
+                                <th>{{ __('Location') }}</th>
                                 <th class="text-right">{{ __('Price') }}</th>
                                 <th>{{ __('Status') }}</th>
                             </tr>
@@ -83,6 +136,7 @@
                                         </x-ui.badge>
                                     </td>
                                     <td>{{ ($result['supplier'] ?? null) ?: '—' }}</td>
+                                    <td>{{ ($result['location'] ?? null) ?: '—' }}</td>
                                     <td class="is-numeric font-semibold"><x-money :amount="$result['price'] ?? 0" :currency="$result['currency'] ?? null" /></td>
                                     <td><x-ui.badge :color="($result['status'] ?? '') === 'created' ? 'success' : 'info'">{{ __(ucfirst((string) ($result['status'] ?? ''))) }}</x-ui.badge></td>
                                 </tr>
