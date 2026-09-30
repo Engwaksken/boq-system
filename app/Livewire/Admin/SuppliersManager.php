@@ -7,6 +7,7 @@ use App\Models\Country;
 use App\Models\HardwarePrice;
 use App\Models\Supplier;
 use App\Services\SupplierCsvImporter;
+use App\Services\SupplierScanQueue;
 use App\Support\Regional;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -37,6 +38,10 @@ class SuppliersManager extends Component
     #[Url(as: 'status', except: '')]
     public string $statusFilter = '';
 
+    /** Suppliers in a city, district or region. */
+    #[Url(as: 'location', except: '')]
+    public string $locationFilter = '';
+
     public int $perPage = 10;
     public bool $showForm = false;
     public ?int $editingId = null;
@@ -48,6 +53,21 @@ class SuppliersManager extends Component
 
     /** How many priced items a website scan may add. */
     public int $scanLimit = 15;
+
+    // Scan all suppliers in a location
+    public bool $showLocationScan = false;
+    public string $scanLocation = '';
+    /** '', 'supplier' or 'factory' */
+    public string $scanType = '';
+
+    // Add many suppliers at once (table rows or a pasted list)
+    public bool $showBulkAdd = false;
+    /** @var list<array<string, string>> */
+    public array $bulkRows = [];
+    public string $bulkPaste = '';
+    /** @var array<int, list<string>> row index => problems */
+    public array $bulkErrors = [];
+    public bool $bulkScan = true;
 
     // CSV import
     public bool $showImport = false;
@@ -72,6 +92,7 @@ class SuppliersManager extends Component
     public function updatedSearch(): void { $this->resetPage(); }
     public function updatedTypeFilter(): void { $this->resetPage(); }
     public function updatedStatusFilter(): void { $this->resetPage(); }
+    public function updatedLocationFilter(): void { $this->resetPage(); $this->clearSelection(); }
 
     /** Clickable statistics cards set the list filters. */
     public function filterBy(string $type, string $status = ''): void
@@ -193,6 +214,207 @@ class SuppliersManager extends Component
                 'created' => $result['created'],
                 'updated' => $result['updated'],
             ])));
+    }
+
+    // ------------------------------------------------------------------ scans by location / selection
+
+    public function openLocationScan(): void
+    {
+        $this->scanLocation = $this->locationFilter;
+        $this->scanType = $this->typeFilter;
+        $this->resetErrorBag('scanLocation');
+        $this->showLocationScan = true;
+    }
+
+    public function closeLocationScan(): void
+    {
+        $this->showLocationScan = false;
+    }
+
+    /** Queue a website scan for every active supplier with a website in the location. */
+    public function scanLocationSuppliers(SupplierScanQueue $scans): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+        $this->validate(['scanLocation' => ['nullable', 'string', 'max:255'], 'scanType' => ['nullable', Rule::in(['', 'supplier', 'factory'])]]);
+
+        $suppliers = SupplierScanQueue::scannable($this->scanLocation, $this->scanType)->get();
+        if ($suppliers->isEmpty()) {
+            $this->addError('scanLocation', __('No active suppliers with a website were found in this location.'));
+
+            return;
+        }
+
+        $queued = $scans->queue($suppliers, HardwarePrice::ownerOrganisationFor(auth()->user()), $this->scanLimit);
+        $this->showLocationScan = false;
+        $this->locationFilter = trim($this->scanLocation);
+        $this->resetPage();
+
+        session()->flash('message', $this->scanQueuedMessage($queued, $suppliers->count(), trim($this->scanLocation)));
+    }
+
+    /** Queue a website scan for the selected suppliers. */
+    public function bulkScan(SupplierScanQueue $scans): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+        $suppliers = Supplier::whereKey($this->selectedIds())->get();
+        $withWebsite = $suppliers->filter(fn (Supplier $s) => filled($s->website_url));
+
+        if ($withWebsite->isEmpty()) {
+            session()->flash('error', __('None of the selected suppliers has a website to scan.'));
+
+            return;
+        }
+
+        $queued = $scans->queue($withWebsite, HardwarePrice::ownerOrganisationFor(auth()->user()), $this->scanLimit);
+        $this->clearSelection();
+        session()->flash('message', $this->scanQueuedMessage($queued, $withWebsite->count())
+            .($suppliers->count() > $withWebsite->count() ? ' '.__(':count without a website were skipped.', ['count' => $suppliers->count() - $withWebsite->count()]) : ''));
+    }
+
+    /**
+     * Polled while scans are waiting: runs a scan the queue worker has not
+     * picked up, so scans finish even without a worker.
+     */
+    public function runQueuedScans(SupplierScanQueue $scans): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+        $scans->runNextStalled();
+    }
+
+    private function scanQueuedMessage(int $queued, int $total, string $location = ''): string
+    {
+        $message = $location !== ''
+            ? trans_choice('Scanning :count supplier in :location. Prices are added to the general prices as each scan finishes.|Scanning :count suppliers in :location. Prices are added to the general prices as each scan finishes.', $queued, ['count' => $queued, 'location' => $location])
+            : trans_choice('Scanning :count supplier. Prices are added to the general prices as each scan finishes.|Scanning :count suppliers. Prices are added to the general prices as each scan finishes.', $queued, ['count' => $queued]);
+
+        return $total > $queued ? $message.' '.__(':count already being scanned.', ['count' => $total - $queued]) : $message;
+    }
+
+    // ------------------------------------------------------------------ add many
+
+    public function openBulkAdd(): void
+    {
+        $this->bulkRows = [];
+        $this->bulkPaste = '';
+        $this->bulkErrors = [];
+        for ($i = 0; $i < 5; $i++) {
+            $this->addBulkRow();
+        }
+        $this->showBulkAdd = true;
+    }
+
+    public function closeBulkAdd(): void
+    {
+        $this->reset(['showBulkAdd', 'bulkRows', 'bulkPaste', 'bulkErrors']);
+    }
+
+    public function addBulkRow(): void
+    {
+        if (count($this->bulkRows) >= 200) {
+            return;
+        }
+
+        $this->bulkRows[] = [
+            'name' => '', 'type' => $this->typeFilter === Supplier::TYPE_FACTORY ? Supplier::TYPE_FACTORY : Supplier::TYPE_SUPPLIER,
+            'contact_name' => '', 'phone' => '', 'email' => '', 'website_url' => '',
+            'location' => $this->locationFilter, 'country' => '', 'materials' => '',
+        ];
+    }
+
+    public function removeBulkRow(int $index): void
+    {
+        unset($this->bulkRows[$index], $this->bulkErrors[$index]);
+        $this->bulkRows = array_values($this->bulkRows);
+        $this->bulkErrors = [];
+    }
+
+    /** Fill the table from rows pasted from Excel/Google Sheets or a typed list. */
+    public function fillFromPaste(SupplierCsvImporter $importer): void
+    {
+        try {
+            $parsed = $importer->parseList($this->bulkPaste);
+        } catch (RuntimeException $e) {
+            $this->addError('bulkPaste', $e->getMessage());
+
+            return;
+        }
+
+        if ($parsed === []) {
+            $this->addError('bulkPaste', __('Paste at least one supplier, one per line.'));
+
+            return;
+        }
+
+        $template = ['name' => '', 'type' => Supplier::TYPE_SUPPLIER, 'contact_name' => '', 'phone' => '', 'email' => '',
+            'website_url' => '', 'location' => $this->locationFilter, 'country' => '', 'materials' => ''];
+
+        // Keep rows already typed; replace the empty ones.
+        $rows = array_values(array_filter($this->bulkRows, fn ($row) => trim((string) ($row['name'] ?? '')) !== ''));
+        foreach ($parsed as $row) {
+            $rows[] = array_merge($template, array_intersect_key($row, $template));
+        }
+
+        $this->bulkRows = array_slice($rows, 0, 200);
+        $this->bulkPaste = '';
+        $this->bulkErrors = [];
+        $this->resetErrorBag('bulkPaste');
+    }
+
+    /** Create every valid row; rows with problems stay in the table with the reason. */
+    public function saveBulk(SupplierCsvImporter $importer, SupplierScanQueue $scans): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+
+        $rows = [];
+        foreach ($this->bulkRows as $index => $row) {
+            if (count(array_filter($row, fn ($v, $k) => ! in_array($k, ['type', 'location'], true) && trim((string) $v) !== '', ARRAY_FILTER_USE_BOTH)) === 0) {
+                continue; // untouched row
+            }
+            // 'line' is the row number shown to the admin ("Repeats line 2").
+            $rows[] = ['line' => $index + 1] + array_map(fn ($v) => trim((string) $v), $row) + ['status' => 'active'];
+        }
+
+        if ($rows === []) {
+            $this->addError('bulkRows', __('Fill in at least one supplier.'));
+
+            return;
+        }
+
+        $preview = $importer->previewRows($rows);
+        $created = $importer->importRows($preview['valid'], auth()->id());
+
+        $this->bulkErrors = [];
+        $left = [];
+        foreach ([...$preview['failed'], ...$preview['duplicates']] as $row) {
+            $left[$row['line']] = $row;
+        }
+        ksort($left);
+        $keep = [];
+        foreach ($left as $line => $row) {
+            $keep[] = $this->bulkRows[$line - 1];
+            $this->bulkErrors[count($keep) - 1] = $row['errors'] ?? [];
+        }
+
+        $message = trans_choice(':count supplier added.|:count suppliers added.', count($created), ['count' => count($created)]);
+        if ($this->bulkScan && $created !== []) {
+            $queued = $scans->queue($created, HardwarePrice::ownerOrganisationFor(auth()->user()), $this->scanLimit);
+            if ($queued > 0) {
+                $message .= ' '.trans_choice('Scanning the website of :count supplier for prices.|Scanning the websites of :count suppliers for prices.', $queued, ['count' => $queued]);
+            }
+        }
+
+        $this->resetPage();
+
+        if ($keep === []) {
+            $this->closeBulkAdd();
+            session()->flash('message', $message);
+
+            return;
+        }
+
+        // Some rows need fixing: keep the dialog open with just those rows.
+        $this->bulkRows = $keep;
+        $this->addError('bulkRows', (count($created) ? $message.' ' : '').trans_choice(':count row needs fixing before it can be added.|:count rows need fixing before they can be added.', count($keep), ['count' => count($keep)]));
     }
 
     public function bulkDelete(): void
@@ -346,6 +568,7 @@ class SuppliersManager extends Component
                 ->withCount(['rates', 'hardwarePrices'])
                 ->when($this->typeFilter !== '', fn ($q) => $q->where('type', $this->typeFilter))
                 ->when($this->statusFilter !== '', fn ($q) => $q->where('is_active', $this->statusFilter === 'active'))
+                ->when(trim($this->locationFilter) !== '', fn ($q) => SupplierScanQueue::inLocation($q, $this->locationFilter))
                 ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w
                     ->where('name', 'like', "%{$search}%")
                     ->orWhere('contact_name', 'like', "%{$search}%")
@@ -356,6 +579,9 @@ class SuppliersManager extends Component
                 ->paginate($this->perPage),
             'stats' => $this->stats(),
             'countries' => Country::options(),
+            'locations' => SupplierScanQueue::locations(),
+            'pendingScans' => app(SupplierScanQueue::class)->pendingCount(),
+            'scanCount' => $this->showLocationScan ? SupplierScanQueue::scannable($this->scanLocation, $this->scanType)->count() : 0,
         ]);
     }
 }

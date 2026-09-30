@@ -83,7 +83,8 @@ Route::get('/pwa/icons/{variant}.png', [\App\Http\Controllers\PwaController::cla
 
 Route::get('/shared/boqs/{boq}/pdf', function (\App\Models\Boq $boq, \App\Services\BoqPdfService $pdfs) {
     try {
-        return $pdfs->pdf($boq)->stream($pdfs->filename($boq));
+        return $pdfs->pdf($boq)->stream($pdfs->filename($boq))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
     } catch (\Throwable $e) {
         report($e);
         abort(500);

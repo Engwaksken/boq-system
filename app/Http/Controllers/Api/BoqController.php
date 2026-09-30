@@ -256,9 +256,13 @@ class BoqController extends Controller
         }
 
         // ?inline=1 previews in the browser; otherwise download.
-        return $request->boolean('inline')
+        $response = $request->boolean('inline')
             ? $pdf->stream($pdfs->filename($boq))
             : $pdf->download($pdfs->filename($boq));
+        // Signatures and prices change: never serve a cached copy.
+        $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+
+        return $response;
     }
 
     public function priceAll(Request $request, Boq $boq, GeminiPricingService $gemini): JsonResponse

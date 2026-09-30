@@ -5,13 +5,23 @@
         :subtitle="__('Hardware suppliers and manufacturers, their websites for AI price research, price lists and quotations.')"
     >
         <x-slot:actions>
+            <x-ui.button variant="secondary" icon="fa-location-dot" wire:click="openLocationScan">{{ __('Scan by Location') }}</x-ui.button>
             <x-ui.button variant="secondary" icon="fa-file-csv" wire:click="openImport">{{ __('Import CSV') }}</x-ui.button>
+            <x-ui.button variant="secondary" icon="fa-table-list" wire:click="openBulkAdd">{{ __('Add Many') }}</x-ui.button>
             <x-ui.button variant="secondary" icon="fa-industry" wire:click="create('factory')">{{ __('Add Factory') }}</x-ui.button>
             <x-ui.button icon="fa-plus" wire:click="create('supplier')">{{ __('Add Supplier') }}</x-ui.button>
         </x-slot:actions>
     </x-ui.page-header>
 
     <x-ui.flash :keys="['message', 'status', 'error']" />
+
+    @if($pendingScans > 0)
+        {{-- Runs scans the queue worker has not picked up and refreshes the list. --}}
+        <div wire:poll.10s="runQueuedScans" class="boq-panel flex items-center gap-3 px-4 py-3 text-sm text-slate-700" role="status">
+            <i class="fas fa-spinner fa-spin text-brand-600" aria-hidden="true"></i>
+            <span>{{ trans_choice(':count supplier website is being scanned for prices. Keep this page open to speed it up.|:count supplier websites are being scanned for prices. Keep this page open to speed it up.', $pendingScans, ['count' => $pendingScans]) }}</span>
+        </div>
+    @endif
 
     {{-- Statistics: supplier cards filter the list, price cards open the price lists --}}
     <div class="boq-stats-grid">
@@ -55,6 +65,11 @@
                 <i class="fas fa-magnifying-glass boq-input-icon" aria-hidden="true"></i>
                 <input type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search name, contact, phone, email or website...') }}" aria-label="{{ __('Search') }}" class="boq-field boq-field-with-icon">
             </div>
+            <select wire:model.live="locationFilter" class="boq-field w-full sm:w-52" aria-label="{{ __('Location') }}">
+                <option value="">{{ __('All locations') }}</option>
+                @foreach($locations as $place)<option value="{{ $place }}">{{ $place }}</option>@endforeach
+                @if($locationFilter !== '' && ! in_array($locationFilter, $locations, true))<option value="{{ $locationFilter }}">{{ $locationFilter }}</option>@endif
+            </select>
             <select wire:model.live="statusFilter" class="boq-field w-full sm:w-44" aria-label="{{ __('Status') }}">
                 <option value="">{{ __('All statuses') }}</option>
                 <option value="active">{{ __('Active') }}</option>
@@ -63,6 +78,7 @@
         </div>
 
         <x-bulk-bar :count="count($selected)">
+            <button type="button" wire:click="bulkScan" wire:loading.attr="disabled" wire:target="bulkScan" class="boq-btn-secondary"><i class="fas fa-magnifying-glass-dollar"></i> {{ __('Scan prices') }}</button>
             <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> {{ __('Activate') }}</button>
             <button type="button" wire:click="bulkSetActive(false)" wire:confirm="{{ __('Deactivate the selected suppliers? Historical quotations are kept.') }}" class="boq-btn-secondary"><i class="fas fa-ban"></i> {{ __('Deactivate') }}</button>
             <button type="button" wire:click="bulkDelete" wire:confirm="{{ __('Delete the selected suppliers? Suppliers with rates or quotations are skipped.') }}" class="boq-btn-danger"><i class="fas fa-trash"></i> {{ __('Delete') }}</button>
@@ -109,7 +125,12 @@
                             <td>{{ \App\Support\Format::number($supplier->rates_count ?? 0, 0) }}</td>
                             <td>
                                 {{ \App\Support\Format::number($supplier->hardware_prices_count ?? 0, 0) }}
-                                @if($scanned = data_get($supplier->metadata, 'last_price_scan.at'))
+                                @php $scanState = data_get($supplier->metadata, 'price_scan.status'); @endphp
+                                @if(in_array($scanState, ['queued', 'running'], true))
+                                    <div class="boq-table-subtitle text-brand-700"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> {{ $scanState === 'running' ? __('Scanning...') : __('Waiting to scan') }}</div>
+                                @elseif($scanState === 'failed')
+                                    <div class="boq-table-subtitle text-red-700" title="{{ data_get($supplier->metadata, 'price_scan.error') }}"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> {{ __('Scan failed') }}</div>
+                                @elseif($scanned = data_get($supplier->metadata, 'last_price_scan.at'))
                                     <div class="boq-table-subtitle">{{ __('Scanned') }} {{ \Illuminate\Support\Carbon::parse($scanned)->diffForHumans() }}</div>
                                 @endif
                             </td>
@@ -223,6 +244,138 @@
                 <div class="boq-modal-foot">
                     <button type="button" wire:click="cancel" class="boq-btn-secondary">{{ __('Cancel') }}</button>
                     <button type="submit" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="save"><i class="fas fa-floppy-disk" wire:loading.remove wire:target="save"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="save"></i> {{ __('Save') }}</button>
+                </div>
+            </form>
+        </div>
+    @endif
+
+    {{-- Scan every supplier with a website in a location --}}
+    @if($showLocationScan)
+        <div class="boq-modal-backdrop" wire:key="supplier-location-scan-modal" x-data x-trap.noscroll="true" @keydown.escape.window="$wire.closeLocationScan()" role="dialog" aria-modal="true" aria-labelledby="supplier-location-scan-title">
+            <form wire:submit="scanLocationSuppliers" class="boq-modal">
+                <div class="boq-modal-head">
+                    <h2 id="supplier-location-scan-title"><i class="fas fa-location-dot"></i> {{ __('Scan Suppliers by Location') }}</h2>
+                    <button type="button" wire:click="closeLocationScan" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
+                </div>
+                <div class="boq-modal-body space-y-4">
+                    <p class="text-sm text-slate-600">{{ __('Scans the websites of the active suppliers and factories in a location for their prices and adds them to the general prices for that location.') }}</p>
+                    <div>
+                        <label for="scan-location" class="boq-field-label">{{ __('Location') }}</label>
+                        <input id="scan-location" list="supplier-locations" wire:model.live.debounce.400ms="scanLocation" class="boq-field" placeholder="{{ __('e.g. city, district or region (empty = all locations)') }}">
+                        <datalist id="supplier-locations">@foreach($locations as $place)<option value="{{ $place }}"></option>@endforeach</datalist>
+                        @error('scanLocation') <p class="boq-field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="boq-form-grid">
+                        <div>
+                            <label for="scan-type" class="boq-field-label">{{ __('Type') }}</label>
+                            <select id="scan-type" wire:model.live="scanType" class="boq-field">
+                                <option value="">{{ __('Suppliers and factories') }}</option>
+                                <option value="supplier">{{ __('Suppliers only') }}</option>
+                                <option value="factory">{{ __('Factories only') }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="scan-limit" class="boq-field-label">{{ __('Items per supplier') }}</label>
+                            <input id="scan-limit" type="number" min="1" max="40" wire:model="scanLimit" class="boq-field">
+                        </div>
+                    </div>
+                    <x-ui.alert :type="$scanCount ? 'info' : 'warning'" :autohide="false">
+                        {{ trans_choice(':count supplier with a website will be scanned.|:count suppliers with a website will be scanned.', $scanCount, ['count' => $scanCount]) }}
+                    </x-ui.alert>
+                </div>
+                <div class="boq-modal-foot">
+                    <button type="button" wire:click="closeLocationScan" class="boq-btn-secondary">{{ __('Cancel') }}</button>
+                    <button type="submit" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="scanLocationSuppliers" @disabled($scanCount === 0)>
+                        <i class="fas fa-magnifying-glass-dollar" wire:loading.remove wire:target="scanLocationSuppliers"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="scanLocationSuppliers"></i> {{ __('Scan Prices') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    @endif
+
+    {{-- Add many suppliers at once: type in the table or paste from a spreadsheet --}}
+    @if($showBulkAdd)
+        <div class="boq-modal-backdrop" wire:key="supplier-bulk-add-modal" x-data x-trap.noscroll="true" @keydown.escape.window="$wire.closeBulkAdd()" role="dialog" aria-modal="true" aria-labelledby="supplier-bulk-add-title">
+            <form wire:submit="saveBulk" class="boq-modal boq-modal-xl">
+                <div class="boq-modal-head">
+                    <h2 id="supplier-bulk-add-title"><i class="fas fa-table-list"></i> {{ __('Add Many Suppliers') }}</h2>
+                    <button type="button" wire:click="closeBulkAdd" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
+                </div>
+                <div class="boq-modal-body space-y-4">
+                    <details class="rounded-lg border border-slate-200 p-3" @if(count(array_filter(array_column($bulkRows, 'name'))) === 0) open @endif>
+                        <summary class="cursor-pointer text-sm font-semibold text-slate-700"><i class="fas fa-paste"></i> {{ __('Paste a list') }}</summary>
+                        <p class="mt-2 text-xs text-slate-500">{{ __('Copy rows from Excel or Google Sheets, or type one supplier per line with the columns separated by commas: name, contact person, phone, email, website, country, district/city, address, type (supplier or factory). A header row may set a different order.') }}</p>
+                        <textarea wire:model="bulkPaste" rows="4" class="boq-field boq-textarea mt-2 font-mono text-xs" aria-label="{{ __('Paste a list') }}" placeholder="Example Hardware Ltd, Jane Doe, +256 700 000 001, sales@example.com, example.com, UG, Kampala"></textarea>
+                        @error('bulkPaste') <p class="boq-field-error">{{ $message }}</p> @enderror
+                        <button type="button" wire:click="fillFromPaste" class="boq-btn-secondary mt-2"><i class="fas fa-table-cells"></i> {{ __('Add to table') }}</button>
+                    </details>
+
+                    @error('bulkRows') <x-ui.alert type="warning" :autohide="false">{{ $message }}</x-ui.alert> @enderror
+
+                    <div class="boq-table-wrapper max-h-[28rem] overflow-y-auto rounded-lg border border-slate-200">
+                        <table class="boq-table boq-table-compact">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>{{ __('Name') }} <span class="boq-field-required" aria-hidden="true">*</span></th>
+                                    <th>{{ __('Type') }}</th>
+                                    <th>{{ __('Contact person') }}</th>
+                                    <th>{{ __('Phone') }}</th>
+                                    <th>{{ __('Email') }}</th>
+                                    <th>{{ __('Website') }}</th>
+                                    <th>{{ __('District/City') }}</th>
+                                    <th>{{ __('Country') }}</th>
+                                    <th>{{ __('Materials') }}</th>
+                                    <th><span class="sr-only">{{ __('Remove') }}</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($bulkRows as $i => $row)
+                                    <tr wire:key="bulk-row-{{ $i }}" @class(['bg-red-50' => ! empty($bulkErrors[$i])])>
+                                        <td class="text-xs text-slate-500">{{ $i + 1 }}</td>
+                                        <td class="min-w-44">
+                                            <input wire:model="bulkRows.{{ $i }}.name" class="boq-field" aria-label="{{ __('Name') }} {{ $i + 1 }}">
+                                            @if(! empty($bulkErrors[$i]))<p class="boq-field-error">{{ implode(' ', $bulkErrors[$i]) }}</p>@endif
+                                        </td>
+                                        <td class="min-w-32">
+                                            <select wire:model="bulkRows.{{ $i }}.type" class="boq-field" aria-label="{{ __('Type') }} {{ $i + 1 }}">
+                                                <option value="supplier">{{ __('Supplier') }}</option>
+                                                <option value="factory">{{ __('Factory') }}</option>
+                                            </select>
+                                        </td>
+                                        <td class="min-w-36"><input wire:model="bulkRows.{{ $i }}.contact_name" class="boq-field" aria-label="{{ __('Contact person') }} {{ $i + 1 }}"></td>
+                                        <td class="min-w-36"><input type="tel" wire:model="bulkRows.{{ $i }}.phone" class="boq-field" aria-label="{{ __('Phone') }} {{ $i + 1 }}"></td>
+                                        <td class="min-w-44"><input type="email" wire:model="bulkRows.{{ $i }}.email" class="boq-field" aria-label="{{ __('Email') }} {{ $i + 1 }}"></td>
+                                        <td class="min-w-44"><input wire:model="bulkRows.{{ $i }}.website_url" class="boq-field" placeholder="example.com" aria-label="{{ __('Website') }} {{ $i + 1 }}"></td>
+                                        <td class="min-w-36"><input list="supplier-locations-bulk" wire:model="bulkRows.{{ $i }}.location" class="boq-field" aria-label="{{ __('District/City') }} {{ $i + 1 }}"></td>
+                                        <td class="min-w-36">
+                                            <select wire:model="bulkRows.{{ $i }}.country" class="boq-field" aria-label="{{ __('Country') }} {{ $i + 1 }}">
+                                                <option value="">—</option>
+                                                @foreach($countries as $iso => $name)<option value="{{ $iso }}">{{ $name }}</option>@endforeach
+                                            </select>
+                                        </td>
+                                        <td class="min-w-40"><input wire:model="bulkRows.{{ $i }}.materials" class="boq-field" placeholder="{{ __('cement, steel') }}" aria-label="{{ __('Materials') }} {{ $i + 1 }}"></td>
+                                        <td><button type="button" wire:click="removeBulkRow({{ $i }})" class="boq-icon-btn" title="{{ __('Remove') }}" aria-label="{{ __('Remove row :number', ['number' => $i + 1]) }}"><i class="fas fa-xmark"></i></button></td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                        <datalist id="supplier-locations-bulk">@foreach($locations as $place)<option value="{{ $place }}"></option>@endforeach</datalist>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <button type="button" wire:click="addBulkRow" class="boq-btn-secondary"><i class="fas fa-plus"></i> {{ __('Add row') }}</button>
+                        <label class="boq-check">
+                            <input type="checkbox" wire:model="bulkScan">
+                            {{ __('Scan the websites for prices after adding') }}
+                        </label>
+                    </div>
+                </div>
+                <div class="boq-modal-foot">
+                    <button type="button" wire:click="closeBulkAdd" class="boq-btn-secondary">{{ __('Cancel') }}</button>
+                    <button type="submit" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="saveBulk">
+                        <i class="fas fa-floppy-disk" wire:loading.remove wire:target="saveBulk"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="saveBulk"></i> {{ __('Save All') }}
+                    </button>
                 </div>
             </form>
         </div>

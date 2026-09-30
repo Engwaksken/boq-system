@@ -165,6 +165,22 @@ class BoqPdfService
             ];
         }
 
+        // No "Prepared by" signature on this BOQ yet: use the owner's saved
+        // signature from Profile > Signature, so it appears on every BOQ.
+        $owner = $boq->owner;
+        if (! $signed->has('preparer') && $owner && filled($owner->signature_path)) {
+            $block['preparer'] = [
+                'name' => $owner->signature_name ?: $owner->name,
+                'title' => $owner->signature_title,
+                'date' => null,
+                'image' => $this->logoDataUri($owner->signature_path),
+                'remote' => false,
+            ];
+        } elseif (! $signed->has('preparer') && $owner) {
+            $block['preparer']['name'] = $owner->signature_name ?: $owner->name;
+            $block['preparer']['title'] = $owner->signature_title;
+        }
+
         return $block;
     }
 

@@ -557,4 +557,47 @@ class BoqSignaturesTest extends TestCase
         $this->assertStringContainsString('<footer>', $html);
         $this->assertStringContainsString('BILL OF QUANTITIES', $html);
     }
+    public function test_pdf_uses_the_saved_profile_signature_when_the_boq_is_not_signed(): void
+    {
+        $owner = $this->customer();
+        $boq = $this->boqFor($owner);
+        $pdfs = app(BoqPdfService::class);
+
+        // Name and title alone (no image yet) are shown too.
+        $owner->forceFill(['signature_name' => 'K. Wakabala', 'signature_title' => 'Senior QS'])->save();
+        $html = $pdfs->html($boq->fresh());
+        $this->assertStringContainsString('K. Wakabala', $html);
+        $this->assertStringContainsString('Senior QS', $html);
+        $this->assertStringNotContainsString('data:image/png;base64', $html);
+
+        Livewire::actingAs($owner)
+            ->test(ProfileSignature::class)
+            ->set('drawnSignature', $this->signatureDataUrl())
+            ->set('name', 'K. Wakabala')
+            ->set('title', 'Senior QS')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $html = $pdfs->html($boq->fresh());
+        $this->assertSame(1, substr_count($html, 'data:image/png;base64'));
+        $this->assertStringContainsString('K. Wakabala', $html);
+        $this->assertStringContainsString('Senior QS', $html);
+        $this->assertStringStartsWith('%PDF', $pdfs->pdf($boq->fresh())->output());
+
+        // A signature made on the BOQ itself wins over the profile default.
+        app(BoqSignatureService::class)->sign($boq, 'preparer', ['name' => 'Kenneth W.', 'title' => 'QS'], $this->signatureDataUrl(), $owner);
+        $html = $pdfs->html($boq->fresh());
+        $this->assertStringContainsString('Kenneth W.', $html);
+        $this->assertStringNotContainsString('Senior QS', $html);
+    }
+
+    public function test_pdf_download_is_never_cached(): void
+    {
+        $owner = $this->customer();
+        $boq = $this->boqFor($owner);
+
+        $response = $this->actingAs($owner)->get(route('boqs.pdf', $boq));
+        $response->assertOk();
+        $this->assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
+    }
 }

@@ -35,6 +35,8 @@ class SupplierCsvImporter
         'country' => 'country',
         'district/city' => 'location', 'district' => 'location', 'city' => 'location',
         'physical address' => 'address', 'address' => 'address',
+        'region' => 'region', 'location' => 'location',
+        'materials' => 'materials', 'materials / services supplied' => 'materials',
         'supplier type' => 'type', 'type' => 'type',
         'status' => 'status',
         'notes' => 'notes',
@@ -84,9 +86,7 @@ class SupplierCsvImporter
             throw new RuntimeException('The file must have a "Supplier Name" column. Download the template to see the expected columns.');
         }
 
-        $existing = $this->existingKeys();
-        $seen = ['name' => [], 'email' => [], 'phone' => [], 'website' => []];
-        $result = ['valid' => [], 'duplicates' => [], 'failed' => []];
+        $rows = [];
         $line = 1;
 
         while (($raw = fgetcsv($handle, 0, $delimiter)) !== false) {
@@ -106,8 +106,71 @@ class SupplierCsvImporter
                     $row[$field] = trim((string) ($raw[$index] ?? ''));
                 }
             }
+            $rows[] = $row;
+        }
 
-            $row = $this->normalise($row);
+        fclose($handle);
+
+        return $this->previewRows($rows);
+    }
+
+    /**
+     * Rows pasted from a spreadsheet or typed as a list: one supplier per line,
+     * columns separated by tabs, commas or semicolons. A header row (as in the
+     * template) sets the column order; without one the columns are read in the
+     * template order: name, contact, phone, email, website, country, city...
+     *
+     * @return list<array<string, string>> rows with 'line' and the fields
+     */
+    public function parseList(string $text): array
+    {
+        $lines = preg_split('/\r\n|\r|\n/', trim($text)) ?: [];
+        $lines = array_values(array_filter($lines, fn ($l) => trim($l) !== ''));
+        if ($lines === []) {
+            return [];
+        }
+        if (count($lines) > self::MAX_ROWS + 1) {
+            throw new RuntimeException('Paste at most '.self::MAX_ROWS.' suppliers at a time.');
+        }
+
+        $first = $lines[0];
+        $delimiter = str_contains($first, "\t") ? "\t" : (substr_count($first, ';') > substr_count($first, ',') ? ';' : ',');
+        $split = fn (string $line) => array_map('trim', str_getcsv($line, $delimiter));
+
+        $header = array_map(fn ($h) => self::FIELD_MAP[strtolower(trim(preg_replace('/^\xEF\xBB\xBF/', '', (string) $h)))] ?? null, $split($first));
+        $hasHeader = in_array('name', $header, true) && count(array_filter($header)) >= 2;
+        $columns = $hasHeader ? $header : array_values(array_map(fn ($h) => self::FIELD_MAP[strtolower($h)], self::HEADERS));
+
+        $rows = [];
+        foreach (array_slice($lines, $hasHeader ? 1 : 0) as $index => $line) {
+            $values = $split($line);
+            $row = ['line' => $index + 1];
+            foreach ($columns as $position => $field) {
+                if ($field !== null && ($values[$position] ?? '') !== '') {
+                    $row[$field] = $values[$position];
+                }
+            }
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Validate rows and sort them into valid, duplicate and failed, without writing.
+     *
+     * @param  list<array<string, mixed>>  $rows  each with a 'line' number and the fields
+     * @return array{valid: list<array>, duplicates: list<array>, failed: list<array>}
+     */
+    public function previewRows(array $rows): array
+    {
+        $existing = $this->existingKeys();
+        $seen = ['name' => [], 'email' => [], 'phone' => [], 'website' => []];
+        $result = ['valid' => [], 'duplicates' => [], 'failed' => []];
+
+        foreach ($rows as $row) {
+            $line = $row['line'];
+            $row = $this->normalise(array_map(fn ($v) => is_string($v) ? trim($v) : $v, $row));
             $errors = $this->validate($row);
 
             if ($errors !== []) {
@@ -148,8 +211,6 @@ class SupplierCsvImporter
             $result['valid'][] = $row;
         }
 
-        fclose($handle);
-
         return $result;
     }
 
@@ -160,10 +221,21 @@ class SupplierCsvImporter
      */
     public function import(array $rows, ?int $userId): int
     {
+        return count($this->importRows($rows, $userId));
+    }
+
+    /**
+     * Create the valid rows and return the new suppliers.
+     *
+     * @param  list<array>  $rows
+     * @return list<Supplier>
+     */
+    public function importRows(array $rows, ?int $userId): array
+    {
         $existing = $this->existingKeys();
 
         return DB::transaction(function () use ($rows, $userId, $existing) {
-            $created = 0;
+            $created = [];
 
             foreach ($rows as $row) {
                 // Re-check in case suppliers were added between preview and confirm.
@@ -173,8 +245,8 @@ class SupplierCsvImporter
                     }
                 }
 
-                Supplier::create([
-                    'code' => 'SUP-'.Str::upper(Str::random(6)),
+                $created[] = Supplier::create([
+                    'code' => ($row['type'] === Supplier::TYPE_FACTORY ? 'FAC-' : 'SUP-').Str::upper(Str::random(6)),
                     'name' => $row['name'],
                     'type' => $row['type'],
                     'contact_name' => $row['contact_name'] ?: null,
@@ -183,14 +255,14 @@ class SupplierCsvImporter
                     'website_url' => $row['website_url'] ?: null,
                     'country' => $row['country'] ?: null,
                     'location' => $row['location'] ?: null,
+                    'region' => ($row['region'] ?? '') ?: null,
                     'address' => $row['address'] ?: null,
+                    'materials' => array_values(array_filter(array_map('trim', explode(',', (string) ($row['materials'] ?? ''))))),
                     'notes' => $row['notes'] ?: null,
                     'is_active' => $row['status'] === 'active',
                     'currency' => Regional::currency(),
                     'created_by' => $userId,
                 ]);
-
-                $created++;
             }
 
             return $created;
@@ -223,7 +295,7 @@ class SupplierCsvImporter
     private function normalise(array $row): array
     {
         $row += ['name' => '', 'contact_name' => '', 'phone' => '', 'email' => '', 'website_url' => '', 'country' => '',
-            'location' => '', 'address' => '', 'type' => '', 'status' => '', 'notes' => ''];
+            'location' => '', 'region' => '', 'address' => '', 'type' => '', 'status' => '', 'notes' => '', 'materials' => ''];
 
         $row['email'] = strtolower($row['email']);
         $type = strtolower($row['type']);
@@ -256,7 +328,9 @@ class SupplierCsvImporter
             'email' => ['nullable', 'email', 'max:255'],
             'website_url' => ['nullable', 'url', 'max:500'],
             'location' => ['nullable', 'string', 'max:255'],
+            'region' => ['nullable', 'string', 'max:100'],
             'address' => ['nullable', 'string', 'max:500'],
+            'materials' => ['nullable', 'string', 'max:2000'],
             'type' => ['required', 'in:supplier,factory'],
             'status' => ['required', 'in:active,inactive'],
             'notes' => ['nullable', 'string', 'max:2000'],
