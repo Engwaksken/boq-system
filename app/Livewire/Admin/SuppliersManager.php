@@ -7,6 +7,7 @@ use App\Models\Country;
 use App\Models\HardwarePrice;
 use App\Models\Supplier;
 use App\Services\SupplierCsvImporter;
+use App\Services\SupplierDiscovery;
 use App\Services\SupplierScanQueue;
 use App\Support\Regional;
 use Illuminate\Support\Str;
@@ -59,6 +60,18 @@ class SuppliersManager extends Component
     public string $scanLocation = '';
     /** '', 'supplier' or 'factory' */
     public string $scanType = '';
+
+    // Find hardware shops and factories online in a location
+    public bool $showDiscover = false;
+    public string $discoverLocation = '';
+    /** '', 'supplier' or 'factory' */
+    public string $discoverType = '';
+    public int $discoverLimit = 15;
+    /** @var list<array<string, mixed>>|null null = not searched yet */
+    public ?array $discoverResults = null;
+    /** @var list<string> result keys */
+    public array $discoverSelected = [];
+    public bool $discoverScan = true;
 
     // Add many suppliers at once (table rows or a pasted list)
     public bool $showBulkAdd = false;
@@ -288,6 +301,98 @@ class SuppliersManager extends Component
             : trans_choice('Scanning :count supplier. Prices are added to the general prices as each scan finishes.|Scanning :count suppliers. Prices are added to the general prices as each scan finishes.', $queued, ['count' => $queued]);
 
         return $total > $queued ? $message.' '.__(':count already being scanned.', ['count' => $total - $queued]) : $message;
+    }
+
+    // ------------------------------------------------------------------ find online
+
+    public function openDiscover(): void
+    {
+        $this->discoverLocation = $this->locationFilter;
+        $this->discoverType = $this->typeFilter;
+        $this->discoverResults = null;
+        $this->discoverSelected = [];
+        $this->resetErrorBag(['discoverLocation', 'discoverSelected']);
+        $this->showDiscover = true;
+    }
+
+    public function closeDiscover(): void
+    {
+        $this->reset(['showDiscover', 'discoverResults', 'discoverSelected']);
+    }
+
+    /** Ask the AI for hardware shops/factories in the location; existing ones are marked. */
+    public function discover(SupplierDiscovery $discovery): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+        $this->validate([
+            'discoverLocation' => ['required', 'string', 'max:255'],
+            'discoverType' => ['nullable', Rule::in(['', 'supplier', 'factory'])],
+            'discoverLimit' => ['required', 'integer', 'min:1', 'max:'.SupplierDiscovery::MAX_RESULTS],
+        ], [], ['discoverLocation' => __('location')]);
+
+        $this->discoverSelected = [];
+
+        try {
+            @set_time_limit(180);
+            $this->discoverResults = $discovery->discover($this->discoverLocation, $this->discoverType, $this->discoverLimit, HardwarePrice::ownerOrganisationFor(auth()->user()));
+        } catch (\App\Exceptions\AiCreditExhaustedException) {
+            $this->addError('discoverLocation', __('The AI providers have no tokens or credit left. Top up under AI API Settings.'));
+
+            return;
+        } catch (\Throwable $exception) {
+            report($exception);
+            $this->addError('discoverLocation', $exception instanceof RuntimeException
+                ? $exception->getMessage()
+                : __('The search could not be completed: the AI provider did not answer. Check AI API Settings and try again.'));
+
+            return;
+        }
+
+        // New businesses are selected by default; duplicates cannot be selected.
+        $this->discoverSelected = collect($this->discoverResults)->whereNull('duplicate')->pluck('key')->values()->all();
+    }
+
+    public function toggleAllDiscovered(): void
+    {
+        $new = collect($this->discoverResults ?? [])->whereNull('duplicate')->pluck('key')->values()->all();
+        $this->discoverSelected = array_diff($new, $this->discoverSelected) === [] ? [] : $new;
+    }
+
+    /** Add the ticked results as suppliers/factories, skipping duplicates. */
+    public function addDiscovered(SupplierDiscovery $discovery, SupplierScanQueue $scans): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+
+        $chosen = collect($this->discoverResults ?? [])
+            ->whereIn('key', $this->discoverSelected)
+            ->whereNull('duplicate')
+            ->values()
+            ->all();
+
+        if ($chosen === []) {
+            $this->addError('discoverSelected', __('Select at least one new supplier to add.'));
+
+            return;
+        }
+
+        $result = $discovery->add($chosen, auth()->id());
+        $created = $result['created'];
+
+        $message = trans_choice(':count supplier added.|:count suppliers added.', count($created), ['count' => count($created)]);
+        if ($result['skipped'] > 0) {
+            $message .= ' '.__(':count skipped because they already exist.', ['count' => $result['skipped']]);
+        }
+        if ($this->discoverScan && $created !== []) {
+            $queued = $scans->queue($created, HardwarePrice::ownerOrganisationFor(auth()->user()), $this->scanLimit);
+            if ($queued > 0) {
+                $message .= ' '.trans_choice('Scanning the website of :count supplier for prices.|Scanning the websites of :count suppliers for prices.', $queued, ['count' => $queued]);
+            }
+        }
+
+        $this->closeDiscover();
+        $this->locationFilter = '';
+        $this->resetPage();
+        session()->flash('message', $message);
     }
 
     // ------------------------------------------------------------------ add many

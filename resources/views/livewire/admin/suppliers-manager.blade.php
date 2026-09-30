@@ -5,6 +5,7 @@
         :subtitle="__('Hardware suppliers and manufacturers, their websites for AI price research, price lists and quotations.')"
     >
         <x-slot:actions>
+            <x-ui.button variant="secondary" icon="fa-globe" wire:click="openDiscover">{{ __('Find Online') }}</x-ui.button>
             <x-ui.button variant="secondary" icon="fa-location-dot" wire:click="openLocationScan">{{ __('Scan by Location') }}</x-ui.button>
             <x-ui.button variant="secondary" icon="fa-file-csv" wire:click="openImport">{{ __('Import CSV') }}</x-ui.button>
             <x-ui.button variant="secondary" icon="fa-table-list" wire:click="openBulkAdd">{{ __('Add Many') }}</x-ui.button>
@@ -290,6 +291,135 @@
                     </button>
                 </div>
             </form>
+        </div>
+    @endif
+
+    {{-- Find hardware shops and factories online, then pick which to add --}}
+    @if($showDiscover)
+        <div class="boq-modal-backdrop" wire:key="supplier-discover-modal" x-data x-trap.noscroll="true" @keydown.escape.window="$wire.closeDiscover()" role="dialog" aria-modal="true" aria-labelledby="supplier-discover-title">
+            <div class="boq-modal boq-modal-xl">
+                <div class="boq-modal-head">
+                    <h2 id="supplier-discover-title"><i class="fas fa-globe"></i> {{ __('Find Suppliers Online') }}</h2>
+                    <button type="button" wire:click="closeDiscover" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
+                </div>
+                <div class="boq-modal-body space-y-4">
+                    <p class="text-sm text-slate-600">{{ __('Searches online for hardware shops and factories in a location. Suppliers already in your list are marked and skipped; tick the new ones to add.') }}</p>
+
+                    <form wire:submit="discover" class="flex flex-wrap items-end gap-3">
+                        <div class="min-w-56 flex-1">
+                            <label for="discover-location" class="boq-field-label">{{ __('Location') }} <span class="boq-field-required" aria-hidden="true">*</span></label>
+                            <input id="discover-location" list="supplier-locations-discover" wire:model="discoverLocation" class="boq-field" placeholder="{{ __('e.g. city, district or region') }}">
+                            <datalist id="supplier-locations-discover">@foreach($locations as $place)<option value="{{ $place }}"></option>@endforeach</datalist>
+                        </div>
+                        <div class="w-full sm:w-52">
+                            <label for="discover-type" class="boq-field-label">{{ __('Type') }}</label>
+                            <select id="discover-type" wire:model="discoverType" class="boq-field">
+                                <option value="">{{ __('Hardware shops and factories') }}</option>
+                                <option value="supplier">{{ __('Hardware shops / suppliers') }}</option>
+                                <option value="factory">{{ __('Factories / manufacturers') }}</option>
+                            </select>
+                        </div>
+                        <div class="w-28">
+                            <label for="discover-limit" class="boq-field-label">{{ __('How many') }}</label>
+                            <input id="discover-limit" type="number" min="1" max="{{ \App\Services\SupplierDiscovery::MAX_RESULTS }}" wire:model="discoverLimit" class="boq-field">
+                        </div>
+                        <button type="submit" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="discover">
+                            <i class="fas fa-magnifying-glass" wire:loading.remove wire:target="discover"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="discover"></i> {{ __('Search') }}
+                        </button>
+                    </form>
+                    @error('discoverLocation') <x-ui.alert type="error">{{ $message }}</x-ui.alert> @enderror
+                    <p wire:loading wire:target="discover" class="text-sm text-slate-500">{{ __('Searching online, this can take up to a minute...') }}</p>
+
+                    @if(is_array($discoverResults))
+                        @php
+                            $newCount = collect($discoverResults)->whereNull('duplicate')->count();
+                            $allSelected = $newCount > 0 && count($discoverSelected) === $newCount;
+                        @endphp
+                        @if($discoverResults === [])
+                            <x-ui.empty-state icon="fa-store-slash" :title="__('No suppliers were found in this location. Try a nearby town or a wider region.')" />
+                        @else
+                            <div class="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                                <span class="boq-badge boq-badge-success">{{ trans_choice(':count new|:count new', $newCount, ['count' => $newCount]) }}</span>
+                                @if(count($discoverResults) > $newCount)
+                                    <span class="boq-badge boq-badge-warning">{{ trans_choice(':count already in your list|:count already in your list', count($discoverResults) - $newCount, ['count' => count($discoverResults) - $newCount]) }}</span>
+                                @endif
+                                <span class="ml-auto">{{ trans_choice(':count selected|:count selected', count($discoverSelected), ['count' => count($discoverSelected)]) }}</span>
+                            </div>
+                            <div class="boq-table-wrapper max-h-[26rem] overflow-y-auto rounded-lg border border-slate-200">
+                                <table class="boq-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="boq-check-col">
+                                                <input type="checkbox" wire:click="toggleAllDiscovered" @checked($allSelected) @disabled($newCount === 0) aria-label="{{ __('Select all new suppliers') }}">
+                                            </th>
+                                            <th>{{ __('Name') }}</th>
+                                            <th>{{ __('Type') }}</th>
+                                            <th>{{ __('Contact') }}</th>
+                                            <th>{{ __('Website') }}</th>
+                                            <th>{{ __('Location') }}</th>
+                                            <th>{{ __('Status') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($discoverResults as $result)
+                                            <tr wire:key="discover-{{ $result['key'] }}" @class(['opacity-60' => $result['duplicate']])>
+                                                <td class="boq-check-col">
+                                                    <input type="checkbox" value="{{ $result['key'] }}" wire:model.live="discoverSelected" @disabled($result['duplicate']) aria-label="{{ __('Select :name', ['name' => $result['name']]) }}">
+                                                </td>
+                                                <td>
+                                                    <div class="boq-table-title">{{ $result['name'] }}</div>
+                                                    @if($result['materials'])<div class="boq-table-subtitle">{{ \Illuminate\Support\Str::limit($result['materials'], 60) }}</div>@endif
+                                                </td>
+                                                <td>
+                                                    <span class="boq-badge {{ $result['type'] === 'factory' ? 'boq-badge-factory' : 'boq-badge-info' }}">
+                                                        <i class="fas {{ $result['type'] === 'factory' ? 'fa-industry' : 'fa-store' }}"></i>
+                                                        {{ $result['type'] === 'factory' ? __('Factory') : __('Supplier') }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-sm">
+                                                    <div>{{ $result['contact_name'] ?: '—' }}</div>
+                                                    <div class="text-xs text-slate-500">{{ collect([$result['phone'], $result['email']])->filter()->implode(' · ') }}</div>
+                                                </td>
+                                                <td class="text-sm">
+                                                    @if($result['website_url'])
+                                                        <a href="{{ $result['website_url'] }}" target="_blank" rel="noopener noreferrer" class="boq-table-link">{{ parse_url($result['website_url'], PHP_URL_HOST) ?: $result['website_url'] }} <i class="fas fa-arrow-up-right-from-square text-xs"></i></a>
+                                                    @else
+                                                        <span class="text-slate-400">—</span>
+                                                    @endif
+                                                </td>
+                                                <td class="text-sm">{{ collect([$result['address'], $result['location']])->filter()->implode(', ') ?: '—' }}</td>
+                                                <td class="text-xs">
+                                                    @if($result['duplicate'])
+                                                        <span class="boq-badge boq-badge-warning">{{ __('Already added') }}</span>
+                                                        <div class="mt-1 text-slate-500">{{ $result['duplicate'] }}</div>
+                                                    @else
+                                                        <span class="boq-badge boq-badge-success">{{ __('New') }}</span>
+                                                        @if($result['errors'])<div class="mt-1 text-amber-700">{{ __('Some contact details look invalid and will be left out.') }}</div>@endif
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="text-xs text-slate-500">{{ __('Details found online may be incomplete or out of date. Check them before relying on them.') }}</p>
+                        @endif
+                    @endif
+                    @error('discoverSelected') <p class="boq-field-error">{{ $message }}</p> @enderror
+                </div>
+                <div class="boq-modal-foot">
+                    @if(is_array($discoverResults) && $discoverResults !== [])
+                        <label class="boq-check mr-auto">
+                            <input type="checkbox" wire:model="discoverScan">
+                            {{ __('Scan their websites for prices after adding') }}
+                        </label>
+                    @endif
+                    <button type="button" wire:click="closeDiscover" class="boq-btn-secondary">{{ __('Cancel') }}</button>
+                    <button type="button" wire:click="addDiscovered" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="addDiscovered" @disabled(count($discoverSelected) === 0)>
+                        <i class="fas fa-plus" wire:loading.remove wire:target="addDiscovered"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="addDiscovered"></i> {{ __('Add Selected') }} ({{ count($discoverSelected) }})
+                    </button>
+                </div>
+            </div>
         </div>
     @endif
 
