@@ -339,20 +339,66 @@ class HardwarePriceController extends Controller
         ]);
     }
 
+    /**
+     * Fetch the latest prices for every active category. This asks the AI about
+     * many items and takes minutes, so it runs after the response is sent (no
+     * queue worker needed) and the app gets an answer straight away. Access is
+     * limited by the route (hardware-prices.manage).
+     */
     public function fetchNow(Request $request): JsonResponse
     {
-        $request->user()->authorizeRoles(['administrator', 'admin', 'manager']);
+        $organisationId = HardwarePrice::ownerOrganisationFor($request->user());
+        $lockKey = self::FETCH_LOCK.($organisationId ?? 'general');
 
-        $results = $this->fetchingService->fetchDailyPrices(
-            organisationId: HardwarePrice::ownerOrganisationFor($request->user()),
-        );
+        if (! \Illuminate\Support\Facades\Cache::add($lockKey, now()->toIso8601String(), now()->addMinutes(30))) {
+            return response()->json([
+                'success' => true,
+                'status' => 'running',
+                'message' => 'Prices are already being fetched. New prices appear in the list as they arrive.',
+                'data' => ['status' => 'running', 'fetched' => 0, 'created' => 0, 'updated' => 0, 'errors' => []],
+            ], 202);
+        }
+
+        $service = $this->fetchingService;
+        dispatch(function () use ($service, $organisationId, $lockKey) {
+            @set_time_limit(0);
+            ignore_user_abort(true);
+
+            try {
+                $results = $service->fetchDailyPrices(organisationId: $organisationId);
+                \Illuminate\Support\Facades\Cache::put(self::FETCH_RESULT.($organisationId ?? 'general'), $results + ['finished_at' => now()->toIso8601String()], now()->addDay());
+            } catch (\Throwable $exception) {
+                report($exception);
+            } finally {
+                \Illuminate\Support\Facades\Cache::forget($lockKey);
+            }
+        })->afterResponse();
 
         return response()->json([
             'success' => true,
-            'message' => 'Price fetching completed',
-            'data' => $results,
+            'status' => 'started',
+            'message' => 'Fetching the latest prices. This takes a few minutes; new prices appear in the list as they arrive.',
+            'data' => ['status' => 'started', 'fetched' => 0, 'created' => 0, 'updated' => 0, 'errors' => []],
+        ], 202);
+    }
+
+    /** GET hardware-prices/fetch-status: whether a fetch is running and the last result. */
+    public function fetchStatus(Request $request): JsonResponse
+    {
+        $key = HardwarePrice::ownerOrganisationFor($request->user()) ?? 'general';
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'running' => \Illuminate\Support\Facades\Cache::has(self::FETCH_LOCK.$key),
+                'last' => \Illuminate\Support\Facades\Cache::get(self::FETCH_RESULT.$key),
+            ],
         ]);
     }
+
+    private const FETCH_LOCK = 'hardware-price-fetch-running-';
+
+    private const FETCH_RESULT = 'hardware-price-fetch-last-';
 
     public function statistics(Request $request): JsonResponse
     {

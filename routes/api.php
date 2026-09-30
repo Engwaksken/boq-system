@@ -198,6 +198,9 @@ Route::prefix('v1')->group(function () {
         // Category filter is available to any authenticated user (mobile client filter dropdown).
         Route::get('hardware-prices/categories', [HardwarePriceController::class, 'categories']);
         Route::get('categories', [\App\Http\Controllers\Api\CategoryController::class, 'index']);
+        // Before hardware-prices/{hardwarePrice}, which would otherwise catch it.
+        Route::get('hardware-prices/fetch-status', [HardwarePriceController::class, 'fetchStatus'])
+            ->middleware('permission:hardware-prices.manage');
         Route::middleware('permission:hardware-prices.view')->group(function () {
             Route::get('hardware-prices', [HardwarePriceController::class, 'index']);
             Route::get('hardware-prices/statistics', [HardwarePriceController::class, 'statistics']);
