@@ -6,6 +6,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\HardwareCategory;
 use App\Models\HardwarePrice;
+use App\Models\SiteSetting;
 use App\Services\HardwarePriceFetchingService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -20,6 +21,12 @@ use Throwable;
 class HardwareScanner extends Component
 {
     use WithFileUploads;
+
+    public array $autoScanForm = [
+        'enabled' => true,
+        'time' => '06:00',
+        'limit' => 3,
+    ];
 
     /**
      * Livewire update requests skip route middleware, so re-check on every request.
@@ -82,7 +89,33 @@ class HardwareScanner extends Component
     {
         $this->scanForm['location'] = \App\Support\Regional::marketLocation();
 
+        $this->autoScanForm = [
+            'enabled' => (bool) SiteSetting::get('hardware_auto_scan_enabled', true),
+            'time' => (string) SiteSetting::get('hardware_auto_scan_time', '06:00'),
+            'limit' => (int) SiteSetting::get('hardware_auto_scan_limit', 3),
+        ];
+
         $this->ensureSelectedCategory();
+    }
+
+    public function saveAutoScanSettings(): void
+    {
+        $validated = $this->validate([
+            'autoScanForm.enabled' => ['boolean'],
+            'autoScanForm.time' => ['required', 'date_format:H:i'],
+            'autoScanForm.limit' => ['required', 'integer', 'min:1', 'max:20'],
+        ])['autoScanForm'];
+
+        SiteSetting::set('hardware_auto_scan_enabled', (bool) $validated['enabled'], 'hardware_scanner', 'boolean');
+        SiteSetting::set('hardware_auto_scan_time', $validated['time'], 'hardware_scanner', 'string');
+        SiteSetting::set('hardware_auto_scan_limit', (int) $validated['limit'], 'hardware_scanner', 'integer');
+
+        session()->flash(
+            'modal_success',
+            (bool) $validated['enabled']
+                ? 'Automatic price scanning schedule saved.'
+                : 'Automatic price scanning has been disabled.'
+        );
     }
 
     public function updatedScanFormRegion(): void
@@ -765,6 +798,14 @@ class HardwareScanner extends Component
                     ($this->scanForm['scope'] ?? '') === 'region' && filled($this->scanForm['region'] ?? null)
                         ? \App\Services\RegionPriceScanner::suppliersInRegion((string) $this->scanForm['region'], (string) $this->scanForm['price_type'])->count()
                         : 0,
+
+                'autoScanStatus' => [
+                    'last_started_at' => SiteSetting::get('hardware_auto_scan_last_started_at'),
+                    'last_run_at' => SiteSetting::get('hardware_auto_scan_last_run_at'),
+                    'last_status' => SiteSetting::get('hardware_auto_scan_last_status', 'never_run'),
+                    'last_summary' => SiteSetting::get('hardware_auto_scan_last_summary', ''),
+                    'timezone' => \App\Support\Regional::timezone(),
+                ],
             ]
         );
     }

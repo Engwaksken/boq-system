@@ -19,6 +19,71 @@
         <x-stat-card :label="__('Active Prices')" :value="\App\Support\Format::number($stats['active_prices'] ?? 0, 0)" icon="fa-circle-check" color="amber" :href="route('hardware-prices.index')" />
     </div>
 
+    <x-ui.card
+        :title="__('Automatic Price Scanner')"
+        icon="fa-clock-rotate-left"
+        :subtitle="__('Choose when the server automatically refreshes market prices. Manual scanning remains available when automatic scanning is disabled.')"
+    >
+        <form wire:submit.prevent="saveAutoScanSettings">
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <x-ui.field :label="__('Automatic Scanning')" for="auto-scan-enabled" error="autoScanForm.enabled">
+                    <label class="boq-check min-h-[42px]">
+                        <input id="auto-scan-enabled" type="checkbox" wire:model="autoScanForm.enabled">
+                        {{ __('Enable automatic price scanning') }}
+                    </label>
+                </x-ui.field>
+
+                <x-ui.field :label="__('Scan Time')" for="auto-scan-time" error="autoScanForm.time">
+                    <input id="auto-scan-time" type="time" wire:model="autoScanForm.time"
+                           class="boq-field @error('autoScanForm.time') has-error @enderror">
+                </x-ui.field>
+
+                <x-ui.field :label="__('Items per Category')" for="auto-scan-limit" error="autoScanForm.limit">
+                    <input id="auto-scan-limit" type="number" min="1" max="20"
+                           wire:model="autoScanForm.limit"
+                           class="boq-field @error('autoScanForm.limit') has-error @enderror">
+                </x-ui.field>
+
+                <x-ui.field :label="__('Timezone')">
+                    <div class="boq-field flex items-center gap-2">
+                        <i class="fas fa-globe-africa" aria-hidden="true"></i>
+                        <span>{{ $autoScanStatus['timezone'] ?? config('app.timezone') }}</span>
+                    </div>
+                </x-ui.field>
+            </div>
+
+            <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="rounded-lg border border-slate-200 p-3">
+                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('Last Run') }}</div>
+                    <div class="mt-1 font-semibold text-slate-900">
+                        {{ filled($autoScanStatus['last_run_at'] ?? null) ? $autoScanStatus['last_run_at'] : __('Never') }}
+                    </div>
+                </div>
+
+                <div class="rounded-lg border border-slate-200 p-3">
+                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('Last Status') }}</div>
+                    <div class="mt-1 font-semibold text-slate-900">
+                        {{ __(str_replace('_', ' ', ucfirst((string) ($autoScanStatus['last_status'] ?? 'never_run')))) }}
+                    </div>
+                </div>
+
+                <div class="rounded-lg border border-slate-200 p-3">
+                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('Last Summary') }}</div>
+                    <div class="mt-1 text-sm text-slate-700">
+                        {{ ($autoScanStatus['last_summary'] ?? '') ?: __('No automatic scan has completed yet.') }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="hardware-card-actions">
+                <button type="submit" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="saveAutoScanSettings">
+                    <i class="fas fa-floppy-disk" aria-hidden="true"></i>
+                    <span wire:loading.remove wire:target="saveAutoScanSettings">{{ __('Save Scanner Schedule') }}</span>
+                    <span wire:loading wire:target="saveAutoScanSettings">{{ __('Saving...') }}</span>
+                </button>
+            </div>
+        </form>
+    </x-ui.card>
     <x-ui.card :title="__('AI Price Scanner')" icon="fa-robot" :subtitle="__('Select whether the AI should research hardware supplier prices or direct factory/manufacturer prices.')">
         <form wire:submit.prevent="scanPrices">
             <div class="mb-4">
@@ -129,14 +194,14 @@
                             @foreach($scanResults as $index => $result)
                                 @php $isFactory = ($result['price_type'] ?? null) === 'factory'; @endphp
                                 <tr wire:key="scan-result-{{ $index }}">
-                                    <td class="font-semibold text-slate-900">{{ $result['item'] ?? '—' }}</td>
+                                    <td class="font-semibold text-slate-900">{{ $result['item'] ?? 'â€”' }}</td>
                                     <td>
                                         <x-ui.badge :color="$isFactory ? 'purple' : 'info'" :icon="$isFactory ? 'fa-industry' : 'fa-store'">
                                             {{ $isFactory ? __('Factory') : __('Hardware') }}
                                         </x-ui.badge>
                                     </td>
-                                    <td>{{ ($result['supplier'] ?? null) ?: '—' }}</td>
-                                    <td>{{ ($result['location'] ?? null) ?: '—' }}</td>
+                                    <td>{{ ($result['supplier'] ?? null) ?: 'â€”' }}</td>
+                                    <td>{{ ($result['location'] ?? null) ?: 'â€”' }}</td>
                                     <td class="is-numeric font-semibold"><x-money :amount="$result['price'] ?? 0" :currency="$result['currency'] ?? null" /></td>
                                     <td><x-ui.badge :color="($result['status'] ?? '') === 'created' ? 'success' : 'info'">{{ __(ucfirst((string) ($result['status'] ?? ''))) }}</x-ui.badge></td>
                                 </tr>

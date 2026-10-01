@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Models\Organisation;
+use App\Models\SiteSetting;
 use App\Services\HardwarePriceFetchingService;
 use Illuminate\Console\Command;
 use Throwable;
@@ -20,6 +21,9 @@ class FetchDailyHardwarePrices extends Command
 
     public function handle(HardwarePriceFetchingService $service): int
     {
+        SiteSetting::set('hardware_auto_scan_last_started_at', now()->toIso8601String(), 'hardware_scanner');
+        SiteSetting::set('hardware_auto_scan_last_status', 'running', 'hardware_scanner');
+
         $location = trim((string) $this->option('location')) ?: \App\Support\Regional::marketLocation();
         $limit = max(1, min(20, (int) $this->option('limit')));
 
@@ -75,6 +79,20 @@ class FetchDailyHardwarePrices extends Command
         $this->line(
             "Total: {$totalFetched} fetched, {$totalCreated} created, ".
             "{$totalUpdated} updated, {$totalErrors} errors."
+        );
+
+        $status = match (true) {
+            $totalErrors > 0 && $totalFetched === 0 => 'failed',
+            $totalErrors > 0 => 'partial',
+            default => 'successful',
+        };
+
+        SiteSetting::set('hardware_auto_scan_last_run_at', now()->toIso8601String(), 'hardware_scanner');
+        SiteSetting::set('hardware_auto_scan_last_status', $status, 'hardware_scanner');
+        SiteSetting::set(
+            'hardware_auto_scan_last_summary',
+            "{$totalFetched} fetched, {$totalCreated} created, {$totalUpdated} updated, {$totalErrors} errors.",
+            'hardware_scanner'
         );
 
         return $totalFetched > 0 ? self::SUCCESS : self::FAILURE;

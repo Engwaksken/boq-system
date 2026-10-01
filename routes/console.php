@@ -9,9 +9,17 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Market location and timezone come from Admin > Settings (App\Support\Regional).
-Schedule::command('hardware:fetch-daily --limit=3')
-    ->dailyAt('06:00')
+$hardwareScanTime = (string) \App\Models\SiteSetting::get('hardware_auto_scan_time', '06:00');
+if (! preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $hardwareScanTime)) {
+    $hardwareScanTime = '06:00';
+}
+
+$hardwareScanLimit = max(1, min(20, (int) \App\Models\SiteSetting::get('hardware_auto_scan_limit', 3)));
+
+Schedule::command('hardware:fetch-daily --limit='.$hardwareScanLimit)
+    ->dailyAt($hardwareScanTime)
     ->timezone(App\Support\Regional::timezone())
+    ->when(fn (): bool => (bool) \App\Models\SiteSetting::get('hardware_auto_scan_enabled', true))
     ->withoutOverlapping();
 
 // Works on hosting without a supervisor-managed worker: the per-minute cron drains
