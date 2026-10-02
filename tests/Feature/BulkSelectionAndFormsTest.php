@@ -72,6 +72,50 @@ class BulkSelectionAndFormsTest extends TestCase
         $this->assertFalse($untouched->fresh()->is_archived);
     }
 
+    public function test_super_admin_can_create_a_plan(): void
+    {
+        $admin = $this->superAdmin();
+
+        Livewire::actingAs($admin)
+            ->test(PlansManager::class)
+            ->call('create')
+            ->set('form.name', 'Starter Plan')
+            ->set('form.code', '')
+            ->set('form.type', 'monthly')
+            ->set('form.duration_days', 30)
+            ->set('form.price', 25000)
+            ->set('form.currency', 'UGX')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('plans', [
+            'name' => 'Starter Plan',
+            'code' => 'starter-plan',
+            'price' => 25000,
+            'currency' => 'UGX',
+        ]);
+    }
+
+    public function test_super_admin_can_update_a_plan(): void
+    {
+        $admin = $this->superAdmin();
+        $plan = Plan::factory()->create(['name' => 'Original Plan', 'price' => 50000]);
+
+        Livewire::actingAs($admin)
+            ->test(PlansManager::class)
+            ->call('edit', $plan->id)
+            ->set('form.name', 'Updated Plan')
+            ->set('form.price', 75000)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('plans', [
+            'id' => $plan->id,
+            'name' => 'Updated Plan',
+            'price' => 75000,
+        ]);
+    }
+
     public function test_suppliers_can_be_deactivated_in_bulk(): void
     {
         $suppliers = Supplier::factory()->count(2)->create(['is_active' => true]);
