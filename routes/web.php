@@ -47,7 +47,7 @@ use App\Livewire\Projects\Show as ProjectsShow;
 use App\Livewire\Subscriptions\Index as SubscriptionsIndex;
 use App\Livewire\System\McpActivity;
 use App\Livewire\Topups\Index as TopupsIndex;
-
+use App\Livewire\Admin\FaqsManager;
 use App\Models\Boq;
 
 use Illuminate\Http\Request;
@@ -578,7 +578,7 @@ Route::middleware('auth')->group(function (): void {
                 UsersManager::class
             )->name('users');
 
-
+            Route::get('/faqs', FaqsManager::class)->name('faqs');
             /*
             |--------------------------------------------------------------------------
             | Roles & Permissions

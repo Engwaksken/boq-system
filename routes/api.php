@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\BoqPricingJobController;
 use App\Http\Controllers\Api\BoqSignatureController;
 use App\Http\Controllers\Api\BoqSignedDocumentController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\FaqController;
 use App\Http\Controllers\Api\HardwareCategoryController;
 use App\Http\Controllers\Api\HardwarePriceController;
 use App\Http\Controllers\Api\Mcp\McpToolController;
@@ -71,6 +72,14 @@ Route::prefix('v1')->group(function () {
 
         // Dashboard
         Route::get('dashboard', [DashboardController::class, 'index']);
+
+        // FAQ administration (also authorized by FaqPolicy in the controller).
+        Route::middleware('role:super-admin')->prefix('admin/faqs')->name('api.v1.admin.faqs.')->group(function () {
+            Route::get('/', [FaqController::class, 'index'])->name('index');
+            Route::post('/', [FaqController::class, 'store'])->middleware('throttle:10,1')->name('store');
+            Route::put('/{faq}', [FaqController::class, 'update'])->middleware('throttle:10,1')->name('update');
+        });
+
         Route::middleware(['permission:boq.edit', 'entitlement:boq.management'])->group(function () {
             Route::post('boqs', [BoqController::class, 'store'])
                 ->middleware('throttle:10,1')

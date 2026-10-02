@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Livewire\Concerns\WithBulkSelection;
 use App\Models\Plan;
 use App\Models\Subscription;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -44,11 +45,18 @@ class PlansManager extends Component
         'grace_period_days' => 3, 'display_order' => 0,
     ];
 
-    public function create(): void { $this->resetForm(); $this->showForm = true; }
+    public function create(): void
+    {
+        $this->resetForm();
+        $this->resetValidation();
+        $this->showForm = true;
+    }
 
     public function edit(int $id): void
     {
         $plan = Plan::findOrFail($id);
+        $this->resetForm();
+        $this->resetValidation();
         $this->editingId = $id;
         foreach (array_keys($this->form) as $key) {
             $this->form[$key] = $plan->{$key} ?? $this->form[$key];
@@ -58,9 +66,16 @@ class PlansManager extends Component
 
     public function save(): void
     {
+        // Validate the generated fallback code too; validating nullable input first
+        // would allow a duplicate slug to reach the database constraint.
+        $this->form['code'] = trim((string) ($this->form['code'] ?? ''));
+        if ($this->form['code'] === '') {
+            $this->form['code'] = Str::slug((string) ($this->form['name'] ?? ''));
+        }
+
         $validated = $this->validate([
             'form.name' => ['required','string','max:255'],
-            'form.code' => ['nullable','string','max:100','unique:plans,code,'.($this->editingId ?? 'NULL')],
+            'form.code' => ['required','string','max:100', Rule::unique('plans', 'code')->ignore($this->editingId)],
             'form.description' => ['nullable','string'],
             'form.type' => ['required','in:monthly,three_month,six_month,annual,one_time,lifetime'],
             'form.duration_days' => ['nullable','integer','min:0'],
@@ -75,7 +90,6 @@ class PlansManager extends Component
             'form.display_order' => ['integer','min:0'],
         ])['form'];
 
-        $validated['code'] = $validated['code'] ?: Str::slug($validated['name']);
         Plan::updateOrCreate(['id' => $this->editingId], $validated);
         session()->flash('message', $this->editingId ? 'Plan updated successfully.' : 'Plan created successfully.');
         $this->cancel();
@@ -115,7 +129,7 @@ class PlansManager extends Component
         $this->finishBulkAction($count, 'archived');
     }
 
-    public function cancel(): void { $this->showForm = false; $this->resetForm(); }
+    public function cancel(): void { $this->showForm = false; $this->resetForm(); $this->resetValidation(); }
     private function resetForm(): void { $this->editingId = null; $this->reset('form'); $this->form['currency'] = \App\Support\Regional::currency(); $this->form['type']='monthly'; $this->form['duration_days']=30; $this->form['trial_days']=7; $this->form['is_active']=true; }
     public function updatedSearch(): void { $this->resetPage(); }
 

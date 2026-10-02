@@ -77,6 +77,7 @@
                 'admin' => true,
                 'items' => [
                     $item('Overview', 'admin.index', 'fa-gauge'),
+                    $item('FAQ Management', 'admin.faqs', 'fa-circle-question'),
                     $item('Users', 'admin.users', 'fa-users'),
                     $item('Roles & Permissions', 'admin.roles-permissions', 'fa-user-shield'),
                     $item('Plans', 'admin.plans', 'fa-layer-group'),
