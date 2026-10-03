@@ -158,6 +158,7 @@ class User extends Authenticatable implements WebAuthnAuthenticatable
         'in_app_project_updates' => true,
         'in_app_boq_changes' => true,
         'in_app_approvals' => true,
+        'in_app_price_alerts' => true,
         'frequency' => 'immediate',
     ];
 

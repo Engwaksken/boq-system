@@ -82,10 +82,15 @@ class SubscriptionControllerTest extends TestCase
         $response->assertStatus(401);
     }
 
-    public function test_store_denies_user_without_subscription_management_permission(): void
+    public function test_store_denies_user_who_already_has_an_active_subscription(): void
     {
         $user = User::factory()->create();
         $plan = Plan::factory()->create(['is_active' => true, 'is_archived' => false]);
+        Subscription::factory()->create([
+            'user_id' => $user->id,
+            'organisation_id' => $user->organisation_id,
+            'status' => 'active',
+        ]);
 
         $this->actingAs($user)
             ->postJson('/api/v1/subscriptions', ['plan_id' => $plan->id])

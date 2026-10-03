@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Jobs\NotifyHardwarePriceChange;
 use App\Models\HardwarePrice;
 use App\Models\PriceHistory;
 use Illuminate\Support\Arr;
@@ -49,7 +50,7 @@ class HardwarePriceManager
                 $attributes
             );
 
-        return DB::transaction(
+        [$price, $history] = DB::transaction(
             function () use (
                 $organisationId,
                 $hardwarePrice,
@@ -62,6 +63,8 @@ class HardwarePriceManager
                         ->findOrFail(
                             $hardwarePrice->id
                         );
+
+                $history = null;
 
                 if (
                     number_format(
@@ -78,7 +81,7 @@ class HardwarePriceManager
                         ''
                     )
                 ) {
-                    PriceHistory::create([
+                    $history = PriceHistory::create([
                         'organisation_id' =>
                             $organisationId,
 
@@ -125,10 +128,23 @@ class HardwarePriceManager
                     $validated
                 );
 
-                return $price
-                    ->refresh();
+                return [
+                    $price
+                        ->refresh(),
+                    $history,
+                ];
             }
         );
+
+        // Alert bookmarked users after the change is committed, so the queued job
+        // always reads a persisted history row.
+        if ($history) {
+            NotifyHardwarePriceChange::dispatch(
+                $history->id
+            );
+        }
+
+        return $price;
     }
 
     public function deactivate(

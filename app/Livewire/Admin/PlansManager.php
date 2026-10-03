@@ -97,10 +97,38 @@ class PlansManager extends Component
             'featureIds.*' => ['integer', Rule::exists('features', 'id')],
         ])['form'];
 
+        $requestedFeatureIds = array_map('intval', $this->featureIds);
+        $retainedInactiveIds = [];
+        $existingPlan = $this->editingId ? Plan::find($this->editingId) : null;
+        if ($existingPlan) {
+            $retainedInactiveIds = $existingPlan->features()
+                ->where('features.is_active', false)
+                ->pluck('features.id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+        }
+
+        // A disabled feature may stay attached to a plan it was already on, but a
+        // disabled feature that is not attached must never be added by a tampered request.
+        $tamperedIds = Feature::query()
+            ->whereIn('id', $requestedFeatureIds)
+            ->where('is_active', false)
+            ->whereNotIn('id', $retainedInactiveIds)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id);
+
+        if ($tamperedIds->isNotEmpty()) {
+            foreach ($requestedFeatureIds as $index => $id) {
+                if ($tamperedIds->contains($id)) {
+                    $this->addError('featureIds.'.$index, __('One or more selected features are no longer available.'));
+                }
+            }
+
+            return;
+        }
+
         $plan = Plan::updateOrCreate(['id' => $this->editingId], $validated);
-        $selectedFeatureIds = array_map('intval', $this->featureIds);
-        $inactiveFeatureIds = $plan->features()->where('features.is_active', false)->pluck('features.id')->all();
-        $plan->features()->sync(array_values(array_unique(array_merge($selectedFeatureIds, $inactiveFeatureIds))));
+        $plan->features()->sync(array_values(array_unique(array_merge($requestedFeatureIds, $retainedInactiveIds))));
         session()->flash('message', $this->editingId ? 'Plan updated successfully.' : 'Plan created successfully.');
         $this->cancel();
     }

@@ -53,6 +53,53 @@ class FaqsManagerTest extends TestCase
         $this->assertDatabaseHas('faqs', ['id' => $created->id, 'question' => 'Changed?', 'answer' => 'Changed answer.']);
     }
 
+    public function test_create_form_adds_and_removes_entries_and_submits_each_question_with_its_own_answer(): void
+    {
+        $component = Livewire::actingAs($this->superAdmin())
+            ->test(\App\Livewire\Admin\FaqsManager::class)
+            ->call('create')
+            ->assertSee('Create FAQ entries')
+            ->assertSee('Add another FAQ');
+
+        $component->call('addFaqEntry')
+            ->assertSee('FAQ 2')
+            ->call('addFaqEntry')
+            ->assertSee('FAQ 3')
+            ->call('removeFaqEntry', 1)
+            ->assertDontSee('FAQ 3');
+
+        $component->set('newFaqs.0.question', 'First question?')
+            ->set('newFaqs.0.answer', 'First answer.')
+            ->set('newFaqs.1.question', 'Second question?')
+            ->set('newFaqs.1.answer', 'Second answer.')
+            ->call('save')
+            ->assertSee('FAQs created successfully.')
+            ->assertDontSee('Create FAQ entries');
+
+        $this->assertDatabaseHas('faqs', ['question' => 'First question?', 'answer' => 'First answer.']);
+        $this->assertDatabaseHas('faqs', ['question' => 'Second question?', 'answer' => 'Second answer.']);
+        $this->assertDatabaseCount('faqs', 2);
+    }
+
+    public function test_edit_form_keeps_single_faq_fields_and_existing_values(): void
+    {
+        $faq = Faq::create([
+            'question' => 'Retained question?',
+            'answer' => 'Retained answer.',
+            'sort_order' => 6,
+            'is_active' => true,
+        ]);
+
+        Livewire::actingAs($this->superAdmin())
+            ->test(\App\Livewire\Admin\FaqsManager::class)
+            ->call('edit', $faq->id)
+            ->assertSee('Edit FAQ')
+            ->assertSee('Save FAQ')
+            ->assertSet('question', 'Retained question?')
+            ->assertSet('answer', 'Retained answer.')
+            ->assertDontSee('Add another FAQ');
+    }
+
     public function test_public_component_state_contains_only_supported_faq_fields(): void
     {
         $faq = Faq::create([

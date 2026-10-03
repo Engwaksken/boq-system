@@ -2564,7 +2564,8 @@ button.boq-sort-th:hover {
 
 .boq-plan-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    /* Keep the plan layout authoritative over grid-cols-* utilities on the view. */
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
     gap: 1rem;
 }
 
@@ -3048,7 +3049,7 @@ button.boq-sort-th:hover {
     }
 
     .boq-plan-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
 
     .boq-checkout-grid {
@@ -3099,6 +3100,10 @@ button.boq-sort-th:hover {
 .boq-ai-filter-grid,
 .boq-totals-grid {
         grid-template-columns: 1fr;
+    }
+
+    .boq-plan-grid {
+        grid-template-columns: 1fr !important;
     }
 
     .boq-form-span-2 {

@@ -229,27 +229,20 @@ class PaymentController extends Controller
     ): JsonResponse {
         $user = $request->user();
         $subscription = $transaction->subscription;
-        if (! $subscription) {
-            return response()->json([
-                'success' => false,
-                'error_code' => 'SUBSCRIPTION_NOT_FOUND',
-                'message' => 'This payment is not associated with a subscription.',
-            ], 422);
+
+        // Authorise before revealing anything. When the transaction is not linked
+        // to a subscription (e.g. a top-up), fall back to payer/owner ownership.
+        if ($subscription) {
+            $this->authorize($subscription->isProxy() ? 'manageProxy' : 'update', $subscription);
+            abort_unless(app(\App\Policies\SubscriptionPolicy::class)->canPay($user, $subscription), 403);
+        } else {
+            abort_unless($transaction->user_id === $user->id || $transaction->payer_id === $user->id, 403);
         }
-
-        $this->authorize($subscription->isProxy() ? 'manageProxy' : 'update', $subscription);
-        abort_unless(app(\App\Policies\SubscriptionPolicy::class)->canPay($user, $subscription), 403);
-
-        if ($transaction->isSuccessful()) {
-            return response()->json(['success' => true, 'data' => $transaction->load('subscription.plan', 'invoice')]);
-        }
-
-        $gateway = $transaction->paymentGateway;
-        abort_unless($gateway && $gateway->is_active, 422, 'Payment gateway unavailable.');
 
         // Never let the client swap in another (older or cheaper) payment's id: the id
         // stored at initiation always wins, and a client id is only accepted when none
-        // was stored and no other transaction has already used it.
+        // was stored and no other transaction has already used it. This runs before the
+        // subscription lookup so a reused payment is rejected even without a subscription.
         $gatewayTransactionId = $transaction->gateway_transaction_id ?: $request->input('gateway_transaction_id');
 
         if (
@@ -263,6 +256,21 @@ class PaymentController extends Controller
                 'message' => 'This payment has already been used for another purchase.',
             ], 422);
         }
+
+        if (! $subscription) {
+            return response()->json([
+                'success' => false,
+                'error_code' => 'SUBSCRIPTION_NOT_FOUND',
+                'message' => 'This payment is not associated with a subscription.',
+            ], 422);
+        }
+
+        if ($transaction->isSuccessful()) {
+            return response()->json(['success' => true, 'data' => $transaction->load('subscription.plan', 'invoice')]);
+        }
+
+        $gateway = $transaction->paymentGateway;
+        abort_unless($gateway && $gateway->is_active, 422, 'Payment gateway unavailable.');
 
         $payload = array_merge($request->except('gateway_transaction_id'), [
             'gateway_transaction_id' => $gatewayTransactionId,
@@ -297,8 +305,9 @@ class PaymentController extends Controller
      */
     public function show(Request $request, Transaction $transaction): JsonResponse
     {
-        $user = $request->user();
-        abort_unless($transaction->subscription && app(\App\Policies\SubscriptionPolicy::class)->canPay($user, $transaction->subscription), 403);
+        $subscription = $transaction->subscription;
+        abort_unless($subscription, 403);
+        $this->authorize($subscription->isProxy() ? 'manageProxy' : 'update', $subscription);
 
         return response()->json([
             'success' => true,
@@ -311,8 +320,9 @@ class PaymentController extends Controller
      */
     public function receipt(Request $request, Transaction $transaction): JsonResponse
     {
-        $user = $request->user();
-        abort_unless($transaction->subscription && app(\App\Policies\SubscriptionPolicy::class)->canPay($user, $transaction->subscription), 403);
+        $subscription = $transaction->subscription;
+        abort_unless($subscription, 403);
+        $this->authorize($subscription->isProxy() ? 'manageProxy' : 'update', $subscription);
 
         if (! $transaction->isSuccessful()) {
             return response()->json([

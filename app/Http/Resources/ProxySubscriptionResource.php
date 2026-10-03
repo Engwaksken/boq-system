@@ -31,7 +31,7 @@ class ProxySubscriptionResource extends JsonResource
             'product_version' => $subscription->product_version,
             'metadata' => $subscription->metadata,
             'is_proxy' => $subscription->isProxy(),
-            'plan' => $subscription->whenLoaded('plan', fn () => [
+            'plan' => $this->whenLoaded('plan', fn () => [
                 'id' => $subscription->plan->id,
                 'name' => $subscription->plan->name,
                 'code' => $subscription->plan->code,
@@ -42,21 +42,21 @@ class ProxySubscriptionResource extends JsonResource
                 'has_trial' => $subscription->plan->has_trial,
                 'trial_days' => $subscription->plan->trial_days,
             ]),
-            'payer' => $subscription->whenLoaded('payer', fn () => [
+            'payer' => $this->whenLoaded('payer', fn () => [
                 'id' => $subscription->payer->id,
                 'name' => $subscription->payer->name,
                 'email' => $subscription->payer->email,
             ]),
-            'beneficiary' => $subscription->whenLoaded('beneficiary', fn () => [
+            'beneficiary' => $this->whenLoaded('beneficiary', fn () => [
                 'id' => $subscription->beneficiary->id,
                 'name' => $subscription->beneficiary->name,
                 'email' => $subscription->beneficiary->email,
             ]),
-            'organisation' => $subscription->whenLoaded('organisation', fn () => [
+            'organisation' => $this->whenLoaded('organisation', fn () => [
                 'id' => $subscription->organisation->id,
                 'name' => $subscription->organisation->name,
             ]),
-            'transactions' => $subscription->whenLoaded('transactions', fn () =>
+            'transactions' => $this->whenLoaded('transactions', fn () =>
                 $subscription->transactions->map(fn ($t) => [
                     'id' => $t->id,
                     'reference' => $t->reference,
@@ -67,21 +67,21 @@ class ProxySubscriptionResource extends JsonResource
                     'initiated_at' => $t->initiated_at?->toIso8601String(),
                     'completed_at' => $t->completed_at?->toIso8601String(),
                     'gateway_transaction_id' => $t->gateway_transaction_id,
-                    'payment_gateway' => $t->whenLoaded('paymentGateway', fn () => [
+                    'payment_gateway' => $t->relationLoaded('paymentGateway') ? [
                         'id' => $t->paymentGateway->id,
                         'name' => $t->paymentGateway->name,
                         'code' => $t->paymentGateway->code,
-                    ]),
+                    ] : null,
                 ])
             ),
-            'entitlements' => $subscription->whenLoaded('entitlements', fn () =>
+            'entitlements' => $this->whenLoaded('entitlements', fn () =>
                 $subscription->entitlements->map(fn ($e) => [
                     'id' => $e->id,
-                    'feature' => $e->whenLoaded('feature', fn () => [
+                    'feature' => $e->relationLoaded('feature') ? [
                         'id' => $e->feature->id,
                         'code' => $e->feature->code,
                         'name' => $e->feature->name,
-                    ]),
+                    ] : null,
                     'status' => $e->status,
                     'granted_at' => $e->granted_at?->toIso8601String(),
                     'expires_at' => $e->expires_at?->toIso8601String(),

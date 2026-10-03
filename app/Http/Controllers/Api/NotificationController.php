@@ -15,6 +15,12 @@ class NotificationController extends Controller
 
         $notifications = UserNotification::query()
             ->where('user_id', $request->user()->id)
+            // Rows whose in-app channel is explicitly disabled are audit-only (for
+            // example an email-only price alert) and must not surface here.
+            ->where(function ($query) {
+                $query->whereNull('data->in_app_enabled')
+                    ->orWhere('data->in_app_enabled', true);
+            })
             ->latest()
             ->paginate($perPage);
 

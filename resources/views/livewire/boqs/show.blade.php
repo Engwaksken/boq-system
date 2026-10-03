@@ -588,9 +588,8 @@
         @endif
     </section>
 
-    @if($reviewingItemId)
-        @php $reviewItem = $items->firstWhere('id', $reviewingItemId); @endphp
-        @if($reviewItem)
+    @if($reviewingItemId && $reviewModalItem)
+        @php $reviewItem = $reviewModalItem; @endphp
             <x-ui.modal wire:key="review-item-{{ $reviewItem->id }}" id="review-item" :title="__('Review BOQ item')" :subtitle="__('Check the item and suggested rate before saving your review.')" icon="fa-scale-balanced" size="lg" close="closeEditor">
                 <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_16rem]">
                     <div class="space-y-4">
@@ -625,7 +624,6 @@
                     <x-ui.button icon="fa-floppy-disk" wire:click="reviewItem({{ $reviewItem->id }})" loading="reviewItem">{{ __('Save Review') }}</x-ui.button>
                 </x-slot:footer>
             </x-ui.modal>
-        @endif
     @endif
 
     <livewire:boqs.signatures :boq="$boq" wire:key="boq-signatures-{{ $boq->id }}" />

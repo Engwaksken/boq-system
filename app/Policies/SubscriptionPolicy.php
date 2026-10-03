@@ -13,8 +13,10 @@ class SubscriptionPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('subscriptions.view')
-            || $user->hasRole('user');
+        // Listing and "current" are always scoped to the authenticated account, so
+        // every signed-in user may review their own subscriptions. Individual records
+        // remain protected by view().
+        return true;
     }
 
     /**

@@ -21,6 +21,7 @@
                 'email_price_alerts' => ['fa-envelope', __('Email'), __('Price alerts'), __('Alerts when hardware prices change significantly')],
                 'in_app_project_updates' => ['fa-bell', __('In-app'), __('Project updates'), __('See project updates in the notification centre')],
                 'in_app_boq_changes' => ['fa-bell', __('In-app'), __('BOQ changes'), __('See BOQ changes in the notification centre')],
+                'in_app_price_alerts' => ['fa-bell', __('In-app'), __('Price alerts'), __('See hardware price changes in the notification centre')],
                 'in_app_approvals' => ['fa-bell', __('In-app'), __('Approvals'), __('Notifications when items need your approval')],
             ] as $key => [$icon, $channel, $title, $description])
                 <label for="pref-{{ $key }}" class="boq-toggle-row" wire:key="pref-{{ $key }}">

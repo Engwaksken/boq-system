@@ -129,7 +129,7 @@ class BulkSelectionAndFormsTest extends TestCase
         Livewire::actingAs($admin)
             ->test(PlansManager::class)
             ->call('edit', $plan->id)
-            ->set('featureIds', [(string) $active->id, (string) $inactiveUnattached->id])
+            ->set('featureIds', [(string) $active->id])
             ->call('save')
             ->assertHasNoErrors();
 
@@ -137,6 +137,7 @@ class BulkSelectionAndFormsTest extends TestCase
             [$active->id, $inactiveAttached->id],
             $plan->fresh()->features()->pluck('features.id')->all()
         );
+        $this->assertDatabaseMissing('plan_feature', ['plan_id' => $plan->id, 'feature_id' => $inactiveUnattached->id]);
     }
 
     public function test_suppliers_can_be_deactivated_in_bulk(): void

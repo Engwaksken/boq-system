@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class FaqAdminApiTest extends TestCase
@@ -13,7 +14,10 @@ class FaqAdminApiTest extends TestCase
 
     private function superAdmin(): User
     {
-        $role = Role::factory()->create(['slug' => 'super-admin']);
+        $role = Role::firstOrCreate(
+            ['slug' => 'super-admin'],
+            ['name' => 'Super Admin', 'is_system' => true],
+        );
         $user = User::factory()->create();
         $user->roles()->attach($role);
 
@@ -74,5 +78,21 @@ class FaqAdminApiTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->getJson('/api/v1/admin/faqs')
             ->assertForbidden();
+    }
+
+    public function test_faq_batch_component_accepts_twenty_entries_and_rejects_a_twenty_first(): void
+    {
+        $component = Livewire::actingAs($this->superAdmin())
+            ->test(\App\Livewire\Admin\FaqsManager::class)
+            ->call('create');
+
+        for ($index = 1; $index < 20; $index++) {
+            $component->call('addFaqEntry');
+        }
+
+        $component->assertCount('newFaqs', 20)
+            ->call('addFaqEntry')
+            ->assertCount('newFaqs', 20)
+            ->assertHasErrors('newFaqs');
     }
 }

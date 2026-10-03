@@ -3,12 +3,15 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Faq;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
 class FaqsManager extends Component
 {
+    private const MAX_FAQ_ENTRIES = 20;
+
     public array $faqs = [];
     public array $meta = [];
     public int $page = 1;
@@ -21,6 +24,8 @@ class FaqsManager extends Component
     public bool $is_active = true;
     public string $successMessage = '';
     public string $serverError = '';
+    /** @var array<int, array{question: string, answer: string}> */
+    public array $newFaqs = [['question' => '', 'answer' => '']];
 
     public function boot(): void
     {
@@ -109,6 +114,32 @@ class FaqsManager extends Component
         $this->showForm = true;
     }
 
+    public function addFaqEntry(): void
+    {
+        $this->authorizeAdmin();
+        $this->authorize('create', Faq::class);
+        if (count($this->newFaqs) >= self::MAX_FAQ_ENTRIES) {
+            $this->addError('newFaqs', __('You can add no more than :count FAQs at a time.', ['count' => self::MAX_FAQ_ENTRIES]));
+
+            return;
+        }
+
+        $this->newFaqs[] = ['question' => '', 'answer' => ''];
+        $this->resetValidation('newFaqs');
+    }
+
+    public function removeFaqEntry(int $index): void
+    {
+        $this->authorizeAdmin();
+        // Removing an unsaved batch entry is still part of the FAQ create flow.
+        $this->authorize('create', Faq::class);
+        if (count($this->newFaqs) > 1 && isset($this->newFaqs[$index])) {
+            unset($this->newFaqs[$index]);
+            $this->newFaqs = array_values($this->newFaqs);
+            $this->resetValidation();
+        }
+    }
+
     public function edit(int $id): void
     {
         $this->authorizeAdmin();
@@ -121,6 +152,7 @@ class FaqsManager extends Component
         $this->is_active = (bool) ($faq['is_active'] ?? true);
         $this->showForm = true;
         $this->successMessage = '';
+        $this->newFaqs = [['question' => '', 'answer' => '']];
         $this->resetValidation();
     }
 
@@ -129,16 +161,33 @@ class FaqsManager extends Component
         $this->authorizeAdmin();
         $this->successMessage = '';
         $this->serverError = '';
-        $data = $this->validate([
-            'question' => ['required', 'string', 'max:255'],
-            'answer' => ['required', 'string'],
-            'sort_order' => ['required', 'integer', 'min:0'],
-            'is_active' => ['required', 'boolean'],
-        ]);
+        if ($this->editingId) {
+            $data = $this->validate([
+                'question' => ['required', 'string', 'max:255'],
+                'answer' => ['required', 'string'],
+                'sort_order' => ['required', 'integer', 'min:0'],
+                'is_active' => ['required', 'boolean'],
+            ]);
+            $payload = $this->updateFaq($this->editingId, $data);
+        } else {
+            $data = $this->validate([
+                'newFaqs' => ['required', 'array', 'min:1', 'max:'.self::MAX_FAQ_ENTRIES],
+                'newFaqs.*.question' => ['required', 'string', 'max:255'],
+                'newFaqs.*.answer' => ['required', 'string'],
+            ]);
+            DB::transaction(function () use ($data): void {
+                foreach ($data['newFaqs'] as $index => $entry) {
+                    $this->storeFaq([
+                        'question' => $entry['question'],
+                        'answer' => $entry['answer'],
+                        'sort_order' => $this->sort_order + $index,
+                        'is_active' => $this->is_active,
+                    ]);
+                }
+            });
+            $payload = ['message' => __('FAQs created successfully.')];
+        }
 
-        $payload = $this->editingId
-            ? $this->updateFaq($this->editingId, $data)
-            : $this->storeFaq($data);
         $this->successMessage = $payload['message'] ?? __('FAQ saved successfully.');
         $this->cancel();
         $this->loadFaqs();
@@ -166,6 +215,7 @@ class FaqsManager extends Component
         $this->answer = '';
         $this->sort_order = 0;
         $this->is_active = true;
+        $this->newFaqs = [['question' => '', 'answer' => '']];
     }
 
     public function render()

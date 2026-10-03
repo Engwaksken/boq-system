@@ -13,15 +13,38 @@
     @endif
 
     @if($showForm)
-        <section class="boq-panel" aria-labelledby="faq-form-heading">
-            <h2 id="faq-form-heading" class="mb-4 text-lg font-semibold">{{ $editingId ? __('Edit FAQ') : __('Create FAQ') }}</h2>
-            <form wire:submit="save" class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <section class="boq-panel p-6 sm:p-8" aria-labelledby="faq-form-heading">
+            <h2 id="faq-form-heading" class="mb-6 text-lg font-semibold">{{ $editingId ? __('Edit FAQ') : __('Create FAQ entries') }}</h2>
+            <form wire:submit="save" class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                @if(!$editingId)
+                    @foreach($newFaqs as $index => $entry)
+                        <fieldset wire:key="new-faq-{{ $index }}" class="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 p-5 md:col-span-2 md:grid-cols-2">
+                            <legend class="px-2 text-sm font-semibold">{{ __('FAQ :number', ['number' => $index + 1]) }}</legend>
+                            <x-ui.field :label="__('Question')" for="faq-question-{{ $index }}" :error="'newFaqs.'.$index.'.question'" required class="md:col-span-2">
+                                <input id="faq-question-{{ $index }}" type="text" wire:model="newFaqs.{{ $index }}.question" maxlength="255" required class="boq-field @error('newFaqs.'.$index.'.question') has-error @enderror">
+                            </x-ui.field>
+                            <x-ui.field :label="__('Answer')" for="faq-answer-{{ $index }}" :error="'newFaqs.'.$index.'.answer'" required class="md:col-span-2">
+                                <textarea id="faq-answer-{{ $index }}" wire:model="newFaqs.{{ $index }}.answer" rows="5" required class="boq-field @error('newFaqs.'.$index.'.answer') has-error @enderror"></textarea>
+                            </x-ui.field>
+                            @if(count($newFaqs) > 1)<button type="button" wire:click="removeFaqEntry({{ $index }})" class="boq-btn-ghost justify-self-start">{{ __('Remove FAQ') }}</button>@endif
+                        </fieldset>
+                    @endforeach
+                    @error('newFaqs')<p role="alert" class="md:col-span-2 text-sm text-rose-700">{{ $message }}</p>@enderror
+                    @if(count($newFaqs) < 20)
+                        <x-ui.button type="button" variant="secondary" icon="fa-plus" wire:click="addFaqEntry" class="md:col-span-2">{{ __('Add another FAQ') }}</x-ui.button>
+                    @else
+                        <p class="md:col-span-2 text-sm text-slate-600">{{ __('Maximum 20 FAQs per batch.') }}</p>
+                    @endif
+                @else
                 <x-ui.field :label="__('Question')" for="faq-question" error="question" required class="md:col-span-2">
                     <input id="faq-question" type="text" wire:model="question" maxlength="1000" required class="boq-field @error('question') has-error @enderror" aria-describedby="faq-question-error">
                 </x-ui.field>
-                <x-ui.field :label="__('Answer')" for="faq-answer" error="answer" required class="md:col-span-2">
-                    <textarea id="faq-answer" wire:model="answer" rows="5" maxlength="10000" required class="boq-field @error('answer') has-error @enderror" aria-describedby="faq-answer-error"></textarea>
-                </x-ui.field>
+                @endif
+                @if($editingId)
+                    <x-ui.field :label="__('Answer')" for="faq-answer" error="answer" required class="md:col-span-2">
+                        <textarea id="faq-answer" wire:model="answer" rows="5" maxlength="10000" required class="boq-field @error('answer') has-error @enderror" aria-describedby="faq-answer-error"></textarea>
+                    </x-ui.field>
+                @endif
                 <x-ui.field :label="__('Sort order')" for="faq-sort-order" error="sort_order">
                     <input id="faq-sort-order" type="number" wire:model="sort_order" min="0" step="1" required class="boq-field @error('sort_order') has-error @enderror">
                 </x-ui.field>
@@ -29,8 +52,8 @@
                     <input id="faq-is-active" type="checkbox" wire:model="is_active" class="rounded border-slate-300">
                     <span>{{ __('Active') }}</span>
                 </label>
-                <div class="flex flex-wrap gap-2 md:col-span-2">
-                    <x-ui.button type="submit" icon="fa-floppy-disk" wire:target="save" wire:loading.attr="disabled">{{ __('Save FAQ') }}</x-ui.button>
+                <div class="flex flex-wrap gap-3 border-t border-slate-100 pt-5 md:col-span-2">
+                    <x-ui.button type="submit" icon="fa-floppy-disk" wire:target="save" wire:loading.attr="disabled">{{ $editingId ? __('Save FAQ') : __('Save FAQs') }}</x-ui.button>
                     <x-ui.button type="button" variant="secondary" wire:click="cancel">{{ __('Cancel') }}</x-ui.button>
                     <span wire:loading wire:target="save" role="status" class="self-center text-sm text-slate-600">{{ __('Saving…') }}</span>
                 </div>
@@ -38,7 +61,7 @@
         </section>
     @endif
 
-    <section class="boq-panel py-8 sm:py-10" aria-labelledby="faq-list-heading" aria-busy="{{ $loading ? 'true' : 'false' }}">
+    <section class="boq-panel p-6 sm:p-8" aria-labelledby="faq-list-heading" aria-busy="{{ $loading ? 'true' : 'false' }}">
         <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 id="faq-list-heading" class="text-lg font-semibold">{{ __('FAQs') }}</h2>
             <button type="button" wire:click="loadFaqs" class="boq-btn-secondary" wire:loading.attr="disabled" wire:target="loadFaqs">{{ __('Refresh') }}</button>

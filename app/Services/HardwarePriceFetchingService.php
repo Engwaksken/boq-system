@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Jobs\NotifyHardwarePriceChange;
 use App\Models\HardwareCategory;
 use App\Models\HardwarePrice;
 use App\Models\PriceHistory;
@@ -721,7 +722,8 @@ PROMPT;
             }
 
             $existing->update($priceData + ['last_verified_at' => now()]);
-            $this->recordHistory($existing->fresh(), $organisationId);
+            $history = $this->recordHistory($existing->fresh(), $organisationId);
+            NotifyHardwarePriceChange::dispatch($history->id);
 
             return 'updated';
         }
@@ -741,9 +743,9 @@ PROMPT;
     /**
      * Append an immutable history entry for the price's current value and source.
      */
-    private function recordHistory(HardwarePrice $price, ?int $organisationId): void
+    private function recordHistory(HardwarePrice $price, ?int $organisationId): PriceHistory
     {
-        PriceHistory::create([
+        return PriceHistory::create([
             'organisation_id' => $organisationId,
             'hardware_price_id' => $price->id,
             'price' => $price->price,

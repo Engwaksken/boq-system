@@ -213,6 +213,30 @@ class CheckoutAndLifecycleTest extends TestCase
         $this->assertSame(1, UserNotification::where('user_id', $subscription->user_id)->count());
     }
 
+    public function test_renewal_reminder_default_cadence_covers_fourteen_seven_three_and_one_days(): void
+    {
+        $user = User::factory()->create();
+        foreach ([14, 7, 3, 1] as $days) {
+            Subscription::factory()->create([
+                'user_id' => $user->id,
+                'status' => 'active',
+                'end_date' => now()->addDays($days)->setTime(12, 0),
+            ]);
+        }
+
+        $this->artisan('subscriptions:remind')->assertSuccessful();
+
+        $notifications = UserNotification::where('user_id', $user->id)->get();
+        $this->assertCount(4, $notifications);
+        $this->assertEqualsCanonicalizing(
+            ['renewal-reminder-'.Subscription::query()->where('user_id', $user->id)->whereDate('end_date', now()->addDays(14)->toDateString())->value('id').'-14',
+             'renewal-reminder-'.Subscription::query()->where('user_id', $user->id)->whereDate('end_date', now()->addDays(7)->toDateString())->value('id').'-7',
+             'renewal-reminder-'.Subscription::query()->where('user_id', $user->id)->whereDate('end_date', now()->addDays(3)->toDateString())->value('id').'-3',
+             'renewal-reminder-'.Subscription::query()->where('user_id', $user->id)->whereDate('end_date', now()->addDays(1)->toDateString())->value('id').'-1'],
+            $notifications->pluck('data.reminder_key')->all()
+        );
+    }
+
     // ---------------------------------------------------------------- ops
 
     public function test_maintenance_mode_blocks_users_but_not_super_admins(): void

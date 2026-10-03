@@ -100,13 +100,11 @@ class Show extends Component
 
     public function updatedItemSearch(): void
     {
-        $this->closeEditor();
         $this->resetPage('itemsPage');
     }
 
     public function updatedItemStatus(): void
     {
-        $this->closeEditor();
         $this->resetPage('itemsPage');
     }
 
@@ -1506,6 +1504,11 @@ class Show extends Component
                 'itemsPage'
             );
 
+        // Keep an open review independent of the currently visible page/filter.
+        $reviewModalItem = $this->reviewingItemId
+            ? $this->boq->items()->with(['hardwarePrice', 'matchedBy', 'reviewedBy', 'approvedBy', 'rejectedBy'])->find($this->reviewingItemId)
+            : null;
+
         /*
          * One aggregate query replaces several separate count
          * queries and avoids loading all items into memory.
@@ -1595,6 +1598,8 @@ class Show extends Component
             [
                 'items' =>
                     $items,
+
+                'reviewModalItem' => $reviewModalItem,
 
                 'itemStats' =>
                     $itemStats,

@@ -184,8 +184,8 @@ class ProductionHardeningTest extends TestCase
             ->call('save')
             ->assertHasErrors('featureIds.*');
 
-        $this->assertDatabaseHas('feature_plan', ['plan_id' => $plan->id, 'feature_id' => $attachedInactive->id]);
-        $this->assertDatabaseMissing('feature_plan', ['plan_id' => $plan->id, 'feature_id' => $tamperedInactive->id]);
+        $this->assertDatabaseHas('plan_feature', ['plan_id' => $plan->id, 'feature_id' => $attachedInactive->id]);
+        $this->assertDatabaseMissing('plan_feature', ['plan_id' => $plan->id, 'feature_id' => $tamperedInactive->id]);
     }
 
     public function test_admin_can_activate_extend_and_cancel_subscriptions(): void
