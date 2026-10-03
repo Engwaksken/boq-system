@@ -38,7 +38,7 @@
         </section>
     @endif
 
-    <section class="boq-panel" aria-labelledby="faq-list-heading" aria-busy="{{ $loading ? 'true' : 'false' }}">
+    <section class="boq-panel py-8 sm:py-10" aria-labelledby="faq-list-heading" aria-busy="{{ $loading ? 'true' : 'false' }}">
         <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 id="faq-list-heading" class="text-lg font-semibold">{{ __('FAQs') }}</h2>
             <button type="button" wire:click="loadFaqs" class="boq-btn-secondary" wire:loading.attr="disabled" wire:target="loadFaqs">{{ __('Refresh') }}</button>

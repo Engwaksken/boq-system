@@ -170,6 +170,24 @@ class ProductionHardeningTest extends TestCase
         $this->assertSoftDeleted('plans', ['id' => $unused->id]);
     }
 
+    public function test_plan_manager_preserves_attached_inactive_features_but_rejects_tampered_inactive_ids(): void
+    {
+        $admin = $this->superAdmin();
+        $plan = Plan::factory()->create();
+        $attachedInactive = Feature::factory()->create(['is_active' => false]);
+        $tamperedInactive = Feature::factory()->create(['is_active' => false]);
+        $plan->features()->attach($attachedInactive->id);
+
+        Livewire::actingAs($admin)->test(PlansManager::class)
+            ->call('edit', $plan->id)
+            ->set('featureIds', [$attachedInactive->id, $tamperedInactive->id])
+            ->call('save')
+            ->assertHasErrors('featureIds.*');
+
+        $this->assertDatabaseHas('feature_plan', ['plan_id' => $plan->id, 'feature_id' => $attachedInactive->id]);
+        $this->assertDatabaseMissing('feature_plan', ['plan_id' => $plan->id, 'feature_id' => $tamperedInactive->id]);
+    }
+
     public function test_admin_can_activate_extend_and_cancel_subscriptions(): void
     {
         $admin = $this->superAdmin();

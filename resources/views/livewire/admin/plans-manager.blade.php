@@ -121,6 +121,23 @@
                     <textarea id="plan-description" placeholder="{{ __('Add description...') }}" wire:model="form.description" rows="2" class="boq-field"></textarea>
                 </x-ui.field>
 
+                <fieldset class="rounded-lg border border-slate-200 p-4 md:col-span-3">
+                    <legend class="px-1 text-sm font-semibold text-slate-700">{{ __('Features') }}</legend>
+                    @if($features->isEmpty())
+                        <p class="text-sm text-slate-500">{{ __('No active features are available.') }}</p>
+                    @else
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            @foreach($features as $feature)
+                                <label wire:key="plan-feature-{{ $feature->id }}" class="inline-flex items-start gap-2 text-sm text-slate-700">
+                                    <input type="checkbox" wire:model="featureIds" value="{{ $feature->id }}" class="mt-0.5 rounded border-slate-300">
+                                    <span>{{ $feature->name }} <span class="text-xs text-slate-500">({{ $feature->code }})</span></span>
+                                </label>
+                            @endforeach
+                        </div>
+                    @endif
+                    @error('featureIds.*') <p class="boq-field-error mt-2">{{ $message }}</p> @enderror
+                </fieldset>
+
                 <x-ui.field :label="__('Currency')" for="plan-currency" error="form.currency" required>
                     <x-currency-select id="plan-currency" wire:model="form.currency" :current="$form['currency'] ?? null" />
                 </x-ui.field>

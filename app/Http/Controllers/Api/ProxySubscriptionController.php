@@ -13,7 +13,6 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Services\Payments\PaymentManager;
 use App\Services\Payments\PaymentSettlementService;
-use App\Services\SubscriptionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -74,6 +73,8 @@ class ProxySubscriptionController extends Controller
 
         $plan = Plan::find($validated['plan_id']);
         $beneficiary = User::find($validated['beneficiary_id']);
+
+        abort_unless($plan && $beneficiary, 404);
 
         // Authorize using policy
         $this->authorize('createProxy', [$plan, $beneficiary]);
@@ -172,7 +173,6 @@ class ProxySubscriptionController extends Controller
     public function initiatePayment(Request $request, Subscription $subscription, PaymentManager $payments): JsonResponse
     {
         $this->authorize('manageProxy', $subscription);
-
         $user = $request->user();
 
         $validated = $request->validate([
@@ -287,6 +287,23 @@ class ProxySubscriptionController extends Controller
         }
 
         $transaction = DB::transaction(function () use ($subscription, $gateway, $validated, $user, $idempotencyKey, $phoneNumber) {
+            // Serialize initiation attempts for this subscription, then recheck
+            // the key inside the lock so concurrent retries cannot create two
+            // gateway requests for the same payment attempt.
+            Subscription::query()->whereKey($subscription->id)->lockForUpdate()->firstOrFail();
+
+            if ($idempotencyKey !== '') {
+                $existing = Transaction::query()
+                    ->where('idempotency_key', $idempotencyKey)
+                    ->where('subscription_id', $subscription->id)
+                    ->where('payer_id', $user->id)
+                    ->first();
+
+                if ($existing) {
+                    return $existing;
+                }
+            }
+
             return Transaction::create([
                 'reference' => 'BOQ-'.now()->format('YmdHis').'-'.Str::upper(Str::random(8)),
                 'idempotency_key' => $idempotencyKey !== '' ? $idempotencyKey : null,
@@ -312,6 +329,17 @@ class ProxySubscriptionController extends Controller
                 ],
             ]);
         });
+
+        if (! $transaction->wasRecentlyCreated && $idempotencyKey !== '') {
+            return response()->json([
+                'success' => true,
+                'message' => 'Existing payment attempt returned.',
+                'data' => [
+                    'transaction' => $transaction->load('invoice'),
+                    'gateway' => $transaction->metadata['initiation'] ?? [],
+                ],
+            ], 201);
+        }
 
         try {
             // Load the beneficiary user for payment initiation
@@ -355,6 +383,9 @@ class ProxySubscriptionController extends Controller
      */
     public function verifyPayment(Request $request, Transaction $transaction, PaymentManager $payments, PaymentSettlementService $settlements): JsonResponse
     {
+        abort_unless($transaction->subscription
+            && $transaction->subscription_id === $transaction->subscription->id
+            && app(\App\Policies\SubscriptionPolicy::class)->canPay($request->user(), $transaction->subscription), 403);
         $this->authorize('manageProxy', $transaction->subscription);
 
         $user = $request->user();
@@ -369,9 +400,14 @@ class ProxySubscriptionController extends Controller
         }
 
         if ($transaction->isSuccessful()) {
+            // Keep the successful retry on the same settlement path so its
+            // idempotent invoice repair runs as well. Do not re-verify with the
+            // gateway or repeat activation/notification side effects.
+            $settled = $settlements->settle($transaction, ['status' => 'successful'], 'verification');
+
             return response()->json([
                 'success' => true,
-                'data' => $transaction->load('subscription.plan', 'invoice'),
+                'data' => $settled->load('subscription.plan', 'invoice'),
             ]);
         }
 
@@ -422,11 +458,8 @@ class ProxySubscriptionController extends Controller
 
         // If payment successful, activate the subscription for the beneficiary
         if ($status === 'successful') {
-            $subscriptionService = app(SubscriptionService::class);
-            $subscription = $subscriptionService->activate($settled->subscription);
-
             // Send notification to beneficiary
-            $this->notifyBeneficiary($subscription);
+            $this->notifyBeneficiary($settled->subscription);
 
             $this->audit($request, 'proxy.payment.verified', $transaction, null, $transaction->fresh()->toArray(), $transaction->reference);
 

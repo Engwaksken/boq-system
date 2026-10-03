@@ -13,7 +13,8 @@ class SubscriptionPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('subscriptions.view');
+        return $user->hasPermission('subscriptions.view')
+            || $user->hasRole('user');
     }
 
     /**
@@ -21,10 +22,6 @@ class SubscriptionPolicy
      */
     public function view(User $user, Subscription $subscription): bool
     {
-        if (! $user->hasPermission('subscriptions.view')) {
-            return false;
-        }
-
         // Super admin can view any subscription
         if ($user->isSuperAdmin()) {
             return true;
@@ -36,17 +33,17 @@ class SubscriptionPolicy
             return true;
         }
 
-        // Payer can view subscriptions they paid for
+        // Payers may view subscriptions they paid for.
         if ($subscription->payer_id === $user->id) {
             return true;
         }
 
-        // Organisation admin can view organisation subscriptions
-        if ($user->organisation_id !== null && $subscription->organisation_id === $user->organisation_id) {
-            return $user->hasPermission('subscriptions.view');
-        }
-
-        return false;
+        // Organisation membership alone is not sufficient to view another
+        // member's subscription; require both explicit admin role and permission.
+        return $user->hasPermission('subscriptions.view')
+            && $this->isOrganisationAdmin($user, $subscription->organisation_id)
+            && $user->organisation_id !== null
+            && $subscription->organisation_id === $user->organisation_id;
     }
 
     /**
@@ -54,10 +51,6 @@ class SubscriptionPolicy
      */
     public function create(User $user, Plan $plan): bool
     {
-        if (! $user->hasPermission('subscriptions.manage')) {
-            return false;
-        }
-
         // Plan must be active and not archived
         if (! $plan->is_active || $plan->is_archived) {
             return false;
@@ -90,7 +83,8 @@ class SubscriptionPolicy
     public function createProxy(User $user, Plan $plan, User $beneficiary): bool
     {
         // Only Super Admin or Administrator can create proxy subscriptions
-        if (! $user->hasAnyRole(['super-admin', 'super_admin', 'administrator'])) {
+        if (! $user->isSuperAdmin()
+            && ! $this->isOrganisationAdmin($user, $beneficiary->organisation_id)) {
             return false;
         }
 
@@ -128,26 +122,7 @@ class SubscriptionPolicy
      */
     public function update(User $user, Subscription $subscription): bool
     {
-        if (! $user->hasPermission('subscriptions.manage')) {
-            return false;
-        }
-
-        // Super admin can update any subscription
-        if ($user->isSuperAdmin()) {
-            return true;
-        }
-
-        // Payer can update subscriptions they paid for
-        if ($subscription->payer_id === $user->id) {
-            return true;
-        }
-
-        // Organisation admin can update organisation subscriptions
-        if ($user->organisation_id !== null && $subscription->organisation_id === $user->organisation_id) {
-            return $user->hasPermission('subscriptions.manage');
-        }
-
-        return false;
+        return $this->canPay($user, $subscription);
     }
 
     /**
@@ -157,26 +132,27 @@ class SubscriptionPolicy
      */
     public function manageProxy(User $user, Subscription $subscription): bool
     {
-        if (! $user->hasPermission('subscriptions.manage')) {
-            return false;
-        }
+        // Payment authority belongs to the payer, never the beneficiary solely
+        // by virtue of being the beneficiary.
+        return $this->canPay($user, $subscription);
+    }
 
-        // Super admin can manage any subscription
+    public function canPay(User $user, Subscription $subscription): bool
+    {
         if ($user->isSuperAdmin()) {
             return true;
         }
 
-        // Payer can manage subscriptions they paid for
-        if ($subscription->payer_id === $user->id) {
-            return true;
+        // A populated beneficiary identifies a proxy subscription. Payer and
+        // billing-administrator authority must not grant access to self-subscriptions.
+        if ($subscription->beneficiary_id !== null) {
+            return $subscription->payer_id === $user->id
+                || ($user->hasPermission('subscriptions.manage')
+                    && $this->isBillingAdministrator($user, $subscription->organisation_id));
         }
 
-        // Organisation admin can manage organisation subscriptions
-        if ($user->organisation_id !== null && $subscription->organisation_id === $user->organisation_id) {
-            return $user->hasPermission('subscriptions.manage');
-        }
-
-        return false;
+        // The owner may pay a regular self-subscription explicitly.
+        return $subscription->user_id === $user->id;
     }
 
     /**
@@ -186,7 +162,8 @@ class SubscriptionPolicy
      */
     public function viewProxy(User $user, Subscription $subscription): bool
     {
-        if (! $user->hasPermission('subscriptions.view')) {
+        if (! $user->hasPermission('subscriptions.view')
+            && ! $user->hasRole('user')) {
             return false;
         }
 
@@ -208,7 +185,8 @@ class SubscriptionPolicy
 
         // Organisation admin can view organisation subscriptions
         if ($user->organisation_id !== null && $subscription->organisation_id === $user->organisation_id) {
-            return $user->hasPermission('subscriptions.view');
+            return $user->hasPermission('subscriptions.view')
+                && $this->isOrganisationAdmin($user, $subscription->organisation_id);
         }
 
         return false;
@@ -237,7 +215,8 @@ class SubscriptionPolicy
 
         // Organisation admin can cancel organisation subscriptions
         if ($user->organisation_id !== null && $subscription->organisation_id === $user->organisation_id) {
-            return $user->hasPermission('subscriptions.manage');
+            return $user->hasPermission('subscriptions.manage')
+                && $this->isOrganisationAdmin($user, $subscription->organisation_id);
         }
 
         return false;
@@ -270,7 +249,8 @@ class SubscriptionPolicy
 
         // Organisation admin can cancel organisation subscriptions
         if ($user->organisation_id !== null && $subscription->organisation_id === $user->organisation_id) {
-            return $user->hasPermission('subscriptions.manage');
+            return $user->hasPermission('subscriptions.manage')
+                && $this->isOrganisationAdmin($user, $subscription->organisation_id);
         }
 
         return false;
@@ -325,5 +305,31 @@ class SubscriptionPolicy
         }
 
         return false;
+    }
+
+    /** Check organisation administrator role in the subscription's organisation. */
+    private function isOrganisationAdmin(User $user, ?int $organisationId): bool
+    {
+        if ($organisationId === null || $user->organisation_id !== $organisationId) {
+            return false;
+        }
+
+        return $user->roles()
+            ->whereIn('roles.slug', ['administrator'])
+            ->wherePivot('organisation_id', $organisationId)
+            ->exists();
+    }
+
+    /** Check the billing-administrator role assigned within this organisation. */
+    private function isBillingAdministrator(User $user, ?int $organisationId): bool
+    {
+        if ($organisationId === null || $user->organisation_id !== $organisationId) {
+            return false;
+        }
+
+        return $user->roles()
+            ->where('roles.slug', 'billing-administrator')
+            ->wherePivot('organisation_id', $organisationId)
+            ->exists();
     }
 }

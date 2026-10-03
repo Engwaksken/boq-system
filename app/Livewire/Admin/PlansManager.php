@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\WithBulkSelection;
 use App\Models\Plan;
+use App\Models\Feature;
 use App\Models\Subscription;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
@@ -45,6 +46,9 @@ class PlansManager extends Component
         'grace_period_days' => 3, 'display_order' => 0,
     ];
 
+    /** Feature ids included in the plan, edited alongside the plan form. */
+    public array $featureIds = [];
+
     public function create(): void
     {
         $this->resetForm();
@@ -61,6 +65,7 @@ class PlansManager extends Component
         foreach (array_keys($this->form) as $key) {
             $this->form[$key] = $plan->{$key} ?? $this->form[$key];
         }
+        $this->featureIds = $plan->features()->pluck('features.id')->map(fn ($id) => (int) $id)->all();
         $this->showForm = true;
     }
 
@@ -88,9 +93,14 @@ class PlansManager extends Component
             'form.max_ocr_pages' => ['nullable','integer','min:0'], 'form.max_translations' => ['nullable','integer','min:0'],
             'form.auto_renewal' => ['boolean'], 'form.grace_period_days' => ['integer','min:0','max:90'],
             'form.display_order' => ['integer','min:0'],
+            'featureIds' => ['array'],
+            'featureIds.*' => ['integer', Rule::exists('features', 'id')],
         ])['form'];
 
-        Plan::updateOrCreate(['id' => $this->editingId], $validated);
+        $plan = Plan::updateOrCreate(['id' => $this->editingId], $validated);
+        $selectedFeatureIds = array_map('intval', $this->featureIds);
+        $inactiveFeatureIds = $plan->features()->where('features.is_active', false)->pluck('features.id')->all();
+        $plan->features()->sync(array_values(array_unique(array_merge($selectedFeatureIds, $inactiveFeatureIds))));
         session()->flash('message', $this->editingId ? 'Plan updated successfully.' : 'Plan created successfully.');
         $this->cancel();
     }
@@ -130,13 +140,14 @@ class PlansManager extends Component
     }
 
     public function cancel(): void { $this->showForm = false; $this->resetForm(); $this->resetValidation(); }
-    private function resetForm(): void { $this->editingId = null; $this->reset('form'); $this->form['currency'] = \App\Support\Regional::currency(); $this->form['type']='monthly'; $this->form['duration_days']=30; $this->form['trial_days']=7; $this->form['is_active']=true; }
+    private function resetForm(): void { $this->editingId = null; $this->reset('form', 'featureIds'); $this->form['currency'] = \App\Support\Regional::currency(); $this->form['type']='monthly'; $this->form['duration_days']=30; $this->form['trial_days']=7; $this->form['is_active']=true; }
     public function updatedSearch(): void { $this->resetPage(); }
 
     public function render()
     {
         return view('livewire.admin.plans-manager', [
             'plans' => Plan::query()->when($this->search, fn($q) => $q->where(fn ($w) => $w->where('name','like','%'.$this->search.'%')->orWhere('code','like','%'.$this->search.'%')))->orderBy('display_order')->orderBy('price')->paginate($this->perPage),
+            'features' => Feature::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'code']),
             'stats' => [
                 'total' => Plan::count(),
                 'active' => Plan::where('is_active', true)->count(),

@@ -69,7 +69,7 @@
     </div>
 
     @if($plans->isNotEmpty())
-        <div class="boq-plan-grid" wire:loading.class="opacity-60" wire:target="search, sortBy, perPage">
+        <div class="boq-plan-grid grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" wire:loading.class="opacity-60" wire:target="search, sortBy, perPage">
             @foreach($plans as $plan)
                 @php $isCurrent = $currentPlanId && (int) $currentPlanId === (int) $plan->id; @endphp
 
@@ -122,7 +122,7 @@
                             <p class="boq-plan-features-title">{{ __('Features') }}</p>
 
                             <ul class="boq-plan-feature-list">
-                                @foreach($plan->features->take(5) as $feature)
+                                @foreach($plan->features as $feature)
                                     <li class="boq-plan-feature">
                                         <span class="boq-plan-feature-check" aria-hidden="true"><i class="fas fa-check"></i></span>
                                         <span>{{ $feature->name }}</span>
@@ -130,12 +130,6 @@
                                 @endforeach
                             </ul>
 
-                            @if($plan->features->count() > 5)
-                                <p class="boq-plan-more-features">
-                                    <i class="fas fa-plus-circle" aria-hidden="true"></i>
-                                    {{ trans_choice(':count more feature|:count more features', $plan->features->count() - 5, ['count' => $plan->features->count() - 5]) }}
-                                </p>
-                            @endif
                         </div>
                     @endif
 

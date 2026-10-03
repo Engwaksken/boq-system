@@ -5,6 +5,9 @@ namespace App\Providers;
 use App\Http\Middleware\CheckEntitlement;
 use App\Http\Middleware\CheckPermission;
 use App\Http\Middleware\CheckRole;
+use App\Models\Plan;
+use App\Policies\SubscriptionPolicy;
+use Illuminate\Support\Facades\Gate;
 use App\Support\DatabaseTranslationLoader;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -29,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(Plan::class, SubscriptionPolicy::class);
         // Livewire action requests re-run these route middleware, so role, permission
         // and subscription checks still apply after the page has loaded.
         Livewire::addPersistentMiddleware([

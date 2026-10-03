@@ -5,7 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use App\Models\Subscription;
-use App\Services\SubscriptionService;
+use App\Http\Resources\SubscriptionResource;
+use App\Http\Requests\StoreSubscriptionRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,15 +17,14 @@ class SubscriptionController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', Subscription::class);
         $user = $request->user();
 
         $subscriptions = Subscription::query()
             ->where(function ($q) use ($user) {
                 $q->where('user_id', $user->id);
-
-                if ($user->organisation_id !== null) {
-                    $q->orWhere('organisation_id', $user->organisation_id);
-                }
+                $q->orWhere('payer_id', $user->id)
+                    ->orWhere('beneficiary_id', $user->id);
             })
             ->with('plan')
             ->latest()
@@ -32,7 +32,7 @@ class SubscriptionController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $subscriptions,
+            'data' => SubscriptionResource::collection($subscriptions),
         ]);
     }
 
@@ -42,9 +42,18 @@ class SubscriptionController extends Controller
     public function current(Request $request): JsonResponse
     {
         $user = $request->user();
-        $service = app(SubscriptionService::class);
-
-        $subscription = $service->currentSubscription($user, $user->organisation_id);
+        $this->authorize('viewAny', Subscription::class);
+        $subscription = Subscription::query()
+            ->whereIn('status', ['active', 'trial', 'grace_period'])
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhere('beneficiary_id', $user->id)
+                    ->orWhere(function ($q) use ($user) {
+                        $q->where('payer_id', $user->id)
+                            ->whereColumn('payer_id', '!=', 'user_id');
+                    });
+            })
+            ->latest()->first();
 
         if (! $subscription) {
             return response()->json([
@@ -56,18 +65,16 @@ class SubscriptionController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $subscription->load('plan', 'entitlements.feature'),
+            'data' => new SubscriptionResource($subscription->load('plan', 'entitlements.feature')),
         ]);
     }
 
     /**
      * Create a new subscription (pending payment).
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreSubscriptionRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'plan_id' => ['required', 'exists:plans,id'],
-        ]);
+        $validated = $request->validated();
 
         $plan = Plan::find($validated['plan_id']);
 
@@ -78,6 +85,8 @@ class SubscriptionController extends Controller
                 'message' => __('subscriptions.plan_not_available'),
             ], 422);
         }
+
+        $this->authorize('create', $plan);
 
         $user = $request->user();
 
@@ -98,7 +107,7 @@ class SubscriptionController extends Controller
         return response()->json([
             'success' => true,
             'message' => __('subscriptions.created'),
-            'data' => $subscription->load('plan'),
+            'data' => new SubscriptionResource($subscription->load('plan')),
         ], 201);
     }
 
@@ -107,23 +116,11 @@ class SubscriptionController extends Controller
      */
     public function show(Request $request, Subscription $subscription): JsonResponse
     {
-        $user = $request->user();
-
-        $personalAccess = $subscription->user_id === $user->id;
-        $organisationAccess = $user->organisation_id !== null
-            && $subscription->organisation_id === $user->organisation_id;
-
-        if (! $personalAccess && ! $organisationAccess) {
-            return response()->json([
-                'success' => false,
-                'error_code' => 'FORBIDDEN',
-                'message' => __('auth.forbidden'),
-            ], 403);
-        }
+        $this->authorize('view', $subscription);
 
         return response()->json([
             'success' => true,
-            'data' => $subscription->load('plan', 'entitlements.feature', 'transactions'),
+            'data' => new SubscriptionResource($subscription->load('plan', 'entitlements.feature', 'transactions')),
         ]);
     }
 }

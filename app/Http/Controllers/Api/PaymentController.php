@@ -49,10 +49,7 @@ class PaymentController extends Controller
     public function initiate(Request $request, Subscription $subscription, PaymentManager $payments): JsonResponse
     {
         $user = $request->user();
-        abort_unless(
-            $subscription->user_id === $user->id || ($user->organisation_id && $subscription->organisation_id === $user->organisation_id),
-            403
-        );
+        $this->authorize($subscription->isProxy() ? 'manageProxy' : 'update', $subscription);
 
         $validated = $request->validate([
             'gateway_code' => ['required', 'string', 'exists:payment_gateways,code'],
@@ -147,7 +144,7 @@ class PaymentController extends Controller
             $existing = Transaction::query()
                 ->where('idempotency_key', $idempotencyKey)
                 ->where('subscription_id', $subscription->id)
-                ->where('user_id', $user->id)
+                ->where('payer_id', $user->id)
                 ->first();
 
             if ($existing) {
@@ -231,10 +228,17 @@ class PaymentController extends Controller
         PaymentSettlementService $settlements,
     ): JsonResponse {
         $user = $request->user();
-        abort_unless(
-            $transaction->user_id === $user->id || ($user->organisation_id && $transaction->organisation_id === $user->organisation_id),
-            403
-        );
+        $subscription = $transaction->subscription;
+        if (! $subscription) {
+            return response()->json([
+                'success' => false,
+                'error_code' => 'SUBSCRIPTION_NOT_FOUND',
+                'message' => 'This payment is not associated with a subscription.',
+            ], 422);
+        }
+
+        $this->authorize($subscription->isProxy() ? 'manageProxy' : 'update', $subscription);
+        abort_unless(app(\App\Policies\SubscriptionPolicy::class)->canPay($user, $subscription), 403);
 
         if ($transaction->isSuccessful()) {
             return response()->json(['success' => true, 'data' => $transaction->load('subscription.plan', 'invoice')]);
@@ -294,10 +298,7 @@ class PaymentController extends Controller
     public function show(Request $request, Transaction $transaction): JsonResponse
     {
         $user = $request->user();
-        abort_unless(
-            $transaction->user_id === $user->id || ($user->organisation_id && $transaction->organisation_id === $user->organisation_id),
-            403
-        );
+        abort_unless($transaction->subscription && app(\App\Policies\SubscriptionPolicy::class)->canPay($user, $transaction->subscription), 403);
 
         return response()->json([
             'success' => true,
@@ -311,10 +312,7 @@ class PaymentController extends Controller
     public function receipt(Request $request, Transaction $transaction): JsonResponse
     {
         $user = $request->user();
-        abort_unless(
-            $transaction->user_id === $user->id || ($user->organisation_id && $transaction->organisation_id === $user->organisation_id),
-            403
-        );
+        abort_unless($transaction->subscription && app(\App\Policies\SubscriptionPolicy::class)->canPay($user, $transaction->subscription), 403);
 
         if (! $transaction->isSuccessful()) {
             return response()->json([

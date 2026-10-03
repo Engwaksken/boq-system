@@ -79,4 +79,27 @@ class PaymentNetworkValidationTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonValidationErrors('network');
     }
+
+    public function test_subscription_owner_can_initiate_payment(): void
+    {
+        $owner = User::factory()->create();
+        $subscription = $this->createPayableSubscription($owner);
+
+        $this->actingAs($owner)->postJson("/api/v1/subscriptions/{$subscription->id}/payments", [
+            'gateway_code' => 'bank_transfer',
+            'network' => 'MTN',
+        ])->assertCreated()->assertJson(['success' => true]);
+    }
+
+    public function test_proxy_beneficiary_cannot_initiate_payment_without_being_payer(): void
+    {
+        $beneficiary = User::factory()->create();
+        $payer = User::factory()->create();
+        $subscription = Subscription::factory()->forBeneficiary($beneficiary, $payer)->create(['status' => 'pending']);
+
+        $this->actingAs($beneficiary)->postJson("/api/v1/subscriptions/{$subscription->id}/payments", [
+            'gateway_code' => 'bank_transfer',
+            'network' => 'MTN',
+        ])->assertForbidden();
+    }
 }

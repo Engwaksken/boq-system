@@ -537,45 +537,6 @@
                                     </div>
                                 </td>
                             </tr>
-                        @elseif($reviewingItemId === $item->id)
-                            <tr wire:key="review-item-{{ $item->id }}" class="bg-brand-50/50 hover:bg-brand-50/50">
-                                <td colspan="{{ $canEdit ? 12 : 11 }}" class="!p-0">
-                                    <div class="sticky left-0 grid max-w-[calc(100vw-2.5rem)] gap-3 p-4 sm:p-5 md:grid-cols-[minmax(10rem,1fr)_minmax(16rem,2fr)_auto] md:items-end lg:max-w-none">
-                                        <x-ui.field :label="__('Reviewed Rate')" for="manual-rate-{{ $item->id }}" error="manualRate">
-                                            <input
-                                                placeholder="0.00"
-                                                id="manual-rate-{{ $item->id }}"
-                                                wire:model="manualRate"
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
-                                                inputmode="decimal"
-                                                class="boq-field @error('manualRate') has-error @enderror"
-                                            >
-                                        </x-ui.field>
-
-                                        <x-ui.field :label="__('Review Notes')" for="review-notes-{{ $item->id }}">
-                                            <input
-                                                id="review-notes-{{ $item->id }}"
-                                                wire:model="reviewNotes"
-                                                type="text"
-                                                maxlength="2000"
-                                                class="boq-field"
-                                                placeholder="{{ __('Reason or supporting context') }}"
-                                            >
-                                        </x-ui.field>
-
-                                        <div class="flex flex-wrap gap-2">
-                                            @if($item->ai_suggested_rate !== null)
-                                                <x-ui.button variant="secondary" wire:click="reviewUsingSuggested({{ $item->id }})">{{ __('Use Suggested') }}</x-ui.button>
-                                            @endif
-
-                                            <x-ui.button icon="fa-floppy-disk" wire:click="reviewItem({{ $item->id }})" loading="reviewItem">{{ __('Save Review') }}</x-ui.button>
-                                            <x-ui.button variant="ghost" wire:click="closeEditor">{{ __('Cancel') }}</x-ui.button>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
                         @elseif($rejectingItemId === $item->id)
                             <tr wire:key="reject-item-{{ $item->id }}" class="bg-red-50/60 hover:bg-red-50/60">
                                 <td colspan="{{ $canEdit ? 12 : 11 }}" class="!p-0">
@@ -626,6 +587,46 @@
             @endif
         @endif
     </section>
+
+    @if($reviewingItemId)
+        @php $reviewItem = $items->firstWhere('id', $reviewingItemId); @endphp
+        @if($reviewItem)
+            <x-ui.modal wire:key="review-item-{{ $reviewItem->id }}" id="review-item" :title="__('Review BOQ item')" :subtitle="__('Check the item and suggested rate before saving your review.')" icon="fa-scale-balanced" size="lg" close="closeEditor">
+                <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_16rem]">
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('Item description') }}</p>
+                            <h3 class="mt-1 text-base font-semibold text-slate-900">{{ $reviewItem->description }}</h3>
+                            <p class="mt-1 text-sm text-slate-600">{{ __('Code: :code · Unit: :unit · Quantity: :quantity', ['code' => $reviewItem->item_code ?: '—', 'unit' => $reviewItem->unit ?: '—', 'quantity' => \App\Support\Format::number((float) $reviewItem->quantity, 2)]) }}</p>
+                        </div>
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <x-ui.field :label="__('Reviewed Rate')" for="manual-rate-{{ $reviewItem->id }}" error="manualRate" required>
+                                <input placeholder="0.00" id="manual-rate-{{ $reviewItem->id }}" wire:model="manualRate" type="number" min="0" step="0.01" inputmode="decimal" class="boq-field @error('manualRate') has-error @enderror">
+                            </x-ui.field>
+                            <x-ui.field :label="__('Review Notes')" for="review-notes-{{ $reviewItem->id }}" error="reviewNotes">
+                                <input id="review-notes-{{ $reviewItem->id }}" wire:model="reviewNotes" type="text" maxlength="2000" class="boq-field" placeholder="{{ __('Reason or supporting context') }}">
+                            </x-ui.field>
+                        </div>
+                    </div>
+                    <aside class="rounded-xl border border-slate-200 bg-slate-50 p-4" aria-label="{{ __('Rate reference') }}">
+                        <h4 class="text-sm font-semibold text-slate-900">{{ __('Rate reference') }}</h4>
+                        <dl class="mt-3 space-y-3 text-sm">
+                            <div class="flex justify-between gap-3"><dt class="text-slate-500">{{ __('Suggested') }}</dt><dd class="font-semibold">{{ $rate($reviewItem->ai_suggested_rate) }}</dd></div>
+                            <div class="flex justify-between gap-3"><dt class="text-slate-500">{{ __('Original') }}</dt><dd class="font-semibold">{{ $rate($reviewItem->original_rate) }}</dd></div>
+                            <div class="flex justify-between gap-3"><dt class="text-slate-500">{{ __('Location') }}</dt><dd class="text-right">{{ $reviewItem->location ?: $pricingLocation ?: '—' }}</dd></div>
+                        </dl>
+                        @if($reviewItem->ai_suggested_rate !== null)
+                            <x-ui.button class="mt-4 w-full" variant="secondary" wire:click="reviewUsingSuggested({{ $reviewItem->id }})">{{ __('Use Suggested') }}</x-ui.button>
+                        @endif
+                    </aside>
+                </div>
+                <x-slot:footer>
+                    <x-ui.button variant="secondary" wire:click="closeEditor">{{ __('Cancel') }}</x-ui.button>
+                    <x-ui.button icon="fa-floppy-disk" wire:click="reviewItem({{ $reviewItem->id }})" loading="reviewItem">{{ __('Save Review') }}</x-ui.button>
+                </x-slot:footer>
+            </x-ui.modal>
+        @endif
+    @endif
 
     <livewire:boqs.signatures :boq="$boq" wire:key="boq-signatures-{{ $boq->id }}" />
 

@@ -9,6 +9,7 @@ use App\Livewire\Admin\UsersManager;
 use App\Livewire\HardwarePrices\Index as HardwarePricesIndex;
 use App\Models\HardwareCategory;
 use App\Models\HardwarePrice;
+use App\Models\Feature;
 use App\Models\Organisation;
 use App\Models\PaymentGateway;
 use App\Models\Plan;
@@ -114,6 +115,28 @@ class BulkSelectionAndFormsTest extends TestCase
             'name' => 'Updated Plan',
             'price' => 75000,
         ]);
+    }
+
+    public function test_plan_feature_selection_saves_active_submitted_ids_and_retains_attached_inactive_ids(): void
+    {
+        $admin = $this->superAdmin();
+        $active = Feature::factory()->create(['is_active' => true]);
+        $inactiveAttached = Feature::factory()->create(['is_active' => false]);
+        $inactiveUnattached = Feature::factory()->create(['is_active' => false]);
+        $plan = Plan::factory()->create();
+        $plan->features()->attach($inactiveAttached->id);
+
+        Livewire::actingAs($admin)
+            ->test(PlansManager::class)
+            ->call('edit', $plan->id)
+            ->set('featureIds', [(string) $active->id, (string) $inactiveUnattached->id])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertEqualsCanonicalizing(
+            [$active->id, $inactiveAttached->id],
+            $plan->fresh()->features()->pluck('features.id')->all()
+        );
     }
 
     public function test_suppliers_can_be_deactivated_in_bulk(): void
