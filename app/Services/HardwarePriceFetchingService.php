@@ -22,7 +22,8 @@ class HardwarePriceFetchingService
         string $location,
         int $limit,
         ?int $organisationId,
-        string $priceType = HardwarePrice::TYPE_HARDWARE
+        string $priceType = HardwarePrice::TYPE_HARDWARE,
+        bool $onlyPreviouslyPriced = false
     ): array {
         $priceType =
             $this->normalisePriceType(
@@ -41,12 +42,27 @@ class HardwarePriceFetchingService
         }
 
         $items =
+            array_values(
+                array_unique(
+                    $items
+                )
+            );
+
+        // The automatic scanner only refreshes items that already have a price,
+        // so it never spends AI credits discovering prices for unpriced items.
+        if ($onlyPreviouslyPriced) {
+            $items =
+                $this->previouslyPricedItemNames(
+                    $items,
+                    $category,
+                    $priceType,
+                    $organisationId
+                );
+        }
+
+        $items =
             array_slice(
-                array_values(
-                    array_unique(
-                        $items
-                    )
-                ),
+                $items,
                 0,
                 max(
                     1,
@@ -94,7 +110,8 @@ class HardwarePriceFetchingService
         ?int $organisationId = null,
         ?string $location = null,
         int $limit = 3,
-        string $priceType = HardwarePrice::TYPE_HARDWARE
+        string $priceType = HardwarePrice::TYPE_HARDWARE,
+        bool $onlyPreviouslyPriced = false
     ): array {
         $location = trim((string) $location) ?: Regional::marketLocation();
 
@@ -140,7 +157,10 @@ class HardwarePriceFetchingService
                             $organisationId,
 
                         priceType:
-                            $priceType
+                            $priceType,
+
+                        onlyPreviouslyPriced:
+                            $onlyPreviouslyPriced
                     );
 
                 foreach (
@@ -781,6 +801,59 @@ PROMPT;
                 ->first();
 
         return $configured?->itemNames() ?? [];
+    }
+
+    /**
+     * The subset of item names that already have a price for this category and type.
+     *
+     * @param  list<string>  $items
+     * @return list<string>
+     */
+    private function previouslyPricedItemNames(
+        array $items,
+        string $category,
+        string $priceType,
+        ?int $organisationId
+    ): array {
+        if ($items === []) {
+            return [];
+        }
+
+        $priced = HardwarePrice::query()
+            ->ownedBy($organisationId)
+            ->where('price_type', $priceType)
+            ->where('category', $category)
+            ->whereIn('item_name', $items)
+            ->distinct()
+            ->pluck('item_name')
+            ->all();
+
+        if ($priced === []) {
+            return [];
+        }
+
+        $lookup =
+            array_flip(
+                array_map(
+                    fn ($name) => mb_strtolower(
+                        (string) $name
+                    ),
+                    $priced
+                )
+            );
+
+        return array_values(
+            array_filter(
+                $items,
+                fn ($name) => isset(
+                    $lookup[
+                        mb_strtolower(
+                            (string) $name
+                        )
+                    ]
+                )
+            )
+        );
     }
 
     private function normalisePriceType(

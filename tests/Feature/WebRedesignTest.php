@@ -165,6 +165,32 @@ class WebRedesignTest extends TestCase
                 && $stats['annual_plans'] === 1);
     }
 
+    public function test_plans_page_collapses_a_long_feature_list_behind_a_toggle(): void
+    {
+        $plan = \App\Models\Plan::factory()->create(['is_active' => true, 'is_archived' => false]);
+        $features = \App\Models\Feature::factory()->count(6)->create(['is_active' => true]);
+        $plan->features()->attach($features->pluck('id'));
+
+        Livewire::actingAs($this->customer())
+            ->test(\App\Livewire\Plans\Index::class)
+            ->assertSee('Show all 6 features')
+            ->assertSee('Show less')
+            // Beyond the first four, features are rendered but hidden until expanded.
+            ->assertSee($features[5]->name);
+    }
+
+    public function test_plans_page_shows_no_toggle_for_a_short_feature_list(): void
+    {
+        $plan = \App\Models\Plan::factory()->create(['is_active' => true, 'is_archived' => false]);
+        $features = \App\Models\Feature::factory()->count(3)->create(['is_active' => true]);
+        $plan->features()->attach($features->pluck('id'));
+
+        Livewire::actingAs($this->customer())
+            ->test(\App\Livewire\Plans\Index::class)
+            ->assertSee($features[2]->name)
+            ->assertDontSee('Show all');
+    }
+
     public function test_choose_plan_link_opens_the_plans_tab(): void
     {
         Livewire::withQueryParams(['tab' => 'plans'])

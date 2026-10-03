@@ -1752,5 +1752,7 @@
     "Item description": "Item description",
     "Rate reference": "Rate reference",
     "One or more selected features are no longer available.": "One or more selected features are no longer available.",
-    "See hardware price changes in the notification centre": "See hardware price changes in the notification centre"
+    "See hardware price changes in the notification centre": "See hardware price changes in the notification centre",
+    "Show all :count features": "Show all :count features",
+    "Show less": "Show less"
 }

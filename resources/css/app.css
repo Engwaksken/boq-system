@@ -2771,10 +2771,29 @@ button.boq-sort-th:hover {
 }
 
 .boq-plan-more-features {
+    display: inline-flex;
     margin-top: 0.6rem;
+    align-items: center;
+    gap: 0.35rem;
+    border: none;
+    background: none;
+    padding: 0;
     color: var(--boq-primary-link);
     font-size: var(--boq-text-xs);
     font-weight: 600;
+    cursor: pointer;
+}
+
+.boq-plan-more-features:hover {
+    text-decoration: underline;
+}
+
+.boq-plan-more-features i {
+    transition: transform 0.2s ease;
+}
+
+.boq-plan-more-features i.is-open {
+    transform: rotate(180deg);
 }
 
 .boq-plan-trial {

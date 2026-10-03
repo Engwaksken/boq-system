@@ -45,7 +45,10 @@ class FetchDailyHardwarePrices extends Command
                 $results = $service->fetchDailyPrices(
                     organisationId: $organisationId === null ? null : (int) $organisationId,
                     location: $location,
-                    limit: $limit
+                    limit: $limit,
+                    // Refresh only items that already have a price; never spend AI
+                    // credits discovering prices for unpriced items on a schedule.
+                    onlyPreviouslyPriced: true
                 );
 
                 $totalFetched += $results['fetched'];

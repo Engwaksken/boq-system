@@ -118,18 +118,35 @@
                     </div>
 
                     @if($plan->features && $plan->features->isNotEmpty())
-                        <div class="boq-plan-features">
+                        @php
+                            $features = $plan->features;
+                            $visibleFeatures = 4;
+                            $hiddenFeatureCount = max(0, $features->count() - $visibleFeatures);
+                        @endphp
+                        <div class="boq-plan-features" x-data="{ showAllFeatures: false }">
                             <p class="boq-plan-features-title">{{ __('Features') }}</p>
 
                             <ul class="boq-plan-feature-list">
-                                @foreach($plan->features as $feature)
-                                    <li class="boq-plan-feature">
+                                @foreach($features as $index => $feature)
+                                    <li class="boq-plan-feature" @if($index >= $visibleFeatures) x-show="showAllFeatures" x-cloak @endif>
                                         <span class="boq-plan-feature-check" aria-hidden="true"><i class="fas fa-check"></i></span>
                                         <span>{{ $feature->name }}</span>
                                     </li>
                                 @endforeach
                             </ul>
 
+                            @if($hiddenFeatureCount > 0)
+                                <button
+                                    type="button"
+                                    class="boq-plan-more-features"
+                                    x-on:click="showAllFeatures = ! showAllFeatures"
+                                    x-bind:aria-expanded="showAllFeatures.toString()"
+                                >
+                                    <span x-show="! showAllFeatures">{{ __('Show all :count features', ['count' => $features->count()]) }}</span>
+                                    <span x-show="showAllFeatures" x-cloak>{{ __('Show less') }}</span>
+                                    <i class="fas fa-chevron-down" x-bind:class="showAllFeatures ? 'is-open' : ''" aria-hidden="true"></i>
+                                </button>
+                            @endif
                         </div>
                     @endif
 
