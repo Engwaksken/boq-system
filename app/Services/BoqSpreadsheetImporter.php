@@ -294,12 +294,36 @@ class BoqSpreadsheetImporter
             }
         }
 
+        // A lone "ITEM"/"ITEMS" column is usually the item description; a separate
+        // serial/number column (S/No, No., Item No) holds the item code instead.
+        if (! isset($columns['description']) && isset($columns['item'])) {
+            $description = $this->itemDescriptionColumn($headers);
+            if ($description !== null) {
+                $columns['description'] = $description;
+                if ($columns['item'] === $description) {
+                    unset($columns['item']);
+                }
+            }
+        }
+
         // A BOQ table needs descriptions plus a quantity or an amount column.
         if (! isset($columns['description']) || (! isset($columns['quantity']) && ! isset($columns['amount']))) {
             return null;
         }
 
         return $columns + ['headers' => $headers];
+    }
+
+    /** Index of a header that reads as the item description rather than its code. */
+    private function itemDescriptionColumn(array $headers): ?int
+    {
+        foreach ($headers as $index => $header) {
+            if (in_array(trim((string) $header), ['ITEM', 'ITEMS'], true)) {
+                return $index;
+            }
+        }
+
+        return null;
     }
 
     /** Joins a heading split over two rows, cell by cell ("Rate" + "(UGX)"). */

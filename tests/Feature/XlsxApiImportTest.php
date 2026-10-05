@@ -189,4 +189,27 @@ class XlsxApiImportTest extends TestCase
         $this->assertSame('bags', $items[0]->unit);
         $this->assertEquals([3, 400, 1200], [$items[1]->quantity, $items[1]->original_rate, $items[1]->amount]);
     }
+
+    public function test_item_column_is_treated_as_description_when_serial_number_present(): void
+    {
+        Storage::fake(config('filesystems.default'));
+        $user = User::factory()->create();
+        $project = Project::factory()->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
+        $csv = "S/No,Item,Unit,Quantity,Unit Cost,Total\n1,Cement 50kg,bags,2,1500,3000\n2,Sand,m3,3,400,1200\n";
+        Storage::put("boqs/{$project->id}/itemdesc.csv", $csv);
+        $boq = \App\Models\Boq::factory()->create([
+            'project_id' => $project->id,
+            'organisation_id' => $user->organisation_id,
+            'source_type' => 'excel',
+            'source_file_path' => "boqs/{$project->id}/itemdesc.csv",
+        ]);
+
+        $this->assertSame(2, app(\App\Services\BoqSpreadsheetImporter::class)->import($boq));
+
+        $items = $boq->items()->orderBy('id')->get();
+        $this->assertEquals(['Cement 50kg', 'Sand'], $items->pluck('description')->all());
+        $this->assertEquals(['1', '2'], $items->pluck('item_code')->all());
+        $this->assertEquals([2, 1500, 3000], [$items[0]->quantity, $items[0]->original_rate, $items[0]->amount]);
+        $this->assertSame('bags', $items[0]->unit);
+    }
 }
