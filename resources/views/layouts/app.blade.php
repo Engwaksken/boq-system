@@ -29,6 +29,9 @@
         $siteFavicon = \App\Models\SiteSetting::get('favicon', '');
 
         $authUser = Auth::user();
+        $organisation = $authUser->organisation;
+        $canManageTeam = $organisation && $authUser->hasVerifiedEmail()
+            && $authUser->can('create', [\App\Models\Invitation::class, $organisation]);
 
         $item = fn (string $label, string $routeName, string $icon, bool $show = true, ?string $pattern = null, array $params = []) => [
             'label' => $label,
@@ -50,6 +53,9 @@
                     $item('Dashboard', 'dashboard', 'fa-chart-line'),
                     $item('Projects', 'projects.index', 'fa-folder-open', $authUser->hasPermission('projects.view'), 'projects.*'),
                     $item('BOQs', 'boqs.index', 'fa-file-invoice-dollar', $authUser->hasPermission('boq.view'), 'boqs.*'),
+                    $item('Expenses & Receipts', 'expenses.index', 'fa-receipt', true, 'expenses.*'),
+                    $item('Team Invitations', 'team.index', 'fa-user-plus'),
+                    $item('Project Assignments', 'team.assignments', 'fa-users', (bool) $canManageTeam),
                     $item('Get Prices', 'hardware-prices.index', 'fa-tags', $authUser->hasPermission('hardware-prices.view'), 'hardware-prices.*'),
                     $item('Top Suppliers', 'supplier-ratings.index', 'fa-ranking-star', $authUser->hasPermission('hardware-prices.view'), 'supplier-ratings.*'),
                 ],
@@ -67,6 +73,7 @@
                 'label' => 'Account',
                 'items' => [
                     $item('Preferences', 'preferences', 'fa-palette'),
+                    $item('FAQs', 'faqs.index', 'fa-circle-question', true, 'faqs.*'),
                 ],
             ],
         ];

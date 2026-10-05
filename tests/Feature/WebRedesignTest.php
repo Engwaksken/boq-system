@@ -42,7 +42,7 @@ class WebRedesignTest extends TestCase
 
     private function projectFor(User $user, array $attributes = []): Project
     {
-        return Project::factory()->create($attributes + [
+        return Project::factory()->assignedTo($user)->create($attributes + [
             'user_id' => $user->id,
             'organisation_id' => $user->organisation_id,
         ]);

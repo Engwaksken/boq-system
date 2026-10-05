@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -31,6 +32,14 @@ class Expense extends Model
     public function organisation(): BelongsTo
     {
         return $this->belongsTo(Organisation::class);
+    }
+
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
+        return $query->where('organisation_id', $user->organisation_id)
+            ->where(fn ($participants) => $participants->where('creator_user_id', $user->id)->orWhere('purchaser_user_id', $user->id))
+            ->whereHas('project', fn ($projects) => $projects->where('organisation_id', $user->organisation_id)
+                ->whereHas('assignments', fn ($assignments) => $assignments->where('user_id', $user->id)->whereNull('deleted_at')));
     }
 
     public function project(): BelongsTo

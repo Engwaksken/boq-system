@@ -16,7 +16,8 @@ class WebProjectEditTest extends TestCase
     public function test_cleared_fields_and_formatted_contract_value_are_saved(): void
     {
         $user = User::factory()->create();
-        $project = Project::factory()->create([
+        $user->permissions()->attach(\App\Models\Permission::factory()->create(['slug' => 'projects.edit']));
+        $project = Project::factory()->assignedTo($user)->create([
             'user_id' => $user->id,
             'organisation_id' => $user->organisation_id,
             'client' => 'Old client',

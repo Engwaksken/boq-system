@@ -53,16 +53,10 @@ class Index extends Component
     {
         $user = auth()->user();
 
-        // Only projects the user owns or that belong to their organisation.
+        abort_unless($user->hasPermission('projects.edit'), 403);
         $count = Project::query()
             ->whereKey($this->selectedIds())
-            ->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-
-                if ($user->organisation_id !== null) {
-                    $q->orWhere('organisation_id', $user->organisation_id);
-                }
-            })
+            ->accessibleTo($user)
             ->get()
             ->each->delete()
             ->count();
@@ -75,11 +69,7 @@ class Index extends Component
         $user = auth()->user();
         $project = Project::findOrFail($id);
 
-        $personalAccess = $project->user_id === $user->id;
-        $organisationAccess = $user->organisation_id !== null
-            && $project->organisation_id === $user->organisation_id;
-
-        abort_unless($personalAccess || $organisationAccess, 403);
+        abort_unless($user->hasPermission('projects.edit') && $project->isAccessibleTo($user), 403);
 
         $project->delete();
 
@@ -89,40 +79,33 @@ class Index extends Component
     public function render()
     {
         $user = auth()->user();
+        $canViewBoqs = $user->hasPermission('boq.view');
+        $boqScope = fn ($query) => $query->where('organisation_id', $user->organisation_id)
+            ->when(! $canViewBoqs, fn ($query) => $query->whereRaw('1 = 0'));
 
         $projects = Project::query()
-            ->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-
-                if ($user->organisation_id !== null) {
-                    $q->orWhere('organisation_id', $user->organisation_id);
-                }
-            })
+            ->accessibleTo($user)
             ->when($this->search !== '', fn ($q) => $q->where(function ($w) {
                 $w->where('name', 'like', "%{$this->search}%")
                     ->orWhere('code', 'like', "%{$this->search}%")
                     ->orWhere('client', 'like', "%{$this->search}%")
                     ->orWhere('location', 'like', "%{$this->search}%");
             }))
-            ->withCount('boqs')
+            ->withCount(['boqs' => $boqScope])
             ->orderBy($this->sortBy, $this->sortDir)
             ->paginate($this->perPage);
 
-        $totals = app(\App\Services\BoqTotals::class)->forProjects($projects->getCollection()->pluck('id')->all());
+        $projectIds = $projects->getCollection()->pluck('id')->all();
+        $visibleBoqIds = $canViewBoqs ? \App\Models\Boq::whereIn('project_id', $projectIds)
+            ->where('organisation_id', $user->organisation_id)->pluck('id')->all() : [];
+        $totals = app(\App\Services\BoqTotals::class)->forProjects($projectIds, $visibleBoqIds);
 
-        $baseProjectQuery = Project::query()
-            ->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-
-                if ($user->organisation_id !== null) {
-                    $q->orWhere('organisation_id', $user->organisation_id);
-                }
-            });
+        $baseProjectQuery = Project::accessibleTo($user);
 
         $stats = [
             'total_projects' => (clone $baseProjectQuery)->count(),
             'active_projects' => (clone $baseProjectQuery)->where('status', 'active')->count(),
-            'total_boqs' => (clone $baseProjectQuery)->withCount('boqs')->get()->sum('boqs_count'),
+            'total_boqs' => (clone $baseProjectQuery)->withCount(['boqs' => $boqScope])->get()->sum('boqs_count'),
             'total_value' => (clone $baseProjectQuery)->sum('contract_value'),
         ];
 

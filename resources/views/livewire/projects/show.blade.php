@@ -37,7 +37,12 @@
             @if(auth()->user()->hasPermission('projects.edit'))
                 <x-ui.button variant="secondary" icon="fa-pen" :href="route('projects.edit', $project->id)">{{ __('Edit') }}</x-ui.button>
             @endif
-            <x-ui.button icon="fa-file-circle-plus" :href="route('boqs.create', ['project' => $project->id])">{{ __('Add BOQ') }}</x-ui.button>
+            @can('create', [\App\Models\Boq::class, $project])
+                <x-ui.button icon="fa-file-circle-plus" :href="route('boqs.create', ['project' => $project->id])">{{ __('Add BOQ') }}</x-ui.button>
+            @endcan
+            @can('create', [\App\Models\Expense::class, $project])
+                <x-ui.button variant="secondary" icon="fa-receipt" :href="route('expenses.index', ['project' => $project->id])">{{ __('Expenses & Receipts') }}</x-ui.button>
+            @endcan
         </x-slot:actions>
     </x-ui.page-header>
 
@@ -73,7 +78,9 @@
                         :title="__('No BOQs yet.')"
                         :description="__('Upload a bill of quantities to price it against current market rates.')"
                     >
-                        <x-ui.button icon="fa-file-arrow-up" :href="route('boqs.create', ['project' => $project->id])">{{ __('Add BOQ') }}</x-ui.button>
+                        @can('create', [\App\Models\Boq::class, $project])
+                            <x-ui.button icon="fa-file-arrow-up" :href="route('boqs.create', ['project' => $project->id])">{{ __('Add BOQ') }}</x-ui.button>
+                        @endcan
                     </x-ui.empty-state>
                 @endforelse
             </x-ui.card>

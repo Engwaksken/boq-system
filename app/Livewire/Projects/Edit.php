@@ -53,10 +53,7 @@ class Edit extends Component
     {
         $user = auth()->user();
 
-        abort_unless(
-            $project->user_id === $user->id || $project->organisation_id === $user->organisation_id,
-            403
-        );
+        abort_unless($project->isAccessibleTo($user), 403);
 
         $this->project = $project;
         $this->name = $project->name;
@@ -82,6 +79,7 @@ class Edit extends Component
 
     public function save(): void
     {
+        abort_unless(auth()->user()->hasPermission('projects.edit') && $this->project->isAccessibleTo(auth()->user()), 403);
         // Livewire keeps cleared inputs as "": store them as empty (null) values.
         foreach (['code', 'client', 'contractor', 'consultant', 'quantitySurveyor', 'projectManager', 'siteEngineer',
             'fundingOrganisation', 'country', 'district', 'location', 'projectType', 'startDate',
@@ -146,6 +144,7 @@ class Edit extends Component
 
     public function render()
     {
+        abort_unless($this->project->isAccessibleTo(auth()->user()), 403);
         return view('livewire.projects.edit', [
             'projectTypes' => \App\Support\Categories::projectTypes(),
         ]);

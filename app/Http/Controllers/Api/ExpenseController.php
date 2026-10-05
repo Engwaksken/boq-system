@@ -29,10 +29,7 @@ class ExpenseController extends Controller
 
     public function index(Request $request)
     {
-        $query = Expense::query()->where('organisation_id', $request->user()->organisation_id)
-            ->where(fn ($q) => $q->where('creator_user_id', $request->user()->id)->orWhere('purchaser_user_id', $request->user()->id))
-            ->whereHas('project', fn ($projects) => $projects->where('organisation_id', $request->user()->organisation_id)
-                ->whereHas('assignments', fn ($assignments) => $assignments->where('user_id', $request->user()->id)->whereNull('deleted_at')));
+        $query = Expense::visibleTo($request->user());
         $expenses = $query->latest('purchase_date')->paginate(min(max((int) $request->integer('per_page', 15), 1), 100));
         $expenses->getCollection()->each(fn (Expense $expense) => $this->authorize('view', $expense));
         return ExpenseResource::collection($expenses);
@@ -40,17 +37,7 @@ class ExpenseController extends Controller
 
     public function store(StoreExpenseRequest $request)
     {
-        $data = $request->validated();
-        $project = Project::query()->where('organisation_id', $request->user()->organisation_id)
-            ->whereHas('assignments', fn ($assignments) => $assignments->where('user_id', $request->user()->id)->whereNull('deleted_at'))
-            ->findOrFail($data['project_id']);
-        $this->authorize('create', [Expense::class, $project]);
-        $expense = Expense::create($data + [
-            'project_id' => $project->id, 'organisation_id' => $project->organisation_id,
-            'creator_user_id' => $request->user()->id,
-            'purchaser_user_id' => $request->user()->id,
-            'total' => round((float) $data['quantity'] * (float) $data['rate'], 2),
-        ]);
+        $expense = app(\App\Services\ExpenseService::class)->create($request->user(), $request->validated());
         return (new ExpenseResource($expense))->response()->setStatusCode(201);
     }
 
@@ -69,12 +56,7 @@ class ExpenseController extends Controller
 
     public function update(UpdateExpenseRequest $request, Expense $expense)
     {
-        $this->authorize('update', $expense);
-        $data = $request->validated();
-        if (array_key_exists('quantity', $data) || array_key_exists('rate', $data)) {
-            $data['total'] = round((float) ($data['quantity'] ?? $expense->quantity) * (float) ($data['rate'] ?? $expense->rate), 2);
-        }
-        $expense->update($data);
+        app(\App\Services\ExpenseService::class)->update($request->user(), $expense, $request->validated());
         return new ExpenseResource($expense->refresh()->load('receipts'));
     }
 }

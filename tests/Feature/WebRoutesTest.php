@@ -122,7 +122,7 @@ class WebRoutesTest extends TestCase
     public function test_projects_show_loads_for_owner(): void
     {
         $user = $this->userWithPermission('projects.view');
-        $project = Project::factory()->create([
+        $project = Project::factory()->assignedTo($user)->create([
             'user_id' => $user->id,
             'organisation_id' => $user->organisation_id,
         ]);
@@ -145,7 +145,7 @@ class WebRoutesTest extends TestCase
     public function test_projects_edit_loads_for_owner_with_permission(): void
     {
         $user = $this->userWithPermission('projects.edit');
-        $project = Project::factory()->create([
+        $project = Project::factory()->assignedTo($user)->create([
             'user_id' => $user->id,
             'organisation_id' => $user->organisation_id,
         ]);

@@ -28,6 +28,10 @@ use App\Livewire\Boqs\Show as BoqsShow;
 
 use App\Livewire\Checkout;
 use App\Livewire\Dashboard;
+use App\Livewire\Faqs;
+use App\Livewire\Expenses\Index as ExpensesIndex;
+use App\Livewire\Team\Index as TeamIndex;
+use App\Livewire\Team\Assignments as TeamAssignments;
 
 use App\Livewire\HardwarePrices\Compare as HardwarePricesCompare;
 use App\Livewire\HardwarePrices\Index as HardwarePricesIndex;
@@ -124,6 +128,13 @@ Route::middleware('auth')->group(function (): void {
         '/dashboard',
         Dashboard::class
     )->name('dashboard');
+
+    Route::get('/faqs', Faqs::class)->name('faqs.index');
+    Route::get('/team/invitations', TeamIndex::class)->name('team.index');
+    Route::get('/team/assignments', TeamAssignments::class)->middleware('verified')->name('team.assignments');
+    Route::get('/expenses', ExpensesIndex::class)->middleware('verified')->name('expenses.index');
+    Route::get('/expense-receipts/{receipt}/download', [\App\Http\Controllers\Api\ExpenseReceiptController::class, 'download'])
+        ->middleware(['verified', 'throttle:30,1'])->name('expense-receipts.download');
 
 
     /*
