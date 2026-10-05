@@ -12,6 +12,13 @@ class BoqItem extends Model
     use HasFactory;
 
     /**
+     * The rate fields whose changes are audited into the price history.
+     *
+     * @var list<string>
+     */
+    public const PRICE_FIELDS = ['original_rate', 'ai_suggested_rate', 'reviewed_rate', 'approved_rate'];
+
+    /**
      * Keep approved BOQ values in sync whenever the model is persisted.
      */
     protected static function booted(): void
@@ -27,6 +34,49 @@ class BoqItem extends Model
                 BoqLocationPrice::record($boqItem);
             }
         });
+
+        // Record an immutable history entry whenever an item's price changes.
+        static::updated(function (self $boqItem): void {
+            $boqItem->recordPriceHistory();
+        });
+    }
+
+    /**
+     * Append a price-history entry for each rate field that changed on this update.
+     */
+    public function recordPriceHistory(): void
+    {
+        foreach (self::PRICE_FIELDS as $field) {
+            if (! $this->wasChanged($field)) {
+                continue;
+            }
+
+            $old = $this->getOriginal($field);
+            $new = $this->{$field};
+
+            // Skip null-to-null and numerically identical transitions.
+            if (($old === null && $new === null) || ($old !== null && $new !== null
+                && bccomp($this->normaliseRate($old), $this->normaliseRate($new), 2) === 0)) {
+                continue;
+            }
+
+            BoqItemPriceHistory::create([
+                'boq_id' => $this->boq_id,
+                'boq_item_id' => $this->id,
+                'field' => $field,
+                'old_value' => $old,
+                'new_value' => $new,
+                'currency' => $this->currency,
+                'source' => $this->pricing_source,
+                'user_id' => auth()->id(),
+                'changed_at' => now(),
+            ]);
+        }
+    }
+
+    private function normaliseRate(mixed $value): string
+    {
+        return number_format((float) $value, 2, '.', '');
     }
 
     /**
@@ -116,6 +166,11 @@ class BoqItem extends Model
     public function expenses(): HasMany
     {
         return $this->hasMany(Expense::class);
+    }
+
+    public function priceHistory(): HasMany
+    {
+        return $this->hasMany(BoqItemPriceHistory::class)->latest('changed_at');
     }
 
     /**

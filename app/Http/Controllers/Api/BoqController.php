@@ -484,6 +484,21 @@ public function show(Request $request, Boq $boq): JsonResponse
         ]);
     }
 
+    public function priceHistory(Request $request, BoqItem $boqItem): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($this->canAccess($boqItem->boq, $user->id, $user->organisation_id), 403);
+        abort_unless($user->hasPermission('boq.view'), 403);
+
+        $history = $boqItem->priceHistory()
+            ->paginate(min($request->integer('per_page', 50), 100));
+
+        return response()->json([
+            'success' => true,
+            'data' => $history,
+        ]);
+    }
+
     public function process(ProcessBoqRequest $request, Boq $boq, \App\Services\BoqExtractionService $extractor): JsonResponse
     {
         set_time_limit(300);

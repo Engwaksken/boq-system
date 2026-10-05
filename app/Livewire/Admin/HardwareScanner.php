@@ -6,6 +6,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\HardwareCategory;
 use App\Models\HardwarePrice;
+use App\Models\PriceHistory;
 use App\Models\SiteSetting;
 use App\Services\HardwarePriceFetchingService;
 use Illuminate\Support\Facades\DB;
@@ -299,6 +300,27 @@ class HardwareScanner extends Component
                         ->first();
 
                 if ($existing) {
+                    if ($this->priceChanged($existing, $item['price'] ?? null)) {
+                        PriceHistory::create([
+                            'organisation_id' => $organisationId,
+                            'hardware_price_id' => $existing->id,
+                            'price' => $existing->price,
+                            'currency' => $existing->currency,
+                            'supplier' => (string) ($existing->supplier ?? ''),
+                            'location' => $existing->location,
+                            'source_url' => $existing->source_url,
+                            'source_reference' => $existing->source_reference,
+                            'recorded_at' => $existing->fetched_at ?? now(),
+                            'metadata' => [
+                                'price_type' => $existing->price_type,
+                                'brand' => $existing->brand,
+                                'specification' => $existing->specification,
+                                'unit' => $existing->unit,
+                                'ai' => $existing->ai_metadata,
+                            ],
+                        ]);
+                    }
+
                     $existing->update([
                         ...$item,
                         'fetched_at' =>
@@ -924,5 +946,15 @@ class HardwareScanner extends Component
             $exception->getMessage(),
             300
         );
+    }
+
+    /** Whether the scanned price differs from the item's current price. */
+    private function priceChanged(HardwarePrice $existing, mixed $newPrice): bool
+    {
+        if ($newPrice === null) {
+            return false;
+        }
+
+        return number_format((float) $existing->price, 2, '.', '') !== number_format((float) $newPrice, 2, '.', '');
     }
 }

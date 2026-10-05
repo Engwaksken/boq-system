@@ -153,6 +153,8 @@ Route::prefix('v1')->group(function () {
             Route::get('boqs/{boq}/share/link', [BoqController::class, 'shareLink'])->middleware('throttle:30,1');
             Route::get('boq-items/{boqItem}', [BoqController::class, 'item'])
                 ->name('api.v1.boq-items.show');
+            Route::get('boq-items/{boqItem}/price-history', [BoqController::class, 'priceHistory'])
+                ->name('api.v1.boq-items.price-history');
         });
 
         Route::middleware(['permission:boq.edit', 'entitlement:boq.management', 'entitlement:boq.import.excel,boq_imports'])
