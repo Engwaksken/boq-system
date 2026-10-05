@@ -14,8 +14,10 @@ class Expense extends Model
 
     protected $fillable = [
         'organisation_id', 'project_id', 'creator_user_id', 'purchaser_user_id',
+        'boq_id', 'boq_item_id',
         'purchase_date', 'supplier', 'description', 'quantity', 'unit', 'rate',
         'total', 'currency', 'payment_method', 'is_planned', 'explanation',
+        'deduplication_hash',
     ];
 
     protected function casts(): array
@@ -45,6 +47,16 @@ class Expense extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function boq(): BelongsTo
+    {
+        return $this->belongsTo(Boq::class);
+    }
+
+    public function boqItem(): BelongsTo
+    {
+        return $this->belongsTo(BoqItem::class);
     }
 
     public function creator(): BelongsTo

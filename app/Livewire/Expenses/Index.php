@@ -8,6 +8,9 @@ use App\Models\Expense;
 use App\Models\Project;
 use App\Services\ExpenseReceiptService;
 use App\Services\ExpenseService;
+use App\Services\ReceiptExtractionService;
+use App\Support\Regional;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
@@ -21,33 +24,60 @@ class Index extends Component
     use WithFileUploads, WithPagination;
 
     public string $search = '';
+
     #[Url(as: 'project', except: '')]
     public string $projectFilter = '';
+
     public bool $showForm = false;
+
     #[Locked]
     public ?int $expenseId = null;
+
     #[Locked]
     public ?int $selectedExpenseId = null;
+
     public ?int $project_id = null;
+
     public string $purchase_date = '';
+
     public string $supplier = '';
+
     public string $description = '';
+
     public string $quantity = '1';
+
     public string $unit = '';
+
     public string $rate = '';
+
     public string $currency = '';
+
     public string $payment_method = '';
+
     public bool $is_planned = true;
+
     public string $explanation = '';
+
     public $receiptFile;
+
+    public $extractFile;
+
+    public array $extractionWarnings = [];
 
     public function boot(): void
     {
         abort_unless(auth()->user()?->hasVerifiedEmail(), 403);
     }
 
-    public function updatedSearch(): void { $this->resetPage(); }
-    public function updatedProjectFilter(): void { $this->resetPage(); }
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedProjectFilter(): void
+    {
+        $this->resetPage();
+    }
 
     private function projects()
     {
@@ -60,7 +90,7 @@ class Index extends Component
     {
         $this->closeForm();
         $this->purchase_date = now()->toDateString();
-        $this->currency = \App\Support\Regional::currency();
+        $this->currency = Regional::currency();
         $project = $this->projects()->firstWhere('id', $this->projectFilter);
         if ($project) {
             $this->project_id = $project->id;
@@ -94,7 +124,7 @@ class Index extends Component
         $this->showForm = true;
     }
 
-    public function save(ExpenseService $service): void
+    public function save(ExpenseService $service, ExpenseReceiptService $receipts): void
     {
         $rules = $this->expenseId === null ? (new StoreExpenseRequest)->rules() : (new UpdateExpenseRequest)->rules();
         if ($this->expenseId !== null) {
@@ -108,14 +138,41 @@ class Index extends Component
         } else {
             $expense = $service->update(auth()->user(), Expense::findOrFail($this->expenseId), $data);
         }
+        if ($this->extractFile) {
+            $receipts->store(auth()->user(), $expense, $this->extractFile);
+        }
         $this->selectedExpenseId = $expense->id;
         $this->closeForm();
         session()->flash('status', __('Expense saved successfully.'));
     }
 
+    /** Read expense fields from an uploaded receipt and pre-fill the form for review. */
+    public function extractFromReceipt(ReceiptExtractionService $service): void
+    {
+        $this->validate(['extractFile' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240']]);
+        try {
+            $fields = $service->extract($this->extractFile, auth()->user()->organisation_id);
+        } catch (ValidationException $exception) {
+            $this->addError('extractFile', $exception->errors()['file'][0] ?? __('The receipt could not be read.'));
+
+            return;
+        }
+
+        $this->supplier = (string) ($fields['supplier'] ?? '');
+        $this->purchase_date = (string) ($fields['purchase_date'] ?? '');
+        $this->description = (string) ($fields['description'] ?? '');
+        $this->quantity = (string) ($fields['quantity'] ?? '1');
+        $this->unit = (string) ($fields['unit'] ?? '');
+        $this->rate = (string) ($fields['rate'] ?? '');
+        $this->payment_method = (string) ($fields['payment_method'] ?? '');
+        $this->currency = (string) ($fields['currency'] ?? $this->currency);
+        $this->extractionWarnings = $fields['warnings'] ?? [];
+        $this->resetValidation(['supplier', 'purchase_date', 'description', 'quantity', 'unit', 'rate', 'currency', 'payment_method']);
+    }
+
     public function closeForm(): void
     {
-        $this->reset(['showForm', 'expenseId', 'project_id', 'purchase_date', 'supplier', 'description', 'quantity', 'unit', 'rate', 'currency', 'payment_method', 'is_planned', 'explanation']);
+        $this->reset(['showForm', 'expenseId', 'project_id', 'purchase_date', 'supplier', 'description', 'quantity', 'unit', 'rate', 'currency', 'payment_method', 'is_planned', 'explanation', 'extractFile', 'extractionWarnings']);
         $this->resetValidation();
     }
 

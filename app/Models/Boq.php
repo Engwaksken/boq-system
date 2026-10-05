@@ -148,6 +148,11 @@ class Boq extends Model
         return $this->hasMany(BoqItem::class);
     }
 
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class);
+    }
+
     /**
      * Summaries for this BOQ.
      */

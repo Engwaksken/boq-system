@@ -29,6 +29,7 @@ class ExpenseFactory extends Factory
             'payment_method' => null,
             'is_planned' => true,
             'explanation' => null,
+            'deduplication_hash' => null,
         ];
     }
 }

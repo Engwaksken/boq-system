@@ -10,6 +10,6 @@ class UpdateInvitationRequest extends FormRequest
 
     public function rules(): array
     {
-        return ['email' => ['sometimes', 'required', 'email', 'max:255'], 'role_id' => ['prohibited'], 'expires_at' => ['sometimes', 'required', 'date', 'after:now']];
+        return ['email' => ['sometimes', 'required', 'email', 'max:255'], 'role_id' => ['prohibited'], 'expires_at' => ['prohibited']];
     }
 }

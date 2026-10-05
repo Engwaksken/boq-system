@@ -17,11 +17,14 @@ class InvitationFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'role_id' => null,
             'inviter_user_id' => User::factory(),
-            'token_hash' => hash('sha256', fake()->unique()->uuid()),
+            'token_hash' => Invitation::hashCode((string) fake()->unique()->randomNumber(5, true)),
             'expires_at' => now()->addDays(7),
             'accepted_at' => null,
             'revoked_at' => null,
             'revoked_by_user_id' => null,
+            'consumed_at' => null,
+            'attempt_count' => 0,
+            'last_attempt_at' => null,
         ];
     }
 }

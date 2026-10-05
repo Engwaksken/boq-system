@@ -129,9 +129,9 @@ class UserWorkspaceFeaturesTest extends TestCase
             ->set('role_id', Role::where('slug', 'procurement-officer')->value('id'))->set('expires_at', now()->addWeek()->toISOString())
             ->call('save')->assertHasNoErrors();
         $token = $component->get('createdToken');
-        $this->assertSame(64, strlen($token));
+        $this->assertMatchesRegularExpression('/^\d{5}$/', $token);
         $invitation = Invitation::firstOrFail();
-        $this->assertSame(hash('sha256', $token), $invitation->token_hash);
+        $this->assertSame(\App\Models\Invitation::hashCode($token), $invitation->token_hash);
         $component->call('edit', $invitation->id)->set('email', 'updated@example.test')->call('save')->assertHasNoErrors()
             ->call('revoke', $invitation->id);
         $this->assertSame('updated@example.test', $invitation->fresh()->email);

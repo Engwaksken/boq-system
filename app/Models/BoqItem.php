@@ -113,6 +113,11 @@ class BoqItem extends Model
         return $this->belongsTo(Boq::class);
     }
 
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class);
+    }
+
     /**
      * The facility this item belongs to.
      */

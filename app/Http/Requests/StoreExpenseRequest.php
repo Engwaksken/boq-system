@@ -12,6 +12,8 @@ class StoreExpenseRequest extends FormRequest
     {
         return [
             'project_id' => ['required', 'integer', 'exists:projects,id'],
+            'boq_id' => ['nullable', 'integer', 'exists:boqs,id'],
+            'boq_item_id' => ['nullable', 'integer', 'exists:boq_items,id'],
             'purchase_date' => ['required', 'date'], 'supplier' => ['nullable', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:10000'], 'quantity' => ['required', 'numeric', 'gt:0'],
             'unit' => ['required', 'string', 'max:50'], 'rate' => ['required', 'numeric', 'min:0'],

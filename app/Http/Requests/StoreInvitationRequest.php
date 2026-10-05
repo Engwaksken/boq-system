@@ -20,7 +20,9 @@ class StoreInvitationRequest extends FormRequest
                     'project-manager', 'procurement-officer', 'finance', 'user',
                 ]),
             ],
-            'expires_at' => ['required', 'date', 'after:now'],
+            // Accepted for backwards compatibility, but the controller replaces it
+            // with the server-defined six-hour lifetime.
+            'expires_at' => ['sometimes', 'date'],
         ];
     }
 }

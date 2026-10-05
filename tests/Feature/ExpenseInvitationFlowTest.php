@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Expense;
 use App\Models\ExpenseReceipt;
+use App\Models\Boq;
+use App\Models\BoqItem;
 use App\Models\Invitation;
 use App\Models\Organisation;
 use App\Models\Project;
@@ -121,6 +123,64 @@ class ExpenseInvitationFlowTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('explanation');
     }
 
+    public function test_duplicate_expense_creation_is_rejected(): void
+    {
+        $org = Organisation::factory()->create();
+        $user = $this->user($org);
+        $project = Project::factory()->create(['organisation_id' => $org->id]);
+        $this->assignToProject($project, $user);
+
+        $this->actingAs($user, 'sanctum')->postJson('/api/v1/expenses', $this->payload($project))->assertCreated();
+        $this->actingAs($user, 'sanctum')->postJson('/api/v1/expenses', $this->payload($project))->assertConflict();
+        $this->assertSame(1, Expense::where('project_id', $project->id)->count());
+    }
+
+    public function test_expense_links_boq_and_item_that_belong_to_the_project(): void
+    {
+        $org = Organisation::factory()->create();
+        $user = $this->user($org);
+        $project = Project::factory()->create(['organisation_id' => $org->id]);
+        $this->assignToProject($project, $user);
+        $boq = Boq::factory()->create(['project_id' => $project->id, 'organisation_id' => $org->id]);
+        $item = BoqItem::factory()->create(['boq_id' => $boq->id]);
+
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/expenses', $this->payload($project, [
+            'boq_id' => $boq->id, 'boq_item_id' => $item->id,
+        ]));
+
+        $response->assertCreated()->assertJsonPath('data.project_id', $project->id);
+        $this->assertDatabaseHas('expenses', ['id' => $response->json('data.id'), 'boq_id' => $boq->id, 'boq_item_id' => $item->id]);
+    }
+
+    public function test_expense_rejects_boq_from_another_project(): void
+    {
+        $org = Organisation::factory()->create();
+        $user = $this->user($org);
+        $project = Project::factory()->create(['organisation_id' => $org->id]);
+        $otherProject = Project::factory()->create(['organisation_id' => $org->id]);
+        $this->assignToProject($project, $user);
+        $foreignBoq = Boq::factory()->create(['project_id' => $otherProject->id, 'organisation_id' => $org->id]);
+
+        $this->actingAs($user, 'sanctum')->postJson('/api/v1/expenses', $this->payload($project, [
+            'boq_id' => $foreignBoq->id,
+        ]))->assertUnprocessable();
+    }
+
+    public function test_expense_rejects_boq_item_from_another_boq(): void
+    {
+        $org = Organisation::factory()->create();
+        $user = $this->user($org);
+        $project = Project::factory()->create(['organisation_id' => $org->id]);
+        $this->assignToProject($project, $user);
+        $boq = Boq::factory()->create(['project_id' => $project->id, 'organisation_id' => $org->id]);
+        $otherBoq = Boq::factory()->create(['project_id' => $project->id, 'organisation_id' => $org->id]);
+        $foreignItem = BoqItem::factory()->create(['boq_id' => $otherBoq->id]);
+
+        $this->actingAs($user, 'sanctum')->postJson('/api/v1/expenses', $this->payload($project, [
+            'boq_id' => $boq->id, 'boq_item_id' => $foreignItem->id,
+        ]))->assertUnprocessable();
+    }
+
     public function test_expense_isolation_rejects_foreign_project_and_hides_foreign_expense(): void
     {
         $org = Organisation::factory()->create();
@@ -181,6 +241,28 @@ class ExpenseInvitationFlowTest extends TestCase
         ])->assertUnprocessable();
     }
 
+    public function test_duplicate_receipt_upload_is_rejected_by_content_hash(): void
+    {
+        Storage::fake('local');
+        config(['filesystems.disks.private' => null]);
+        $org = Organisation::factory()->create();
+        $owner = $this->user($org);
+        $project = Project::factory()->create(['organisation_id' => $org->id]);
+        $expense = Expense::factory()->create(['organisation_id' => $org->id, 'project_id' => $project->id, 'creator_user_id' => $owner->id]);
+        $this->assignToProject($project, $owner);
+
+        $this->actingAs($owner, 'sanctum')->post('/api/v1/expenses/'.$expense->id.'/receipts', [
+            'file' => UploadedFile::fake()->createWithContent('same.pdf', "%PDF-1.4\nidentical receipt"),
+        ])->assertCreated();
+
+        $this->actingAs($owner, 'sanctum')->post('/api/v1/expenses/'.$expense->id.'/receipts', [
+            'file' => UploadedFile::fake()->createWithContent('renamed.pdf', "%PDF-1.4\nidentical receipt"),
+        ])->assertConflict();
+
+        $this->assertSame(1, $expense->receipts()->count());
+        $this->assertSame(1, ExpenseReceipt::where('expense_id', $expense->id)->whereNotNull('sha256')->count());
+    }
+
     public function test_only_administrator_can_create_invitation(): void
     {
         $org = Organisation::factory()->create();
@@ -195,6 +277,22 @@ class ExpenseInvitationFlowTest extends TestCase
         $admin = $this->user($org, 'administrator');
         $roleId = Role::where('slug', 'user')->value('id');
         $this->actingAs($admin, 'sanctum')->postJson('/api/v1/invitations', ['email' => 'invite@example.test', 'role_id' => $roleId, 'expires_at' => now()->addDays(3)->toISOString()])->assertCreated();
+    }
+
+    public function test_created_invitation_expires_six_hours_after_creation_and_keeps_token_hash_private(): void
+    {
+        $org = Organisation::factory()->create();
+        $admin = $this->user($org, 'administrator');
+        $roleId = Role::where('slug', 'user')->value('id');
+
+        $response = $this->actingAs($admin, 'sanctum')->postJson('/api/v1/invitations', [
+            'email' => 'six-hours@example.test', 'role_id' => $roleId,
+            'expires_at' => now()->addDays(3)->toISOString(),
+        ])->assertCreated();
+
+        $invitation = Invitation::where('email', 'six-hours@example.test')->firstOrFail();
+        $this->assertEqualsWithDelta(now()->addHours(6)->timestamp, $invitation->expires_at->timestamp, 2);
+        $this->assertArrayNotHasKey('token_hash', $response->json('data'));
     }
 
     public function test_accepting_another_organisation_invitation_does_not_carry_old_privileges(): void
@@ -272,6 +370,7 @@ class ExpenseInvitationFlowTest extends TestCase
         ])->assertCreated();
 
         $token = $created->json('token');
+        $this->assertMatchesRegularExpression('/^\d{5}$/', $token, 'Invitation codes are five digits.');
         $acceptance = $this->actingAs($invitee, 'sanctum')->postJson('/api/v1/invitations/accept', ['token' => $token]);
         if ($acceptance->status() !== 200) {
             fwrite(STDERR, "Invitation acceptance failed (HTTP {$acceptance->status()}): {$acceptance->getContent()}\n");

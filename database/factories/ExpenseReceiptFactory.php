@@ -20,6 +20,7 @@ class ExpenseReceiptFactory extends Factory
             'file_size' => fake()->numberBetween(1024, 10485760),
             'storage_path' => 'expense-receipts/'.fake()->uuid().'.pdf',
             'storage_disk' => 'private',
+            'sha256' => null,
         ];
     }
 }

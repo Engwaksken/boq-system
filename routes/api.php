@@ -71,7 +71,7 @@ Route::prefix('v1')->group(function () {
 
         // Invitation acceptance is available to authenticated, unverified invitees.
         Route::post('invitations/accept', [InvitationController::class, 'accept'])
-            ->middleware('throttle:10,1')
+            ->middleware('throttle:5,1')
             ->name('api.v1.invitations.accept');
 
         // Organisation business routes require a verified account.
@@ -89,6 +89,7 @@ Route::prefix('v1')->group(function () {
                 Route::get('/projects', [ExpenseController::class, 'projects'])->middleware('throttle:60,1')->name('projects');
                 Route::get('/', [ExpenseController::class, 'index'])->name('index');
                 Route::post('/', [ExpenseController::class, 'store'])->middleware('throttle:10,1')->name('store');
+                Route::post('/extract', [ExpenseController::class, 'extract'])->middleware('throttle:10,1')->name('extract');
                 Route::get('/{expense}', [ExpenseController::class, 'show'])->name('show');
                 Route::put('/{expense}', [ExpenseController::class, 'update'])->middleware('throttle:10,1')->name('update');
                 Route::post('/{expense}/receipts', [ExpenseReceiptController::class, 'store'])

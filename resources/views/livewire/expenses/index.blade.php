@@ -28,6 +28,19 @@
     </x-ui.card>
     @if($showForm)
         <x-ui.modal :title="$expenseId ? __('Edit expense') : __('Record expense')" close="closeForm" submit="save" size="xl">
+            @if($expenseId === null)
+                <div class="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <p class="mb-2 text-sm font-semibold">{{ __('Fill from a receipt (optional)') }}</p>
+                    <div class="flex items-end gap-3">
+                        <x-ui.field :label="__('Receipt')" for="expense-extract-file" error="extractFile" class="flex-1">
+                            <input id="expense-extract-file" type="file" wire:model="extractFile" accept="application/pdf,image/jpeg,image/png,image/webp" class="boq-field">
+                        </x-ui.field>
+                        <x-ui.button type="button" icon="fa-wand-magic-sparkles" wire:click="extractFromReceipt" wire:loading.attr="disabled" wire:target="extractFromReceipt">{{ __('Extract') }}</x-ui.button>
+                    </div>
+                    <p class="mt-1 text-xs text-slate-500">{{ __('Reads the supplier, date, description, quantity, unit, rate and currency from the receipt. Review and correct the values before saving.') }}</p>
+                    @foreach($extractionWarnings as $warning)<p class="mt-2 text-xs text-amber-600"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> {{ $warning }}</p>@endforeach
+                </div>
+            @endif
             <div class="grid gap-4 sm:grid-cols-2">
                 <x-ui.field :label="__('Assigned project')" for="expense-project" error="project_id" required>
                     <select id="expense-project" wire:model.live="project_id" class="boq-field" @disabled($expenseId !== null)><option value="">{{ __('Select a project') }}</option>@foreach($projects as $project)<option value="{{ $project->id }}">{{ $project->name }}</option>@endforeach</select>
