@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AiProvider;
 use App\Models\Organisation;
 use App\Models\Project;
 use App\Models\User;
@@ -98,6 +99,26 @@ class ReceiptExtractionTest extends TestCase
 
         $this->assertSame('openai', $result['provider']);
         $this->assertSame('Ace Hardware', $result['supplier']);
+    }
+
+    public function test_deepseek_provider_is_used_for_receipt_extraction(): void
+    {
+        $organisation = $this->organisation();
+        AiProvider::create([
+            'key' => 'deepseek', 'name' => 'DeepSeek', 'provider_type' => 'deepseek',
+            'api_base_url' => 'https://api.deepseek.com/v1', 'default_model' => 'deepseek-chat',
+            'api_key' => 'deepseek-secret', 'is_enabled' => true, 'is_default' => true, 'sort_order' => 1,
+        ]);
+        Http::fake(['api.deepseek.com/*' => Http::response([
+            'choices' => [['message' => ['content' => json_encode($this->validExtraction())]]],
+        ])]);
+
+        $image = UploadedFile::fake()->image('receipt.jpg', 100, 100);
+        $result = app(ReceiptExtractionService::class)->extract($image, $organisation->id);
+
+        $this->assertSame('openai', $result['provider']);
+        $this->assertSame('Ace Hardware', $result['supplier']);
+        Http::assertSent(fn (Request $request): bool => str_starts_with($request->url(), 'https://api.deepseek.com/v1/chat/completions'));
     }
 
     public function test_extraction_fails_cleanly_when_no_vision_provider_is_configured(): void

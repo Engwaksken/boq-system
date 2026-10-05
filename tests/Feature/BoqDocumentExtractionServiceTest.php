@@ -160,7 +160,7 @@ class BoqDocumentExtractionServiceTest extends TestCase
             app(BoqDocumentExtractionService::class)->extract($boq);
             $this->fail('OpenAI PDF extraction should not be attempted.');
         } catch (ValidationException $exception) {
-            $this->assertStringContainsString('Reading PDF BOQs needs a Gemini AI provider', $exception->errors()['boq'][0]);
+            $this->assertStringContainsString('Reading PDF BOQs needs a vision-capable AI provider', $exception->errors()['boq'][0]);
         }
 
         Http::assertNothingSent();

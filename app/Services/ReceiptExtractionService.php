@@ -65,8 +65,8 @@ class ReceiptExtractionService
 
         if ($candidates === []) {
             throw ValidationException::withMessages(['file' => $mime === 'application/pdf'
-                ? 'Reading PDF receipts needs a Gemini AI provider. Add and enable one under Admin > AI API Settings.'
-                : 'Reading receipt photos needs a Gemini or OpenAI AI provider. Add and enable one under Admin > AI API Settings.']);
+                ? 'Reading PDF receipts needs a vision-capable AI provider. Add and enable one under Admin > AI API Settings.'
+                : 'Reading receipt photos needs a vision-capable AI provider. Add and enable one under Admin > AI API Settings.']);
         }
 
         $fields = null;
@@ -108,7 +108,6 @@ class ReceiptExtractionService
         $configured = AiProvider::query()
             ->enabled()
             ->forOrganisation($organisationId)
-            ->whereIn('provider_type', ['gemini', 'google_gemini', 'openai'])
             ->orderByDesc('is_default')
             ->orderBy('sort_order')
             ->get();

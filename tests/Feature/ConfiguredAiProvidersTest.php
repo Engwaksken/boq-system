@@ -115,7 +115,7 @@ class ConfiguredAiProvidersTest extends TestCase
             app(BoqDocumentExtractionService::class)->extract($boq);
             $this->fail('Expected a validation error.');
         } catch (ValidationException $e) {
-            $this->assertStringContainsString('needs a Gemini AI provider', $e->errors()['boq'][0]);
+            $this->assertStringContainsString('needs a vision-capable AI provider', $e->errors()['boq'][0]);
         }
         Http::assertNothingSent();
     }

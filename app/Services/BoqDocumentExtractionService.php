@@ -86,8 +86,8 @@ class BoqDocumentExtractionService
 
         if ($candidates === []) {
             throw ValidationException::withMessages(['boq' => $mime === 'application/pdf'
-                ? 'Reading PDF BOQs needs a Gemini AI provider. Add and enable one under Admin > AI API Settings, or upload the BOQ as Excel/CSV.'
-                : 'Reading BOQ photos needs a Gemini or OpenAI AI provider. Add and enable one under Admin > AI API Settings, or upload the BOQ as Excel/CSV.']);
+                ? 'Reading PDF BOQs needs a vision-capable AI provider. Add and enable one under Admin > AI API Settings, or upload the BOQ as Excel/CSV.'
+                : 'Reading BOQ photos needs a vision-capable AI provider. Add and enable one under Admin > AI API Settings, or upload the BOQ as Excel/CSV.']);
         }
 
         $items = null;
@@ -146,7 +146,6 @@ class BoqDocumentExtractionService
         $configured = \App\Models\AiProvider::query()
             ->enabled()
             ->forOrganisation($organisationId)
-            ->whereIn('provider_type', ['gemini', 'google_gemini', 'openai'])
             ->orderByDesc('is_default')
             ->orderBy('sort_order')
             ->get();
