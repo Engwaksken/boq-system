@@ -50,6 +50,8 @@ class Index extends Component
 
     public string $rate = '';
 
+    public array $additionalItems = [];
+
     public string $currency = '';
 
     public string $payment_method = '';
@@ -134,6 +136,12 @@ class Index extends Component
         $rules = array_intersect_key($rules, $this->all());
         $data = $this->validate($rules);
         if ($this->expenseId === null) {
+            $data['items'] = [[
+                'description' => $data['description'],
+                'quantity' => $data['quantity'],
+                'unit' => $data['unit'],
+                'rate' => $data['rate'],
+            ], ...$this->additionalItems];
             $expense = $service->create(auth()->user(), $data);
         } else {
             $expense = $service->update(auth()->user(), Expense::findOrFail($this->expenseId), $data);
@@ -144,6 +152,20 @@ class Index extends Component
         $this->selectedExpenseId = $expense->id;
         $this->closeForm();
         session()->flash('status', __('Expense saved successfully.'));
+    }
+
+    public function addExpenseItem(): void
+    {
+        abort_if(count($this->additionalItems) >= 99, 422);
+        $this->additionalItems[] = ['description' => '', 'quantity' => '1', 'unit' => '', 'rate' => ''];
+    }
+
+    public function removeExpenseItem(int $index): void
+    {
+        if (isset($this->additionalItems[$index])) {
+            unset($this->additionalItems[$index]);
+            $this->additionalItems = array_values($this->additionalItems);
+        }
     }
 
     /**
@@ -193,7 +215,7 @@ class Index extends Component
 
     public function closeForm(): void
     {
-        $this->reset(['showForm', 'expenseId', 'project_id', 'purchase_date', 'supplier', 'description', 'quantity', 'unit', 'rate', 'currency', 'payment_method', 'is_planned', 'explanation', 'extractFile', 'extractionWarnings']);
+        $this->reset(['showForm', 'expenseId', 'project_id', 'purchase_date', 'supplier', 'description', 'quantity', 'unit', 'rate', 'currency', 'payment_method', 'is_planned', 'explanation', 'extractFile', 'extractionWarnings', 'additionalItems']);
         $this->resetValidation();
     }
 
@@ -228,7 +250,7 @@ class Index extends Component
             ->when(trim($this->search) !== '', fn ($query) => $query->where(fn ($search) => $search
                 ->where('description', 'like', '%'.trim($this->search).'%')
                 ->orWhere('supplier', 'like', '%'.trim($this->search).'%')));
-        $selected = $this->selectedExpenseId ? Expense::with(['project', 'receipts'])->findOrFail($this->selectedExpenseId) : null;
+        $selected = $this->selectedExpenseId ? Expense::with(['project', 'receipts', 'items'])->findOrFail($this->selectedExpenseId) : null;
         if ($selected) {
             $this->authorize('view', $selected);
         }

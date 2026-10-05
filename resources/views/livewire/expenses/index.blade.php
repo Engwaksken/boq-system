@@ -53,6 +53,24 @@
                 <x-ui.field :label="__('Unit')" for="expense-unit" error="unit" required><input id="expense-unit" wire:model="unit" class="boq-field" maxlength="50" required></x-ui.field>
                 <x-ui.field :label="__('Rate')" for="expense-rate" error="rate" required><input id="expense-rate" type="number" wire:model="rate" class="boq-field" min="0" step="0.01" required></x-ui.field>
                 <x-ui.field :label="__('Currency')" for="expense-currency" error="currency" required><x-currency-select id="expense-currency" wire:model="currency" :current="$currency" /></x-ui.field>
+                @if($expenseId === null)
+                    <div class="sm:col-span-2 rounded-lg border border-slate-200 p-4">
+                        <div class="mb-3 flex items-center justify-between gap-3">
+                            <h3 class="font-semibold">{{ __('Additional items') }}</h3>
+                            <x-ui.button type="button" variant="secondary" size="sm" icon="fa-plus" wire:click="addExpenseItem">{{ __('Add item') }}</x-ui.button>
+                        </div>
+                        @foreach($additionalItems as $index => $line)
+                            <div class="mb-3 grid gap-3 border-b border-slate-100 pb-3 sm:grid-cols-12" wire:key="expense-line-{{ $index }}">
+                                <div class="sm:col-span-5"><label class="boq-field-label">{{ __('Description') }}</label><input wire:model="additionalItems.{{ $index }}.description" class="boq-field" maxlength="10000"></div>
+                                <div class="sm:col-span-2"><label class="boq-field-label">{{ __('Quantity') }}</label><input type="number" min="0.001" step="0.001" wire:model="additionalItems.{{ $index }}.quantity" class="boq-field"></div>
+                                <div class="sm:col-span-2"><label class="boq-field-label">{{ __('Unit') }}</label><input wire:model="additionalItems.{{ $index }}.unit" class="boq-field" maxlength="50"></div>
+                                <div class="sm:col-span-2"><label class="boq-field-label">{{ __('Rate') }}</label><input type="number" min="0" step="0.01" wire:model="additionalItems.{{ $index }}.rate" class="boq-field"></div>
+                                <div class="flex items-end sm:col-span-1"><button type="button" class="boq-icon-btn boq-icon-danger" wire:click="removeExpenseItem({{ $index }})" aria-label="{{ __('Remove item') }}"><i class="fas fa-trash" aria-hidden="true"></i></button></div>
+                            </div>
+                        @endforeach
+                        <p class="text-xs text-slate-500">{{ __('Each item is saved under this expense record; the total is calculated from all items.') }}</p>
+                    </div>
+                @endif
                 <label class="flex items-center gap-2 sm:col-span-2"><input type="checkbox" wire:model.live="is_planned" class="rounded border-slate-300"><span>{{ __('Planned purchase') }}</span></label>
                 @if(!$is_planned)<x-ui.field :label="__('Reason for unplanned purchase')" for="expense-explanation" error="explanation" required class="sm:col-span-2"><textarea id="expense-explanation" wire:model="explanation" class="boq-field" rows="3" maxlength="10000" required></textarea></x-ui.field>@endif
                 <p class="text-sm text-slate-500 sm:col-span-2">{{ __('The total is calculated from quantity and rate when you save.') }}</p>
@@ -64,7 +82,15 @@
             <h3 class="font-semibold">{{ $selectedExpense->description }}</h3>
             <p class="mt-1 text-sm text-slate-600">{{ $selectedExpense->project->name }} · {{ \App\Support\Format::date($selectedExpense->purchase_date) }}</p>
             <p class="my-4 text-xl font-bold"><x-money :amount="$selectedExpense->total" :currency="$selectedExpense->currency" /></p>
-            <dl class="grid gap-3 text-sm sm:grid-cols-2"><div><dt class="font-semibold">{{ __('Supplier') }}</dt><dd>{{ $selectedExpense->supplier ?: '—' }}</dd></div><div><dt class="font-semibold">{{ __('Payment method') }}</dt><dd>{{ $selectedExpense->payment_method ?: '—' }}</dd></div><div><dt class="font-semibold">{{ __('Quantity / Unit / Rate') }}</dt><dd>{{ $selectedExpense->quantity }} {{ $selectedExpense->unit }} × {{ $selectedExpense->rate }}</dd></div></dl>
+            <dl class="grid gap-3 text-sm sm:grid-cols-2"><div><dt class="font-semibold">{{ __('Supplier') }}</dt><dd>{{ $selectedExpense->supplier ?: '—' }}</dd></div><div><dt class="font-semibold">{{ __('Payment method') }}</dt><dd>{{ $selectedExpense->payment_method ?: '—' }}</dd></div></dl>
+            @if($selectedExpense->items->isNotEmpty())
+                <h3 class="mt-4 mb-2 font-semibold">{{ __('Expense items') }}</h3>
+                <div class="overflow-x-auto"><x-ui.table><thead><tr><th>{{ __('Description') }}</th><th>{{ __('Quantity') }}</th><th>{{ __('Unit') }}</th><th class="is-numeric">{{ __('Rate') }}</th><th class="is-numeric">{{ __('Total') }}</th></tr></thead><tbody>
+                    @foreach($selectedExpense->items as $line)<tr wire:key="expense-detail-line-{{ $line->id }}"><td>{{ $line->description }}</td><td>{{ $line->quantity }}</td><td>{{ $line->unit }}</td><td class="is-numeric">{{ $line->rate }}</td><td class="is-numeric">{{ $line->total }}</td></tr>@endforeach
+                </tbody></x-ui.table></div>
+            @else
+                <div class="mt-4 text-sm"><strong>{{ __('Quantity / Unit / Rate') }}:</strong> {{ $selectedExpense->quantity }} {{ $selectedExpense->unit }} × {{ $selectedExpense->rate }}</div>
+            @endif
             @if(!$selectedExpense->is_planned)<p class="mt-4 whitespace-pre-line text-sm"><strong>{{ __('Reason for unplanned purchase') }}:</strong> {{ $selectedExpense->explanation }}</p>@endif
             <h3 class="mt-6 mb-3 font-semibold">{{ __('Receipts') }}</h3>
             @forelse($selectedExpense->receipts as $receipt)<a class="boq-btn-secondary mb-2" href="{{ route('expense-receipts.download', $receipt) }}"><i class="fas fa-download" aria-hidden="true"></i>{{ $receipt->original_filename }}</a>@empty<p class="mb-4 text-sm text-slate-500">{{ __('No receipts attached.') }}</p>@endforelse

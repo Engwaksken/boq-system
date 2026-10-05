@@ -24,6 +24,7 @@ class Index extends Component
     public ?int $deletingBoqId = null;
 
     public string $search = '';
+    public string $statusTab = 'all';
     public ?int $projectId = null;
     public int $perPage = 15;
     public string $sortBy = 'created_at';
@@ -39,6 +40,16 @@ class Index extends Component
 
     public function updatedProjectId(): void
     {
+        $this->resetPage();
+    }
+
+    public function setStatusTab(string $status): void
+    {
+        if (! in_array($status, ['all', 'uploaded', 'under_review', 'approved'], true)) {
+            return;
+        }
+
+        $this->statusTab = $status;
         $this->resetPage();
     }
 
@@ -174,7 +185,8 @@ class Index extends Component
             ->with('project')
             ->withCount('items')
             ->when($this->search !== '', fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
-            ->when($this->projectId, fn ($q) => $q->where('project_id', $this->projectId));
+            ->when($this->projectId, fn ($q) => $q->where('project_id', $this->projectId))
+            ->when($this->statusTab !== 'all', fn ($q) => $q->where('status', $this->statusTab));
 
         match ($this->sortBy) {
             'project.name' => $boqs->orderBy(

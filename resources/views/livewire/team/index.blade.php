@@ -3,6 +3,12 @@
         <x-slot:actions>@if($canManage)<x-ui.button type="button" icon="fa-plus" wire:click="create">{{ __('Invite team member') }}</x-ui.button><x-ui.button variant="secondary" :href="route('team.assignments')" icon="fa-users">{{ __('Project Assignments') }}</x-ui.button>@endif</x-slot:actions>
     </x-ui.page-header>
     <x-ui.flash />
+    @if($canManage)
+        <x-ui.tabs :label="__('Team workspace tabs')">
+            <x-ui.tab :href="route('team.index')" :active="request()->routeIs('team.index')" icon="fa-user-plus">{{ __('Team Invitations') }}</x-ui.tab>
+            <x-ui.tab :href="route('team.assignments')" :active="request()->routeIs('team.assignments')" icon="fa-users">{{ __('Project Assignments') }}</x-ui.tab>
+        </x-ui.tabs>
+    @endif
     <x-ui.card :title="__('Accept invitation')">
         <form wire:submit="accept" class="space-y-3">
             <x-ui.field :label="__('Invitation token')" for="accept-token" error="acceptToken" required><input id="accept-token" wire:model="acceptToken" class="boq-field" maxlength="255" autocomplete="off" required></x-ui.field>

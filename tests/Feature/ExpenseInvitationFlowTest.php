@@ -135,6 +135,31 @@ class ExpenseInvitationFlowTest extends TestCase
         $this->assertSame(1, Expense::where('project_id', $project->id)->count());
     }
 
+    public function test_one_expense_can_contain_multiple_items_and_sums_the_line_totals(): void
+    {
+        $org = Organisation::factory()->create();
+        $user = $this->user($org);
+        $project = Project::factory()->create(['organisation_id' => $org->id]);
+        $this->assignToProject($project, $user);
+
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/expenses', [
+            'project_id' => $project->id,
+            'purchase_date' => '2026-10-01',
+            'supplier' => 'Vendor',
+            'currency' => 'UGX',
+            'is_planned' => true,
+            'items' => [
+                ['description' => 'Cement', 'quantity' => 2, 'unit' => 'bags', 'rate' => 1500],
+                ['description' => 'Sand', 'quantity' => 3, 'unit' => 'm3', 'rate' => 400],
+            ],
+        ]);
+
+        $response->assertCreated()->assertJsonPath('data.total', '4200.00');
+        $this->assertDatabaseCount('expense_items', 2);
+        $this->assertDatabaseHas('expense_items', ['description' => 'Cement', 'total' => 3000]);
+        $this->assertDatabaseHas('expense_items', ['description' => 'Sand', 'total' => 1200]);
+    }
+
     public function test_expense_links_boq_and_item_that_belong_to_the_project(): void
     {
         $org = Organisation::factory()->create();

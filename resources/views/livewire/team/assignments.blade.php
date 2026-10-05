@@ -3,6 +3,10 @@
         <x-slot:actions><x-ui.button variant="secondary" :href="route('team.index')" icon="fa-user-plus">{{ __('Team Invitations') }}</x-ui.button></x-slot:actions>
     </x-ui.page-header>
     <x-ui.flash />
+    <x-ui.tabs :label="__('Team workspace tabs')">
+        <x-ui.tab :href="route('team.index')" :active="request()->routeIs('team.index')" icon="fa-user-plus">{{ __('Team Invitations') }}</x-ui.tab>
+        <x-ui.tab :href="route('team.assignments')" :active="request()->routeIs('team.assignments')" icon="fa-users">{{ __('Project Assignments') }}</x-ui.tab>
+    </x-ui.tabs>
     <x-ui.card :title="__('Assign project member')">
         <form wire:submit="save" class="grid gap-4 sm:grid-cols-3">
             <x-ui.field :label="__('Project')" for="assignment-project" error="projectId" required><select id="assignment-project" wire:model="projectId" class="boq-field"><option value="">{{ __('Select a project') }}</option>@foreach($projects as $project)<option value="{{ $project->id }}">{{ $project->name }}</option>@endforeach</select></x-ui.field>

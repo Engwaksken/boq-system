@@ -27,6 +27,7 @@
 
 <div
     class="boq-page-stack"
+    x-data="{ preferencesTab: 'appearance' }"
     x-data="{
         preview(key, value) {
             const root = document.documentElement;
@@ -51,7 +52,14 @@
 
     <x-ui.flash :keys="['success', 'error']" class="max-w-4xl" />
 
+    <x-ui.tabs :label="__('Preference sections')">
+        <x-ui.tab @click="preferencesTab = 'appearance'" icon="fa-palette" x-bind:class="preferencesTab === 'appearance' ? 'is-active' : ''">{{ __('Appearance') }}</x-ui.tab>
+        <x-ui.tab @click="preferencesTab = 'layout'" icon="fa-table-columns" x-bind:class="preferencesTab === 'layout' ? 'is-active' : ''">{{ __('Layout') }}</x-ui.tab>
+    </x-ui.tabs>
+
     <form wire:submit="save" class="boq-page-stack max-w-4xl">
+
+        <div x-show="preferencesTab === 'appearance'" x-cloak class="space-y-4">
 
         {{-- Theme mode --}}
         <x-ui.card :title="__('Theme')" icon="fa-circle-half-stroke" :subtitle="__('Light, dark, or match your device.')">
@@ -83,6 +91,9 @@
             @error('accent') <p class="boq-field-error" role="alert">{{ $message }}</p> @enderror
         </x-ui.card>
 
+        </div>
+
+        <div x-show="preferencesTab === 'layout'" x-cloak class="space-y-4">
         <div class="grid gap-4 lg:grid-cols-3">
             {{-- Density --}}
             <x-ui.card :title="__('Density')" icon="fa-compress" class="lg:col-span-1">
@@ -132,6 +143,7 @@
                 </div>
                 @error('font') <p class="boq-field-error" role="alert">{{ $message }}</p> @enderror
             </x-ui.card>
+        </div>
         </div>
 
         <div class="flex flex-wrap items-center justify-end gap-2">

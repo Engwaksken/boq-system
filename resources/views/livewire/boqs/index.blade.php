@@ -32,6 +32,13 @@
 
     <div class="boq-panel">
 
+        <x-ui.tabs :label="__('BOQ status tabs')" class="border-b border-slate-200">
+            <x-ui.tab wire:click="setStatusTab('all')" :active="$statusTab === 'all'" icon="fa-layer-group" :count="$stats['total_boqs']">{{ __('All BOQs') }}</x-ui.tab>
+            <x-ui.tab wire:click="setStatusTab('uploaded')" :active="$statusTab === 'uploaded'" icon="fa-cloud-arrow-up" :count="$stats['uploaded']">{{ __('Uploaded') }}</x-ui.tab>
+            <x-ui.tab wire:click="setStatusTab('under_review')" :active="$statusTab === 'under_review'" icon="fa-magnifying-glass-chart" :count="$stats['under_review']">{{ __('Under Review') }}</x-ui.tab>
+            <x-ui.tab wire:click="setStatusTab('approved')" :active="$statusTab === 'approved'" icon="fa-circle-check" :count="$stats['approved']">{{ __('Approved') }}</x-ui.tab>
+        </x-ui.tabs>
+
         <div class="boq-toolbar border-b border-slate-200">
             <x-ui.field :label="__('Search BOQs')" for="boq-search" class="boq-toolbar-grow">
                 <div class="boq-input-icon-wrap">

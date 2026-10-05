@@ -65,7 +65,7 @@ class ExpenseController extends Controller
     {
         $this->authorize('view', $expense);
 
-        return new ExpenseResource($expense->load('receipts'));
+        return new ExpenseResource($expense->load(['receipts', 'items']));
     }
 
     public function destroy(Expense $expense)
@@ -80,6 +80,6 @@ class ExpenseController extends Controller
     {
         app(ExpenseService::class)->update($request->user(), $expense, $request->validated());
 
-        return new ExpenseResource($expense->refresh()->load('receipts'));
+        return new ExpenseResource($expense->refresh()->load(['receipts', 'items']));
     }
 }

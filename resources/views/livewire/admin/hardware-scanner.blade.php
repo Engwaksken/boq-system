@@ -1,4 +1,4 @@
-<div class="boq-page-stack">
+<div class="boq-page-stack" x-data="{ scannerTab: 'scan' }">
     <x-ui.page-header
         :title="__('Price Scanner')"
         icon="fa-magnifying-glass-dollar"
@@ -12,6 +12,12 @@
 
     <x-ui.flash :keys="['modal_success', 'modal_error', 'message', 'status', 'error']" :types="['modal_success' => 'success', 'modal_error' => 'error']" />
 
+    <x-ui.tabs :label="__('Price scanner sections')">
+        <x-ui.tab @click="scannerTab = 'scan'" icon="fa-robot" x-bind:class="scannerTab === 'scan' ? 'is-active' : ''">{{ __('AI Price Scanner') }}</x-ui.tab>
+        <x-ui.tab @click="scannerTab = 'schedule'" icon="fa-clock" x-bind:class="scannerTab === 'schedule' ? 'is-active' : ''">{{ __('Automatic Price Scanner') }}</x-ui.tab>
+        <x-ui.tab @click="scannerTab = 'categories'" icon="fa-folder-tree" x-bind:class="scannerTab === 'categories' ? 'is-active' : ''">{{ __('Price Categories') }}</x-ui.tab>
+    </x-ui.tabs>
+
     <div class="boq-stats-grid">
         <x-stat-card :label="__('Categories')" :value="\App\Support\Format::number($stats['categories'] ?? 0, 0)" icon="fa-folder-tree" color="green" />
         <x-stat-card :label="__('Hardware Prices')" :value="\App\Support\Format::number($stats['hardware_prices'] ?? 0, 0)" icon="fa-store" color="blue" :href="route('hardware-prices.index', ['priceType' => 'hardware'])" />
@@ -19,6 +25,7 @@
         <x-stat-card :label="__('Active Prices')" :value="\App\Support\Format::number($stats['active_prices'] ?? 0, 0)" icon="fa-circle-check" color="amber" :href="route('hardware-prices.index')" />
     </div>
 
+    <div x-show="scannerTab === 'schedule'" x-cloak>
     <x-ui.card
         :title="__('Automatic Price Scanner')"
         icon="fa-clock-rotate-left"
@@ -84,6 +91,8 @@
             </div>
         </form>
     </x-ui.card>
+    </div>
+    <div x-show="scannerTab === 'scan'" x-cloak>
     <x-ui.card :title="__('AI Price Scanner')" icon="fa-robot" :subtitle="__('Select whether the AI should research hardware supplier prices or direct factory/manufacturer prices.')">
         <form wire:submit.prevent="scanPrices">
             <div class="mb-4">
@@ -212,7 +221,9 @@
             </div>
         @endif
     </x-ui.card>
+    </div>
 
+    <div x-show="scannerTab === 'categories'" x-cloak>
     <x-ui.card :title="__('Price Categories')" icon="fa-folder-tree" :subtitle="__('Categories are shared by Hardware Prices and Factory Prices.')" :padded="false">
         <x-slot:actions>
             <x-ui.button size="sm" icon="fa-plus" wire:click="createCategory">{{ __('Add Category') }}</x-ui.button>
@@ -256,6 +267,7 @@
             </tbody>
         </x-ui.table>
     </x-ui.card>
+    </div>
 
     @if($showCategoryModal)
         <x-ui.modal

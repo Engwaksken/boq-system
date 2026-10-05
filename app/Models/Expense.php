@@ -74,4 +74,9 @@ class Expense extends Model
         return $this->hasMany(ExpenseReceipt::class);
     }
 
+    public function items(): HasMany
+    {
+        return $this->hasMany(ExpenseItem::class);
+    }
+
 }

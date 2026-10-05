@@ -39,7 +39,7 @@
             :href="route('boqs.index')"
         />
         <x-stat-card
-            :label="__('Hardware Prices')"
+            :label="__('Hardware & Factory Prices')"
             :value="\App\Support\Format::number($hardwarePricesCount ?? 0, 0)"
             icon="fa-tags"
             color="amber"

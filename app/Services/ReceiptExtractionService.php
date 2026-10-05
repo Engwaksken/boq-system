@@ -65,8 +65,8 @@ class ReceiptExtractionService
 
         if ($candidates === []) {
             throw ValidationException::withMessages(['file' => $mime === 'application/pdf'
-                ? 'Reading PDF receipts needs a vision-capable AI provider. Add and enable one under Admin > AI API Settings.'
-                : 'Reading receipt photos needs a vision-capable AI provider. Add and enable one under Admin > AI API Settings.']);
+                ? 'This PDF receipt could not be read automatically. Enter the details manually or upload a clear receipt photo.'
+                : 'This receipt photo could not be read automatically. Enter the details manually or try a clearer image.']);
         }
 
         $fields = null;

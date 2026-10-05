@@ -25,6 +25,7 @@ class ExpenseResource extends JsonResource
             'payment_method' => $this->payment_method,
             'is_planned' => $this->is_planned,
             'explanation' => $this->explanation,
+            'items' => ExpenseItemResource::collection($this->whenLoaded('items')),
             'receipts' => ExpenseReceiptResource::collection($this->whenLoaded('receipts')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
