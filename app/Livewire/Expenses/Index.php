@@ -146,12 +146,33 @@ class Index extends Component
         session()->flash('status', __('Expense saved successfully.'));
     }
 
-    /** Read expense fields from an uploaded receipt and pre-fill the form for review. */
-    public function extractFromReceipt(ReceiptExtractionService $service): void
+    /**
+     * Extract runs automatically once the file upload finishes, so the async upload
+     * and the "Extract" button can never race. The button simply re-runs it.
+     */
+    public function updatedExtractFile(): void
     {
-        $this->validate(['extractFile' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240']]);
+        if ($this->extractFile) {
+            $this->runExtraction();
+        }
+    }
+
+    /** Read expense fields from an uploaded receipt and pre-fill the form for review. */
+    public function extractFromReceipt(): void
+    {
+        $this->runExtraction();
+    }
+
+    private function runExtraction(): void
+    {
+        if (! $this->extractFile) {
+            $this->addError('extractFile', __('Choose a receipt file first.'));
+
+            return;
+        }
+
         try {
-            $fields = $service->extract($this->extractFile, auth()->user()->organisation_id);
+            $fields = app(ReceiptExtractionService::class)->extract($this->extractFile, auth()->user()->organisation_id);
         } catch (ValidationException $exception) {
             $this->addError('extractFile', $exception->errors()['file'][0] ?? __('The receipt could not be read.'));
 
