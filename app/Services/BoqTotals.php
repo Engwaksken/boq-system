@@ -58,9 +58,11 @@ class BoqTotals
      * @param  array<int, int>  $projectIds
      * @return array<int, array{boqs: int, items: int, estimated_items: int, priced_items: int, estimated_amount: float, generated_total: float, difference: float}>
      */
-    public function forProjects(array $projectIds): array
+    public function forProjects(array $projectIds, ?array $visibleBoqIds = null): array
     {
-        $boqs = Boq::query()->whereIn('project_id', $projectIds)->get(['id', 'project_id']);
+        $boqs = Boq::query()->whereIn('project_id', $projectIds)
+            ->when($visibleBoqIds !== null, fn ($query) => $query->whereIn('id', $visibleBoqIds))
+            ->get(['id', 'project_id']);
         $perBoq = $this->forBoqs($boqs->pluck('id')->all());
 
         $totals = [];

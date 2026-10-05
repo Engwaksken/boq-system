@@ -37,6 +37,7 @@ class ProxySubscriptionResource extends JsonResource
                 'code' => $subscription->plan->code,
                 'type' => $subscription->plan->type,
                 'duration_days' => $subscription->plan->duration_days,
+                'duration_hours' => $subscription->plan->duration_hours,
                 'price' => $subscription->plan->price,
                 'currency' => $subscription->plan->currency,
                 'has_trial' => $subscription->plan->has_trial,

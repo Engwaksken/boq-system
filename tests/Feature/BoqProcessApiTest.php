@@ -134,7 +134,7 @@ class BoqProcessApiTest extends TestCase
     {
         $organisation = Organisation::factory()->create();
         $user = User::factory()->create(['organisation_id' => $organisation->id]);
-        $project = Project::factory()->create([
+        $project = Project::factory()->assignedTo($user)->create([
             'organisation_id' => $organisation->id,
             'user_id' => $user->id,
         ]);

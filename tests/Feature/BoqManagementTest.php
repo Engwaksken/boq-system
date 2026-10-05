@@ -37,7 +37,7 @@ class BoqManagementTest extends TestCase
 
     private function boqFor(User $user, string $name = 'Original'): Boq
     {
-        $project = Project::factory()->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
+        $project = Project::factory()->assignedTo($user)->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
 
         return Boq::factory()->create(['project_id' => $project->id, 'organisation_id' => $user->organisation_id, 'name' => $name]);
     }
@@ -52,7 +52,7 @@ class BoqManagementTest extends TestCase
     {
         $user = $this->customer();
         $boq = $this->boqFor($user);
-        $other = Project::factory()->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id, 'name' => 'Second']);
+        $other = Project::factory()->assignedTo($user)->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id, 'name' => 'Second']);
 
         Livewire::actingAs($user)
             ->test(BoqsIndex::class)

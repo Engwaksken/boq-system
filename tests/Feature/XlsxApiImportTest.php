@@ -33,7 +33,7 @@ class XlsxApiImportTest extends TestCase
                 'expires_at' => now()->addMonth(),
             ]);
         }
-        $project = Project::factory()->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
+        $project = Project::factory()->assignedTo($user)->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
 
         $xlsx = tempnam(sys_get_temp_dir(), 'x').'.xlsx';
         $writer = new \OpenSpout\Writer\XLSX\Writer();
@@ -68,7 +68,7 @@ class XlsxApiImportTest extends TestCase
     {
         Storage::fake(config('filesystems.default'));
         $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
+        $project = Project::factory()->assignedTo($user)->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
 
         $xlsx = tempnam(sys_get_temp_dir(), 'x').'.xlsx';
         $writer = new \OpenSpout\Writer\XLSX\Writer();
@@ -135,7 +135,7 @@ class XlsxApiImportTest extends TestCase
                 'expires_at' => now()->addMonth(),
             ]);
         }
-        $project = Project::factory()->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
+        $project = Project::factory()->assignedTo($user)->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
 
         $upload = $this->actingAs($user, 'sanctum')->post('/api/v1/boqs', [
             'project_id' => $project->id,

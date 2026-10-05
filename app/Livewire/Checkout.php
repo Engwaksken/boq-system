@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\PaymentGateway;
+use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Topup;
 use App\Models\Transaction;
@@ -165,7 +166,7 @@ class Checkout extends Component
                 'name' => $product->plan?->name ?? 'Subscription',
                 'amount' => (float) ($product->plan?->price ?? 0),
                 'currency' => (string) ($product->plan?->currency ?? ''),
-                'detail' => $product->plan?->duration_days ? $product->plan->duration_days.' days' : ucfirst((string) $product->plan?->type),
+                'detail' => $this->planDurationDetail($product->plan),
             ];
         }
 
@@ -175,6 +176,19 @@ class Checkout extends Component
             'currency' => (string) $product->currency,
             'detail' => str_replace('_', ' ', (string) $product->type),
         ];
+    }
+
+    private function planDurationDetail(?Plan $plan): string
+    {
+        if ($plan?->duration_hours) {
+            return $plan->duration_hours.' hours';
+        }
+
+        if ($plan?->duration_days) {
+            return $plan->duration_days.' days';
+        }
+
+        return ucfirst((string) $plan?->type);
     }
 
     /** @return \Illuminate\Support\Collection<int, PaymentGateway> */

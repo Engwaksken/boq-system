@@ -41,7 +41,7 @@ class BoqTotalsAndEstimatesTest extends TestCase
             'expires_at' => now()->addMonth(),
         ]);
 
-        $this->project = Project::factory()->create([
+        $this->project = Project::factory()->assignedTo($this->user)->create([
             'user_id' => $this->user->id,
             'organisation_id' => $this->user->organisation_id,
         ]);

@@ -143,7 +143,7 @@ class BoqUploadNormalizerTest extends TestCase
     public function test_api_upload_accepts_a_csv_the_server_guesses_as_text(): void
     {
         $user = $this->customer();
-        $project = Project::factory()->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
+        $project = Project::factory()->assignedTo($user)->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
 
         $response = $this->actingAs($user, 'sanctum')->post('/api/v1/boqs', [
             'project_id' => $project->id,
@@ -160,7 +160,7 @@ class BoqUploadNormalizerTest extends TestCase
     public function test_api_upload_rejects_unsupported_extensions(): void
     {
         $user = $this->customer();
-        $project = Project::factory()->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
+        $project = Project::factory()->assignedTo($user)->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
 
         $this->actingAs($user, 'sanctum')->post('/api/v1/boqs', [
             'project_id' => $project->id,

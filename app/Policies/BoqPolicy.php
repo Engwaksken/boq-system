@@ -79,11 +79,6 @@ class BoqPolicy
 
     private function canAccessProject(User $user, Project $project): bool
     {
-        if ($user->organisation_id !== null) {
-            return $project->organisation_id === $user->organisation_id;
-        }
-
-        return $project->organisation_id === null
-            && $project->user_id === $user->id;
+        return $project->isAccessibleTo($user);
     }
 }

@@ -32,7 +32,7 @@ class BulkReviewAndLocationPricesTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
         $this->user = User::factory()->create();
         // Admin role: edit and approve BOQs.
-        $this->user->roles()->attach(Role::where('slug', 'administrator')->value('id'));
+        $this->user->roles()->attach(Role::where('slug', 'administrator')->value('id'), ['organisation_id' => $this->user->organisation_id]);
         foreach (['boq.management', 'boq.import.excel'] as $code) {
             Entitlement::factory()->create([
                 'user_id' => $this->user->id, 'organisation_id' => $this->user->organisation_id,

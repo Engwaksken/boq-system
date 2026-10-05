@@ -39,6 +39,7 @@ class PlansManager extends Component
 
     public array $form = [
         'name' => '', 'code' => '', 'description' => '', 'type' => 'monthly', 'duration_days' => 30,
+        'duration_hours' => null,
         'price' => 0, 'currency' => '', 'is_active' => true, 'is_archived' => false,
         'has_trial' => false, 'trial_days' => 7, 'max_users' => 1, 'max_projects' => 5,
         'max_boqs' => 20, 'max_storage_bytes' => 104857600, 'max_ai_credits' => 100,
@@ -84,6 +85,7 @@ class PlansManager extends Component
             'form.description' => ['nullable','string'],
             'form.type' => ['required','in:monthly,three_month,six_month,annual,one_time,lifetime'],
             'form.duration_days' => ['nullable','integer','min:0'],
+            'form.duration_hours' => ['nullable','integer','min:0'],
             'form.price' => ['required','numeric','min:0'],
             'form.currency' => ['required','string','size:3'],
             'form.is_active' => ['boolean'], 'form.is_archived' => ['boolean'], 'form.has_trial' => ['boolean'],
@@ -168,7 +170,7 @@ class PlansManager extends Component
     }
 
     public function cancel(): void { $this->showForm = false; $this->resetForm(); $this->resetValidation(); }
-    private function resetForm(): void { $this->editingId = null; $this->reset('form', 'featureIds'); $this->form['currency'] = \App\Support\Regional::currency(); $this->form['type']='monthly'; $this->form['duration_days']=30; $this->form['trial_days']=7; $this->form['is_active']=true; }
+    private function resetForm(): void { $this->editingId = null; $this->reset('form', 'featureIds'); $this->form['currency'] = \App\Support\Regional::currency(); $this->form['type']='monthly'; $this->form['duration_days']=30; $this->form['duration_hours']=null; $this->form['trial_days']=7; $this->form['is_active']=true; }
     public function updatedSearch(): void { $this->resetPage(); }
 
     public function render()

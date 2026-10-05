@@ -7,9 +7,12 @@ use App\Http\Controllers\Api\BoqPricingJobController;
 use App\Http\Controllers\Api\BoqSignatureController;
 use App\Http\Controllers\Api\BoqSignedDocumentController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ExpenseController;
+use App\Http\Controllers\Api\ExpenseReceiptController;
 use App\Http\Controllers\Api\FaqController;
 use App\Http\Controllers\Api\HardwareCategoryController;
 use App\Http\Controllers\Api\HardwarePriceController;
+use App\Http\Controllers\Api\InvitationController;
 use App\Http\Controllers\Api\Mcp\McpToolController;
 use App\Http\Controllers\Api\MobileConfigController;
 use App\Http\Controllers\Api\NotificationController;
@@ -58,7 +61,7 @@ Route::prefix('v1')->group(function () {
         Route::post('mcp/tools/{tool}', McpToolController::class)->middleware('throttle:60,1');
 
         // Auth
-        Route::post('auth/logout', [AuthController::class, 'logout']);
+        Route::post('auth/logout', [AuthController::class, 'logout'])->name('api.v1.auth.logout');
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::get('company-profile', [\App\Http\Controllers\Api\CompanyProfileController::class, 'show']);
         Route::post('company-profile', [\App\Http\Controllers\Api\CompanyProfileController::class, 'update'])->middleware('throttle:20,1');
@@ -66,12 +69,46 @@ Route::prefix('v1')->group(function () {
         Route::post('auth/avatar', [AuthController::class, 'updateAvatar'])->middleware('throttle:20,1');
         Route::delete('auth/avatar', [AuthController::class, 'deleteAvatar']);
 
+        // Invitation acceptance is available to authenticated, unverified invitees.
+        Route::post('invitations/accept', [InvitationController::class, 'accept'])
+            ->middleware('throttle:10,1')
+            ->name('api.v1.invitations.accept');
+
+        // Organisation business routes require a verified account.
+        Route::middleware('verified')->group(function () {
+            Route::prefix('invitations')->name('api.v1.invitations.')->group(function () {
+                Route::get('/roles', [InvitationController::class, 'roles'])->middleware('throttle:60,1')->name('roles');
+                Route::get('/', [InvitationController::class, 'index'])->name('index');
+                Route::post('/', [InvitationController::class, 'store'])->middleware('throttle:10,1')->name('store');
+                Route::get('/{invitation}', [InvitationController::class, 'show'])->name('show');
+                Route::put('/{invitation}', [InvitationController::class, 'update'])->middleware('throttle:10,1')->name('update');
+                Route::delete('/{invitation}', [InvitationController::class, 'destroy'])->middleware('throttle:10,1')->name('destroy');
+            });
+
+            Route::prefix('expenses')->name('api.v1.expenses.')->group(function () {
+                Route::get('/projects', [ExpenseController::class, 'projects'])->middleware('throttle:60,1')->name('projects');
+                Route::get('/', [ExpenseController::class, 'index'])->name('index');
+                Route::post('/', [ExpenseController::class, 'store'])->middleware('throttle:10,1')->name('store');
+                Route::get('/{expense}', [ExpenseController::class, 'show'])->name('show');
+                Route::put('/{expense}', [ExpenseController::class, 'update'])->middleware('throttle:10,1')->name('update');
+                Route::post('/{expense}/receipts', [ExpenseReceiptController::class, 'store'])
+                    ->middleware('throttle:10,1')
+                    ->name('receipts.store');
+            });
+
+            Route::get('expense-receipts/{receipt}/download', [ExpenseReceiptController::class, 'download'])
+                ->middleware('throttle:30,1')
+                ->name('api.v1.expense-receipts.download');
+        });
+
         // Notifications
         Route::get('notifications', [NotificationController::class, 'index']);
         Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
 
         // Dashboard
-        Route::get('dashboard', [DashboardController::class, 'index']);
+        Route::get('dashboard', [DashboardController::class, 'index'])
+            ->middleware('verified')
+            ->name('api.v1.dashboard');
 
         // FAQ administration (also authorized by FaqPolicy in the controller).
         Route::middleware('role:super-admin')->prefix('admin/faqs')->name('api.v1.admin.faqs.')->group(function () {

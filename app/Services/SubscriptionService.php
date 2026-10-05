@@ -27,8 +27,7 @@ class SubscriptionService
             $subscription->end_date = null;
             $subscription->access_type = 'lifetime';
         } else {
-            $durationDays = $plan->duration_days ?? $this->defaultDurationForType($plan->type);
-            $subscription->end_date = $subscription->start_date->copy()->addDays($durationDays);
+            $subscription->end_date = $this->endDateFor($subscription->start_date, $plan);
             $subscription->renewal_date = $subscription->end_date->copy();
             $subscription->access_type = $plan->type;
         }
@@ -132,6 +131,20 @@ class SubscriptionService
             ->whereIn('status', ['active', 'trial', 'grace_period'])
             ->latest()
             ->first();
+    }
+
+    /**
+     * Resolve a plan's end date, preferring an explicit hour duration over days.
+     */
+    protected function endDateFor(Carbon $startDate, Plan $plan): Carbon
+    {
+        if ($plan->duration_hours !== null) {
+            return $startDate->copy()->addHours($plan->duration_hours);
+        }
+
+        $durationDays = $plan->duration_days ?? $this->defaultDurationForType($plan->type);
+
+        return $startDate->copy()->addDays($durationDays);
     }
 
     /**

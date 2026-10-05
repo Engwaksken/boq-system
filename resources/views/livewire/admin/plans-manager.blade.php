@@ -54,7 +54,15 @@
                             <div class="boq-table-subtitle"><span class="boq-code">{{ $plan->code }}</span> · {{ __(\Illuminate\Support\Str::headline((string) $plan->type)) }}</div>
                         </td>
                         <td class="is-numeric font-semibold text-slate-900"><x-money :amount="$plan->price" :currency="$plan->currency" /></td>
-                        <td class="whitespace-nowrap">{{ $plan->duration_days ? trans_choice(':count day|:count days', (int) $plan->duration_days, ['count' => $plan->duration_days]) : '—' }}</td>
+                        <td class="whitespace-nowrap">
+                            @if($plan->duration_hours)
+                                {{ trans_choice(':count hour|:count hours', (int) $plan->duration_hours, ['count' => $plan->duration_hours]) }}
+                            @elseif($plan->duration_days)
+                                {{ trans_choice(':count day|:count days', (int) $plan->duration_days, ['count' => $plan->duration_days]) }}
+                            @else
+                                —
+                            @endif
+                        </td>
                         <td>
                             <div class="flex flex-wrap gap-1">
                                 <x-ui.badge icon="fa-folder-open">{{ $plan->max_projects ?? '∞' }}</x-ui.badge>
@@ -142,7 +150,7 @@
                     <x-currency-select id="plan-currency" wire:model="form.currency" :current="$form['currency'] ?? null" />
                 </x-ui.field>
 
-                @foreach(['price' => __('Price'), 'duration_days' => __('Duration Days'), 'max_users' => __('Max Users'), 'max_projects' => __('Max Projects'), 'max_boqs' => __('Max BOQs'), 'max_ai_credits' => __('AI Credits'), 'max_ocr_pages' => __('OCR Pages'), 'max_translations' => __('Translations'), 'grace_period_days' => __('Grace Days'), 'display_order' => __('Display Order')] as $field => $label)
+                @foreach(['price' => __('Price'), 'duration_days' => __('Duration Days'), 'duration_hours' => __('Duration Hours'), 'max_users' => __('Max Users'), 'max_projects' => __('Max Projects'), 'max_boqs' => __('Max BOQs'), 'max_ai_credits' => __('AI Credits'), 'max_ocr_pages' => __('OCR Pages'), 'max_translations' => __('Translations'), 'grace_period_days' => __('Grace Days'), 'display_order' => __('Display Order')] as $field => $label)
                     <x-ui.field :label="$label" for="plan-{{ $field }}" :error="'form.'.$field">
                         <input id="plan-{{ $field }}" wire:model="form.{{ $field }}" type="number" @if($field === 'price') step="0.01" @endif min="0" class="boq-field @error('form.'.$field) has-error @enderror" placeholder="{{ in_array($field, ['max_users', 'max_projects', 'max_boqs', 'max_ai_credits', 'max_ocr_pages', 'max_translations'], true) ? __('Blank = unlimited') : '' }}">
                     </x-ui.field>

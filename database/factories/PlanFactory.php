@@ -23,12 +23,14 @@ class PlanFactory extends Factory
             'description' => fake()->sentence(),
             'type' => 'monthly',
             'duration_days' => 30,
+            'duration_hours' => null,
             'price' => 50000,
             'currency' => 'UGX',
             'is_active' => true,
             'is_archived' => false,
             'has_trial' => false,
             'trial_days' => 0,
+            'max_users' => 5,
             'max_projects' => 10,
             'max_boqs' => 20,
             'max_ai_credits' => 200,
@@ -39,5 +41,16 @@ class PlanFactory extends Factory
             'grace_period_days' => 7,
             'display_order' => 1,
         ];
+    }
+
+    /**
+     * Define an hour-based duration without the default day duration.
+     */
+    public function hours(int $hours = 24): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'duration_days' => null,
+            'duration_hours' => $hours,
+        ]);
     }
 }

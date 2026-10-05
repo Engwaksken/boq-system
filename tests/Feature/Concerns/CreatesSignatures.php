@@ -34,7 +34,7 @@ trait CreatesSignatures
 
     protected function boqFor(User $user, array $attributes = []): Boq
     {
-        $project = Project::factory()->create([
+        $project = Project::factory()->assignedTo($user)->create([
             'user_id' => $user->id,
             'organisation_id' => $user->organisation_id,
             'name' => 'Kampala Clinic',

@@ -358,6 +358,10 @@ class BoqSignaturesTest extends TestCase
         $boq = $this->boqFor($owner);
         $link = app(BoqSignatureService::class)->createRequest($boq, $owner);
 
+        $boq->project->assignments()->create([
+            'user_id' => $colleague->id, 'role' => 'project-manager', 'assigned_by' => $owner->id,
+        ]);
+
         Livewire::actingAs($colleague)
             ->test(Signatures::class, ['boq' => $boq])
             ->call('openCapture', 'client')
@@ -496,6 +500,9 @@ class BoqSignaturesTest extends TestCase
 
         $viewer = User::factory()->create(['organisation_id' => $owner->organisation_id]);
         $viewer->roles()->attach(\App\Models\Role::where('slug', 'site-engineer')->value('id'));
+        $boq->project->assignments()->create([
+            'user_id' => $viewer->id, 'role' => 'site-engineer', 'assigned_by' => $owner->id,
+        ]);
         $this->assertTrue($viewer->can('view', $boq));
         $this->assertFalse($viewer->can('update', $boq));
 

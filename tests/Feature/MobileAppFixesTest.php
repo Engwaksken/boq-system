@@ -22,7 +22,7 @@ class MobileAppFixesTest extends TestCase
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
         $user = User::factory()->create();
         $user->roles()->attach(Role::where('slug', 'user')->value('id'));
-        $make = fn (string $name, string $status) => Project::factory()->create([
+        $make = fn (string $name, string $status) => Project::factory()->assignedTo($user)->create([
             'user_id' => $user->id,
             'organisation_id' => $user->organisation_id,
             'name' => $name,
@@ -163,8 +163,8 @@ class MobileAppFixesTest extends TestCase
             'status' => 'active',
             'expires_at' => now()->addMonth(),
         ]);
-        $first = Project::factory()->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
-        $second = Project::factory()->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
+        $first = Project::factory()->assignedTo($user)->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
+        $second = Project::factory()->assignedTo($user)->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
         $foreign = Project::factory()->create();
         $boq = Boq::factory()->create(['project_id' => $first->id, 'organisation_id' => $user->organisation_id, 'name' => 'Old']);
 

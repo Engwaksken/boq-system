@@ -79,7 +79,7 @@ class Create extends Component
 
         $user = auth()->user();
 
-        $project = Project::create([
+        $project = Project::createForUser($user, [
             'name' => $validated['name'],
             'code' => $validated['code'],
             'client' => $validated['client'],

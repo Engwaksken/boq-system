@@ -44,6 +44,50 @@ class SubscriptionEntitlementTest extends TestCase
         $this->assertEquals('monthly', $activated->access_type);
     }
 
+    public function test_activate_hourly_subscription_sets_hour_based_dates(): void
+    {
+        $user = User::factory()->create();
+        $plan = Plan::factory()->hours(48)->create([
+            'type' => 'monthly',
+            'grace_period_days' => 0,
+        ]);
+        $subscription = Subscription::factory()->create([
+            'plan_id' => $plan->id,
+        ]);
+        $subscription->forceFill([
+            'user_id' => $user->id,
+            'status' => 'pending',
+        ])->save();
+
+        $activated = app(SubscriptionService::class)->activate($subscription);
+
+        $this->assertNotNull($activated->end_date);
+        $this->assertEquals(48, $activated->start_date->diffInHours($activated->end_date));
+        $this->assertEquals($activated->end_date->timestamp, $activated->renewal_date->timestamp);
+    }
+
+    public function test_activate_prefers_duration_hours_over_days(): void
+    {
+        $user = User::factory()->create();
+        $plan = Plan::factory()->create([
+            'type' => 'monthly',
+            'duration_days' => 30,
+            'duration_hours' => 12,
+            'grace_period_days' => 0,
+        ]);
+        $subscription = Subscription::factory()->create([
+            'plan_id' => $plan->id,
+        ]);
+        $subscription->forceFill([
+            'user_id' => $user->id,
+            'status' => 'pending',
+        ])->save();
+
+        $activated = app(SubscriptionService::class)->activate($subscription);
+
+        $this->assertEquals(12, $activated->start_date->diffInHours($activated->end_date));
+    }
+
     public function test_activate_lifetime_subscription_has_no_end_date(): void
     {
         $user = User::factory()->create();

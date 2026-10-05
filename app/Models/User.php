@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,7 +14,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Laragear\WebAuthn\Contracts\WebAuthnAuthenticatable;
 use Laragear\WebAuthn\WebAuthnAuthentication;
 
-class User extends Authenticatable implements WebAuthnAuthenticatable
+class User extends Authenticatable implements MustVerifyEmail, WebAuthnAuthenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, WebAuthnAuthentication;
@@ -249,6 +249,43 @@ class User extends Authenticatable implements WebAuthnAuthenticatable
     public function projects(): HasMany
     {
         return $this->hasMany(Project::class);
+    }
+
+    /** Project assignments held by this user. */
+    public function projectAssignments(): HasMany
+    {
+        return $this->hasMany(ProjectAssignment::class);
+    }
+
+    /** Project assignments created by this user. */
+    public function assignedProjectAssignments(): HasMany
+    {
+        return $this->hasMany(ProjectAssignment::class, 'assigned_by');
+    }
+
+    public function createdExpenses(): HasMany
+    {
+        return $this->hasMany(Expense::class, 'creator_user_id');
+    }
+
+    public function purchasedExpenses(): HasMany
+    {
+        return $this->hasMany(Expense::class, 'purchaser_user_id');
+    }
+
+    public function sentInvitations(): HasMany
+    {
+        return $this->hasMany(Invitation::class, 'inviter_user_id');
+    }
+
+    public function revokedInvitations(): HasMany
+    {
+        return $this->hasMany(Invitation::class, 'revoked_by_user_id');
+    }
+
+    public function uploadedExpenseReceipts(): HasMany
+    {
+        return $this->hasMany(ExpenseReceipt::class, 'uploaded_by_user_id');
     }
 
     /**

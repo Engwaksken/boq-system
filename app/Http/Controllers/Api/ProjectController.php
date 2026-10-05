@@ -15,25 +15,26 @@ class ProjectController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
+        $canViewBoqs = $user->hasPermission('boq.view');
 
         $projects = Project::query()
-            ->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-
-                if ($user->organisation_id !== null) {
-                    $q->orWhere('organisation_id', $user->organisation_id);
-                }
-            })
+            ->accessibleTo($user)
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')->toString()))
             ->when($request->filled('boq_status'), fn ($q) => $q->whereHas(
                 'boqs',
-                fn ($boqs) => $boqs->where('status', $request->string('boq_status')->toString()),
+                fn ($boqs) => $boqs->where('status', $request->string('boq_status')->toString())
+                    ->where('organisation_id', $user->organisation_id)
+                    ->when(! $canViewBoqs, fn ($q) => $q->whereRaw('1 = 0')),
             ))
-            ->withCount('boqs')
+            ->withCount(['boqs' => fn ($boqs) => $boqs->where('organisation_id', $user->organisation_id)
+                ->when(! $canViewBoqs, fn ($q) => $q->whereRaw('1 = 0'))])
             ->latest()
             ->paginate(min(max((int) $request->integer('per_page', 15), 1), 100));
 
-        $totals = app(\App\Services\BoqTotals::class)->forProjects($projects->getCollection()->pluck('id')->all());
+        $projectIds = $projects->getCollection()->pluck('id')->all();
+        $visibleBoqIds = $canViewBoqs ? \App\Models\Boq::whereIn('project_id', $projectIds)
+            ->where('organisation_id', $user->organisation_id)->pluck('id')->all() : [];
+        $totals = app(\App\Services\BoqTotals::class)->forProjects($projectIds, $visibleBoqIds);
         $projects->getCollection()->each(fn (Project $project) => $project->setAttribute('totals', $totals[$project->id]));
 
         return response()->json([
@@ -73,11 +74,7 @@ class ProjectController extends Controller
             'status' => ['sometimes', 'string', 'in:draft,active,completed,archived'],
         ]);
 
-        $project = Project::create(array_merge($validated, [
-            'user_id' => $user->id,
-            'organisation_id' => $user->organisation_id,
-            'status' => 'draft',
-        ]));
+        $project = Project::createForUser($user, array_merge($validated, ['status' => 'draft']));
 
         return response()->json([
             'success' => true,
@@ -93,11 +90,14 @@ class ProjectController extends Controller
     {
         $this->authorizeProjectAccess($request, $project);
 
-        $project->load('boqs');
+        $project->load(['boqs' => fn ($boqs) => $boqs->where('organisation_id', $project->organisation_id)]);
+        if (! $request->user()->hasPermission('boq.view')) {
+            $project->setRelation('boqs', collect());
+        }
         $service = app(\App\Services\BoqTotals::class);
         $boqTotals = $service->forBoqs($project->boqs->pluck('id')->all());
         $project->boqs->each(fn ($boq) => $boq->setAttribute('totals', $boqTotals[$boq->id]));
-        $project->setAttribute('totals', $service->forProjects([$project->id])[$project->id]);
+        $project->setAttribute('totals', $service->forProjects([$project->id], $project->boqs->pluck('id')->all())[$project->id]);
 
         return response()->json([
             'success' => true,
@@ -161,17 +161,13 @@ class ProjectController extends Controller
     }
 
     /**
-     * Ensure the authenticated user owns the project or belongs to its organisation.
+     * Use the same tenant and active-assignment boundary as BOQ authorization.
      */
     private function authorizeProjectAccess(Request $request, Project $project): void
     {
         $user = $request->user();
 
-        $personalAccess = $project->user_id === $user->id;
-        $organisationAccess = $user->organisation_id !== null
-            && $project->organisation_id === $user->organisation_id;
-
-        if (! $personalAccess && ! $organisationAccess) {
+        if (! $project->isAccessibleTo($user)) {
             abort(response()->json([
                 'success' => false,
                 'error_code' => 'FORBIDDEN',

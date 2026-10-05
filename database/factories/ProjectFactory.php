@@ -12,6 +12,17 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class ProjectFactory extends Factory
 {
+    public function assignedTo(User $user): static
+    {
+        return $this->afterCreating(function (Project $project) use ($user) {
+            $project->assignments()->create([
+                'user_id' => $user->id,
+                'role' => 'project-manager',
+                'assigned_by' => $user->id,
+            ]);
+        });
+    }
+
     /**
      * Define the model's default state.
      *

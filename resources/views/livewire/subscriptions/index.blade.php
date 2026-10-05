@@ -290,6 +290,8 @@
                                 <i class="fas fa-clock" aria-hidden="true"></i>
                                 @if($plan->type === 'lifetime')
                                     <span>{{ __('Lifetime access') }}</span>
+                                @elseif($plan->duration_hours)
+                                    <span>{{ trans_choice(':count hour|:count hours', (int) $plan->duration_hours, ['count' => \App\Support\Format::number($plan->duration_hours, 0)]) }}</span>
                                 @elseif($plan->duration_days)
                                     <span>{{ trans_choice(':count day|:count days', (int) $plan->duration_days, ['count' => \App\Support\Format::number($plan->duration_days, 0)]) }}</span>
                                 @else
