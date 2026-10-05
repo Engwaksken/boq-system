@@ -324,12 +324,12 @@ class BoqSpreadsheetImporter
         }
 
         return match (true) {
-            (bool) preg_match('/^(ITEM |WORK )?(DESCRIPTION|DESCRIPTIONS|DESC|PARTICULARS|WORK ITEM|WORKS|DETAILS|SPECIFICATION|SCOPE|NARRATION|ITEM DETAILS)\b/', $name) => 'description',
-            (bool) preg_match('/^(QUANTITY|QTY|QTYS|QUANTITIES|QNTY|QTTY|QUANT|QTE)\b/', $name) => 'quantity',
-            (bool) preg_match('/^(UNIT RATE|RATE|RATES|PRICE|UNIT PRICE|UNIT COST|COST PER UNIT)\b/', $name) => 'rate',
+            (bool) preg_match('/^(ITEM |WORK )?(DESCRIPTION|DESCRIPTIONS|DESC|PARTICULARS|WORK ITEM|WORK|WORKS|DETAILS|SPECIFICATION|SCOPE|NARRATION|ITEM DETAILS|ITEM DETAIL|ITEM NAME|MATERIAL|MATERIALS|GOODS|SERVICES|SUPPLY|SUPPLIES)\b/', $name) => 'description',
+            (bool) preg_match('/^(QUANTITY|QUANTITIES|QTY|QTYS|QNTY|QTTY|QUANT|QTE|QTY NO|QTY NOS|NUMBER OF UNITS|NUMBER OF|NUMBER|NUMBERS|NOS|NO OF)\b/', $name) => 'quantity',
+            (bool) preg_match('/^(UNIT RATE|RATE|RATES|PRICE|PRICES|UNIT PRICE|UNIT COST|COST PER UNIT|RATE PER UNIT|PRICE PER UNIT)\b/', $name) => 'rate',
             (bool) preg_match('/^(AMOUNT|AMT|TOTAL|TOTAL AMOUNT|COST|TOTAL COST|VALUE|EXTENSION|SUM)\b/', $name) => 'amount',
-            (bool) preg_match('/^(UNIT|UNITS|UOM|UNIT OF MEASURE|MEASURE)$/', $name) => 'unit',
-            (bool) preg_match('/^(ITEM|ITEMS|ITEM NO|ITEM NUMBER|ITEM CODE|NO|REF|REF NO|CODE|S N|SN|SR NO|SL NO)$/', $name) => 'item',
+            (bool) preg_match('/^(UNIT OF MEASUREMENT|UNIT OF MEASURE|UNIT|UNITS|UOM|MEASURE)\b/', $name) => 'unit',
+            (bool) preg_match('/^(ITEM|ITEMS|ITEM NO|ITEM NUMBER|ITEM CODE|NO|REF|REF NO|CODE|S NO|S N|SN|SR NO|SL NO|SERIAL|SERIAL NO|SL)\b/', $name) => 'item',
             default => null,
         };
     }
