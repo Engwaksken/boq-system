@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\AiProvider;
-use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
@@ -71,7 +70,6 @@ class ReceiptExtractionService
 
         $fields = null;
         $provider = null;
-        $lastError = null;
 
         foreach ($candidates as $candidate) {
             try {
@@ -85,12 +83,11 @@ class ReceiptExtractionService
                 throw $exception;
             } catch (Throwable $exception) {
                 report($exception);
-                $lastError = $exception;
             }
         }
 
         if ($fields === null) {
-            throw ValidationException::withMessages(['file' => 'The receipt could not be read by the configured AI provider.'.($lastError instanceof RequestException && in_array($lastError->response->status(), [401, 403], true) ? ' The API key was rejected.' : '')]);
+            throw ValidationException::withMessages(['file' => 'We couldn’t read this receipt automatically. Please enter the details manually or try uploading a clearer photo.']);
         }
 
         return $fields + ['provider' => $provider];

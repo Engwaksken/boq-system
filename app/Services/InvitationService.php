@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Mail\TeamInvitation;
 use App\Http\Requests\StoreInvitationRequest;
 use App\Models\Invitation;
 use App\Models\Organisation;
@@ -10,6 +11,7 @@ use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class InvitationService
@@ -34,6 +36,8 @@ class InvitationService
             'token_hash' => Invitation::hashCode($code),
             'expires_at' => now()->addHours(self::VALIDITY_HOURS),
         ]);
+
+        Mail::to($invitation->email)->send(new TeamInvitation($invitation, $code, $user));
 
         return [$invitation, $code];
     }
