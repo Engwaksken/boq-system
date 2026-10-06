@@ -149,8 +149,8 @@ Route::prefix('v1')->group(function () {
             Route::get('boqs/{boq}/pdf', [BoqController::class, 'pdf'])
                 ->middleware('throttle:10,1')
                 ->name('api.v1.boqs.pdf');
-            Route::post('boqs/{boq}/share/email', [BoqController::class, 'shareEmail'])->middleware('throttle:10,1');
-            Route::get('boqs/{boq}/share/link', [BoqController::class, 'shareLink'])->middleware('throttle:30,1');
+            Route::post('boqs/{boq}/share/email', [BoqController::class, 'shareEmail'])->middleware('throttle:10,1')->name('api.v1.boqs.share.email');
+            Route::get('boqs/{boq}/share/link', [BoqController::class, 'shareLink'])->middleware('throttle:30,1')->name('api.v1.boqs.share.link');
             Route::get('boq-items/{boqItem}', [BoqController::class, 'item'])
                 ->name('api.v1.boq-items.show');
             Route::get('boq-items/{boqItem}/price-history', [BoqController::class, 'priceHistory'])
@@ -165,13 +165,13 @@ Route::prefix('v1')->group(function () {
             });
         // AI pricing spends provider credit: paid feature, rate limited.
         Route::middleware(['permission:boq.edit', 'entitlement:boq.management'])->group(function () {
-            Route::post('boqs/{boq}/price-all', [BoqController::class, 'priceAll'])->middleware('throttle:5,1');
-            Route::post('boqs/{boq}/pricing-batches', [BoqController::class, 'startPricingBatch'])->middleware('throttle:5,1');
-            Route::post('boq-items/{boqItem}/price', [BoqController::class, 'price'])->middleware('throttle:30,1');
+            Route::post('boqs/{boq}/price-all', [BoqController::class, 'priceAll'])->middleware('throttle:5,1')->name('api.v1.boqs.price-all');
+            Route::post('boqs/{boq}/pricing-batches', [BoqController::class, 'startPricingBatch'])->middleware('throttle:5,1')->name('api.v1.boqs.pricing-batches.store');
+            Route::post('boq-items/{boqItem}/price', [BoqController::class, 'price'])->middleware('throttle:30,1')->name('api.v1.boq-items.price');
         });
-        Route::get('pricing-batches/{batch}', [BoqController::class, 'pricingBatch']);
-        Route::get('boqs/{boq}/pricing-history/{location}', [BoqController::class, 'pricingHistory']);
-        Route::get('boqs/{boq}/pricing-history', [BoqController::class, 'pricingHistory']);
+        Route::get('pricing-batches/{batch}', [BoqController::class, 'pricingBatch'])->name('api.v1.pricing-batches.show');
+        Route::get('boqs/{boq}/pricing-history/{location}', [BoqController::class, 'pricingHistory'])->name('api.v1.boqs.pricing-history.location');
+        Route::get('boqs/{boq}/pricing-history', [BoqController::class, 'pricingHistory'])->name('api.v1.boqs.pricing-history');
 
         // BOQ signatures and signed copies (authorised per BOQ with BoqPolicy view/update).
         Route::middleware('entitlement:boq.management')->group(function () {
@@ -263,7 +263,9 @@ Route::prefix('v1')->group(function () {
         });
 
         Route::middleware('permission:hardware-prices.manage')->group(function () {
-            Route::post('hardware-prices/fetch', [HardwarePriceController::class, 'fetchNow']);
+            Route::post('hardware-prices/fetch', [HardwarePriceController::class, 'fetchNow'])
+                ->middleware('throttle:5,1')
+                ->name('api.v1.hardware-prices.fetch');
         });
 
         // AI Providers

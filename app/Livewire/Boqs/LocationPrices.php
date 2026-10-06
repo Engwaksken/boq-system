@@ -48,7 +48,11 @@ class LocationPrices extends Component
             ['newLocation' => __('location')],
         )['newLocation']);
 
+        // Re-query the persisted BOQ rather than relying on the hydrated public
+        // model/relationship state. Uploaded rows are created after this
+        // component mounts, so a previously loaded relationship can be stale.
         $ids = $boq->items()
+            ->reorder()
             ->where(fn ($q) => $q->whereNull('status')->orWhere('status', '!=', 'approved'))
             ->orderBy('id')
             ->pluck('id')

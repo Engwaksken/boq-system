@@ -63,8 +63,6 @@ class BoqPricingJobController extends Controller
             Log::error('Failed to create pricing job', [
                 'boq_id' => $boq->id,
                 'user_id' => $user->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
@@ -95,7 +93,7 @@ class BoqPricingJobController extends Controller
         $this->authorize('start', $job);
 
         try {
-            return DB::transaction(function () use ($job) {
+            return DB::transaction(function () use ($job, $request) {
                 // Acquire lock
                 if (! $job->lock($request->user())) {
                     return response()->json([
@@ -118,8 +116,6 @@ class BoqPricingJobController extends Controller
         } catch (\Throwable $e) {
             Log::error('Failed to start pricing job', [
                 'job_id' => $job->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
@@ -138,7 +134,7 @@ class BoqPricingJobController extends Controller
         $this->authorize('update', $job);
 
         try {
-            return DB::transaction(function () use ($job) {
+            return DB::transaction(function () use ($job, $request) {
                 // Check if job can process next batch
                 if (! $job->canProcessNextBatch()) {
                     $message = match (true) {
@@ -186,8 +182,6 @@ class BoqPricingJobController extends Controller
         } catch (\Throwable $e) {
             Log::error('Failed to process next batch', [
                 'job_id' => $job->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
@@ -206,7 +200,7 @@ class BoqPricingJobController extends Controller
         $this->authorize('pause', $job);
 
         try {
-            return DB::transaction(function () use ($job) {
+            return DB::transaction(function () use ($job, $request) {
                 $job->update(['status' => 'paused']);
                 $job->unlock();
 
@@ -217,8 +211,6 @@ class BoqPricingJobController extends Controller
         } catch (\Throwable $e) {
             Log::error('Failed to pause pricing job', [
                 'job_id' => $job->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
@@ -237,7 +229,7 @@ class BoqPricingJobController extends Controller
         $this->authorize('resume', $job);
 
         try {
-            return DB::transaction(function () use ($job) {
+            return DB::transaction(function () use ($job, $request) {
                 // Acquire lock
                 if (! $job->lock($request->user())) {
                     return response()->json([
@@ -265,8 +257,6 @@ class BoqPricingJobController extends Controller
         } catch (\Throwable $e) {
             Log::error('Failed to resume pricing job', [
                 'job_id' => $job->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
@@ -312,8 +302,6 @@ class BoqPricingJobController extends Controller
         } catch (\Throwable $e) {
             Log::error('Failed to cancel pricing job', [
                 'job_id' => $job->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
@@ -350,8 +338,6 @@ class BoqPricingJobController extends Controller
         } catch (\Throwable $e) {
             Log::error('Failed to retry failed items', [
                 'job_id' => $job->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
@@ -384,8 +370,6 @@ class BoqPricingJobController extends Controller
         } catch (\Throwable $e) {
             Log::error('Failed to lock pricing job', [
                 'job_id' => $job->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
@@ -412,8 +396,6 @@ class BoqPricingJobController extends Controller
         } catch (\Throwable $e) {
             Log::error('Failed to unlock pricing job', [
                 'job_id' => $job->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([

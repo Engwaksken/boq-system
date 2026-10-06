@@ -162,6 +162,11 @@ class HardwarePrice extends Model
         );
     }
 
+    public function supplierRecord(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
+
     public function priceHistories(): HasMany
     {
         return $this->hasMany(

@@ -24,7 +24,8 @@ class AiProviderResource extends JsonResource
             'is_enabled' => $this->is_enabled,
             'is_default' => $this->is_default,
             'sort_order' => $this->sort_order,
-            'settings' => $this->settings,
+            // Provider settings may contain custom headers or other credentials.
+            // Never expose them through the public API resource.
             'last_tested_at' => $this->last_tested_at?->toISOString(),
             'last_test_status' => $this->last_test_status,
             'last_test_message' => $this->last_test_message,
