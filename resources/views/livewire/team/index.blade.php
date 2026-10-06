@@ -17,7 +17,7 @@
         </form>
     </x-ui.card>
     @if($createdToken)
-        <x-ui.card :title="__('Invitation created')"><p class="mb-3 text-sm">{{ __('Share this token securely with the invited email address. It is shown only once.') }}</p><code class="block break-all rounded-lg bg-slate-100 p-3 text-sm">{{ $createdToken }}</code><button type="button" wire:click="closeForm" class="boq-btn-secondary mt-3">{{ __('Dismiss token') }}</button></x-ui.card>
+        <x-ui.card :title="__('Invitation created')"><p class="mb-3 text-sm">{{ $invitationEmailSent ? __('An invitation email was sent. If they cannot find it, share this code securely. It is shown only once.') : __('The invitation email was not sent. Configure SMTP in the server mail settings, or share this code securely. It is shown only once.') }}</p><code class="block break-all rounded-lg bg-slate-100 p-3 text-sm">{{ $createdToken }}</code><button type="button" wire:click="closeForm" class="boq-btn-secondary mt-3">{{ __('Dismiss token') }}</button></x-ui.card>
     @endif
     @if($canManage)
         <x-ui.card :padded="false"><div class="overflow-x-auto"><x-ui.table>

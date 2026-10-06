@@ -9,6 +9,7 @@ use App\Models\Organisation;
 use App\Models\Role;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Models\UserNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Mail;
@@ -37,9 +38,41 @@ class InvitationService
             'expires_at' => now()->addHours(self::VALIDITY_HOURS),
         ]);
 
-        Mail::to($invitation->email)->send(new TeamInvitation($invitation, $code, $user));
+        $emailSent = false;
+        try {
+            Mail::to($invitation->email)->send(new TeamInvitation($invitation, $code, $user));
+            $emailSent = ! in_array(config('mail.default'), ['log', 'array'], true);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
 
-        return [$invitation, $code];
+        UserNotification::create([
+            'user_id' => $user->id,
+            'type' => 'team_invitation',
+            'title' => $emailSent ? 'Invitation email sent' : 'Invitation created — email not sent',
+            'message' => $emailSent
+                ? 'An invitation email was sent to '.$invitation->email.'. The code expires in '.self::VALIDITY_HOURS.' hours.'
+                : 'An invitation was created for '.$invitation->email.', but email delivery is not configured or failed. Configure SMTP and share the code manually. The code expires in '.self::VALIDITY_HOURS.' hours.',
+            'data' => ['invitation_id' => $invitation->id, 'email' => $invitation->email, 'email_sent' => $emailSent],
+        ]);
+
+        $invitee = User::query()
+            ->whereRaw('LOWER(email) = ?', [mb_strtolower($invitation->email)])
+            ->where('id', '!=', $user->id)
+            ->first();
+        if ($invitee) {
+            UserNotification::create([
+                'user_id' => $invitee->id,
+                'type' => 'team_invitation',
+                'title' => 'You have a team invitation',
+                'message' => $emailSent
+                    ? 'An invitation to join '.$organisation->name.' was sent to your email address.'
+                    : 'You have an invitation to join '.$organisation->name.', but the invitation email could not be delivered. Contact the inviter for your invitation code.',
+                'data' => ['invitation_id' => $invitation->id, 'organisation_id' => $organisation->id, 'email_sent' => $emailSent],
+            ]);
+        }
+
+        return [$invitation, $code, $emailSent];
     }
 
     /**

@@ -9,6 +9,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
 class TeamInvitation extends Mailable
 {
@@ -29,12 +30,16 @@ class TeamInvitation extends Mailable
 
     public function content(): Content
     {
+        $organisation = $this->invitation->organisation;
+
         return new Content(view: 'emails.team-invitation', with: [
-            'organisation' => $this->invitation->organisation->name,
+            'organisation' => $organisation->name,
             'inviter' => $this->inviter->name,
             'code' => $this->code,
             'expiresAt' => $this->invitation->expires_at,
             'acceptUrl' => route('team.index'),
+            'logoUrl' => $organisation->logo_path ? Storage::disk('public')->url($organisation->logo_path) : null,
+            'platformName' => config('app.name'),
         ]);
     }
 }

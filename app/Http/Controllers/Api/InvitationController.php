@@ -35,9 +35,13 @@ class InvitationController extends Controller
 
     public function store(StoreInvitationRequest $request)
     {
-        [$invitation, $token] = app(InvitationService::class)->create($request->user(), $request->validated());
+        [$invitation, $token, $emailSent] = app(InvitationService::class)->create($request->user(), $request->validated());
 
-        return (new InvitationResource($invitation))->additional(['token' => $token])->response()->setStatusCode(201);
+        return (new InvitationResource($invitation))->additional([
+            'token' => $token,
+            'email_sent' => $emailSent,
+            'message' => $emailSent ? 'Invitation email sent.' : 'Invitation created, but email delivery is not configured or failed.',
+        ])->response()->setStatusCode(201);
     }
 
     public function show(Invitation $invitation)

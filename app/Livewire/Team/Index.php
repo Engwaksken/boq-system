@@ -27,6 +27,8 @@ class Index extends Component
     #[Locked]
     public string $createdToken = '';
     #[Locked]
+    public bool $invitationEmailSent = false;
+    #[Locked]
     public ?int $editingId = null;
 
     public function boot(): void
@@ -80,16 +82,20 @@ class Index extends Component
             $this->authorize('update', $invitation);
             $invitation->update($data);
         } else {
-            [, $token] = $service->create(auth()->user(), $data);
+            [, $token, $emailSent] = $service->create(auth()->user(), $data);
+            $this->invitationEmailSent = $emailSent;
             $this->createdToken = $token;
         }
         $this->showForm = false;
-        session()->flash('status', __('Invitation saved successfully.'));
+        session()->flash($this->editingId === null && ! $this->invitationEmailSent ? 'warning' : 'status',
+            $this->editingId === null && ! $this->invitationEmailSent
+                ? __('Invitation created, but the email was not sent. Configure SMTP in the server mail settings; you can share the code below in the meantime.')
+                : __('Invitation saved successfully.'));
     }
 
     public function closeForm(): void
     {
-        $this->reset(['showForm', 'editingId', 'email', 'role_id', 'expires_at', 'createdToken']);
+        $this->reset(['showForm', 'editingId', 'email', 'role_id', 'expires_at', 'createdToken', 'invitationEmailSent']);
         $this->resetValidation();
     }
 

@@ -319,8 +319,14 @@ class ExpenseInvitationFlowTest extends TestCase
         $org = Organisation::factory()->create();
         $admin = $this->user($org, 'administrator');
         $roleId = Role::where('slug', 'user')->value('id');
-        $this->actingAs($admin, 'sanctum')->postJson('/api/v1/invitations', ['email' => 'invite@example.test', 'role_id' => $roleId, 'expires_at' => now()->addDays(3)->toISOString()])->assertCreated();
+        $response = $this->actingAs($admin, 'sanctum')->postJson('/api/v1/invitations', ['email' => 'invite@example.test', 'role_id' => $roleId, 'expires_at' => now()->addDays(3)->toISOString()])->assertCreated();
+        $this->assertFalse($response->json('email_sent'), 'The log mailer records email but does not deliver it.');
         Mail::assertSent(TeamInvitation::class, fn (TeamInvitation $mail) => $mail->hasTo('invite@example.test') && preg_match('/^\d{5}$/', $mail->code) === 1);
+        $this->assertDatabaseHas('user_notifications', [
+            'user_id' => $admin->id,
+            'type' => 'team_invitation',
+            'title' => 'Invitation created — email not sent',
+        ]);
     }
 
     public function test_created_invitation_expires_six_hours_after_creation_and_keeps_token_hash_private(): void
@@ -350,6 +356,11 @@ class ExpenseInvitationFlowTest extends TestCase
         $token = $this->actingAs($inviter, 'sanctum')->postJson('/api/v1/invitations', [
             'email' => $invitee->email, 'role_id' => $roleId, 'expires_at' => now()->addDay()->toISOString(),
         ])->assertCreated()->json('token');
+        $this->assertDatabaseHas('user_notifications', [
+            'user_id' => $invitee->id,
+            'type' => 'team_invitation',
+            'title' => 'You have a team invitation',
+        ]);
 
         $this->actingAs($invitee, 'sanctum')->postJson('/api/v1/invitations/accept', ['token' => $token])->assertOk();
         $invitee->refresh();
