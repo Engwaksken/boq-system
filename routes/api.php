@@ -63,6 +63,7 @@ Route::prefix('v1')->group(function () {
         // Auth
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('api.v1.auth.logout');
         Route::get('auth/me', [AuthController::class, 'me']);
+        Route::get('faqs', [\App\Http\Controllers\Api\PublishedFaqController::class, 'index'])->middleware('throttle:60,1');
         Route::get('company-profile', [\App\Http\Controllers\Api\CompanyProfileController::class, 'show']);
         Route::post('company-profile', [\App\Http\Controllers\Api\CompanyProfileController::class, 'update'])->middleware('throttle:20,1');
         Route::put('auth/profile', [AuthController::class, 'updateProfile']);
@@ -76,6 +77,12 @@ Route::prefix('v1')->group(function () {
 
         // Organisation business routes require a verified account.
         Route::middleware('verified')->group(function () {
+            Route::prefix('project-assignments')->group(function () {
+                Route::get('options', [\App\Http\Controllers\Api\ProjectAssignmentController::class, 'options']);
+                Route::get('/', [\App\Http\Controllers\Api\ProjectAssignmentController::class, 'index']);
+                Route::post('/', [\App\Http\Controllers\Api\ProjectAssignmentController::class, 'store'])->middleware('throttle:10,1');
+                Route::delete('{assignment}', [\App\Http\Controllers\Api\ProjectAssignmentController::class, 'destroy'])->middleware('throttle:10,1');
+            });
             Route::prefix('invitations')->name('api.v1.invitations.')->group(function () {
                 Route::get('/roles', [InvitationController::class, 'roles'])->middleware('throttle:60,1')->name('roles');
                 Route::get('/', [InvitationController::class, 'index'])->name('index');

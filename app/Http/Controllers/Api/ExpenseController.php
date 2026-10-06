@@ -32,11 +32,19 @@ class ExpenseController extends Controller
 
     public function index(Request $request)
     {
-        $query = Expense::visibleTo($request->user());
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'], 'project_id' => ['nullable', 'integer'],
+        ]);
+        $search = trim($filters['search'] ?? '');
+        $query = Expense::visibleTo($request->user())
+            ->when(isset($filters['project_id']), fn ($q) => $q->where('project_id', $filters['project_id']))
+            ->when($search !== '', fn ($q) => $q->where(fn ($q) => $q
+                ->where('description', 'like', '%'.$search.'%')->orWhere('supplier', 'like', '%'.$search.'%')));
+        $totals = (clone $query)->selectRaw('currency, SUM(total) AS amount')->groupBy('currency')->get();
         $expenses = $query->latest('purchase_date')->paginate(min(max((int) $request->integer('per_page', 15), 1), 100));
         $expenses->getCollection()->each(fn (Expense $expense) => $this->authorize('view', $expense));
 
-        return ExpenseResource::collection($expenses);
+        return ExpenseResource::collection($expenses)->additional(['totals' => $totals]);
     }
 
     public function store(StoreExpenseRequest $request)

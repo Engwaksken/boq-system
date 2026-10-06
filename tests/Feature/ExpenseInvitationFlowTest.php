@@ -11,10 +11,12 @@ use App\Models\Organisation;
 use App\Models\Project;
 use App\Models\Role;
 use App\Models\User;
+use App\Mail\TeamInvitation;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class ExpenseInvitationFlowTest extends TestCase
@@ -64,6 +66,21 @@ class ExpenseInvitationFlowTest extends TestCase
         $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/expenses', $this->payload($project));
         $response->assertCreated()->assertJsonPath('data.description', 'Cement purchase');
         $this->getJson('/api/v1/expenses/'.$response->json('data.id'))->assertOk();
+    }
+
+    public function test_expense_filters_and_currency_totals_respect_visibility(): void
+    {
+        $org = Organisation::factory()->create();
+        $user = $this->user($org);
+        $project = Project::factory()->assignedTo($user)->create(['organisation_id' => $org->id]);
+        $otherProject = Project::factory()->assignedTo($user)->create(['organisation_id' => $org->id]);
+        $this->actingAs($user, 'sanctum')->postJson('/api/v1/expenses', $this->payload($project))->assertCreated();
+        $this->postJson('/api/v1/expenses', $this->payload($otherProject, ['rate' => 50]))->assertCreated();
+        $this->postJson('/api/v1/expenses', $this->payload($project, ['description' => 'Sand', 'currency' => 'USD']))->assertCreated();
+        $response = $this->getJson('/api/v1/expenses?project_id='.$project->id.'&search=cement')->assertOk()
+            ->assertJsonCount(1, 'data')->assertJsonCount(1, 'totals')->assertJsonPath('totals.0.currency', 'UGX');
+        $this->assertEquals(20, $response->json('totals.0.amount'));
+        $this->getJson('/api/v1/expenses?project_id=999999')->assertOk()->assertJsonCount(0, 'totals');
     }
 
     public function test_expense_project_lookup_excludes_unassigned_foreign_and_revoked_assignments(): void
@@ -298,10 +315,12 @@ class ExpenseInvitationFlowTest extends TestCase
 
     public function test_administrator_can_create_invitation(): void
     {
+        Mail::fake();
         $org = Organisation::factory()->create();
         $admin = $this->user($org, 'administrator');
         $roleId = Role::where('slug', 'user')->value('id');
         $this->actingAs($admin, 'sanctum')->postJson('/api/v1/invitations', ['email' => 'invite@example.test', 'role_id' => $roleId, 'expires_at' => now()->addDays(3)->toISOString()])->assertCreated();
+        Mail::assertSent(TeamInvitation::class, fn (TeamInvitation $mail) => $mail->hasTo('invite@example.test') && preg_match('/^\d{5}$/', $mail->code) === 1);
     }
 
     public function test_created_invitation_expires_six_hours_after_creation_and_keeps_token_hash_private(): void
