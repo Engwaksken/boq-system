@@ -33,18 +33,21 @@
                 @foreach($breakdown['other_currency'] as $code => $amount)
                     <p>{{ __('Other currency expenditure') }}: <x-money :amount="$amount" :currency="$code" /></p>
                 @endforeach
+                @if($breakdown['excluded_count'] > 0)
+                    <p>{{ __(':count BOQ(s) excluded because they are not approved.', ['count' => $breakdown['excluded_count']]) }}</p>
+                @endif
             </div>
         @endif
     </x-ui.card>
 
     <x-ui.card :title="__('Portfolio')" :padded="false">
         <div class="overflow-x-auto"><x-ui.table>
-            <thead><tr><th>{{ __('Project') }}</th><th>{{ __('Status') }}</th><th class="is-numeric">{{ __('Budget') }}</th><th class="is-numeric">{{ __('Expenditure') }}</th><th class="is-numeric">{{ __('Balance') }}</th><th class="is-numeric">{{ __('Used') }}</th></tr></thead>
+            <thead><tr><th>{{ __('Project') }}</th><th>{{ __('Status') }}</th><th class="is-numeric">{{ __('Budget') }}</th><th class="is-numeric">{{ __('Expenditure') }}</th><th class="is-numeric">{{ __('Balance') }}</th><th class="is-numeric">{{ __('Used') }}</th><th class="is-numeric">{{ __('Unlinked') }}</th></tr></thead>
             <tbody>
                 @forelse($portfolio as $row)
-                    <tr wire:key="report-project-{{ $row['id'] }}"><td><button type="button" wire:click="$set('projectFilter', '{{ $row['id'] }}')" class="boq-link-button">{{ $row['name'] }}</button></td><td>{{ ucfirst(str_replace('_', ' ', (string) $row['status'])) }}</td><td class="is-numeric"><x-money :amount="$row['budget']" :currency="$row['currency']" /></td><td class="is-numeric"><x-money :amount="$row['spent']" :currency="$row['currency']" /></td><td class="is-numeric"><x-money :amount="$row['balance']" :currency="$row['currency']" /></td><td class="is-numeric">{{ $row['progress'] !== null ? $row['progress'].'%' : '—' }}</td></tr>
+                    <tr wire:key="report-project-{{ $row['id'] }}"><td><button type="button" wire:click="$set('projectFilter', '{{ $row['id'] }}')" class="boq-link-button">{{ $row['name'] }}</button></td><td>{{ ucfirst(str_replace('_', ' ', (string) $row['status'])) }}</td><td class="is-numeric"><x-money :amount="$row['budget']" :currency="$row['currency']" /></td><td class="is-numeric"><x-money :amount="$row['spent']" :currency="$row['currency']" /></td><td class="is-numeric"><x-money :amount="$row['balance']" :currency="$row['currency']" /></td><td class="is-numeric">{{ $row['progress'] !== null ? $row['progress'].'%' : '—' }}</td><td class="is-numeric"><x-money :amount="$row['unlinked']" :currency="$row['currency']" /></td></tr>
                 @empty
-                    <tr><td colspan="6"><x-ui.empty-state icon="fa-chart-pie" :title="__('No projects assigned.')" /></td></tr>
+                    <tr><td colspan="7"><x-ui.empty-state icon="fa-chart-pie" :title="__('No projects assigned.')" /></td></tr>
                 @endforelse
             </tbody>
         </x-ui.table></div>

@@ -62,6 +62,26 @@ class ProjectAccountingTest extends TestCase
         $this->assertArrayHasKey('USD', $breakdown['other_currency']->all());
     }
 
+    public function test_only_approved_boqs_are_budgeted_and_unlinked_spend_is_separate(): void
+    {
+        $user = $this->member();
+        $project = $this->project($user);
+        $approved = Boq::factory()->create(['project_id' => $project->id, 'organisation_id' => $user->organisation_id, 'status' => 'approved', 'currency' => 'UGX']);
+        BoqItem::factory()->create(['boq_id' => $approved->id, 'status' => 'approved', 'quantity' => 10, 'approved_rate' => 10, 'currency' => 'UGX']);
+        $draft = Boq::factory()->create(['project_id' => $project->id, 'organisation_id' => $user->organisation_id, 'status' => 'draft', 'currency' => 'UGX']);
+        BoqItem::factory()->create(['boq_id' => $draft->id, 'status' => 'pending', 'quantity' => 5, 'approved_rate' => 10, 'currency' => 'UGX']);
+        // An expense recorded without any BOQ link is tracked separately.
+        Expense::factory()->create(['organisation_id' => $user->organisation_id, 'project_id' => $project->id, 'creator_user_id' => $user->id, 'currency' => 'UGX', 'total' => 25]);
+
+        $breakdown = app(ProjectAccountingService::class)->breakdown($project);
+
+        $this->assertSame(100.0, $breakdown['budget']);
+        $this->assertSame(0.0, $breakdown['spent']);
+        $this->assertSame(25.0, $breakdown['unlinked_spent']);
+        $this->assertSame(1, $breakdown['excluded_count']);
+        $this->assertCount(1, $breakdown['rows']);
+    }
+
     public function test_page_lists_assigned_project_and_exports(): void
     {
         $user = $this->member();

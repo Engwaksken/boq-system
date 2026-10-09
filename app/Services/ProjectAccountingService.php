@@ -11,14 +11,16 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Reads the BOQ budget and recorded expenditure of a project so the balance can
- * be tracked. Budget uses each item's best available rate (approved, then
- * reviewed, then original). Amounts in a currency other than the project's are
- * reported separately rather than mixed into the totals.
+ * BOQ-centric accounting: each approved BOQ is the budget unit. Budget is the
+ * sum of its items at the best available rate (approved, then reviewed, then
+ * original); expenditure is the amount recorded against that BOQ, attributed
+ * through the expense lines. Expenses not linked to an approved BOQ are
+ * reported separately and are not charged to any BOQ balance. Amounts in a
+ * currency other than the project's are reported separately, never mixed in.
  */
 class ProjectAccountingService
 {
-    /** One row per assigned project: budget, expenditure and balance. */
+    /** One row per assigned project, rolled up from its approved BOQs. */
     public function portfolio(User $user): Collection
     {
         return Project::where('organisation_id', $user->organisation_id)
@@ -29,7 +31,7 @@ class ProjectAccountingService
             ], $this->totals($project)));
     }
 
-    /** Per-BOQ breakdown plus project totals for the project's currency. */
+    /** Per-approved-BOQ breakdown plus project totals for the project's currency. */
     public function breakdown(Project $project): array
     {
         $currency = strtoupper((string) ($project->currency ?: Regional::currency()));
@@ -39,27 +41,12 @@ class ProjectAccountingService
             ->with(['items' => fn ($query) => $query->select('id', 'boq_id', 'quantity', 'approved_rate', 'reviewed_rate', 'original_rate', 'currency')])
             ->orderBy('name')->get();
 
-        $itemSpend = DB::table('expense_items')
-            ->join('expenses', 'expenses.id', '=', 'expense_items.expense_id')
-            ->where('expenses.project_id', $project->id)
-            ->where('expenses.organisation_id', $project->organisation_id)
-            ->whereRaw('UPPER(expenses.currency) = ?', [$currency])
-            ->whereNotNull('expense_items.boq_id')
-            ->groupBy('expense_items.boq_id')
-            ->selectRaw('expense_items.boq_id, SUM(expense_items.total) AS spent')
-            ->pluck('spent', 'expense_items.boq_id');
+        [$itemTotals, $legacyTotals] = $this->spendMaps($project, $currency);
 
-        $legacySpend = Expense::where('project_id', $project->id)
-            ->where('organisation_id', $project->organisation_id)
-            ->whereRaw('UPPER(currency) = ?', [$currency])
-            ->whereDoesntHave('items')->whereNotNull('boq_id')
-            ->groupBy('boq_id')->selectRaw('boq_id, SUM(total) AS spent')
-            ->pluck('spent', 'boq_id');
-
-        $rows = $boqs->map(function (Boq $boq) use ($itemSpend, $legacySpend, $currency) {
+        $rows = $boqs->where('status', 'approved')->values()->map(function (Boq $boq) use ($itemTotals, $legacyTotals, $currency) {
             $budget = round($boq->items->sum(fn ($item) => (float) $item->quantity
                 * (float) ($item->approved_rate ?? $item->reviewed_rate ?? $item->original_rate ?? 0)), 2);
-            $spent = round((float) ($itemSpend[$boq->id] ?? 0) + (float) ($legacySpend[$boq->id] ?? 0), 2);
+            $spent = round($this->linkedSpend($boq->id, $itemTotals, $legacyTotals), 2);
 
             return [
                 'id' => $boq->id, 'name' => $boq->name, 'code' => $boq->code, 'status' => $boq->status,
@@ -71,52 +58,101 @@ class ProjectAccountingService
             ];
         });
 
-        $unlinked = round((float) Expense::where('project_id', $project->id)
-            ->where('organisation_id', $project->organisation_id)
-            ->whereRaw('UPPER(currency) = ?', [$currency])
-            ->whereNull('boq_id')->sum('total'), 2);
-
-        $otherCurrency = DB::table('expenses')
-            ->where('project_id', $project->id)->where('organisation_id', $project->organisation_id)
-            ->whereRaw('UPPER(currency) != ?', [$currency])
-            ->groupBy('currency')->selectRaw('currency, SUM(total) AS spent')
-            ->pluck('spent', 'currency');
-
         $budget = round((float) $rows->sum('budget'), 2);
-        $spent = round((float) $rows->sum('spent') + $unlinked, 2);
+        $spent = round((float) $rows->sum('spent'), 2);
+        $totalSpend = round(array_sum($itemTotals) + array_sum($legacyTotals), 2);
+        $unlinked = round($totalSpend - $spent, 2);
 
         return [
-            'currency' => $currency, 'rows' => $rows, 'unlinked_spent' => $unlinked,
-            'other_currency' => $otherCurrency,
+            'currency' => $currency, 'rows' => $rows,
+            'excluded_count' => $boqs->where('status', '!=', 'approved')->count(),
+            'unlinked_spent' => $unlinked,
+            'other_currency' => $this->otherCurrencySpend($project, $currency),
             'budget' => $budget, 'spent' => $spent, 'balance' => round($budget - $spent, 2),
             'progress' => $budget > 0 ? round($spent / $budget * 100, 1) : null,
         ];
     }
 
-    /** Budget and expenditure for one project in its currency. */
+    /** Approved-BOQ budget and linked expenditure for one project. */
     private function totals(Project $project): array
     {
         $currency = strtoupper((string) ($project->currency ?: Regional::currency()));
+        [$itemTotals, $legacyTotals] = $this->spendMaps($project, $currency);
 
-        $budget = DB::table('boq_items')
-            ->join('boqs', 'boqs.id', '=', 'boq_items.boq_id')
-            ->where('boqs.project_id', $project->id)
-            ->where('boqs.organisation_id', $project->organisation_id)
-            ->whereRaw('UPPER(COALESCE(boq_items.currency, boqs.currency)) = ?', [$currency])
-            ->selectRaw('SUM(boq_items.quantity * COALESCE(boq_items.approved_rate, boq_items.reviewed_rate, boq_items.original_rate, 0)) AS total')
-            ->value('total');
-
-        $spent = DB::table('expenses')
-            ->where('project_id', $project->id)->where('organisation_id', $project->organisation_id)
-            ->whereRaw('UPPER(currency) = ?', [$currency])->sum('total');
-
-        $budget = round((float) $budget, 2);
-        $spent = round((float) $spent, 2);
+        $budget = $this->approvedBudget($project, $currency);
+        $spent = 0.0;
+        foreach (Boq::where('project_id', $project->id)->where('organisation_id', $project->organisation_id)
+            ->where('status', 'approved')->pluck('id') as $id) {
+            $spent += $this->linkedSpend($id, $itemTotals, $legacyTotals);
+        }
+        $spent = round($spent, 2);
+        $unlinked = round(array_sum($itemTotals) + array_sum($legacyTotals) - $spent, 2);
 
         return [
             'currency' => $currency, 'budget' => $budget, 'spent' => $spent,
+            'unlinked' => $unlinked,
             'balance' => round($budget - $spent, 2),
             'progress' => $budget > 0 ? round($spent / $budget * 100, 1) : null,
         ];
+    }
+
+    /** Approved-BOQ budget in the project currency. */
+    private function approvedBudget(Project $project, string $currency): float
+    {
+        return round((float) DB::table('boq_items')
+            ->join('boqs', 'boqs.id', '=', 'boq_items.boq_id')
+            ->where('boqs.project_id', $project->id)
+            ->where('boqs.organisation_id', $project->organisation_id)
+            ->where('boqs.status', 'approved')
+            ->whereNull('boqs.deleted_at')
+            ->whereRaw('UPPER(COALESCE(boq_items.currency, boqs.currency)) = ?', [$currency])
+            ->selectRaw('SUM(boq_items.quantity * COALESCE(boq_items.approved_rate, boq_items.reviewed_rate, boq_items.original_rate, 0)) AS total')
+            ->value('total'), 2);
+    }
+
+    /**
+     * Expenditure in the project currency keyed by BOQ id ('' for unlinked).
+     * Modern expenses use their item lines; older expenses without items use
+     * their own BOQ link and total.
+     *
+     * @return array{0: array<string, float>, 1: array<string, float>}
+     */
+    private function spendMaps(Project $project, string $currency): array
+    {
+        $itemTotals = [];
+        foreach (DB::table('expense_items')
+            ->join('expenses', 'expenses.id', '=', 'expense_items.expense_id')
+            ->where('expenses.project_id', $project->id)
+            ->where('expenses.organisation_id', $project->organisation_id)
+            ->whereRaw('UPPER(expenses.currency) = ?', [$currency])
+            ->groupBy('expense_items.boq_id')
+            ->selectRaw('expense_items.boq_id AS boq_id, SUM(expense_items.total) AS spent')->get() as $row) {
+            $itemTotals[(string) ($row->boq_id ?? '')] = (float) $row->spent;
+        }
+
+        $legacyTotals = [];
+        foreach (Expense::where('project_id', $project->id)
+            ->where('organisation_id', $project->organisation_id)
+            ->whereRaw('UPPER(currency) = ?', [$currency])
+            ->whereDoesntHave('items')
+            ->groupBy('boq_id')->selectRaw('boq_id, SUM(total) AS spent')->get() as $row) {
+            $legacyTotals[(string) ($row->boq_id ?? '')] = (float) $row->spent;
+        }
+
+        return [$itemTotals, $legacyTotals];
+    }
+
+    private function linkedSpend(int $boqId, array $itemTotals, array $legacyTotals): float
+    {
+        return ($itemTotals[(string) $boqId] ?? 0) + ($legacyTotals[(string) $boqId] ?? 0);
+    }
+
+    private function otherCurrencySpend(Project $project, string $currency): Collection
+    {
+        return DB::table('expenses')
+            ->where('project_id', $project->id)->where('organisation_id', $project->organisation_id)
+            ->whereRaw('UPPER(currency) != ?', [$currency])
+            ->groupBy('currency')->selectRaw('currency, SUM(total) AS spent')
+            ->pluck('spent', 'currency');
     }
 }
