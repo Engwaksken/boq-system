@@ -62,4 +62,32 @@ class BulkInvitationsTest extends TestCase
         Mail::assertNothingSent();
         Livewire::actingAs($this->member('user'))->test(Index::class)->call('downloadBulkTemplate')->assertForbidden();
     }
+
+    public function test_admin_can_bulk_disable_selected_pending_invitations(): void
+    {
+        $admin = $this->member();
+        $roleId = Role::where('slug', 'user')->value('id');
+        [$first] = app(\App\Services\InvitationService::class)->create($admin, ['email' => 'first@example.com', 'role_id' => $roleId]);
+        [$second] = app(\App\Services\InvitationService::class)->create($admin, ['email' => 'second@example.com', 'role_id' => $roleId]);
+
+        Livewire::actingAs($admin)->test(Index::class)
+            ->set('selected', [(string) $first->id, (string) $second->id])
+            ->call('bulkRevoke')
+            ->assertHasNoErrors()
+            ->assertSet('selected', []);
+
+        $this->assertNotNull($first->fresh()->revoked_at);
+        $this->assertSame($admin->id, $first->fresh()->revoked_by_user_id);
+        $this->assertNotNull($second->fresh()->revoked_at);
+    }
+
+    public function test_non_manager_lands_on_the_accept_tab_and_cannot_revoke(): void
+    {
+        $user = $this->member('user');
+        Livewire::actingAs($user)->test(Index::class)
+            ->assertSet('tab', 'accept')
+            ->assertSee('Accept invitation')
+            ->call('bulkRevoke')
+            ->assertForbidden();
+    }
 }

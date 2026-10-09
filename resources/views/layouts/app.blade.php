@@ -54,6 +54,7 @@
                     $item('Projects', 'projects.index', 'fa-folder-open', $authUser->hasPermission('projects.view'), 'projects.*'),
                     $item('BOQs', 'boqs.index', 'fa-file-invoice-dollar', $authUser->hasPermission('boq.view'), 'boqs.*'),
                     $item('Expenses & Receipts', 'expenses.index', 'fa-receipt', true, 'expenses.*'),
+                    $item('Reports', 'reports.accounting', 'fa-chart-pie', $authUser->hasPermission('reports.view'), 'reports.*'),
                     $item('Team Invitations', 'team.index', 'fa-user-plus'),
                     $item('Project Assignments', 'team.assignments', 'fa-users', (bool) $canManageTeam),
                     $item('Get Prices', 'hardware-prices.index', 'fa-tags', $authUser->hasPermission('hardware-prices.view'), 'hardware-prices.*'),

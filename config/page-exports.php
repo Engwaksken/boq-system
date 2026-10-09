@@ -28,6 +28,7 @@ return [
     App\Livewire\Expenses\Index::class => ['expenses' => ['purchase_date' => 'Date', 'project.name' => 'Project', 'supplier' => 'Supplier', 'description' => 'Description', 'quantity' => 'Quantity', 'unit' => 'Unit', 'rate' => 'Rate', 'total' => 'Total', 'currency' => 'Currency', 'is_planned' => 'Planned', 'explanation' => 'Explanation']],
     App\Livewire\Team\Index::class => ['invitations' => ['email' => 'Email', 'role.name' => 'Role', 'expires_at' => 'Expires', 'accepted_at' => 'Accepted', 'revoked_at' => 'Disabled', 'created_at' => 'Created']],
     App\Livewire\Team\Assignments::class => ['assignments' => ['project.name' => 'Project', 'user.name' => 'Name', 'user.email' => 'Email', 'role' => 'Role', 'created_at' => 'Assigned']],
+    App\Livewire\Reports\Accounting::class => ['portfolio' => ['name' => 'Project', 'code' => 'Code', 'status' => 'Status', 'currency' => 'Currency', 'budget' => 'Budget', 'spent' => 'Expenditure', 'balance' => 'Balance', 'progress' => 'Used %']],
     App\Livewire\Faqs::class => ['faqs' => $faqs],
     App\Livewire\System\McpActivity::class => ['logs' => ['created_at' => 'Date', 'user.name' => 'User', 'action' => 'Action', 'reference' => 'Reference']],
     App\Livewire\Topups\Index::class => ['catalog' => $topups, 'purchases' => ['topup.name' => 'Top-up', 'status' => 'Status', 'created_at' => 'Purchased']],

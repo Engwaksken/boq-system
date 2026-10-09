@@ -133,6 +133,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/team/invitations', TeamIndex::class)->name('team.index');
     Route::get('/team/assignments', TeamAssignments::class)->middleware('verified')->name('team.assignments');
     Route::get('/expenses', ExpensesIndex::class)->middleware('verified')->name('expenses.index');
+    Route::get('/reports/accounting', \App\Livewire\Reports\Accounting::class)->middleware('verified')->name('reports.accounting');
     Route::get('/expense-receipts/{receipt}/download', [\App\Http\Controllers\Api\ExpenseReceiptController::class, 'download'])
         ->middleware(['verified', 'throttle:30,1'])->name('expense-receipts.download');
 

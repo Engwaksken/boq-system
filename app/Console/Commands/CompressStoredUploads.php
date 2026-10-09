@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Boq;
 use App\Models\CompanyProfile;
+use App\Models\ExpenseReceipt;
 use App\Models\User;
 use App\Services\FileCompressor;
 use Illuminate\Console\Command;
@@ -13,14 +14,14 @@ use Illuminate\Support\Str;
 
 /**
  * Compresses files uploaded before compression was added: BOQ photos/scans,
- * profile pictures and company logos. Leftover estimated-prices files are
- * removed. Run with --dry-run first to see the savings.
+ * profile pictures, company logos and expense receipt photos. Leftover
+ * estimated-prices files are removed. Run with --dry-run first to see the savings.
  */
 class CompressStoredUploads extends Command
 {
     protected $signature = 'uploads:compress {--dry-run : Report the savings without changing any file}';
 
-    protected $description = 'Compress stored BOQ scans, profile pictures and logos, and remove leftover upload files';
+    protected $description = 'Compress stored BOQ scans, profile pictures, logos and expense receipts, and remove leftover upload files';
 
     private int $before = 0;
 
@@ -61,6 +62,22 @@ class CompressStoredUploads extends Command
                 }
             }
         });
+
+        ExpenseReceipt::whereIn('mime_type', ['image/jpeg', 'image/png', 'image/webp'])
+            ->whereNotNull('storage_path')
+            ->chunkById(100, function ($receipts) use ($compressor, $dry) {
+                foreach ($receipts as $receipt) {
+                    $disk = $receipt->storage_disk ?: 'local';
+                    $path = $this->compress($compressor, $disk, $receipt->storage_path, FileCompressor::SCAN_MAX_SIDE, false, $dry);
+                    if ($path !== null && $path !== $receipt->storage_path) {
+                        $receipt->forceFill([
+                            'storage_path' => $path,
+                            'mime_type' => $this->mimeFor($path),
+                            'file_size' => Storage::disk($disk)->size($path),
+                        ])->saveQuietly();
+                    }
+                }
+            });
 
         // Estimated prices are copied onto BOQ items; their files are not needed.
         $leftovers = Storage::disk($default)->allFiles('boq-estimates');
@@ -120,6 +137,15 @@ class CompressStoredUploads extends Command
         } finally {
             @unlink($result['path']);
         }
+    }
+
+    private function mimeFor(string $path): string
+    {
+        return match (strtolower((string) pathinfo($path, PATHINFO_EXTENSION))) {
+            'png' => 'image/png',
+            'webp' => 'image/webp',
+            default => 'image/jpeg',
+        };
     }
 
     private function human(int $bytes): string

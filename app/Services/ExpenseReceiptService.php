@@ -33,11 +33,25 @@ class ExpenseReceiptService
             ->exists();
         abort_if($duplicate, 409, 'This receipt has already been uploaded.');
 
-        $path = $file->storeAs('expense-receipts', Str::uuid().'.'.$extension, $disk);
+        // Receipt photos are re-encoded to cut storage; the smaller of the original
+        // and the compressed image is kept. PDFs are stored as uploaded.
+        if (in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true)) {
+            $path = app(FileCompressor::class)->storeImage(
+                $file, 'expense-receipts', FileCompressor::SCAN_MAX_SIDE, false, $disk, (string) Str::uuid()
+            );
+            $mime = match (strtolower((string) pathinfo($path, PATHINFO_EXTENSION))) {
+                'png' => 'image/png',
+                'webp' => 'image/webp',
+                default => 'image/jpeg',
+            };
+        } else {
+            $path = $file->storeAs('expense-receipts', Str::uuid().'.'.$extension, $disk);
+        }
+
         try {
             return $expense->receipts()->create([
                 'uploaded_by_user_id' => $user->id, 'original_filename' => $file->getClientOriginalName(),
-                'mime_type' => $mime, 'file_size' => $file->getSize(), 'storage_path' => $path, 'storage_disk' => $disk,
+                'mime_type' => $mime, 'file_size' => Storage::disk($disk)->size($path), 'storage_path' => $path, 'storage_disk' => $disk,
                 'sha256' => $sha256,
             ]);
         } catch (\Throwable $exception) {

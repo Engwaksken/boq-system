@@ -19,8 +19,11 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 class Index extends Component
 {
     use \App\Livewire\Concerns\ExportsTables;
+    use \App\Livewire\Concerns\WithBulkSelection;
     use WithPagination;
     use WithFileUploads;
+
+    public string $tab = 'invitations';
 
     public $bulkFile;
 
@@ -75,6 +78,27 @@ class Index extends Component
     public function boot(): void
     {
         abort_unless(auth()->check(), 401);
+    }
+
+    public function mount(): void
+    {
+        // Users who cannot manage the team land on the tab that applies to them.
+        if (! $this->canManage()) {
+            $this->tab = 'accept';
+        }
+    }
+
+    public function setTab(string $tab): void
+    {
+        if (! in_array($tab, ['invitations', 'accept', 'bulk'], true)) {
+            return;
+        }
+        if (in_array($tab, ['invitations', 'bulk'], true)) {
+            $this->authorizeManagement();
+        }
+        $this->tab = $tab;
+        $this->clearSelection();
+        $this->resetPage();
     }
 
     private function canManage(): bool
@@ -152,6 +176,18 @@ class Index extends Component
         $this->authorize('delete', $invitation);
         $invitation->forceFill(['revoked_at' => now(), 'revoked_by_user_id' => auth()->id()])->save();
         session()->flash('status', __('Invitation revoked.'));
+    }
+
+    /** Disable every selected pending invitation in one action. */
+    public function bulkRevoke(): void
+    {
+        $this->authorizeManagement();
+        $count = Invitation::where('organisation_id', auth()->user()->organisation_id)
+            ->whereKey($this->selectedIds())
+            ->whereNull('accepted_at')
+            ->whereNull('revoked_at')
+            ->update(['revoked_at' => now(), 'revoked_by_user_id' => auth()->id()]);
+        $this->finishBulkAction($count, 'disabled', 'status');
     }
 
     public function accept(InvitationService $service): void

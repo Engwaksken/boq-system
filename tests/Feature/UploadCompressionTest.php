@@ -3,6 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Boq;
+use App\Models\Expense;
+use App\Models\ExpenseReceipt;
+use App\Models\Organisation;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\BoqUploadNormalizer;
@@ -121,6 +124,50 @@ class UploadCompressionTest extends TestCase
         Storage::assertMissing('boqs/1/old.png');
         $this->assertLessThan(strlen($png), Storage::size('boqs/1/old.jpg'));
         Storage::assertMissing('boq-estimates/1/leftover.csv');
+    }
+
+    public function test_expense_receipt_images_are_compressed(): void
+    {
+        Storage::fake('local');
+        config(['filesystems.disks.private' => null]);
+        $org = Organisation::factory()->create();
+        $user = User::factory()->create(['organisation_id' => $org->id]);
+        $project = Project::factory()->create(['organisation_id' => $org->id]);
+        $project->assignments()->create(['user_id' => $user->id, 'role' => 'project-manager', 'assigned_by' => $user->id]);
+        $expense = Expense::factory()->create(['organisation_id' => $org->id, 'project_id' => $project->id, 'creator_user_id' => $user->id]);
+
+        $png = $this->bigPng(2600, 400);
+        $this->actingAs($user, 'sanctum')->post('/api/v1/expenses/'.$expense->id.'/receipts', [
+            'file' => UploadedFile::fake()->createWithContent('receipt.png', $png),
+        ], ['Accept' => 'application/json'])->assertCreated();
+
+        $receipt = $expense->receipts()->sole();
+        Storage::disk('local')->assertExists($receipt->storage_path);
+        $this->assertLessThan(strlen($png), Storage::disk('local')->size($receipt->storage_path));
+        $this->assertSame('image/jpeg', $receipt->mime_type);
+        $this->assertSame(Storage::disk('local')->size($receipt->storage_path), $receipt->file_size);
+    }
+
+    public function test_command_compresses_existing_receipts(): void
+    {
+        Storage::fake('local');
+        $org = Organisation::factory()->create();
+        $user = User::factory()->create(['organisation_id' => $org->id]);
+        $project = Project::factory()->create(['organisation_id' => $org->id]);
+        $expense = Expense::factory()->create(['organisation_id' => $org->id, 'project_id' => $project->id, 'creator_user_id' => $user->id]);
+        Storage::disk('local')->put('expense-receipts/old.png', $png = $this->bigPng(2600, 400));
+        $receipt = ExpenseReceipt::factory()->create([
+            'expense_id' => $expense->id, 'uploaded_by_user_id' => $user->id,
+            'mime_type' => 'image/png', 'storage_path' => 'expense-receipts/old.png', 'storage_disk' => 'local',
+            'file_size' => strlen($png),
+        ]);
+
+        $this->artisan('uploads:compress')->assertSuccessful();
+
+        $receipt->refresh();
+        $this->assertSame('expense-receipts/old.jpg', $receipt->storage_path);
+        Storage::disk('local')->assertMissing('expense-receipts/old.png');
+        $this->assertLessThan(strlen($png), $receipt->file_size);
     }
 
     public function test_user_role_is_given_the_price_permission(): void
