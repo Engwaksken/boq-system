@@ -37,6 +37,8 @@
     "Please confirm": "Please confirm",
     "This email already belongs to a team member.": "This email already belongs to a team member.",
     "This email already has a pending invitation.": "This email already has a pending invitation.",
+    "You will join as :role.": "You will join as :role.",
+    "Create an account": "Create an account",
     "This project has no approved BOQ yet. You can still record the expense; it will not be linked to a BOQ.": "This project has no approved BOQ yet. You can still record the expense; it will not be linked to a BOQ.",
     "Not linked to a BOQ": "Not linked to a BOQ",
     "Select a project to continue.": "Select a project to continue.",

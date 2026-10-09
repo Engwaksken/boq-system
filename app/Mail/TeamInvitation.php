@@ -3,6 +3,8 @@
 namespace App\Mail;
 
 use App\Models\Invitation;
+use App\Models\Organisation;
+use App\Models\SiteSetting;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -35,11 +37,33 @@ class TeamInvitation extends Mailable
         return new Content(view: 'emails.team-invitation', with: [
             'organisation' => $organisation->name,
             'inviter' => $this->inviter->name,
+            'role' => $this->invitation->role?->name,
             'code' => $this->code,
             'expiresAt' => $this->invitation->expires_at,
             'acceptUrl' => route('team.index'),
-            'logoUrl' => $organisation->logo_path ? Storage::disk('public')->url($organisation->logo_path) : null,
-            'platformName' => config('app.name'),
+            'registerUrl' => SiteSetting::get('allow_registration', true) && \Illuminate\Support\Facades\Route::has('register')
+                ? route('register')
+                : null,
+            'logoUrl' => $this->logoUrl($organisation),
+            'platformName' => $this->platformName(),
+            'platformUrl' => config('app.url'),
         ]);
+    }
+
+    /** The organisation logo, falling back to the platform logo. */
+    private function logoUrl(Organisation $organisation): ?string
+    {
+        if ($organisation->logo_path) {
+            return Storage::disk('public')->url($organisation->logo_path);
+        }
+
+        $logo = SiteSetting::get('logo', '');
+
+        return $logo ? asset('storage/'.$logo) : null;
+    }
+
+    private function platformName(): string
+    {
+        return (string) (SiteSetting::get('system_name', config('app.name')) ?: config('app.name'));
     }
 }
