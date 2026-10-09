@@ -20,23 +20,12 @@ class DashboardController extends Controller
         $user = $request->user();
         $subscriptionService = app(SubscriptionService::class);
 
-        $projectQuery = Project::query()
-            ->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-
-                if ($user->organisation_id !== null) {
-                    $q->orWhere('organisation_id', $user->organisation_id);
-                }
-            });
+        // Members only see projects (and their BOQs) they are assigned to;
+        // administrators see the whole organisation (Project::accessibleTo).
+        $projectQuery = Project::query()->accessibleTo($user);
 
         $boqQuery = Boq::query()
-            ->where(function ($q) use ($user) {
-                $q->whereHas('project', fn ($p) => $p->where('user_id', $user->id));
-
-                if ($user->organisation_id !== null) {
-                    $q->orWhere('organisation_id', $user->organisation_id);
-                }
-            });
+            ->whereHas('project', fn ($project) => $project->accessibleTo($user));
 
         $currentSubscription = cache()->remember('dashboard_subscription_' . $user->id, 30, function () use ($subscriptionService, $user) {
             return $subscriptionService->currentSubscription($user, $user->organisation_id);

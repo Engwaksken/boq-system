@@ -87,7 +87,8 @@ class AuthController extends Controller
             'success' => true,
             'message' => __('auth.registered'),
             'data' => [
-                'user' => $user,
+                'user' => $user->load('roles', 'organisation'),
+                'permissions' => $user->getAllPermissionSlugs(),
                 'token' => $token,
             ],
         ], 201);
@@ -128,6 +129,7 @@ class AuthController extends Controller
             'message' => __('auth.logged_in'),
             'data' => [
                 'user' => $user->load('roles', 'organisation'),
+                'permissions' => $user->getAllPermissionSlugs(),
                 'token' => $token,
             ],
         ]);
