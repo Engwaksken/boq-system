@@ -60,6 +60,12 @@ class BulkInvitationService
         }
         $results = [];
         foreach ($rows as $row) {
+            $member = User::where('organisation_id', $user->organisation_id)
+                ->whereRaw('LOWER(email) = ?', [$row['email']])->exists();
+            if ($member) {
+                $results[] = ['email' => $row['email'], 'role' => $row['role'], 'status' => 'Already a member', 'code' => '', 'email_sent' => false];
+                continue;
+            }
             $pending = Invitation::where('organisation_id', $user->organisation_id)
                 ->whereRaw('LOWER(email) = ?', [$row['email']])->whereNull('accepted_at')->whereNull('consumed_at')
                 ->whereNull('revoked_at')->where('expires_at', '>', now())->exists();

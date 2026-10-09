@@ -5,6 +5,7 @@ namespace App\Livewire\Team;
 use App\Models\Invitation;
 use App\Models\Organisation;
 use App\Models\Role;
+use App\Models\User;
 use App\Services\InvitationService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Gate;
@@ -119,6 +120,24 @@ class Index extends Component
         abort_unless($this->canManage(), 403);
     }
 
+    /** An email that already belongs to an organisation member cannot be invited. */
+    private function isTeamMember(string $email): bool
+    {
+        return User::where('organisation_id', auth()->user()->organisation_id)
+            ->whereRaw('LOWER(email) = ?', [$email])->exists();
+    }
+
+    /** An email with a live (pending, unexpired) invitation cannot be invited again. */
+    private function hasActiveInvitation(string $email): bool
+    {
+        return Invitation::where('organisation_id', auth()->user()->organisation_id)
+            ->whereRaw('LOWER(email) = ?', [$email])
+            ->whereNull('accepted_at')->whereNull('consumed_at')->whereNull('revoked_at')
+            ->where('expires_at', '>', now())
+            ->when($this->editingId, fn ($query) => $query->where('id', '!=', $this->editingId))
+            ->exists();
+    }
+
     public function create(): void
     {
         $this->authorizeManagement();
@@ -147,6 +166,17 @@ class Index extends Component
             $rules['role_id'] = ['required', 'integer'];
         }
         $data = $this->validate($rules);
+        $email = mb_strtolower(trim((string) $data['email']));
+        if ($this->isTeamMember($email)) {
+            $this->addError('email', __('This email already belongs to a team member.'));
+
+            return;
+        }
+        if ($this->hasActiveInvitation($email)) {
+            $this->addError('email', __('This email already has a pending invitation.'));
+
+            return;
+        }
         if ($this->editingId !== null) {
             $invitation = Invitation::findOrFail($this->editingId);
             $this->authorize('update', $invitation);

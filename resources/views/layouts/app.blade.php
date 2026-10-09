@@ -511,6 +511,8 @@
 
 @include('pwa.install-help')
 
+<x-ui.confirm-dialog />
+
 @livewireScripts
 
 @stack('scripts')

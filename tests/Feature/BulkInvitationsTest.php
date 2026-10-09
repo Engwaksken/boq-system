@@ -109,4 +109,37 @@ class BulkInvitationsTest extends TestCase
 
         $this->assertDatabaseMissing('invitations', ['id' => $invitation->id]);
     }
+
+    public function test_single_invite_rejects_existing_members_and_duplicate_pending_invites(): void
+    {
+        $admin = $this->member();
+        $roleId = Role::where('slug', 'user')->value('id');
+        User::factory()->create(['organisation_id' => $admin->organisation_id, 'email' => 'member@example.com']);
+
+        $invite = fn (string $email) => Livewire::actingAs($admin)->test(Index::class)
+            ->set('email', $email)->set('role_id', $roleId)
+            ->set('expires_at', now()->addDay()->format('Y-m-d\TH:i'))->call('save');
+
+        $invite('member@example.com')->assertHasErrors(['email']);
+        $this->assertSame(0, Invitation::count());
+
+        $invite('fresh@example.com')->assertHasNoErrors();
+        $this->assertSame(1, Invitation::count());
+
+        $invite('fresh@example.com')->assertHasErrors(['email']);
+        $this->assertSame(1, Invitation::count());
+    }
+
+    public function test_bulk_invitations_skip_existing_members(): void
+    {
+        $admin = $this->member();
+        User::factory()->create(['organisation_id' => $admin->organisation_id, 'email' => 'member@example.com']);
+
+        $component = Livewire::actingAs($admin)->test(Index::class)
+            ->set('bulkFile', UploadedFile::fake()->createWithContent('team.csv', "email,role\nmember@example.com,user\nnew@example.com,user\n"))
+            ->call('uploadBulkInvitations')->assertHasNoErrors();
+
+        $this->assertSame('Already a member', $component->get('bulkResults')[0]['status']);
+        $this->assertSame(1, Invitation::where('organisation_id', $admin->organisation_id)->count());
+    }
 }

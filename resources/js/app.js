@@ -128,3 +128,31 @@ document.addEventListener('click', async (event) => {
         icon?.classList.replace('fa-spinner', 'fa-fingerprint');
     }
 });
+
+/*
+ * Styled confirmation dialog for wire:confirm.
+ * Livewire's wire:click handler reads el.__livewire_confirm at click time and
+ * calls the browser's confirm(). We replace that handler with one that opens our
+ * own dialog (<x-ui.confirm-dialog>). The capture listener runs before Livewire's
+ * click handler, and reading the message at click time also covers elements that
+ * Livewire renders after the page has loaded.
+ */
+document.addEventListener(
+    'click',
+    (event) => {
+        const el = event.target.closest('[wire\\:confirm]');
+
+        if (! el) {
+            return;
+        }
+
+        const message = el.getAttribute('wire:confirm') || 'Are you sure?';
+
+        el.__livewire_confirm = (action, instead) => {
+            window.dispatchEvent(new CustomEvent('boq-confirm', {
+                detail: { message, action, instead },
+            }));
+        };
+    },
+    true,
+);
