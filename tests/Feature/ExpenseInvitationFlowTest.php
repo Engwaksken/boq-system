@@ -183,8 +183,8 @@ class ExpenseInvitationFlowTest extends TestCase
         $user = $this->user($org);
         $project = Project::factory()->create(['organisation_id' => $org->id]);
         $this->assignToProject($project, $user);
-        $boq = Boq::factory()->create(['project_id' => $project->id, 'organisation_id' => $org->id]);
-        $item = BoqItem::factory()->create(['boq_id' => $boq->id]);
+        $boq = Boq::factory()->create(['project_id' => $project->id, 'organisation_id' => $org->id, 'status' => 'approved']);
+        $item = BoqItem::factory()->create(['boq_id' => $boq->id, 'status' => 'approved']);
 
         $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/expenses', $this->payload($project, [
             'boq_id' => $boq->id, 'boq_item_id' => $item->id,
@@ -220,6 +220,33 @@ class ExpenseInvitationFlowTest extends TestCase
 
         $this->actingAs($user, 'sanctum')->postJson('/api/v1/expenses', $this->payload($project, [
             'boq_id' => $boq->id, 'boq_item_id' => $foreignItem->id,
+        ]))->assertUnprocessable();
+    }
+
+    public function test_expense_rejects_a_boq_that_is_not_approved(): void
+    {
+        $org = Organisation::factory()->create();
+        $user = $this->user($org);
+        $project = Project::factory()->create(['organisation_id' => $org->id]);
+        $this->assignToProject($project, $user);
+        $boq = Boq::factory()->create(['project_id' => $project->id, 'organisation_id' => $org->id, 'status' => 'draft']);
+
+        $this->actingAs($user, 'sanctum')->postJson('/api/v1/expenses', $this->payload($project, [
+            'boq_id' => $boq->id,
+        ]))->assertUnprocessable();
+    }
+
+    public function test_expense_rejects_a_boq_item_that_is_not_approved(): void
+    {
+        $org = Organisation::factory()->create();
+        $user = $this->user($org);
+        $project = Project::factory()->create(['organisation_id' => $org->id]);
+        $this->assignToProject($project, $user);
+        $boq = Boq::factory()->create(['project_id' => $project->id, 'organisation_id' => $org->id, 'status' => 'approved']);
+        $item = BoqItem::factory()->create(['boq_id' => $boq->id, 'status' => 'pending']);
+
+        $this->actingAs($user, 'sanctum')->postJson('/api/v1/expenses', $this->payload($project, [
+            'boq_id' => $boq->id, 'boq_item_id' => $item->id,
         ]))->assertUnprocessable();
     }
 

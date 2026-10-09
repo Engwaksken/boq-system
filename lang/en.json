@@ -1,4 +1,10 @@
 {
+    "Choose the project and the approved BOQ this purchase belongs to.": "Choose the project and the approved BOQ this purchase belongs to.",
+    "Approved BOQ": "Approved BOQ",
+    "This project has no approved BOQ yet. You can still record the expense; it will not be linked to a BOQ.": "This project has no approved BOQ yet. You can still record the expense; it will not be linked to a BOQ.",
+    "Not linked to a BOQ": "Not linked to a BOQ",
+    "Select a project to continue.": "Select a project to continue.",
+    "BOQ item for the first line": "BOQ item for the first line",
     "Not linked to a BOQ item — budget cannot be checked.": "Not linked to a BOQ item — budget cannot be checked.",
     "The selected BOQ item has no budget rate yet.": "The selected BOQ item has no budget rate yet.",
     "Over budget": "Over budget",

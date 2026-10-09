@@ -4,6 +4,7 @@ namespace App\Livewire\Expenses;
 
 use App\Http\Requests\StoreExpenseRequest;
 use App\Http\Requests\UpdateExpenseRequest;
+use App\Models\Boq;
 use App\Models\BoqItem;
 use App\Models\Expense;
 use App\Models\Project;
@@ -41,6 +42,8 @@ class Index extends Component
     public ?int $selectedExpenseId = null;
 
     public ?int $project_id = null;
+
+    public ?int $boq_id = null;
 
     public string $purchase_date = '';
 
@@ -113,12 +116,14 @@ class Index extends Component
         if ($project) {
             $this->project_id = $project->id;
             $this->currency = $project->currency;
+            $this->selectSingleApprovedBoq();
         }
         $this->showForm = true;
     }
 
     public function updatedProjectId(): void
     {
+        $this->boq_id = null;
         $this->boq_item_id = null;
         foreach ($this->additionalItems as &$item) {
             $item['boq_item_id'] = null;
@@ -128,6 +133,24 @@ class Index extends Component
             if ($project) {
                 $this->currency = $project->currency;
             }
+            $this->selectSingleApprovedBoq();
+        }
+    }
+
+    public function updatedBoqId(): void
+    {
+        $this->boq_item_id = null;
+        foreach ($this->additionalItems as &$item) {
+            $item['boq_item_id'] = null;
+        }
+    }
+
+    /** Use the only approved BOQ automatically when a project has exactly one. */
+    private function selectSingleApprovedBoq(): void
+    {
+        $boqs = $this->approvedBoqs();
+        if ($boqs->count() === 1) {
+            $this->boq_id = $boqs->first()->id;
         }
     }
 
@@ -141,6 +164,7 @@ class Index extends Component
             $this->{$field} = (string) $expense->{$field};
         }
         $this->project_id = $expense->project_id;
+        $this->boq_id = $expense->boq_id;
         $this->purchase_date = $expense->purchase_date->toDateString();
         $this->is_planned = $expense->is_planned;
         $this->boq_item_id = $expense->boq_item_id;
@@ -160,16 +184,22 @@ class Index extends Component
         $rules = array_intersect_key($rules, $this->all());
         $data = $this->validate($rules);
         if ($this->expenseId === null) {
+            if ($this->boq_id !== null) {
+                abort_unless($this->approvedBoqs()->contains('id', $this->boq_id), 422, 'Select an approved BOQ for the assigned project.');
+            }
             $items = $this->draftItems();
             $available = $this->boqItems()->keyBy('id');
             foreach ($items as &$item) {
                 if (! empty($item['boq_item_id'])) {
                     $boqItem = $available->get($item['boq_item_id']);
-                    abort_unless($boqItem, 422, 'Select a BOQ item from the assigned project.');
+                    abort_unless($boqItem, 422, 'Select an approved BOQ item from the selected BOQ.');
                     $item['boq_id'] = $boqItem->boq_id;
+                } else {
+                    $item['boq_id'] = $this->boq_id;
                 }
             }
             $data['items'] = $items;
+            $data['boq_id'] = $this->boq_id;
             $expense = DB::transaction(function () use ($service, $receipts, $data) {
                 $expense = $service->create(auth()->user(), $data);
                 if ($this->extractFile) {
@@ -303,7 +333,7 @@ class Index extends Component
 
     public function closeForm(): void
     {
-        $this->reset(['showForm', 'expenseId', 'project_id', 'purchase_date', 'supplier', 'description', 'quantity', 'unit', 'rate', 'currency', 'payment_method', 'is_planned', 'explanation', 'extractFile', 'extractFiles', 'activeReceiptIndex', 'receiptDrafts', 'boq_item_id', 'extractionWarnings', 'additionalItems']);
+        $this->reset(['showForm', 'expenseId', 'project_id', 'boq_id', 'purchase_date', 'supplier', 'description', 'quantity', 'unit', 'rate', 'currency', 'payment_method', 'is_planned', 'explanation', 'extractFile', 'extractFiles', 'activeReceiptIndex', 'receiptDrafts', 'boq_item_id', 'extractionWarnings', 'additionalItems']);
         $this->resetValidation();
     }
 
@@ -354,11 +384,12 @@ class Index extends Component
             'expenses' => (clone $query)->with('project')->latest('purchase_date')->latest('id')->paginate($this->exportPageSize(15)),
             'totals' => (clone $query)->selectRaw('currency, SUM(total) AS amount')->groupBy('currency')->get(),
             'projects' => $this->projects(), 'selectedExpense' => $selected,
+            'boqs' => $this->approvedBoqs(),
             'boqItems' => $this->boqItems(),
             'budgetComparisons' => auth()->user()->hasPermission('boq.view') && ($project = $this->projects()->firstWhere('id', $this->project_id)) && $this->showForm && $this->expenseId === null
-                ? app(ExpenseBudgetService::class)->compare($project, $this->draftItems(), $this->currency) : [],
+                ? app(ExpenseBudgetService::class)->compare($project, $this->draftItems(), $this->currency, null, $this->boq_id) : [],
             'savedBudgetComparisons' => $selected && auth()->user()->hasPermission('boq.view') ? app(ExpenseBudgetService::class)->compare($selected->project,
-                $selected->items->isNotEmpty() ? $selected->items->toArray() : [$selected->toArray()], $selected->currency, $selected->id) : [],
+                $selected->items->isNotEmpty() ? $selected->items->toArray() : [$selected->toArray()], $selected->currency, $selected->id, $selected->boq_id) : [],
         ]);
     }
 
@@ -368,14 +399,28 @@ class Index extends Component
             'rate' => $this->rate, 'boq_item_id' => $this->boq_item_id], ...$this->additionalItems];
     }
 
-    private function boqItems()
+    /** Approved BOQs of the selected project that an expense may be linked to. */
+    private function approvedBoqs()
     {
         if (! auth()->user()->hasPermission('boq.view') || ! $this->project_id || ! $this->projects()->contains('id', $this->project_id)) {
             return collect();
         }
 
-        return BoqItem::with('boq')->whereHas('boq', fn ($query) => $query
-            ->where('project_id', $this->project_id)->where('organisation_id', auth()->user()->organisation_id))
+        return Boq::where('project_id', $this->project_id)
+            ->where('organisation_id', auth()->user()->organisation_id)
+            ->where('status', 'approved')
+            ->orderBy('name')->get();
+    }
+
+    /** Approved items that belong to the selected approved BOQ. */
+    private function boqItems()
+    {
+        if (! auth()->user()->hasPermission('boq.view') || ! $this->boq_id || ! $this->approvedBoqs()->contains('id', $this->boq_id)) {
+            return collect();
+        }
+
+        return BoqItem::with('boq')->where('boq_id', $this->boq_id)
+            ->where('status', 'approved')
             ->orderBy('description')->get();
     }
 }

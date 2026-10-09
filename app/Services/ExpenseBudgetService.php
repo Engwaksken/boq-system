@@ -10,10 +10,11 @@ use App\Models\Project;
 class ExpenseBudgetService
 {
     /** Compare recorded spending plus a draft against explicitly selected BOQ lines. */
-    public function compare(Project $project, array $lines, string $currency, ?int $excludeExpenseId = null): array
+    public function compare(Project $project, array $lines, string $currency, ?int $excludeExpenseId = null, ?int $boqId = null): array
     {
         $items = BoqItem::with('boq')->whereHas('boq', fn ($query) => $query
             ->where('project_id', $project->id)->where('organisation_id', $project->organisation_id))
+            ->when($boqId, fn ($query) => $query->where('boq_id', $boqId))
             ->whereIn('id', array_filter(array_column($lines, 'boq_item_id')))->get()->keyBy('id');
         $spending = ExpenseItem::query()->whereHas('expense', fn ($query) => $query
             ->where('project_id', $project->id)->where('organisation_id', $project->organisation_id)

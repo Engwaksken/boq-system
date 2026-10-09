@@ -257,8 +257,8 @@ class UserWorkspaceFeaturesTest extends TestCase
     {
         $user = $this->member();
         $project = Project::factory()->assignedTo($user)->create(['organisation_id' => $user->organisation_id]);
-        $boq = \App\Models\Boq::factory()->create(['project_id' => $project->id, 'organisation_id' => $user->organisation_id]);
-        $item = \App\Models\BoqItem::factory()->create(['boq_id' => $boq->id, 'quantity' => 2, 'approved_rate' => 10, 'unit' => 'bags', 'currency' => 'UGX']);
+        $boq = \App\Models\Boq::factory()->create(['project_id' => $project->id, 'organisation_id' => $user->organisation_id, 'status' => 'approved']);
+        $item = \App\Models\BoqItem::factory()->create(['boq_id' => $boq->id, 'status' => 'approved', 'quantity' => 2, 'approved_rate' => 10, 'unit' => 'bags', 'currency' => 'UGX']);
         $this->fillExpense(Livewire::actingAs($user)->test(Expenses::class), $project)
             ->set('boq_item_id', $item->id)->assertSee('Over budget')->call('save')->assertHasNoErrors()->assertSee('BOQ budget progress');
         $expense = Expense::with('items')->firstOrFail();

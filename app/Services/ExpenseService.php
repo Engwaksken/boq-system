@@ -93,9 +93,10 @@ class ExpenseService
     }
 
     /**
-     * A linked BOQ must belong to the expense's project and organisation, and a
-     * linked BOQ item must belong to that BOQ. This prevents cross-project or
-     * cross-tenant references from being stored through an unchecked write path.
+     * A linked BOQ must be approved and belong to the expense's project and
+     * organisation, and a linked BOQ item must be approved and belong to that
+     * BOQ. This prevents cross-project or cross-tenant references and keeps
+     * spending tied to the signed-off budget.
      */
     private function validateBoqLinks(Project $project, array $data): void
     {
@@ -113,11 +114,13 @@ class ExpenseService
                 422,
                 'The selected BOQ does not belong to this project.'
             );
+            abort_unless($boq->status === 'approved', 422, 'Only an approved BOQ can be linked to an expense.');
         }
 
         if ($boqItemId !== null) {
             $boqItem = BoqItem::find($boqItemId);
             abort_unless($boqItem && $boqItem->boq_id === $boqId, 422, 'The selected BOQ item does not belong to the selected BOQ.');
+            abort_unless($boqItem->status === 'approved', 422, 'Only an approved BOQ item can be linked to an expense.');
         }
     }
 
