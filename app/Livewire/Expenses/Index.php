@@ -28,6 +28,9 @@ class Index extends Component
     use \App\Livewire\Concerns\ExportsTables;
     use WithFileUploads, WithPagination;
 
+    /** Purchase payment methods offered on the record-expense form. */
+    public const PAYMENT_METHODS = ['Cash', 'Mobile Money', 'Bank Transfer', 'Cheque', 'Card', 'Credit', 'Other'];
+
     public string $search = '';
 
     #[Url(as: 'project', except: '')]
@@ -313,7 +316,7 @@ class Index extends Component
         $this->quantity = (string) ($fields['quantity'] ?? '1');
         $this->unit = (string) ($fields['unit'] ?? '');
         $this->rate = (string) ($fields['rate'] ?? '');
-        $this->payment_method = (string) ($fields['payment_method'] ?? '');
+        $this->payment_method = $this->normalisePaymentMethod((string) ($fields['payment_method'] ?? ''));
         $this->currency = (string) ($fields['currency'] ?? $this->currency);
         $this->extractionWarnings = $fields['warnings'] ?? [];
         $items = $fields['items'] ?? [];
@@ -386,6 +389,7 @@ class Index extends Component
             'projects' => $this->projects(), 'selectedExpense' => $selected,
             'boqs' => $this->approvedBoqs(),
             'boqItems' => $this->boqItems(),
+            'paymentMethods' => self::PAYMENT_METHODS,
             'budgetComparisons' => auth()->user()->hasPermission('boq.view') && ($project = $this->projects()->firstWhere('id', $this->project_id)) && $this->showForm && $this->expenseId === null
                 ? app(ExpenseBudgetService::class)->compare($project, $this->draftItems(), $this->currency, null, $this->boq_id) : [],
             'savedBudgetComparisons' => $selected && auth()->user()->hasPermission('boq.view') ? app(ExpenseBudgetService::class)->compare($selected->project,
@@ -422,5 +426,30 @@ class Index extends Component
         return BoqItem::with('boq')->where('boq_id', $this->boq_id)
             ->where('status', 'approved')
             ->orderBy('description')->get();
+    }
+
+    /** Map a receipt's free-text payment method onto a form option where possible. */
+    private function normalisePaymentMethod(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+
+        foreach (self::PAYMENT_METHODS as $method) {
+            if (strcasecmp($method, $value) === 0) {
+                return $method;
+            }
+        }
+
+        return match (strtolower(str_replace(['-', '_'], ' ', $value))) {
+            'momo', 'mobile money', 'mobilemoney', 'airtel money', 'mtn momo' => 'Mobile Money',
+            'bank', 'bank transfer', 'banktransfer', 'wire', 'eft' => 'Bank Transfer',
+            'check', 'cheque' => 'Cheque',
+            'cash' => 'Cash',
+            'card', 'credit card', 'debit card' => 'Card',
+            'credit', 'credit account', 'on credit' => 'Credit',
+            default => $value,
+        };
     }
 }

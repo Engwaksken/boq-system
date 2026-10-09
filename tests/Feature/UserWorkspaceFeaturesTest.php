@@ -266,6 +266,19 @@ class UserWorkspaceFeaturesTest extends TestCase
         $this->assertSame($boq->id, $expense->items->sole()->boq_id);
     }
 
+    public function test_expense_form_offers_payment_method_options(): void
+    {
+        $user = $this->member();
+        $project = Project::factory()->assignedTo($user)->create(['organisation_id' => $user->organisation_id]);
+        $this->fillExpense(Livewire::actingAs($user)->test(Expenses::class), $project)
+            ->assertSee('Select payment method')
+            ->set('payment_method', 'Mobile Money')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Mobile Money', Expense::firstOrFail()->payment_method);
+    }
+
     public function test_multiple_receipts_can_be_attached_to_an_existing_expense(): void
     {
         Storage::fake('local');

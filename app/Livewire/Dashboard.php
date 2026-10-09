@@ -37,14 +37,12 @@ class Dashboard extends Component
         $user = auth()->user();
         $organisationId = $user?->organisation_id;
 
-        $this->projectsCount = Project::query()
-            ->where(fn ($q) => $q->where('user_id', $user->id)->orWhere('organisation_id', $organisationId))
-            ->count();
+        // Members only see projects they are assigned to; administrators see the
+        // whole organisation (Project::accessibleTo encodes that boundary).
+        $this->projectsCount = Project::accessibleTo($user)->count();
 
         $this->boqsCount = Boq::query()
-            ->where(fn ($q) => $q
-                ->whereHas('project', fn ($p) => $p->where('user_id', $user->id))
-                ->orWhere('organisation_id', $organisationId))
+            ->whereHas('project', fn ($project) => $project->accessibleTo($user))
             ->count();
 
         $this->hardwarePricesCount = HardwarePrice::query()
@@ -55,8 +53,7 @@ class Dashboard extends Component
         $this->subscription = app(SubscriptionService::class)
             ->currentSubscription($user, $organisationId);
 
-        $this->recentProjects = Project::query()
-            ->where(fn ($q) => $q->where('user_id', $user->id)->orWhere('organisation_id', $organisationId))
+        $this->recentProjects = Project::accessibleTo($user)
             ->withCount('boqs')
             ->latest()
             ->limit(5)
