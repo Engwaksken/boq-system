@@ -69,6 +69,14 @@ class SiteSettings extends Component
             'allow_forgot_password' => SiteSetting::get('allow_forgot_password', true),
             'privacy_policy' => SiteSetting::get('privacy_policy', ''),
             'terms_of_use' => SiteSetting::get('terms_of_use', ''),
+            'mail_mailer' => (string) SiteSetting::get('mail_mailer', config('mail.default')),
+            'mail_host' => (string) SiteSetting::get('mail_host', config('mail.mailers.smtp.host', '')),
+            'mail_port' => (int) SiteSetting::get('mail_port', config('mail.mailers.smtp.port', 587)),
+            'mail_username' => (string) SiteSetting::get('mail_username', ''),
+            'mail_password' => '',
+            'mail_encryption' => (string) SiteSetting::get('mail_encryption', (string) config('mail.mailers.smtp.encryption', 'tls')),
+            'mail_from_address' => (string) SiteSetting::get('mail_from_address', config('mail.from.address', '')),
+            'mail_from_name' => (string) SiteSetting::get('mail_from_name', config('mail.from.name', '')),
         ];
 
         $this->logoUrl = $this->settings['logo'] ? asset('storage/'.$this->settings['logo']) : '';
@@ -102,6 +110,14 @@ class SiteSettings extends Component
             'settings.allow_forgot_password' => 'boolean',
             'settings.privacy_policy' => 'nullable|string',
             'settings.terms_of_use' => 'nullable|string',
+            'settings.mail_mailer' => 'nullable|string|max:50',
+            'settings.mail_host' => 'nullable|string|max:255',
+            'settings.mail_port' => 'nullable|integer|min:1|max:65535',
+            'settings.mail_username' => 'nullable|string|max:255',
+            'settings.mail_password' => 'nullable|string|max:1000',
+            'settings.mail_encryption' => 'nullable|string|max:20',
+            'settings.mail_from_address' => 'nullable|email|max:255',
+            'settings.mail_from_name' => 'nullable|string|max:255',
             'logoFile' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:2048',
             'faviconFile' => 'nullable|mimes:png,jpg,jpeg,webp,ico|max:1024',
         ]);
@@ -125,9 +141,20 @@ class SiteSettings extends Component
         }
 
         foreach ($this->settings as $key => $value) {
+            if ($key === 'mail_password') {
+                continue; // stored encrypted, or left unchanged when left blank
+            }
             $type = is_bool($value) ? 'boolean' : (is_int($value) ? 'integer' : 'string');
-            SiteSetting::set($key, $value, 'general', $type);
+            SiteSetting::set($key, $value, str_starts_with($key, 'mail_') ? 'mail' : 'general', $type);
         }
+
+        if (filled($this->settings['mail_password'] ?? null)) {
+            SiteSetting::set('mail_password', encrypt($this->settings['mail_password']), 'mail', 'string');
+            $this->settings['mail_password'] = '';
+        }
+
+        // Apply the new mail settings to the running request straight away.
+        app(\App\Services\MailSettings::class)->apply();
 
         // Keep the currency/language tables' default flags in step with the settings.
         DB::transaction(function () {
@@ -154,6 +181,48 @@ class SiteSettings extends Component
     {
         $this->settings['favicon'] = '';
         $this->faviconUrl = '';
+    }
+
+    /** Send a test email using the values currently in the mail form. */
+    public function sendTestMail(): void
+    {
+        $this->validate($this->mailRules());
+
+        $password = filled($this->settings['mail_password'] ?? null)
+            ? $this->settings['mail_password']
+            : app(\App\Services\MailSettings::class)->password();
+        app(\App\Services\MailSettings::class)->applyValues($this->settings, $password);
+
+        try {
+            \Illuminate\Support\Facades\Mail::to(auth()->user()->email)
+                ->send(new \App\Mail\MailSettingsTest(config('app.name')));
+            session()->flash('message', __('Test email sent to :email.', ['email' => auth()->user()->email]));
+        } catch (\Throwable $exception) {
+            report($exception);
+            session()->flash('error', __('The test email failed: :error', ['error' => $exception->getMessage()]));
+        }
+    }
+
+    /** Remove the stored SMTP password (e.g. when switching to an unauthenticated relay). */
+    public function clearMailPassword(): void
+    {
+        SiteSetting::set('mail_password', '', 'mail', 'string');
+        $this->settings['mail_password'] = '';
+        session()->flash('message', __('Stored mail password cleared.'));
+    }
+
+    /** @return array<string, mixed> */
+    private function mailRules(): array
+    {
+        return [
+            'settings.mail_mailer' => 'nullable|string|max:50',
+            'settings.mail_host' => 'nullable|string|max:255',
+            'settings.mail_port' => 'nullable|integer|min:1|max:65535',
+            'settings.mail_username' => 'nullable|string|max:255',
+            'settings.mail_encryption' => 'nullable|string|max:20',
+            'settings.mail_from_address' => 'nullable|email|max:255',
+            'settings.mail_from_name' => 'nullable|string|max:255',
+        ];
     }
 
     public function render()

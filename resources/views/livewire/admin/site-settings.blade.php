@@ -13,6 +13,7 @@
                 'general' => ['fa-sliders', __('General')],
                 'branding' => ['fa-image', __('Branding')],
                 'mobile' => ['fa-mobile-screen', __('Mobile App')],
+                'mail' => ['fa-envelope', __('Mail / SMTP')],
                 'currencies' => ['fa-coins', __('Currencies')],
                 'languages' => ['fa-language', __('Languages')],
                 'access' => ['fa-user-lock', __('Registration & Access')],
@@ -241,6 +242,81 @@
                         <a href="{{ route('legal.terms') }}" target="_blank" rel="noopener" class="boq-field-help inline-block"><i class="fas fa-arrow-up-right-from-square"></i> {{ __('Preview saved page') }}</a>
                         @error('settings.terms_of_use') <p class="boq-field-error">{{ $message }}</p> @enderror
                     </div>
+                </div>
+            </div>
+            {{-- Mail / SMTP --}}
+            <div x-show="tab === 'mail'" x-cloak>
+                <x-ui.alert type="info" class="mb-4">
+                    {{ __('Used to send invitation and notification emails. Leave the driver as in .env to keep the server configuration. The password is stored encrypted and is never shown again.') }}
+                </x-ui.alert>
+
+                <div class="boq-form-grid">
+                    <div>
+                        <label for="mail_mailer" class="boq-field-label">{{ __('Mail driver') }}</label>
+                        <select id="mail_mailer" wire:model="settings.mail_mailer" class="boq-field">
+                            @foreach(['smtp', 'ses', 'postmark', 'mailgun', 'resend', 'sendmail', 'log', 'array'] as $driver)
+                                <option value="{{ $driver }}">{{ $driver }}</option>
+                            @endforeach
+                        </select>
+                        @error('settings.mail_mailer') <p class="boq-field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label for="mail_host" class="boq-field-label">{{ __('SMTP host') }}</label>
+                        <input id="mail_host" type="text" wire:model="settings.mail_host" class="boq-field" placeholder="smtp.example.com">
+                        @error('settings.mail_host') <p class="boq-field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label for="mail_port" class="boq-field-label">{{ __('SMTP port') }}</label>
+                        <input id="mail_port" type="number" wire:model="settings.mail_port" class="boq-field" placeholder="587">
+                        @error('settings.mail_port') <p class="boq-field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label for="mail_encryption" class="boq-field-label">{{ __('Encryption') }}</label>
+                        <select id="mail_encryption" wire:model="settings.mail_encryption" class="boq-field">
+                            <option value="">{{ __('None') }}</option>
+                            <option value="tls">TLS</option>
+                            <option value="ssl">SSL</option>
+                        </select>
+                        @error('settings.mail_encryption') <p class="boq-field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label for="mail_username" class="boq-field-label">{{ __('SMTP username') }}</label>
+                        <input id="mail_username" type="text" wire:model="settings.mail_username" class="boq-field" autocomplete="off" placeholder="user@example.com">
+                        @error('settings.mail_username') <p class="boq-field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label for="mail_password" class="boq-field-label">{{ __('SMTP password') }}</label>
+                        <input id="mail_password" type="password" wire:model="settings.mail_password" class="boq-field" autocomplete="new-password" placeholder="{{ __('Leave blank to keep the saved password') }}">
+                        @error('settings.mail_password') <p class="boq-field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label for="mail_from_address" class="boq-field-label">{{ __('From address') }}</label>
+                        <input id="mail_from_address" type="email" wire:model="settings.mail_from_address" class="boq-field" placeholder="no-reply@example.com">
+                        @error('settings.mail_from_address') <p class="boq-field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label for="mail_from_name" class="boq-field-label">{{ __('From name') }}</label>
+                        <input id="mail_from_name" type="text" wire:model="settings.mail_from_name" class="boq-field" placeholder="{{ config('app.name') }}">
+                        @error('settings.mail_from_name') <p class="boq-field-error">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
+                <div class="mt-4 flex flex-wrap items-center gap-3">
+                    <button type="button" wire:click="sendTestMail" wire:loading.attr="disabled" wire:target="sendTestMail" class="boq-btn-secondary">
+                        <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                        {{ __('Send test email') }}
+                    </button>
+                    <button type="button" wire:click="clearMailPassword" class="boq-btn-secondary text-red-600">
+                        {{ __('Clear stored password') }}
+                    </button>
+                    <span wire:loading wire:target="sendTestMail" class="boq-field-help">{{ __('Sending...') }}</span>
                 </div>
             </div>
         </div>

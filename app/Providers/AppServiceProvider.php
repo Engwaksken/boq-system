@@ -40,5 +40,11 @@ class AppServiceProvider extends ServiceProvider
             CheckPermission::class,
             CheckEntitlement::class,
         ]);
+
+        // Mail (SMTP) configured in Site Settings overrides the .env defaults. Skip
+        // in console so config:cache is not baked with database-derived values.
+        if (! $this->app->runningInConsole()) {
+            $this->app->make(\App\Services\MailSettings::class)->apply();
+        }
     }
 }
