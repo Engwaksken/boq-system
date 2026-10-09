@@ -28,7 +28,7 @@
         x-show="open"
         x-cloak
         x-transition.origin.top.right
-        class="boq-menu w-80 max-w-[calc(100vw-1.5rem)] sm:w-96"
+        class="boq-menu boq-notifications-menu"
     >
         <div class="boq-menu-header flex items-center justify-between gap-3">
             <span class="text-sm font-semibold text-slate-900">{{ __('Notifications') }}</span>

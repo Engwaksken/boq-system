@@ -137,14 +137,32 @@ class Index extends Component
         ];
 
         $this->notificationPrefs = $user->notificationPreferences();
-        $this->loadCompanyForm();
         $this->displayPrefs = $user->displayPreferences() + ['locale' => $user->locale ?: 'en'];
+
+        // Company branding belongs to the organisation owner/administrator (or a
+        // personal account with no organisation); invited members cannot edit it.
+        if ($this->canManageCompany()) {
+            $this->loadCompanyForm();
+        } else {
+            unset($this->tabs['company']);
+        }
 
         $tab = (string) request()->query('tab', '');
 
         if (array_key_exists($tab, $this->tabs)) {
             $this->activeTab = $tab;
         }
+    }
+
+    /** Only organisation owners/admins (or personal accounts) set company details. */
+    private function canManageCompany(): bool
+    {
+        $user = Auth::user();
+
+        return $user !== null
+            && ($user->isSuperAdmin()
+                || $user->hasAnyRole(['administrator', 'admin'])
+                || $user->organisation_id === null);
     }
 
     /**
@@ -272,12 +290,15 @@ class Index extends Component
 
     public function updatedCompanyLogo(): void
     {
+        abort_unless($this->canManageCompany(), 403);
         $this->validateOnly('companyLogo', ['companyLogo' => \App\Services\CompanyProfileService::LOGO_RULES]);
         $this->removeCompanyLogo = false;
     }
 
     public function saveCompanyProfile(\App\Services\CompanyProfileService $service): void
     {
+        abort_unless($this->canManageCompany(), 403);
+
         try {
             $service->save(Auth::user(), $this->companyForm, $this->companyLogo, $this->removeCompanyLogo);
         } catch (\Illuminate\Validation\ValidationException $e) {

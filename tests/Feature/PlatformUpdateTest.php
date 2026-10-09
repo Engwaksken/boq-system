@@ -195,6 +195,8 @@ class PlatformUpdateTest extends TestCase
     {
         Storage::fake('public');
         $user = $this->customer();
+        // Company details are managed by the organisation administrator/owner.
+        $user->roles()->attach(Role::where('slug', 'administrator')->value('id'), ['organisation_id' => $user->organisation_id]);
 
         Livewire::actingAs($user)
             ->test(ProfileIndex::class)

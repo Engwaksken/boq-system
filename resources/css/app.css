@@ -2478,6 +2478,26 @@ button.boq-sort-th:hover {
     padding: 0.75rem 0.9rem;
 }
 
+/* Notifications: right-aligned on desktop, centred under the topbar on phones
+   where a right-anchored panel would overflow the screen edge. */
+.boq-notifications-menu {
+    width: min(24rem, calc(100vw - 1.5rem));
+    max-width: calc(100vw - 1.5rem);
+}
+
+@media (max-width: 639px) {
+    .boq-notifications-menu {
+        position: fixed;
+        top: calc(var(--boq-topbar-height) + 0.5rem);
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        width: min(22rem, calc(100vw - 2rem));
+        max-height: calc(100vh - var(--boq-topbar-height) - 1.5rem);
+        overflow-y: auto;
+    }
+}
+
 .boq-menu-item {
     display: flex;
     width: 100%;
