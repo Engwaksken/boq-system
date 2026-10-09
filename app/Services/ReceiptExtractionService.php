@@ -174,8 +174,9 @@ class ReceiptExtractionService
     {
         return <<<'PROMPT'
 Extract the expense details from this receipt. Return JSON only, with exactly this top-level shape:
-{"supplier":string|null,"purchase_date":"YYYY-MM-DD"|null,"description":string,"quantity":number,"unit":string,"rate":number|null,"total":number|null,"currency":string|null,"payment_method":string|null,"warnings":[string]}
+{"supplier":string|null,"purchase_date":"YYYY-MM-DD"|null,"description":string,"quantity":number,"unit":string,"rate":number|null,"total":number|null,"currency":string|null,"payment_method":string|null,"warnings":[string],"items":[{"description":string,"quantity":number,"unit":string,"rate":number|null,"total":number|null}]}
 Use null when a value is absent or unreadable. purchase_date must be an ISO date (YYYY-MM-DD) or null. quantity must be a positive number (default 1 when the receipt shows a single item and no quantity). rate and total must be non-negative numbers. currency must be a three-letter code. Preserve the supplier name and item wording exactly. Put concise extraction uncertainties in warnings.
+Read both printed and handwritten receipts. Never guess illegible handwriting, quantities or prices; use null for unreadable optional values and explain uncertainty in warnings. Return each purchased line separately in items (maximum 100), excluding subtotal, tax and grand-total rows. The top-level description, quantity, unit and rate must describe the first item, while total is the receipt grand total. If no items can be read, return an empty items list and a warning. Use "item" for an unspecified unit. Flag any discrepancy between line totals and the receipt grand total for review.
 PROMPT;
     }
 
@@ -190,7 +191,7 @@ PROMPT;
         $decoded = is_string($text) ? json_decode($text, true) : null;
 
         if (! is_array($decoded)
-            || ! $this->hasExactKeys($decoded, ['supplier', 'purchase_date', 'description', 'quantity', 'unit', 'rate', 'total', 'currency', 'payment_method', 'warnings'])
+            || ! $this->hasExactKeys(array_diff_key($decoded, ['items' => true]), ['supplier', 'purchase_date', 'description', 'quantity', 'unit', 'rate', 'total', 'currency', 'payment_method', 'warnings'])
             || ! is_array($decoded['warnings'])) {
             throw new RuntimeException('AI extraction response did not contain the expected fields.');
         }
@@ -221,6 +222,34 @@ PROMPT;
         $supplier = $this->string($decoded, 'supplier', 255);
         $paymentMethod = $this->string($decoded, 'payment_method', 100);
 
+        $items = $decoded['items'] ?? [['description' => $description, 'quantity' => $quantity, 'unit' => $unit, 'rate' => $rate, 'total' => $total]];
+        if (! is_array($items) || ! array_is_list($items) || count($items) > 100) {
+            throw new RuntimeException('AI extraction response contained invalid items.');
+        }
+        $items = array_map(function ($item): array {
+            if (! is_array($item) || ! $this->hasExactKeys($item, ['description', 'quantity', 'unit', 'rate', 'total'])) {
+                throw new RuntimeException('AI extraction response contained an invalid item.');
+            }
+            $quantity = $this->number($item, 'quantity', 1000000000, true);
+            if ($quantity <= 0) {
+                throw new RuntimeException('AI extraction response contained a non-positive item quantity.');
+            }
+
+            return [
+                'description' => $this->string($item, 'description', 10000, true),
+                'quantity' => $quantity,
+                'unit' => $this->string($item, 'unit', 50, true),
+                'rate' => $this->number($item, 'rate', 1000000000000),
+                'total' => $this->number($item, 'total', 1000000000000),
+            ];
+        }, $items);
+        if ($total !== null && $items !== [] && ! in_array(null, array_column($items, 'rate'), true)) {
+            $lineTotal = array_sum(array_map(fn ($item) => round($item['quantity'] * $item['rate'], 2), $items));
+            if (abs($lineTotal - $total) > 0.01) {
+                $warnings[] = 'The item totals differ from the receipt grand total. Review discounts, tax and unreadable lines before saving.';
+            }
+        }
+
         return [
             'supplier' => $supplier,
             'purchase_date' => $purchaseDate,
@@ -232,6 +261,7 @@ PROMPT;
             'currency' => $currency,
             'payment_method' => $paymentMethod,
             'warnings' => $warnings,
+            'items' => $items,
         ];
     }
 

@@ -224,4 +224,60 @@ class UserWorkspaceFeaturesTest extends TestCase
         Livewire::actingAs($user)->test(\App\Livewire\Projects\Show::class, ['project' => $project])
             ->assertSee('Visible BOQ')->assertDontSee('Foreign BOQ')->assertViewHas('totals', fn ($totals) => $totals['estimated_amount'] === 20.0);
     }
+
+    public function test_receipts_are_reviewed_and_saved_separately_without_losing_corrections(): void
+    {
+        Storage::fake('local');
+        config(['filesystems.disks.private' => null, 'services.ai_provider' => 'gemini', 'services.gemini.key' => 'test']);
+        $fields = ['supplier' => 'Shop', 'purchase_date' => '2026-10-01', 'description' => 'Cement',
+            'quantity' => 2, 'unit' => 'bags', 'rate' => 10, 'total' => 20, 'currency' => 'UGX', 'payment_method' => 'cash', 'warnings' => []];
+        \Illuminate\Support\Facades\Http::fake(['*' => \Illuminate\Support\Facades\Http::sequence()
+            ->push(['candidates' => [['content' => ['parts' => [['text' => json_encode($fields)]]]]]])
+            ->push(['candidates' => [['content' => ['parts' => [['text' => json_encode(array_replace($fields, ['supplier' => 'Other shop', 'description' => 'Sand']))]]]]]])]);
+        $user = $this->member();
+        $project = Project::factory()->assignedTo($user)->create(['organisation_id' => $user->organisation_id]);
+        $component = Livewire::actingAs($user)->test(Expenses::class)->call('create')->set('project_id', $project->id)
+            ->set('extractFiles', [
+                UploadedFile::fake()->createWithContent('first.pdf', "%PDF-1.4\nfirst receipt\n%%EOF"),
+                UploadedFile::fake()->createWithContent('second.pdf', "%PDF-1.4\nsecond receipt\n%%EOF"),
+            ])->assertSet('description', 'Cement')->set('supplier', 'Corrected shop')
+            ->call('reviewReceipt', 1)->assertSet('description', 'Sand')
+            ->call('reviewReceipt', 0)->assertSet('supplier', 'Corrected shop')
+            ->call('save')->assertHasNoErrors()->assertSet('showForm', true)->assertSet('description', 'Sand')
+            ->call('save')->assertHasNoErrors()->assertSet('showForm', false);
+        $expenses = Expense::with('receipts')->orderBy('id')->get();
+        $this->assertCount(2, $expenses);
+        $this->assertSame('Corrected shop', $expenses[0]->supplier);
+        $this->assertSame('first.pdf', $expenses[0]->receipts->sole()->original_filename);
+        $this->assertSame('second.pdf', $expenses[1]->receipts->sole()->original_filename);
+        \Illuminate\Support\Facades\Http::assertSentCount(2);
+    }
+
+    public function test_expense_form_saves_boq_links_and_shows_over_budget_progress(): void
+    {
+        $user = $this->member();
+        $project = Project::factory()->assignedTo($user)->create(['organisation_id' => $user->organisation_id]);
+        $boq = \App\Models\Boq::factory()->create(['project_id' => $project->id, 'organisation_id' => $user->organisation_id]);
+        $item = \App\Models\BoqItem::factory()->create(['boq_id' => $boq->id, 'quantity' => 2, 'approved_rate' => 10, 'unit' => 'bags', 'currency' => 'UGX']);
+        $this->fillExpense(Livewire::actingAs($user)->test(Expenses::class), $project)
+            ->set('boq_item_id', $item->id)->assertSee('Over budget')->call('save')->assertHasNoErrors()->assertSee('BOQ budget progress');
+        $expense = Expense::with('items')->firstOrFail();
+        $this->assertSame($item->id, $expense->items->sole()->boq_item_id);
+        $this->assertSame($boq->id, $expense->items->sole()->boq_id);
+    }
+
+    public function test_multiple_receipts_can_be_attached_to_an_existing_expense(): void
+    {
+        Storage::fake('local');
+        config(['filesystems.disks.private' => null]);
+        $user = $this->member();
+        $project = Project::factory()->assignedTo($user)->create(['organisation_id' => $user->organisation_id]);
+        $component = $this->fillExpense(Livewire::actingAs($user)->test(Expenses::class), $project)->call('save');
+        $component->set('receiptFiles', [
+            UploadedFile::fake()->createWithContent('first.pdf', "%PDF-1.4\nfirst\n%%EOF"),
+            UploadedFile::fake()->createWithContent('second.pdf', "%PDF-1.4\nsecond\n%%EOF"),
+        ])->call('uploadReceipt')->assertHasNoErrors()->assertSee('first.pdf')->assertSee('second.pdf');
+        $this->assertSame(2, Expense::firstOrFail()->receipts()->count());
+        $this->assertSame('37.50', Expense::firstOrFail()->total);
+    }
 }

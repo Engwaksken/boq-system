@@ -61,6 +61,20 @@ class ExpenseController extends Controller
      */
     public function extract(ExtractExpenseRequest $request)
     {
+        if ($request->hasFile('files')) {
+            $results = [];
+            foreach ($request->file('files') as $index => $file) {
+                try {
+                    $results[] = ['index' => $index, 'filename' => $file->getClientOriginalName(),
+                        'data' => app(ReceiptExtractionService::class)->extract($file, $request->user()->organisation_id), 'error' => null];
+                } catch (\Illuminate\Validation\ValidationException $exception) {
+                    $results[] = ['index' => $index, 'filename' => $file->getClientOriginalName(),
+                        'data' => null, 'error' => $exception->errors()['file'][0] ?? 'The receipt could not be read.'];
+                }
+            }
+
+            return response()->json(['data' => $results]);
+        }
         $data = app(ReceiptExtractionService::class)->extract(
             $request->file('file'),
             $request->user()->organisation_id

@@ -4,12 +4,15 @@ namespace App\Livewire\Expenses;
 
 use App\Http\Requests\StoreExpenseRequest;
 use App\Http\Requests\UpdateExpenseRequest;
+use App\Models\BoqItem;
 use App\Models\Expense;
 use App\Models\Project;
+use App\Services\ExpenseBudgetService;
 use App\Services\ExpenseReceiptService;
 use App\Services\ExpenseService;
 use App\Services\ReceiptExtractionService;
 use App\Support\Regional;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -64,6 +67,18 @@ class Index extends Component
 
     public $extractFile;
 
+    public array $extractFiles = [];
+
+    public array $receiptFiles = [];
+
+    #[Locked]
+    public ?int $activeReceiptIndex = null;
+
+    #[Locked]
+    public array $receiptDrafts = [];
+
+    public ?int $boq_item_id = null;
+
     public array $extractionWarnings = [];
 
     public function boot(): void
@@ -103,6 +118,10 @@ class Index extends Component
 
     public function updatedProjectId(): void
     {
+        $this->boq_item_id = null;
+        foreach ($this->additionalItems as &$item) {
+            $item['boq_item_id'] = null;
+        }
         if ($this->expenseId === null && $this->project_id !== null) {
             $project = $this->projects()->firstWhere('id', $this->project_id);
             if ($project) {
@@ -123,11 +142,15 @@ class Index extends Component
         $this->project_id = $expense->project_id;
         $this->purchase_date = $expense->purchase_date->toDateString();
         $this->is_planned = $expense->is_planned;
+        $this->boq_item_id = $expense->boq_item_id;
         $this->showForm = true;
     }
 
     public function save(ExpenseService $service, ExpenseReceiptService $receipts): void
     {
+        if ($this->extractFiles !== []) {
+            $this->validate(['extractFiles' => ['array', 'max:10'], 'extractFiles.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240']]);
+        }
         $rules = $this->expenseId === null ? (new StoreExpenseRequest)->rules() : (new UpdateExpenseRequest)->rules();
         if ($this->expenseId !== null) {
             unset($rules['project_id']);
@@ -136,20 +159,41 @@ class Index extends Component
         $rules = array_intersect_key($rules, $this->all());
         $data = $this->validate($rules);
         if ($this->expenseId === null) {
-            $data['items'] = [[
-                'description' => $data['description'],
-                'quantity' => $data['quantity'],
-                'unit' => $data['unit'],
-                'rate' => $data['rate'],
-            ], ...$this->additionalItems];
-            $expense = $service->create(auth()->user(), $data);
+            $items = $this->draftItems();
+            $available = $this->boqItems()->keyBy('id');
+            foreach ($items as &$item) {
+                if (! empty($item['boq_item_id'])) {
+                    $boqItem = $available->get($item['boq_item_id']);
+                    abort_unless($boqItem, 422, 'Select a BOQ item from the assigned project.');
+                    $item['boq_id'] = $boqItem->boq_id;
+                }
+            }
+            $data['items'] = $items;
+            $expense = DB::transaction(function () use ($service, $receipts, $data) {
+                $expense = $service->create(auth()->user(), $data);
+                if ($this->extractFile) {
+                    $receipts->store(auth()->user(), $expense, $this->extractFile);
+                }
+
+                return $expense;
+            });
         } else {
             $expense = $service->update(auth()->user(), Expense::findOrFail($this->expenseId), $data);
         }
-        if ($this->extractFile) {
+        if ($this->expenseId !== null && $this->extractFile) {
             $receipts->store(auth()->user(), $expense, $this->extractFile);
         }
         $this->selectedExpenseId = $expense->id;
+        if ($this->activeReceiptIndex !== null) {
+            unset($this->extractFiles[$this->activeReceiptIndex], $this->receiptDrafts[$this->activeReceiptIndex]);
+            if ($this->extractFiles !== []) {
+                $this->activeReceiptIndex = null;
+                $this->reviewReceipt(array_key_first($this->extractFiles));
+                session()->flash('status', __('Expense saved. Review the next receipt.'));
+
+                return;
+            }
+        }
         $this->closeForm();
         session()->flash('status', __('Expense saved successfully.'));
     }
@@ -157,7 +201,7 @@ class Index extends Component
     public function addExpenseItem(): void
     {
         abort_if(count($this->additionalItems) >= 99, 422);
-        $this->additionalItems[] = ['description' => '', 'quantity' => '1', 'unit' => '', 'rate' => ''];
+        $this->additionalItems[] = ['description' => '', 'quantity' => '1', 'unit' => '', 'rate' => '', 'boq_item_id' => null];
     }
 
     public function removeExpenseItem(int $index): void
@@ -179,6 +223,36 @@ class Index extends Component
         }
     }
 
+    public function updatedExtractFiles(): void
+    {
+        $this->receiptDrafts = [];
+        $this->activeReceiptIndex = null;
+        $this->extractFile = null;
+        $this->validate(['extractFiles' => ['array', 'min:1', 'max:10'], 'extractFiles.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240']]);
+        $this->reviewReceipt(array_key_first($this->extractFiles));
+    }
+
+    public function reviewReceipt(int $index): void
+    {
+        abort_unless(isset($this->extractFiles[$index]), 404);
+        $fields = ['supplier', 'purchase_date', 'description', 'quantity', 'unit', 'rate', 'payment_method', 'currency', 'additionalItems', 'extractionWarnings', 'boq_item_id', 'is_planned', 'explanation'];
+        if ($this->activeReceiptIndex !== null) {
+            $this->receiptDrafts[$this->activeReceiptIndex] = array_intersect_key($this->all(), array_flip($fields));
+        }
+        $this->activeReceiptIndex = $index;
+        $this->extractFile = $this->extractFiles[$index];
+        $this->resetValidation();
+        if (isset($this->receiptDrafts[$index])) {
+            foreach ($fields as $field) {
+                $this->{$field} = $this->receiptDrafts[$index][$field];
+            }
+        } else {
+            $this->reset($fields);
+            $this->currency = $this->projects()->firstWhere('id', $this->project_id)?->currency ?? Regional::currency();
+            $this->runExtraction();
+        }
+    }
+
     /** Read expense fields from an uploaded receipt and pre-fill the form for review. */
     public function extractFromReceipt(): void
     {
@@ -187,6 +261,7 @@ class Index extends Component
 
     private function runExtraction(): void
     {
+        $this->resetValidation('extractFile');
         if (! $this->extractFile) {
             $this->addError('extractFile', __('Choose a receipt file first.'));
 
@@ -210,12 +285,24 @@ class Index extends Component
         $this->payment_method = (string) ($fields['payment_method'] ?? '');
         $this->currency = (string) ($fields['currency'] ?? $this->currency);
         $this->extractionWarnings = $fields['warnings'] ?? [];
+        $items = $fields['items'] ?? [];
+        if ($items !== []) {
+            $first = array_shift($items);
+            foreach (['description', 'quantity', 'unit', 'rate'] as $field) {
+                $this->{$field} = (string) ($first[$field] ?? '');
+            }
+        }
+        $this->boq_item_id = null;
+        $this->additionalItems = array_map(fn ($item) => [
+            'description' => $item['description'], 'quantity' => (string) $item['quantity'],
+            'unit' => $item['unit'], 'rate' => (string) ($item['rate'] ?? ''), 'boq_item_id' => null,
+        ], $items);
         $this->resetValidation(['supplier', 'purchase_date', 'description', 'quantity', 'unit', 'rate', 'currency', 'payment_method']);
     }
 
     public function closeForm(): void
     {
-        $this->reset(['showForm', 'expenseId', 'project_id', 'purchase_date', 'supplier', 'description', 'quantity', 'unit', 'rate', 'currency', 'payment_method', 'is_planned', 'explanation', 'extractFile', 'extractionWarnings', 'additionalItems']);
+        $this->reset(['showForm', 'expenseId', 'project_id', 'purchase_date', 'supplier', 'description', 'quantity', 'unit', 'rate', 'currency', 'payment_method', 'is_planned', 'explanation', 'extractFile', 'extractFiles', 'activeReceiptIndex', 'receiptDrafts', 'boq_item_id', 'extractionWarnings', 'additionalItems']);
         $this->resetValidation();
     }
 
@@ -223,13 +310,13 @@ class Index extends Component
     {
         $this->authorize('view', Expense::findOrFail($id));
         $this->selectedExpenseId = $id;
-        $this->reset('receiptFile');
+        $this->reset('receiptFile', 'receiptFiles');
         $this->resetValidation();
     }
 
     public function closeDetails(): void
     {
-        $this->reset(['selectedExpenseId', 'receiptFile']);
+        $this->reset(['selectedExpenseId', 'receiptFile', 'receiptFiles']);
         $this->resetValidation();
     }
 
@@ -237,9 +324,16 @@ class Index extends Component
     {
         $expense = Expense::findOrFail($this->selectedExpenseId);
         $this->authorize('update', $expense);
-        $this->validate(['receiptFile' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240']]);
-        $service->store(auth()->user(), $expense, $this->receiptFile);
-        $this->reset('receiptFile');
+        if ($this->receiptFile && $this->receiptFiles === []) {
+            $this->validate(['receiptFile' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240']]);
+            $this->receiptFiles = [$this->receiptFile];
+        }
+        $this->validate(['receiptFiles' => ['required', 'array', 'min:1', 'max:10'], 'receiptFiles.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240']]);
+        foreach ($this->receiptFiles as $index => $file) {
+            $service->store(auth()->user(), $expense, $file);
+            unset($this->receiptFiles[$index]);
+        }
+        $this->reset('receiptFile', 'receiptFiles');
         session()->flash('status', __('Receipt uploaded successfully.'));
     }
 
@@ -259,6 +353,28 @@ class Index extends Component
             'expenses' => (clone $query)->with('project')->latest('purchase_date')->latest('id')->paginate(15),
             'totals' => (clone $query)->selectRaw('currency, SUM(total) AS amount')->groupBy('currency')->get(),
             'projects' => $this->projects(), 'selectedExpense' => $selected,
+            'boqItems' => $this->boqItems(),
+            'budgetComparisons' => auth()->user()->hasPermission('boq.view') && ($project = $this->projects()->firstWhere('id', $this->project_id)) && $this->showForm && $this->expenseId === null
+                ? app(ExpenseBudgetService::class)->compare($project, $this->draftItems(), $this->currency) : [],
+            'savedBudgetComparisons' => $selected && auth()->user()->hasPermission('boq.view') ? app(ExpenseBudgetService::class)->compare($selected->project,
+                $selected->items->isNotEmpty() ? $selected->items->toArray() : [$selected->toArray()], $selected->currency, $selected->id) : [],
         ]);
+    }
+
+    private function draftItems(): array
+    {
+        return [['description' => $this->description, 'quantity' => $this->quantity, 'unit' => $this->unit,
+            'rate' => $this->rate, 'boq_item_id' => $this->boq_item_id], ...$this->additionalItems];
+    }
+
+    private function boqItems()
+    {
+        if (! auth()->user()->hasPermission('boq.view') || ! $this->project_id || ! $this->projects()->contains('id', $this->project_id)) {
+            return collect();
+        }
+
+        return BoqItem::with('boq')->whereHas('boq', fn ($query) => $query
+            ->where('project_id', $this->project_id)->where('organisation_id', auth()->user()->organisation_id))
+            ->orderBy('description')->get();
     }
 }

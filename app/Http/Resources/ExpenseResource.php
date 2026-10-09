@@ -27,6 +27,11 @@ class ExpenseResource extends JsonResource
             'explanation' => $this->explanation,
             'items' => ExpenseItemResource::collection($this->whenLoaded('items')),
             'receipts' => ExpenseReceiptResource::collection($this->whenLoaded('receipts')),
+            'budget_comparisons' => $this->when($this->resource->relationLoaded('items') && $request->user()?->hasPermission('boq.view'), fn () => app(\App\Services\ExpenseBudgetService::class)->compare(
+                $this->resource->project,
+                $this->resource->items->isNotEmpty() ? $this->resource->items->toArray() : [$this->resource->toArray()],
+                $this->currency, $this->id
+            )),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

@@ -201,4 +201,41 @@ class ReceiptExtractionTest extends TestCase
 
         $this->actingAs($user, 'sanctum')->post('/api/v1/expenses/extract', [])->assertUnprocessable();
     }
+
+    public function test_extracts_separate_items_and_flags_total_discrepancies(): void
+    {
+        config(['services.ai_provider' => 'gemini', 'services.gemini.key' => 'test']);
+        $fields = $this->validExtraction();
+        $fields['items'] = [
+            ['description' => 'Cement', 'quantity' => 2, 'unit' => 'bags', 'rate' => 10, 'total' => 20],
+            ['description' => 'Sand', 'quantity' => 1, 'unit' => 'load', 'rate' => 5, 'total' => 5],
+        ];
+        Http::fake(['*' => Http::response($this->geminiResponse($fields))]);
+        $result = app(ReceiptExtractionService::class)->extract($this->pdf(), $this->organisation()->id);
+        $this->assertCount(2, $result['items']);
+        $this->assertSame('Sand', $result['items'][1]['description']);
+        $this->assertStringContainsString('grand total', $result['warnings'][1]);
+        Http::assertSent(fn (Request $request) => str_contains($request['contents'][0]['parts'][0]['text'], 'handwritten receipts'));
+    }
+
+    public function test_batch_extraction_keeps_success_and_failure_results_separate(): void
+    {
+        config(['services.ai_provider' => 'gemini', 'services.gemini.key' => 'test']);
+        Http::fake(['*' => Http::sequence()->push($this->geminiResponse($this->validExtraction()))->push([], 500)]);
+        $user = $this->user($this->organisation());
+        $this->actingAs($user, 'sanctum')->post('/api/v1/expenses/extract', ['files' => [$this->pdf(), $this->pdf()]])
+            ->assertOk()->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.data.supplier', 'Ace Hardware')->assertJsonPath('data.0.error', null)
+            ->assertJsonPath('data.1.data', null)->assertJsonPath('data.1.index', 1);
+        Http::assertSentCount(2);
+    }
+
+    public function test_batch_extraction_rejects_more_than_ten_receipts(): void
+    {
+        Http::fake();
+        $user = $this->user($this->organisation());
+        $this->actingAs($user, 'sanctum')->post('/api/v1/expenses/extract', ['files' => array_map(fn () => $this->pdf(), range(1, 11))])
+            ->assertUnprocessable();
+        Http::assertNothingSent();
+    }
 }

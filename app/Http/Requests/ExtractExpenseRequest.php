@@ -13,6 +13,10 @@ class ExtractExpenseRequest extends FormRequest
 
     public function rules(): array
     {
-        return ['file' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240']];
+        return [
+            'file' => ['required_without:files', 'prohibits:files', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240'],
+            'files' => ['required_without:file', 'prohibits:file', 'array', 'min:1', 'max:10'],
+            'files.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240'],
+        ];
     }
 }
