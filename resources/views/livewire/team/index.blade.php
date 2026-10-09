@@ -11,9 +11,12 @@
     @endif
 
     <x-ui.tabs :label="__('Team invitations sections')">
-        @if($canManage)<x-ui.tab wire:click="setTab('invitations')" :active="$tab === 'invitations'" icon="fa-list">{{ __('Invitations') }}</x-ui.tab>@endif
-        <x-ui.tab wire:click="setTab('accept')" :active="$tab === 'accept'" icon="fa-key">{{ __('Accept invitation') }}</x-ui.tab>
-        @if($canManage)<x-ui.tab wire:click="setTab('bulk')" :active="$tab === 'bulk'" icon="fa-file-csv">{{ __('Bulk invitations') }}</x-ui.tab>@endif
+        @if($canManage)
+            <x-ui.tab wire:click="setTab('invitations')" :active="$tab === 'invitations'" icon="fa-list">{{ __('Invitations') }}</x-ui.tab>
+            <x-ui.tab wire:click="setTab('bulk')" :active="$tab === 'bulk'" icon="fa-file-csv">{{ __('Bulk invitations') }}</x-ui.tab>
+        @else
+            <x-ui.tab wire:click="setTab('accept')" :active="$tab === 'accept'" icon="fa-key">{{ __('Accept invitation') }}</x-ui.tab>
+        @endif
     </x-ui.tabs>
 
     @if($createdToken)
@@ -56,7 +59,7 @@
                 <thead><tr><th class="boq-check-col"><x-select-all :ids="$pendingIds" :selected="$selected" /></th><th>{{ __('Email') }}</th><th>{{ __('Role') }}</th><th>{{ __('Expires at') }}</th><th>{{ __('Status') }}</th><th>{{ __('Actions') }}</th></tr></thead>
                 <tbody>@forelse($invitations as $invitation)
                     @php($pending = !$invitation->accepted_at && !$invitation->revoked_at && $invitation->expires_at->isFuture())
-                    <tr wire:key="invitation-{{ $invitation->id }}"><td class="boq-check-col">@if($pending)<x-select-row :id="$invitation->id" />@endif</td><td>{{ $invitation->email }}</td><td>{{ $invitation->role?->name ?: '—' }}</td><td>{{ \App\Support\Format::date($invitation->expires_at) }}</td><td>{{ $invitation->accepted_at ? __('Accepted') : ($invitation->revoked_at ? __('Disabled') : ($pending ? __('Pending') : __('Expired'))) }}</td><td>@if($pending)<button type="button" wire:click="edit({{ $invitation->id }})" class="boq-btn-ghost">{{ __('Edit') }}</button><button type="button" wire:click="revoke({{ $invitation->id }})" wire:confirm="{{ __('Disable this invitation? The invited person will no longer be able to join with it.') }}" class="boq-btn-ghost">{{ __('Disable') }}</button>@endif</td></tr>
+                    <tr wire:key="invitation-{{ $invitation->id }}"><td class="boq-check-col">@if($pending)<x-select-row :id="$invitation->id" />@endif</td><td>{{ $invitation->email }}</td><td>{{ $invitation->role?->name ?: '—' }}</td><td>{{ \App\Support\Format::date($invitation->expires_at) }}</td><td>{{ $invitation->accepted_at ? __('Accepted') : ($invitation->revoked_at ? __('Disabled') : ($pending ? __('Pending') : __('Expired'))) }}</td><td>@if($pending)<button type="button" wire:click="edit({{ $invitation->id }})" class="boq-btn-ghost">{{ __('Edit') }}</button><button type="button" wire:click="revoke({{ $invitation->id }})" wire:confirm="{{ __('Disable this invitation? The invited person will no longer be able to join with it.') }}" class="boq-btn-ghost">{{ __('Disable') }}</button>@elseif(!$invitation->accepted_at)<button type="button" wire:click="deleteInvitation({{ $invitation->id }})" wire:confirm="{{ __('Delete this invitation? This cannot be undone.') }}" class="boq-btn-ghost">{{ __('Delete') }}</button>@endif</td></tr>
                 @empty<tr><td colspan="6"><x-ui.empty-state icon="fa-user-plus" :title="__('No invitations yet.')" /></td></tr>@endforelse</tbody>
             </x-ui.table></div><div class="p-4">{{ $invitations->links() }}</div>
         </x-ui.card>

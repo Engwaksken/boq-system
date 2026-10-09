@@ -190,6 +190,17 @@ class Index extends Component
         $this->finishBulkAction($count, 'disabled', 'status');
     }
 
+    /** Permanently remove an expired or disabled invitation (accepted ones are kept). */
+    public function deleteInvitation(int $id): void
+    {
+        $this->authorizeManagement();
+        $invitation = Invitation::findOrFail($id);
+        $this->authorize('delete', $invitation);
+        abort_if($invitation->accepted_at !== null, 422, 'An accepted invitation cannot be deleted.');
+        $invitation->delete();
+        session()->flash('status', __('Invitation deleted.'));
+    }
+
     public function accept(InvitationService $service): void
     {
         $this->validate(['acceptToken' => ['required', 'string', 'max:255']]);

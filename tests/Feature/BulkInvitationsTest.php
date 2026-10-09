@@ -90,4 +90,23 @@ class BulkInvitationsTest extends TestCase
             ->call('bulkRevoke')
             ->assertForbidden();
     }
+
+    public function test_manager_does_not_see_accept_invitation_and_can_delete_an_expired_one(): void
+    {
+        $admin = $this->member();
+        Livewire::actingAs($admin)->test(Index::class)
+            ->assertSet('tab', 'invitations')
+            ->assertDontSee('Accept invitation');
+
+        [$invitation] = app(\App\Services\InvitationService::class)->create($admin, [
+            'email' => 'expired@example.com', 'role_id' => Role::where('slug', 'user')->value('id'),
+        ]);
+        $invitation->forceFill(['expires_at' => now()->subDay()])->save();
+
+        Livewire::actingAs($admin)->test(Index::class)
+            ->call('deleteInvitation', $invitation->id)
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseMissing('invitations', ['id' => $invitation->id]);
+    }
 }
