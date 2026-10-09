@@ -12,12 +12,53 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\WithFileUploads;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use WithPagination;
+    use WithFileUploads;
+
+    public $bulkFile;
+
+    #[Locked]
+    public array $bulkResults = [];
+
+    public function downloadBulkTemplate()
+    {
+        $this->authorizeManagement();
+
+        return response()->streamDownload(function () {
+            $stream = fopen('php://output', 'wb');
+            fputcsv($stream, ['email', 'role']);
+            fputcsv($stream, ['colleague@example.com', 'user']);
+            fclose($stream);
+        }, 'team-invitations-template.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    public function uploadBulkInvitations(\App\Services\BulkInvitationService $service): void
+    {
+        $this->authorizeManagement();
+        $this->validate(['bulkFile' => ['required', 'file', 'mimes:csv,txt', 'max:2048']]);
+        try {
+            $this->bulkResults = $service->import(auth()->user(), $this->bulkFile);
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $this->addError('bulkFile', implode(' ', $exception->errors()['file'] ?? ['The upload is invalid.']));
+
+            return;
+        }
+        $this->reset('bulkFile');
+        $this->resetPage();
+        session()->flash('status', __('Bulk invitations processed. Review delivery results below.'));
+    }
+
+    public function dismissBulkResults(): void
+    {
+        $this->reset('bulkResults');
+    }
 
     public string $email = '';
     public ?int $role_id = null;
@@ -42,6 +83,11 @@ class Index extends Component
 
         return auth()->user()->hasVerifiedEmail() && $organisation
             && Gate::allows('create', [Invitation::class, $organisation]);
+    }
+
+    public function canExportTables(): bool
+    {
+        return $this->canManage();
     }
 
     private function authorizeManagement(): void
@@ -131,7 +177,7 @@ class Index extends Component
 
         return view('livewire.team.index', [
             'canManage' => $canManage,
-            'invitations' => $canManage ? Invitation::where('organisation_id', auth()->user()->organisation_id)->with('role')->latest()->paginate(15) : null,
+            'invitations' => $canManage ? Invitation::where('organisation_id', auth()->user()->organisation_id)->with('role')->latest()->paginate($this->exportPageSize(15)) : null,
             'roles' => $canManage ? Role::whereIn('slug', ['project-manager', 'procurement-officer', 'finance', 'user'])->orderBy('name')->get() : collect(),
         ]);
     }

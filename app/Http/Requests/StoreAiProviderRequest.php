@@ -20,7 +20,7 @@ class StoreAiProviderRequest extends FormRequest
         return [
             'key' => ['required', 'string', 'max:50', 'alpha_dash', 'unique:ai_providers,key'],
             'name' => ['required', 'string', 'max:255'],
-            'provider_type' => ['required', 'string', Rule::in(['openai', 'gemini', 'google_gemini', 'ollama', 'anthropic', 'azure_openai'])],
+            'provider_type' => ['required', 'string', Rule::in([...array_keys(config('ai-providers')), 'google_gemini'])],
             'api_base_url' => ['sometimes', 'nullable', 'url', 'max:500'],
             'default_model' => ['required', 'string', 'max:100'],
             'api_key' => ['required', 'string', 'max:2000'],
@@ -42,7 +42,7 @@ class StoreAiProviderRequest extends FormRequest
     {
         return [
             'key.alpha_dash' => 'The key may only contain letters, numbers, dashes, and underscores.',
-            'provider_type.in' => 'The provider type must be one of: openai, gemini, google_gemini, ollama, anthropic, azure_openai.',
+            'provider_type.in' => 'Select a supported AI provider or an OpenAI-compatible API.',
             'api_key.required' => 'An API key is required for the AI provider.',
         ];
     }

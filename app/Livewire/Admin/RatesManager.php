@@ -15,6 +15,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class RatesManager extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithBulkSelection;
     use WithPagination;
@@ -199,7 +200,7 @@ class RatesManager extends Component
             ->when($this->currency, fn ($q) => $q->where('currency', $this->currency));
 
         return view('livewire.admin.rates-manager', [
-            'rates' => $query->orderByDesc('verified_at')->orderBy('item')->paginate($this->perPage),
+            'rates' => $query->orderByDesc('verified_at')->orderBy('item')->paginate($this->exportPageSize($this->perPage)),
             'categoryOptions' => $this->showForm ? $this->categoryOptions() : [],
             'itemOptions' => $this->showForm ? $this->itemOptions((string) ($this->form['category'] ?? '')) : [],
         ]);

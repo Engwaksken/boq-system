@@ -13,6 +13,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class TopupsManager extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithBulkSelection;
     use WithPagination;
@@ -205,7 +206,7 @@ class TopupsManager extends Component
                 })
                 ->orderBy('display_order')
                 ->orderBy('name')
-                ->paginate($this->perPage),
+                ->paginate($this->exportPageSize($this->perPage)),
             'purchaseCounts' => TopupPurchase::query()
                 ->selectRaw('topup_id, count(*) as total')
                 ->groupBy('topup_id')

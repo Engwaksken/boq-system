@@ -4,6 +4,7 @@
         <button type="button" wire:click="create" class="boq-btn-primary">
             <i class="fas fa-plus"></i> {{ __('Add Currency') }}
         </button>
+        <div class="flex flex-wrap gap-2"><x-ui.export-buttons /></div>
     </div>
 
     @if(session('currency-message'))

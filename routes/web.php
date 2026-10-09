@@ -450,6 +450,9 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('role:super-admin,administrator,admin')
         ->name('admin.categories');
 
+    Route::get('/admin/ai-providers', AiProviders::class)
+        ->middleware('role:super-admin,administrator,admin')->name('admin.ai-providers');
+
     Route::middleware(
         'role:super-admin'
     )
@@ -559,12 +562,6 @@ Route::middleware('auth')->group(function (): void {
             | AI Providers
             |--------------------------------------------------------------------------
             */
-
-            Route::get(
-                '/ai-providers',
-                AiProviders::class
-            )->name('ai-providers');
-
 
             /*
             |--------------------------------------------------------------------------

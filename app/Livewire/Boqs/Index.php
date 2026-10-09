@@ -11,6 +11,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use \App\Livewire\Concerns\UsesPreferredPerPage;
     use \App\Livewire\Concerns\WithBulkSelection;
     use WithPagination;
@@ -196,7 +197,7 @@ class Index extends Component
             default => $boqs->orderBy($this->sortBy, $this->sortDir),
         };
 
-        $boqs = $boqs->paginate($this->perPage);
+        $boqs = $boqs->paginate($this->exportPageSize($this->perPage));
 
         $projects = Project::query()
             ->where(function ($q) use ($user) {

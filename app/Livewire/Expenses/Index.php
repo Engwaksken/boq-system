@@ -24,6 +24,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use WithFileUploads, WithPagination;
 
     public string $search = '';
@@ -350,7 +351,7 @@ class Index extends Component
         }
 
         return view('livewire.expenses.index', [
-            'expenses' => (clone $query)->with('project')->latest('purchase_date')->latest('id')->paginate(15),
+            'expenses' => (clone $query)->with('project')->latest('purchase_date')->latest('id')->paginate($this->exportPageSize(15)),
             'totals' => (clone $query)->selectRaw('currency, SUM(total) AS amount')->groupBy('currency')->get(),
             'projects' => $this->projects(), 'selectedExpense' => $selected,
             'boqItems' => $this->boqItems(),

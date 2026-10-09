@@ -17,6 +17,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithPagination;
 
@@ -1351,7 +1352,7 @@ class Index extends Component
             $this
                 ->subscriptionsQuery()
                 ->paginate(
-                    $this->perPage,
+                    $this->exportPageSize($this->perPage),
                     ['*'],
                     'subscriptionsPage'
                 );
@@ -1360,7 +1361,7 @@ class Index extends Component
             $this
                 ->plansQuery()
                 ->paginate(
-                    $this->planPerPage,
+                    $this->exportPageSize($this->planPerPage),
                     ['*'],
                     'plansPage'
                 );

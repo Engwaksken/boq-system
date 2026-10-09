@@ -16,6 +16,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class SubscriptionsManager extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithBulkSelection;
     use WithPagination;
@@ -272,7 +273,7 @@ class SubscriptionsManager extends Component
             default => $query->orderBy($this->sortBy, $this->sortDir),
         };
 
-        $subscriptions = $query->paginate($this->perPage);
+        $subscriptions = $query->paginate($this->exportPageSize($this->perPage));
 
         $stats = [
             'total' => Subscription::query()->count(),

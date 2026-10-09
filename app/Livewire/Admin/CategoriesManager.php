@@ -16,6 +16,7 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class CategoriesManager extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     public string $type = Category::TYPE_PROJECT;
 
     public ?int $editingId = null;

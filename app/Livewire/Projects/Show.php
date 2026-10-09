@@ -9,6 +9,7 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Show extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     public Project $project;
 
     public function mount(Project $project): void
@@ -29,6 +30,7 @@ class Show extends Component
         $service = app(\App\Services\BoqTotals::class);
 
         return view('livewire.projects.show', [
+            'boqs' => $this->project->boqs,
             'totals' => $service->forProjects([$this->project->id], $this->project->boqs->pluck('id')->all())[$this->project->id],
             'boqTotals' => $service->forBoqs($this->project->boqs->pluck('id')->all()),
         ]);

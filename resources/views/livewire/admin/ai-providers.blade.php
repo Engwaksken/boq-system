@@ -5,6 +5,7 @@
         :subtitle="__('Configure AI providers, models, priorities and fallback behaviour.')"
     >
         <x-slot:actions>
+            <x-ui.button type="button" variant="secondary" icon="fa-list" wire:click="addProviderPresets" loading="addProviderPresets">{{ __('Add provider presets') }}</x-ui.button>
             <x-ui.button icon="fa-plus" wire:click="create">{{ __('Add Provider') }}</x-ui.button>
         </x-slot:actions>
     </x-ui.page-header>
@@ -58,6 +59,7 @@
                     <th>{{ __('Provider') }}</th>
                     <th>{{ __('Type') }}</th>
                     <th>{{ __('Model') }}</th>
+                    <th>{{ __('Scope') }}</th>
                     <th>{{ __('Status') }}</th>
                     <th>{{ __('Default') }}</th>
                     <th>{{ __('Last Test') }}</th>
@@ -74,6 +76,7 @@
                         </td>
                         <td>{{ $providerTypes[$provider->provider_type] ?? $provider->provider_type }}</td>
                         <td>{{ $provider->default_model ?: '—' }}</td>
+                        <td>{{ $provider->organisation_id ? __('Organisation :id', ['id' => $provider->organisation_id]) : __('Global') }}</td>
                         <td><x-ui.status :status="$provider->is_enabled ? 'enabled' : 'disabled'" /></td>
                         <td>
                             @if($provider->is_default)
@@ -88,6 +91,7 @@
                             @if($provider->last_test_status)
                                 <x-ui.status :status="$provider->last_test_status" />
                                 <div class="boq-table-subtitle">{{ $provider->last_tested_at?->diffForHumans() }}</div>
+                                <div class="boq-table-subtitle">{{ $provider->last_test_message }}</div>
                             @else
                                 <span class="boq-table-empty">{{ __('Never tested') }}</span>
                             @endif
@@ -165,7 +169,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="p-0">
+                        <td colspan="9" class="p-0">
                             <x-ui.empty-state icon="fa-robot" :title="__('No AI providers configured.')">
                                 <x-ui.button size="sm" icon="fa-plus" wire:click="create">{{ __('Add Provider') }}</x-ui.button>
                             </x-ui.empty-state>
@@ -199,12 +203,16 @@
                     <input id="ai-key" wire:model="form.key" class="boq-field @error('form.key') has-error @enderror" placeholder="{{ __('gemini') }}">
                 </x-ui.field>
                 <x-ui.field :label="__('Provider Type')" for="ai-provider-type" error="form.provider_type">
-                    <select id="ai-provider-type" wire:model="form.provider_type" class="boq-field">
+                    <select id="ai-provider-type" wire:model.live="form.provider_type" class="boq-field">
                         @foreach($providerTypes as $value => $label)
                             <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
                     </select>
+                    @if($hint = config('ai-providers.'.$form['provider_type'].'.hint'))<p class="boq-field-help">{{ __($hint) }}</p>@endif
                 </x-ui.field>
+                @if(auth()->user()->isSuperAdmin())
+                    <x-ui.field :label="__('Organisation ID (blank for global)')" for="ai-organisation" error="form.organisation_id"><input id="ai-organisation" type="number" min="1" wire:model="form.organisation_id" class="boq-field"></x-ui.field>
+                @endif
                 <x-ui.field :label="__('Default Model')" for="ai-model" error="form.default_model">
                     <input id="ai-model" wire:model="form.default_model" class="boq-field" placeholder="{{ __('gemini-2.5-flash') }}">
                 </x-ui.field>

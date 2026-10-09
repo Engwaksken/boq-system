@@ -15,6 +15,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class PlansManager extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithBulkSelection;
     use WithPagination;
@@ -176,7 +177,7 @@ class PlansManager extends Component
     public function render()
     {
         return view('livewire.admin.plans-manager', [
-            'plans' => Plan::query()->when($this->search, fn($q) => $q->where(fn ($w) => $w->where('name','like','%'.$this->search.'%')->orWhere('code','like','%'.$this->search.'%')))->orderBy('display_order')->orderBy('price')->paginate($this->perPage),
+            'plans' => Plan::query()->when($this->search, fn($q) => $q->where(fn ($w) => $w->where('name','like','%'.$this->search.'%')->orWhere('code','like','%'.$this->search.'%')))->orderBy('display_order')->orderBy('price')->paginate($this->exportPageSize($this->perPage)),
             'features' => Feature::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'code']),
             'stats' => [
                 'total' => Plan::count(),

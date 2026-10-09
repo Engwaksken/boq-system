@@ -17,6 +17,7 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     #[Url(except: 'month')]
     public string $period = 'month';
 
@@ -154,8 +155,8 @@ class Index extends Component
         return view('livewire.supplier-ratings.index', [
             'isAdmin' => $isAdmin,
             'periodLabel' => SupplierRatings::periodLabel($this->period),
-            'topHardware' => $ratings->leaderboard($this->period, Supplier::TYPE_SUPPLIER),
-            'topFactories' => $ratings->leaderboard($this->period, Supplier::TYPE_FACTORY),
+            'topHardware' => $ratings->leaderboard($this->period, Supplier::TYPE_SUPPLIER, $this->exportPageSize(10)),
+            'topFactories' => $ratings->leaderboard($this->period, Supplier::TYPE_FACTORY, $this->exportPageSize(10)),
             // Admins see who needs to improve.
             'lowHardware' => $isAdmin ? $ratings->leaderboard($this->period, Supplier::TYPE_SUPPLIER, 5, lowest: true) : [],
             'lowFactories' => $isAdmin ? $ratings->leaderboard($this->period, Supplier::TYPE_FACTORY, 5, lowest: true) : [],

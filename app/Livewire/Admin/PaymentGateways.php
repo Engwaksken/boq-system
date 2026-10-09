@@ -13,6 +13,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class PaymentGateways extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use WithBulkSelection;
     use WithPagination;
 
@@ -361,7 +362,7 @@ class PaymentGateways extends Component
     public function render()
     {
         return view('livewire.admin.payment-gateways', [
-            'gateways' => PaymentGateway::orderByDesc('is_default')->orderBy('name')->paginate(10),
+            'gateways' => PaymentGateway::orderByDesc('is_default')->orderBy('name')->paginate($this->exportPageSize(10)),
             'driverOptions' => $this->driverOptions(),
             'stats' => [
                 'gateways' => PaymentGateway::count(),

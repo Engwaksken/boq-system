@@ -113,6 +113,7 @@
                     // Super admins find Categories under Administration.
                     $item('Categories', 'admin.categories', 'fa-list-check', ! $authUser->isSuperAdmin() && $authUser->hasAnyRole(['administrator', 'admin']), 'admin.categories'),
                     $item('AI Activity', 'system.mcp-activity', 'fa-wave-square'),
+                    $item('AI API Settings', 'admin.ai-providers', 'fa-robot', ! $authUser->isSuperAdmin() && $authUser->hasAnyRole(['administrator', 'admin'])),
                 ],
             ];
         }

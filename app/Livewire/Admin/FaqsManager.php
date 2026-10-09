@@ -10,6 +10,12 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class FaqsManager extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
+
+    protected function exportViewData(): array
+    {
+        return ['faqs' => $this->loadFaqPage()['data']];
+    }
     private const MAX_FAQ_ENTRIES = 20;
 
     public array $faqs = [];
@@ -50,7 +56,7 @@ class FaqsManager extends Component
         $faqs = Faq::query()
             ->orderBy('sort_order')
             ->orderBy('id')
-            ->paginate(20, ['*'], 'page', $this->page);
+            ->paginate($this->exportPageSize(20), ['*'], 'page', $this->page);
 
         return [
             'data' => array_map(static fn (Faq $faq): array => [

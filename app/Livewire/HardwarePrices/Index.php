@@ -21,6 +21,7 @@ use RuntimeException;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use WithBulkSelection;
     use WithFileUploads;
     use WithPagination;
@@ -628,7 +629,7 @@ class Index extends Component
                     'name' => $query->orderBy('item_name'),
                     default => $query->orderByDesc('fetched_at'),
                 })
-                ->paginate(20);
+                ->paginate($this->exportPageSize(20));
 
         // Lowest / highest active price for each item on this page (same unit and currency).
         $extremes = $prices->isEmpty() ? collect() : HardwarePrice::query()

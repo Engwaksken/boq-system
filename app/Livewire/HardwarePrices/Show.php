@@ -9,6 +9,15 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Show extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
+
+    protected function exportViewData(): array
+    {
+        $price = $this->hardwarePrice->fresh();
+        abort_unless($price && $price->isVisibleTo(auth()->user()->organisation_id), 403);
+
+        return ['prices' => [$price], 'history' => $price->priceHistories()->latest('recorded_at')->get()];
+    }
     public HardwarePrice $hardwarePrice;
 
     public function mount(HardwarePrice $hardwarePrice): void

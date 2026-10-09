@@ -38,6 +38,11 @@ class AiProvider extends Model
         'api_key',
     ];
 
+    public function organisation(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Organisation::class);
+    }
+
     protected function casts(): array
     {
         return [

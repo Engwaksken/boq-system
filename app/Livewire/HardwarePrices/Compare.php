@@ -11,6 +11,16 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Compare extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
+
+    protected function exportViewData(): array
+    {
+        abort_unless(count(array_filter($this->selectedIds)) >= 2 && count(array_filter($this->selectedIds)) <= 10, 422, 'Select 2 to 10 items to compare.');
+        $this->comparison = null;
+        $this->compare();
+
+        return ['comparison' => $this->comparison ?? []];
+    }
     public array $selectedIds = [];
 
     public $comparison = null;

@@ -10,6 +10,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class McpActivity extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use WithPagination;
 
     public string $search = '';
@@ -27,7 +28,7 @@ class McpActivity extends Component
             ->when($this->search !== '', fn ($query) => $query->where(fn ($q) => $q->where('action', 'like', '%'.$this->search.'%')->orWhere('reference', 'like', '%'.$this->search.'%')))
             ->when($this->status !== '', fn ($query) => $query->where('new_value->status', $this->status))
             ->latest()
-            ->paginate(25);
+            ->paginate($this->exportPageSize(25));
 
         return view('livewire.system.mcp-activity', ['logs' => $logs]);
     }

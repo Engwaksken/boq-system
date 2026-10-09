@@ -10,6 +10,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class Faqs extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use WithPagination;
 
     public string $search = '';
@@ -26,7 +27,7 @@ class Faqs extends Component
                 ->when(trim($this->search) !== '', fn ($query) => $query->where(fn ($search) => $search
                     ->where('question', 'like', '%'.trim($this->search).'%')
                     ->orWhere('answer', 'like', '%'.trim($this->search).'%')))
-                ->orderBy('sort_order')->orderBy('id')->paginate(20),
+                ->orderBy('sort_order')->orderBy('id')->paginate($this->exportPageSize(20)),
         ]);
     }
 }

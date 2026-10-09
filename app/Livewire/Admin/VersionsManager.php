@@ -11,6 +11,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class VersionsManager extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithBulkSelection;
     use WithPagination;
@@ -162,7 +163,7 @@ class VersionsManager extends Component
                         ->orWhere('version_number', 'like', '%'.$this->search.'%');
                 })
                 ->orderByDesc('release_date')
-                ->paginate($this->perPage),
+                ->paginate($this->exportPageSize($this->perPage)),
         ]);
     }
 }

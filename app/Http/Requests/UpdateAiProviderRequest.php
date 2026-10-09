@@ -22,7 +22,7 @@ class UpdateAiProviderRequest extends FormRequest
         return [
             'key' => ['sometimes', 'string', 'max:50', 'alpha_dash', Rule::unique('ai_providers', 'key')->ignore($provider->id)],
             'name' => ['sometimes', 'string', 'max:255'],
-            'provider_type' => ['sometimes', 'string', Rule::in(['openai', 'gemini', 'google_gemini', 'ollama', 'anthropic', 'azure_openai'])],
+            'provider_type' => ['sometimes', 'string', Rule::in([...array_keys(config('ai-providers')), 'google_gemini'])],
             'api_base_url' => ['sometimes', 'nullable', 'url', 'max:500'],
             'default_model' => ['sometimes', 'string', 'max:100'],
             'api_key' => ['sometimes', 'nullable', 'string', 'max:2000'],
@@ -44,7 +44,7 @@ class UpdateAiProviderRequest extends FormRequest
     {
         return [
             'key.alpha_dash' => 'The key may only contain letters, numbers, dashes, and underscores.',
-            'provider_type.in' => 'The provider type must be one of: openai, gemini, google_gemini, ollama, anthropic, azure_openai.',
+            'provider_type.in' => 'Select a supported AI provider or an OpenAI-compatible API.',
         ];
     }
 

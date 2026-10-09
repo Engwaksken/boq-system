@@ -19,6 +19,16 @@ use App\Livewire\Concerns\WithBulkSelection;
 #[Layout('layouts.app')]
 class Show extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
+
+    protected function exportViewData(): array
+    {
+        $user = auth()->user();
+        $boq = $this->boq->fresh();
+        abort_unless($boq && $this->canAccess($boq, $user->id, $user->organisation_id), 403);
+
+        return $this->render()->getData();
+    }
     use WithBulkSelection;
     use WithFileUploads;
     use WithPagination;
@@ -1499,7 +1509,7 @@ class Show extends Component
 
         $items =
             $itemsQuery->paginate(
-                $this->itemsPerPage,
+                $this->exportPageSize($this->itemsPerPage),
                 ['*'],
                 'itemsPage'
             );

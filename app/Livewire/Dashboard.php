@@ -12,6 +12,16 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Dashboard extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
+
+    protected function exportViewData(): array
+    {
+        return ['summary' => [
+            ['metric' => __('Projects'), 'value' => $this->projectsCount],
+            ['metric' => __('BOQs'), 'value' => $this->boqsCount],
+            ['metric' => __('Hardware prices'), 'value' => $this->hardwarePricesCount],
+        ], 'projects' => Project::accessibleTo(auth()->user())->latest()->get()];
+    }
     public int $projectsCount = 0;
 
     public int $boqsCount = 0;

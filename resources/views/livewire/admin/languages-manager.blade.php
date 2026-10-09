@@ -4,6 +4,7 @@
         <button type="button" wire:click="create" class="boq-btn-primary">
             <i class="fas fa-plus"></i> {{ __('Add Language') }}
         </button>
+        <div class="flex flex-wrap gap-2"><x-ui.export-buttons /></div>
     </div>
 
     @if(session('language-message'))

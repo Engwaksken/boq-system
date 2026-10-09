@@ -14,6 +14,7 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     public ?Subscription $currentSubscription = null;
 
     public function mount(SubscriptionService $subscriptions): void
@@ -58,7 +59,7 @@ class Index extends Component
             ->where('user_id', $user->id)
             ->with('topup')
             ->latest()
-            ->limit(25)
+            ->when(! $this->exportingTables, fn ($query) => $query->limit(25))
             ->get();
 
         return view('livewire.topups.index', [

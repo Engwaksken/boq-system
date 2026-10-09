@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Throwable;
@@ -18,6 +19,7 @@ use Throwable;
 #[Layout('layouts.app')]
 class AiProviders extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithPagination;
 
@@ -26,7 +28,7 @@ class AiProviders extends Component
      */
     public function boot(): void
     {
-        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+        abort_unless(auth()->user()?->isSuperAdmin() || (auth()->user()?->hasAnyRole(['administrator', 'admin']) && auth()->user()?->organisation_id !== null), 403);
     }
 
     private const SECRET_MASK = '***stored***';
@@ -58,8 +60,10 @@ class AiProviders extends Component
 
     public bool $showTestModal = false;
 
+    #[Locked]
     public ?int $editingId = null;
 
+    #[Locked]
     public ?int $deleteId = null;
 
     public ?int $testingId = null;
@@ -132,6 +136,28 @@ class AiProviders extends Component
         $this->showForm = true;
     }
 
+    public function addProviderPresets(): void
+    {
+        $organisationId = auth()->user()->isSuperAdmin() ? null : auth()->user()->organisation_id;
+        foreach (config('ai-providers') as $type => $preset) {
+            if (in_array($type, ['custom', 'openai_compatible'], true) || $this->providerQuery()->where('organisation_id', $organisationId)->where('provider_type', $type)->exists()) {
+                continue;
+            }
+            $baseKey = $organisationId ? 'org-'.$organisationId.'-'.$type : $type;
+            $key = $baseKey;
+            while (AiProvider::where('key', $key)->exists()) {
+                $key = $baseKey.'-'.Str::lower(Str::random(6));
+            }
+            AiProvider::create([
+                'name' => $preset['name'], 'key' => $key, 'provider_type' => $type,
+                'api_base_url' => $preset['url'] ?: null, 'default_model' => $preset['model'] ?: null,
+                'organisation_id' => $organisationId, 'is_enabled' => false, 'is_default' => false,
+                'sort_order' => 100, 'created_by' => auth()->id(), 'updated_by' => auth()->id(),
+            ]);
+        }
+        session()->flash('message', __('Provider presets added. Enter your credentials and model, test each configuration, then enable the providers you want to use.'));
+    }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -143,7 +169,7 @@ class AiProviders extends Component
     {
         $this->resetValidation();
 
-        $provider = AiProvider::query()->findOrFail($id);
+        $provider = $this->providerQuery()->findOrFail($id);
 
         $settings = is_array($provider->settings)
             ? $provider->settings
@@ -228,7 +254,7 @@ class AiProviders extends Component
         DB::transaction(function () use ($validated): void {
 
             $provider = $this->editingId
-                ? AiProvider::query()->findOrFail($this->editingId)
+                ? $this->providerQuery()->findOrFail($this->editingId)
                 : new AiProvider();
 
             $form = $validated['form'];
@@ -249,6 +275,9 @@ class AiProviders extends Component
             $organisationId = filled($form['organisation_id'] ?? null)
                 ? (int) $form['organisation_id']
                 : null;
+            if (! auth()->user()->isSuperAdmin()) {
+                $organisationId = auth()->user()->organisation_id;
+            }
 
             $isDefault = (bool) ($form['is_default'] ?? false);
 
@@ -333,7 +362,7 @@ class AiProviders extends Component
                     $form['sort_order'] ?? 100
                 ),
 
-                'settings' => [
+                'settings' => array_replace($provider->settings ?? [], [
                     'temperature' => isset(
                         $form['temperature']
                     )
@@ -357,7 +386,7 @@ class AiProviders extends Component
                     'web_search' => (bool) (
                         $form['web_search'] ?? false
                     ),
-                ],
+                ]),
 
                 'credit_balance' => filled($form['credit_balance'] ?? null) ? (float) $form['credit_balance'] : null,
                 'credit_currency' => filled($form['credit_currency'] ?? null) ? strtoupper(trim($form['credit_currency'])) : null,
@@ -381,6 +410,10 @@ class AiProviders extends Component
 
             $provider->fill($payload);
 
+            if ($provider->isDirty(['provider_type', 'api_base_url', 'default_model', 'api_key', 'settings'])) {
+                $provider->forceFill(['last_tested_at' => null, 'last_test_status' => null, 'last_test_message' => null]);
+            }
+
             $provider->save();
         });
 
@@ -403,7 +436,7 @@ class AiProviders extends Component
 
     public function toggleEnabled(int $id): void
     {
-        $provider = AiProvider::query()->findOrFail($id);
+        $provider = $this->providerQuery()->findOrFail($id);
 
         /*
          * Do not allow the current default provider to be disabled.
@@ -440,7 +473,7 @@ class AiProviders extends Component
     {
         DB::transaction(function () use ($id): void {
 
-            $provider = AiProvider::query()->findOrFail($id);
+            $provider = $this->providerQuery()->findOrFail($id);
 
             $query = AiProvider::query();
 
@@ -483,7 +516,7 @@ class AiProviders extends Component
 
     public function confirmDelete(int $id): void
     {
-        $provider = AiProvider::query()->findOrFail($id);
+        $provider = $this->providerQuery()->findOrFail($id);
 
         if ($provider->is_default) {
             session()->flash(
@@ -514,7 +547,7 @@ class AiProviders extends Component
             return;
         }
 
-        $provider = AiProvider::query()->findOrFail(
+        $provider = $this->providerQuery()->findOrFail(
             $this->deleteId
         );
 
@@ -550,7 +583,7 @@ class AiProviders extends Component
         int $id,
         AiProviderService $service
     ): void {
-        $provider = AiProvider::query()->findOrFail($id);
+        $provider = $this->providerQuery()->findOrFail($id);
 
         $this->testingId = $provider->id;
 
@@ -730,7 +763,7 @@ class AiProviders extends Component
     /** Reads the live balance for providers that report it (DeepSeek, OpenRouter). */
     public function refreshBalance(int $id, \App\Services\AiUsageMonitor $monitor): void
     {
-        $provider = AiProvider::query()->findOrFail($id);
+        $provider = $this->providerQuery()->findOrFail($id);
 
         session()->flash('message', $monitor->refreshBalance($provider)
             ? __('Balance updated for :name.', ['name' => $provider->name])
@@ -740,7 +773,7 @@ class AiProviders extends Component
     /** After a top-up: let the provider be used again straight away. */
     public function clearCreditWarning(int $id): void
     {
-        AiProvider::query()->whereKey($id)->update(['credit_exhausted_at' => null, 'last_credit_alert_at' => null]);
+        $this->providerQuery()->findOrFail($id)->forceFill(['credit_exhausted_at' => null, 'last_credit_alert_at' => null])->save();
         session()->flash('message', __('Credit warning cleared. The provider will be used again.'));
     }
 
@@ -794,34 +827,26 @@ class AiProviders extends Component
 
     public function providerTypes(): array
     {
-        return [
-            'openai' =>
-                'OpenAI',
+        return array_map(fn ($preset) => $preset['name'], config('ai-providers'));
+    }
 
-            'gemini' =>
-                'Google Gemini',
+    public function updatedFormProviderType(string $type): void
+    {
+        $preset = config('ai-providers.'.$type);
+        if (! is_array($preset)) {
+            return;
+        }
+        $this->form['api_base_url'] = $preset['url'];
+        $this->form['default_model'] = $preset['model'];
+        if ($this->editingId === null) {
+            $this->form['name'] = $preset['name'];
+            $this->form['key'] = auth()->user()->isSuperAdmin() ? $type : 'org-'.auth()->user()->organisation_id.'-'.$type;
+        }
+    }
 
-            'groq' =>
-                'Groq',
-
-            'mistral' =>
-                'Mistral',
-
-            'deepseek' =>
-                'DeepSeek',
-
-            'openrouter' =>
-                'OpenRouter',
-
-            'ollama' =>
-                'Ollama',
-
-            'openai_compatible' =>
-                'OpenAI-compatible API',
-
-            'custom' =>
-                'Custom REST API',
-        ];
+    private function providerQuery(): Builder
+    {
+        return AiProvider::query()->when(! auth()->user()->isSuperAdmin(), fn ($query) => $query->where('organisation_id', auth()->user()->organisation_id));
     }
 
 
@@ -882,7 +907,7 @@ class AiProviders extends Component
 
     public function render()
     {
-        $providers = AiProvider::query()
+        $providers = $this->providerQuery()
             ->when(
                 trim($this->search) !== '',
                 function (Builder $query): void {
@@ -963,7 +988,7 @@ class AiProviders extends Component
             )
 
             ->paginate(
-                $this->perPage
+                $this->exportPageSize($this->perPage)
             );
 
         $monitor = app(\App\Services\AiUsageMonitor::class);
@@ -989,10 +1014,10 @@ class AiProviders extends Component
 
                 'stats' => [
                     'providers' =>
-                        AiProvider::query()->count(),
+                        $this->providerQuery()->count(),
 
                     'enabled' =>
-                        AiProvider::query()
+                        $this->providerQuery()
                             ->where(
                                 'is_enabled',
                                 true
@@ -1000,7 +1025,7 @@ class AiProviders extends Component
                             ->count(),
 
                     'default' =>
-                        AiProvider::query()
+                        $this->providerQuery()
                             ->where(
                                 'is_default',
                                 true
@@ -1009,7 +1034,7 @@ class AiProviders extends Component
                         ?? 'None',
 
                     'failed' =>
-                        AiProvider::query()
+                        $this->providerQuery()
                             ->where(
                                 'last_test_status',
                                 'failed'

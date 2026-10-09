@@ -167,6 +167,10 @@ class AiProviderService
         try {
             $result = $this->sendJsonRequest($provider, $prompt);
 
+            if (($result['ok'] ?? null) !== true) {
+                throw new RuntimeException('AI provider returned an invalid test response.');
+            }
+
             $provider->forceFill([
                 'last_tested_at' => now(),
                 'last_test_status' => 'success',
@@ -236,6 +240,8 @@ class AiProviderService
 
         return match ($type) {
             'gemini', 'google_gemini' => $this->gemini($provider, $prompt, $timeout, $webSearchOverride),
+            'anthropic' => $this->anthropic($provider, $prompt, $timeout),
+            'azure_openai' => $this->azureOpenAi($provider, $prompt, $timeout),
             default => $this->openAiCompatible($provider, $prompt, $timeout),
         };
     }
@@ -255,13 +261,16 @@ class AiProviderService
             throw new RuntimeException('Provider API key is missing.');
         }
 
-        $base = rtrim($provider->api_base_url ?: 'https://generativelanguage.googleapis.com', '/');
+        $base = preg_replace('#/v1(beta)?$#', '', rtrim($provider->api_base_url ?: 'https://generativelanguage.googleapis.com', '/'));
         $model = $provider->default_model ?: 'gemini-2.5-flash';
 
         $body = [
             'contents' => [['parts' => [['text' => $prompt]]]],
-            'generationConfig' => ['responseMimeType' => 'application/json'],
+            'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => (float) data_get($provider->settings, 'temperature', 0.2)],
         ];
+        if (filled(data_get($provider->settings, 'max_tokens'))) {
+            $body['generationConfig']['maxOutputTokens'] = (int) data_get($provider->settings, 'max_tokens');
+        }
 
         // Opt-in live web search via Google Search grounding so price scans
         // can return real, cited market results instead of model estimates.
@@ -317,10 +326,11 @@ class AiProviderService
             throw new RuntimeException('Provider API key is missing.');
         }
 
-        $base = rtrim($provider->api_base_url ?: 'https://api.openai.com/v1', '/');
-        $endpoint = str_ends_with($base, '/v1')
+        $preset = config('ai-providers.'.$provider->provider_type, []);
+        $base = rtrim($provider->api_base_url ?: ($preset['url'] ?? 'https://api.openai.com/v1'), '/');
+        $endpoint = isset($preset['endpoint']) ? $base.$preset['endpoint'] : (str_ends_with($base, '/v1')
             ? "{$base}/chat/completions"
-            : "{$base}/v1/chat/completions";
+            : "{$base}/v1/chat/completions");
 
         $request = Http::timeout($timeout)->retry(2, 400, fn (Throwable $e): bool => $this->isTransient($e), throw: false);
 
@@ -333,15 +343,21 @@ class AiProviderService
             $request = $request->withHeaders($headers);
         }
 
-        $response = $request->post($endpoint, [
+        $body = [
             'model' => $provider->default_model,
             'messages' => [
                 ['role' => 'system', 'content' => 'Return valid JSON only.'],
                 ['role' => 'user', 'content' => $prompt],
             ],
             'temperature' => (float) data_get($provider->settings, 'temperature', 0.2),
-            'response_format' => ['type' => 'json_object'],
-        ]);
+        ];
+        if ($preset['json_mode'] ?? true) {
+            $body['response_format'] = ['type' => 'json_object'];
+        }
+        if (filled(data_get($provider->settings, 'max_tokens'))) {
+            $body['max_tokens'] = (int) data_get($provider->settings, 'max_tokens');
+        }
+        $response = $request->post($endpoint, $body);
 
         if (! $response->successful()) {
             $response->throw();
@@ -359,6 +375,54 @@ class AiProviderService
             'input_units' => (int) data_get($payload, 'usage.prompt_tokens', 0),
             'output_units' => (int) data_get($payload, 'usage.completion_tokens', 0),
         ];
+
+        return $result;
+    }
+
+    private function anthropic(AiProvider $provider, string $prompt, int $timeout): array
+    {
+        if (blank($provider->api_key)) {
+            throw new RuntimeException('Provider API key is missing.');
+        }
+        $base = preg_replace('#/v1$#', '', rtrim($provider->api_base_url ?: 'https://api.anthropic.com', '/'));
+        $payload = Http::timeout($timeout)->withHeaders([
+            'x-api-key' => $provider->api_key, 'anthropic-version' => '2023-06-01',
+        ])->post($base.'/v1/messages', [
+            'model' => $provider->default_model,
+            'max_tokens' => (int) (data_get($provider->settings, 'max_tokens') ?? 4096),
+            'temperature' => (float) data_get($provider->settings, 'temperature', 0.2),
+            'system' => 'Return valid JSON only, without markdown fences.',
+            'messages' => [['role' => 'user', 'content' => $prompt]],
+        ])->throw()->json();
+        $text = collect($payload['content'] ?? [])->where('type', 'text')->pluck('text')->implode('');
+        $result = json_decode($text, true);
+        if (! is_array($result)) {
+            throw new RuntimeException('AI provider returned invalid JSON.');
+        }
+        $result['_usage'] = ['input_units' => (int) data_get($payload, 'usage.input_tokens', 0),
+            'output_units' => (int) data_get($payload, 'usage.output_tokens', 0)];
+
+        return $result;
+    }
+
+    private function azureOpenAi(AiProvider $provider, string $prompt, int $timeout): array
+    {
+        if (blank($provider->api_key) || blank($provider->api_base_url) || blank($provider->default_model)) {
+            throw new RuntimeException('Provider configuration is invalid.');
+        }
+        $base = rtrim($provider->api_base_url, '/');
+        $payload = Http::timeout($timeout)->withHeaders(['api-key' => $provider->api_key])
+            ->post($base.'/openai/deployments/'.rawurlencode($provider->default_model).'/chat/completions?api-version='.rawurlencode(data_get($provider->settings, 'api_version', '2024-10-21')), [
+                'model' => $provider->default_model,
+                'messages' => [['role' => 'system', 'content' => 'Return valid JSON only.'], ['role' => 'user', 'content' => $prompt]],
+                'response_format' => ['type' => 'json_object'],
+            ])->throw()->json();
+        $result = json_decode((string) data_get($payload, 'choices.0.message.content'), true);
+        if (! is_array($result)) {
+            throw new RuntimeException('AI provider returned invalid JSON.');
+        }
+        $result['_usage'] = ['input_units' => (int) data_get($payload, 'usage.prompt_tokens', 0),
+            'output_units' => (int) data_get($payload, 'usage.completion_tokens', 0)];
 
         return $result;
     }

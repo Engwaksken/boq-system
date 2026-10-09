@@ -13,6 +13,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class UsersManager extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithBulkSelection;
     use WithPagination;
@@ -159,7 +160,7 @@ class UsersManager extends Component
             ->when($this->search, fn($q) => $q->where(fn($x) => $x->where('name','like','%'.$this->search.'%')->orWhere('email','like','%'.$this->search.'%')))
             ->when($this->status !== 'all', fn($q) => $q->where('is_active', $this->status === 'active'))
             ->with(['roles','organisation','subscriptions.plan'])
-            ->latest()->paginate($this->perPage);
+            ->latest()->paginate($this->exportPageSize($this->perPage));
         return view('livewire.admin.users-manager', [
             'users'=>$users,
             'roles'=>Role::orderBy('name')->get(),

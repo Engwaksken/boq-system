@@ -23,6 +23,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 #[Layout('layouts.app')]
 class SuppliersManager extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithBulkSelection;
     use WithFileUploads;
@@ -685,7 +686,7 @@ class SuppliersManager extends Component
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhere('website_url', 'like', "%{$search}%")))
                 ->orderBy('name')
-                ->paginate($this->perPage),
+                ->paginate($this->exportPageSize($this->perPage)),
             'stats' => $this->stats(),
             'countries' => Country::options(),
             'locations' => SupplierScanQueue::locations(),

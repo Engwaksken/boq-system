@@ -12,6 +12,7 @@ use Livewire\WithPagination;
 
 class CurrenciesManager extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use WithBulkSelection;
     use WithPagination;
 
@@ -121,7 +122,7 @@ class CurrenciesManager extends Component
     public function render()
     {
         return view('livewire.admin.currencies-manager', [
-            'currencies' => Currency::orderByDesc('is_default')->orderBy('sort_order')->orderBy('code')->paginate(10, pageName: 'currencies'),
+            'currencies' => Currency::orderByDesc('is_default')->orderBy('sort_order')->orderBy('code')->paginate($this->exportPageSize(10), pageName: 'currencies'),
         ]);
     }
 }

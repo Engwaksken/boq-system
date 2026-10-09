@@ -32,9 +32,12 @@
         {{ $slot }}
     </div>
 
-    @isset($actions)
+    @if(isset($actions) || (isset($__livewire) && method_exists($__livewire, 'exportTables') && $__livewire->canExportTables()))
         <div class="boq-page-actions">
-            {{ $actions }}
+            {{ $actions ?? '' }}
+            @if(isset($__livewire) && method_exists($__livewire, 'exportTables') && $__livewire->canExportTables())
+                <x-ui.export-buttons />
+            @endif
         </div>
-    @endisset
+    @endif
 </header>

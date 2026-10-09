@@ -15,6 +15,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class Assignments extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use WithPagination;
 
     public ?int $projectId = null;
@@ -62,7 +63,7 @@ class Assignments extends Component
             'members' => User::where('organisation_id', $organisationId)->orderBy('name')->get(['id', 'name', 'email']),
             'assignments' => ProjectAssignment::whereHas('project', fn ($query) => $query->where('organisation_id', $organisationId))
                 ->whereHas('user', fn ($query) => $query->where('organisation_id', $organisationId))
-                ->with(['project', 'user'])->latest()->paginate(15),
+                ->with(['project', 'user'])->latest()->paginate($this->exportPageSize(15)),
         ]);
     }
 }

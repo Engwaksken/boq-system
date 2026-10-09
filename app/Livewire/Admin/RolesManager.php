@@ -11,6 +11,7 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class RolesManager extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     /**
      * Livewire update requests skip route middleware, so re-check on every request.
      */

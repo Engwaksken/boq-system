@@ -11,6 +11,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithPagination;
 
@@ -63,7 +64,7 @@ class Index extends Component
             ->when($this->statusFilter === 'archived', fn ($q) => $q->where('is_archived', true))
             ->with('features')
             ->orderBy($this->sortBy, $this->sortDir)
-            ->paginate($this->perPage);
+            ->paginate($this->exportPageSize($this->perPage));
 
         $available = Plan::query()->where('is_active', true)->where('is_archived', false);
 

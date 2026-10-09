@@ -13,6 +13,7 @@ use Livewire\WithPagination;
 
 class LanguagesManager extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use WithBulkSelection;
     use WithPagination;
 
@@ -256,7 +257,7 @@ class LanguagesManager extends Component
         }
 
         return view('livewire.admin.languages-manager', [
-            'languages' => Language::orderByDesc('is_default')->orderBy('name')->paginate(10, pageName: 'languages'),
+            'languages' => Language::orderByDesc('is_default')->orderBy('name')->paginate($this->exportPageSize(10), pageName: 'languages'),
             'translationRows' => $translationRows,
             'translationPages' => $translationPages,
         ]);

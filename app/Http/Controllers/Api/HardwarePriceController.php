@@ -236,11 +236,11 @@ class HardwarePriceController extends Controller
         ]);
     }
 
-    public function recommendations(Request $request): JsonResponse
+    public function recommendations(Request $request, bool $exportAll = false): JsonResponse
     {
         $category = $request->get('category');
         $location = $request->get('location');
-        $limit = min($request->get('limit', 10), 50);
+        $limit = $exportAll ? PHP_INT_MAX : min($request->get('limit', 10), 50);
 
         $query = HardwarePrice::active()
             ->visibleTo($request->user()->organisation_id);

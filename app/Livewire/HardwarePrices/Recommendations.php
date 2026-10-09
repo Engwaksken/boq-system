@@ -10,6 +10,16 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Recommendations extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
+
+    protected function exportViewData(): array
+    {
+        $request = Request::create('/api/v1/hardware-prices/recommendations', 'GET', ['category' => $this->category, 'location' => $this->location]);
+        $request->setUserResolver(fn () => auth()->user());
+        $response = app(HardwarePriceController::class)->recommendations($request, true);
+
+        return ['recommendations' => json_decode($response->getContent(), true)['data'] ?? []];
+    }
     public ?string $category = null;
 
     public ?string $location = null;

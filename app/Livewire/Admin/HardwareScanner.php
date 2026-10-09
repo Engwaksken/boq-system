@@ -21,6 +21,7 @@ use Throwable;
 #[Layout('layouts.app')]
 class HardwareScanner extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use WithFileUploads;
 
     public array $autoScanForm = [

@@ -12,6 +12,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class QuotationsManager extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithPagination;
 
@@ -84,7 +85,7 @@ class QuotationsManager extends Component
                 ->when($this->search, fn ($q) => $q->where(fn ($w) => $w->where('quote_number', 'like', '%'.$this->search.'%')->orWhereHas('supplier', fn ($s) => $s->where('name', 'like', '%'.$this->search.'%'))))
                 ->when($this->status, fn ($q) => $q->where('status', $this->status))
                 ->latest()
-                ->paginate($this->perPage),
+                ->paginate($this->exportPageSize($this->perPage)),
         ]);
     }
 }

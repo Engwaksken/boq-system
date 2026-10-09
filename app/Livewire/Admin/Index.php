@@ -13,6 +13,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithPagination;
 
@@ -65,14 +66,14 @@ class Index extends Component
                 ->when($search !== '', fn ($q) => $q->whereHas('user', fn ($u) => $u->where(fn ($w) => $w->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))))
                 ->with(['user', 'plan'])
                 ->latest()
-                ->paginate($this->perPage)
+                ->paginate($this->exportPageSize($this->perPage))
             : $empty;
 
         $plans = $this->activeTab === 'plans'
             ? Plan::query()
                 ->when($search !== '', fn ($q) => $q->where('name', 'like', "%{$search}%"))
                 ->latest()
-                ->paginate($this->perPage)
+                ->paginate($this->exportPageSize($this->perPage))
             : $empty;
 
         $users = $this->activeTab === 'users'
@@ -80,7 +81,7 @@ class Index extends Component
                 ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%")))
                 ->with(['organisation', 'roles'])
                 ->latest()
-                ->paginate($this->perPage)
+                ->paginate($this->exportPageSize($this->perPage))
             : $empty;
 
         $stats = [

@@ -11,6 +11,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use \App\Livewire\Concerns\ExportsTables;
     use \App\Livewire\Concerns\UsesPreferredPerPage;
     use WithBulkSelection;
     use WithPagination;
@@ -93,7 +94,7 @@ class Index extends Component
             }))
             ->withCount(['boqs' => $boqScope])
             ->orderBy($this->sortBy, $this->sortDir)
-            ->paginate($this->perPage);
+            ->paginate($this->exportPageSize($this->perPage));
 
         $projectIds = $projects->getCollection()->pluck('id')->all();
         $visibleBoqIds = $canViewBoqs ? \App\Models\Boq::whereIn('project_id', $projectIds)

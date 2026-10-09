@@ -25,6 +25,7 @@ class AiProviderController extends Controller
         $this->authorize('viewAny', AiProvider::class);
 
         $query = AiProvider::query()
+            ->when(! $request->user()->isSuperAdmin(), fn ($query) => $query->forOrganisation($request->user()->organisation_id))
             ->with('organisation')
             ->orderByDesc('is_default')
             ->orderBy('sort_order')
@@ -68,6 +69,13 @@ class AiProviderController extends Controller
         $this->authorize('create', AiProvider::class);
 
         $validated = $request->validated();
+        if (! $request->user()->isSuperAdmin()) {
+            $validated['organisation_id'] = $request->user()->organisation_id;
+            abort_if($validated['organisation_id'] === null, 403);
+        }
+        if ($validated['is_default'] ?? false) {
+            $validated['is_enabled'] = true;
+        }
         $validated['created_by'] = $request->user()->id;
         $validated['updated_by'] = $request->user()->id;
 
@@ -110,11 +118,17 @@ class AiProviderController extends Controller
         $this->authorize('update', $provider);
 
         $validated = $request->validated();
+        if (! $request->user()->isSuperAdmin()) {
+            $validated['organisation_id'] = $provider->organisation_id;
+        }
+        if ($validated['is_default'] ?? $provider->is_default) {
+            $validated['is_enabled'] = true;
+        }
         $validated['updated_by'] = $request->user()->id;
 
         // If setting as default, unset other defaults for the same organisation
         if ($validated['is_default'] ?? false) {
-            AiProvider::where('organisation_id', $provider->organisation_id)
+            AiProvider::where('organisation_id', $validated['organisation_id'] ?? $provider->organisation_id)
                 ->where('id', '!=', $provider->id)
                 ->where('is_default', true)
                 ->update(['is_default' => false, 'updated_by' => $request->user()->id]);
@@ -186,6 +200,7 @@ class AiProviderController extends Controller
 
         $provider->update([
             'is_default' => true,
+            'is_enabled' => true,
             'updated_by' => $request->user()->id,
         ]);
 
