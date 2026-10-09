@@ -342,7 +342,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get(
         '/plans',
         PlansIndex::class
-    )->name('plans.index');
+    )->middleware('permission:subscriptions.view')->name('plans.index');
 
 
     /*
@@ -372,7 +372,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get(
         '/topups',
         TopupsIndex::class
-    )->name('topups.index');
+    )->middleware('permission:subscriptions.view')->name('topups.index');
 
 
     /*

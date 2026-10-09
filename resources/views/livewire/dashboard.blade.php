@@ -45,14 +45,16 @@
             color="amber"
             :href="$canPrices ? route('hardware-prices.index') : null"
         />
-        <x-stat-card
-            :label="__('Subscription')"
-            :value="$subscription ? ($subscription->plan?->name ?? __('Active')) : __('Free')"
-            :hint="$subscription?->end_date ? __('Renews or ends on :date', ['date' => \App\Support\Format::date($subscription->end_date)]) : null"
-            icon="fa-credit-card"
-            color="purple"
-            :href="$canSubscriptions ? route('subscriptions.index') : route('plans.index')"
-        />
+        @if($canSubscriptions)
+            <x-stat-card
+                :label="__('Subscription')"
+                :value="$subscription ? ($subscription->plan?->name ?? __('Active')) : __('Free')"
+                :hint="$subscription?->end_date ? __('Renews or ends on :date', ['date' => \App\Support\Format::date($subscription->end_date)]) : null"
+                icon="fa-credit-card"
+                color="purple"
+                :href="route('subscriptions.index')"
+            />
+        @endif
     </div>
 
     <div class="grid gap-5 xl:grid-cols-3">
@@ -140,13 +142,15 @@
                         </a>
                     @endif
 
-                    <a href="{{ route('plans.index') }}" class="boq-action-tile">
-                        <span class="boq-stat-icon"><i class="fas fa-layer-group" aria-hidden="true"></i></span>
-                        <span class="min-w-0">
-                            <span class="block text-sm font-semibold text-slate-900">{{ __('View Plans') }}</span>
-                            <span class="block text-xs text-slate-500">{{ __('Upgrade for more BOQs and features.') }}</span>
-                        </span>
-                    </a>
+                    @if($canSubscriptions)
+                        <a href="{{ route('plans.index') }}" class="boq-action-tile">
+                            <span class="boq-stat-icon"><i class="fas fa-layer-group" aria-hidden="true"></i></span>
+                            <span class="min-w-0">
+                                <span class="block text-sm font-semibold text-slate-900">{{ __('View Plans') }}</span>
+                                <span class="block text-xs text-slate-500">{{ __('Upgrade for more BOQs and features.') }}</span>
+                            </span>
+                        </a>
+                    @endif
                 </div>
             </x-ui.card>
 

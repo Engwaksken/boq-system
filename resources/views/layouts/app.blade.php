@@ -65,9 +65,11 @@
                 // Not plain "Billing": that key collides with lang/*/billing.php.
                 'label' => 'Plans & Billing',
                 'items' => [
-                    $item('Plans', 'plans.index', 'fa-layer-group', true, 'plans.*'),
+                    // Billing is for the account owner and billing roles; invited
+                    // members (project manager, procurement, ...) do not see it.
+                    $item('Plans', 'plans.index', 'fa-layer-group', $authUser->hasPermission('subscriptions.view'), 'plans.*'),
                     $item('Subscriptions', 'subscriptions.index', 'fa-credit-card', $authUser->hasPermission('subscriptions.view'), 'subscriptions.*'),
-                    $item('Top-ups', 'topups.index', 'fa-gift', true, 'topups.*'),
+                    $item('Top-ups', 'topups.index', 'fa-gift', $authUser->hasPermission('subscriptions.view'), 'topups.*'),
                 ],
             ],
             [
@@ -425,11 +427,11 @@
                             <a href="{{ route('subscriptions.index') }}" class="boq-menu-item" role="menuitem">
                                 <i class="fas fa-credit-card" aria-hidden="true"></i> {{ __('Subscriptions') }}
                             </a>
-                        @endif
 
-                        <a href="{{ route('plans.index') }}" class="boq-menu-item" role="menuitem">
-                            <i class="fas fa-layer-group" aria-hidden="true"></i> {{ __('Plans') }}
-                        </a>
+                            <a href="{{ route('plans.index') }}" class="boq-menu-item" role="menuitem">
+                                <i class="fas fa-layer-group" aria-hidden="true"></i> {{ __('Plans') }}
+                            </a>
+                        @endif
 
                         <div class="boq-menu-sep" role="separator"></div>
 

@@ -294,12 +294,20 @@ class WebRoutesTest extends TestCase
         $this->actingAs($user)->get("/hardware-prices/{$price->id}")->assertStatus(403);
     }
 
-    public function test_plans_index_loads_for_authenticated_user(): void
+    public function test_plans_index_loads_for_an_account_owner(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithPermission('subscriptions.view');
         Plan::factory()->create(['is_active' => true, 'is_archived' => false]);
 
         $this->actingAs($user)->get('/plans')->assertOk();
+    }
+
+    public function test_plans_and_topups_are_forbidden_without_billing_permission(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get('/plans')->assertForbidden();
+        $this->actingAs($user)->get('/topups')->assertForbidden();
     }
 
     public function test_subscriptions_index_loads_for_authenticated_user(): void

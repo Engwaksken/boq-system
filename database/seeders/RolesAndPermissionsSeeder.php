@@ -194,7 +194,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 'permissions' => [
                     'dashboard.view',
                     'projects.view',
-                    'boq.view',
+                    'boq.view', 'boq.edit', 'boq.upload',
                     'suppliers.view', 'suppliers.manage',
                     'quotations.view', 'quotations.manage',
                     'rates.view', 'hardware-prices.view',
@@ -208,6 +208,9 @@ class RolesAndPermissionsSeeder extends Seeder
                 'is_system' => true,
                 'permissions' => [
                     'dashboard.view',
+                    'projects.view',
+                    'boq.view',
+                    'hardware-prices.view',
                     'subscriptions.view',
                     'payments.view', 'payments.process',
                     'invoices.view', 'invoices.manage',
