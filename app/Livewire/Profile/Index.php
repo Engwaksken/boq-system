@@ -154,14 +154,17 @@ class Index extends Component
         }
     }
 
-    /** Only organisation owners/admins (or personal accounts) set company details. */
+    /** Organisation owners/admins (or personal accounts) set company details. */
     private function canManageCompany(): bool
     {
         $user = Auth::user();
 
+        // Organisations are created with the customer/owner role (`user`), so it
+        // is included; invited operational roles (project-manager, procurement,
+        // finance) are not.
         return $user !== null
             && ($user->isSuperAdmin()
-                || $user->hasAnyRole(['administrator', 'admin'])
+                || $user->hasAnyRole(['administrator', 'admin', 'user'])
                 || $user->organisation_id === null);
     }
 

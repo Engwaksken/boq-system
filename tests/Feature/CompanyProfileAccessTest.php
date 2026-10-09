@@ -46,6 +46,10 @@ class CompanyProfileAccessTest extends TestCase
         $admin = $this->user('administrator', $org->id);
         Livewire::actingAs($admin)->test(ProfileIndex::class)->assertSee('Company Profile');
 
+        // The organisation owner role (customer) may also manage it.
+        $owner = $this->user('user', $org->id);
+        Livewire::actingAs($owner)->test(ProfileIndex::class)->assertSee('Company Profile');
+
         $personal = User::factory()->create();
         $personal->forceFill(['organisation_id' => null])->save();
         Livewire::actingAs($personal)->test(ProfileIndex::class)->assertSee('Company Profile');

@@ -419,7 +419,7 @@
                             <i class="fas fa-user" aria-hidden="true"></i> {{ __('Update profile') }}
                         </a>
 
-                        @if($authUser->isSuperAdmin() || $authUser->hasAnyRole(['administrator', 'admin']) || $authUser->organisation_id === null)
+                        @if($authUser->isSuperAdmin() || $authUser->hasAnyRole(['administrator', 'admin', 'user']) || $authUser->organisation_id === null)
                             <a href="{{ route('profile.edit', ['tab' => 'company']) }}" class="boq-menu-item" role="menuitem">
                                 <i class="fas fa-building" aria-hidden="true"></i> {{ __('Company Profile') }}
                             </a>
