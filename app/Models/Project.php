@@ -42,6 +42,7 @@ class Project extends Model
         'original_language',
         'report_language',
         'status',
+        'progress',
     ];
 
     /**
@@ -55,6 +56,7 @@ class Project extends Model
             'start_date' => 'date',
             'expected_completion_date' => 'date',
             'contract_value' => 'decimal:2',
+            'progress' => 'integer',
         ];
     }
 
@@ -137,5 +139,52 @@ class Project extends Model
     public function expenses(): HasMany
     {
         return $this->hasMany(Expense::class);
+    }
+
+    /**
+     * Whole days from today until the expected completion date: positive when the
+     * deadline is ahead, 0 when it is today, negative when it has passed. Null when
+     * the project has no expected completion date.
+     */
+    public function remainingDays(): ?int
+    {
+        if (! $this->expected_completion_date) {
+            return null;
+        }
+
+        return (int) now()->startOfDay()->diffInDays(
+            $this->expected_completion_date->copy()->startOfDay(),
+            false
+        );
+    }
+
+    /** Active/draft project whose expected completion date is in the past. */
+    public function isOverdue(): bool
+    {
+        if (! in_array($this->status, ['draft', 'active'], true)) {
+            return false;
+        }
+
+        $remaining = $this->remainingDays();
+
+        return $remaining !== null && $remaining < 0;
+    }
+
+    /** Active/draft project due within the given number of days (including today). */
+    public function isDueSoon(int $days = 14): bool
+    {
+        if (! in_array($this->status, ['draft', 'active'], true)) {
+            return false;
+        }
+
+        $remaining = $this->remainingDays();
+
+        return $remaining !== null && $remaining >= 0 && $remaining <= $days;
+    }
+
+    /** Clamped 0-100 progress percentage. */
+    public function progressPercent(): int
+    {
+        return max(0, min(100, (int) ($this->progress ?? 0)));
     }
 }

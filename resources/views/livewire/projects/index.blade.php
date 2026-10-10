@@ -90,6 +90,8 @@
                     <x-ui.sort-header field="location" :sort-by="$sortBy" :sort-dir="$sortDir">{{ __('Location') }}</x-ui.sort-header>
                     <x-ui.sort-header field="contract_value" :sort-by="$sortBy" :sort-dir="$sortDir" class="text-right">{{ __('Contract Value') }}</x-ui.sort-header>
                     <x-ui.sort-header field="status" :sort-by="$sortBy" :sort-dir="$sortDir">{{ __('Status') }}</x-ui.sort-header>
+                    <th>{{ __('Remaining') }}</th>
+                    <th>{{ __('Progress') }}</th>
                     <x-ui.sort-header field="start_date" :sort-by="$sortBy" :sort-dir="$sortDir">{{ __('Start Date') }}</x-ui.sort-header>
                     <th class="text-right">{{ __('Actions') }}</th>
                 </tr>
@@ -135,6 +137,10 @@
 
                         <td><x-ui.status :status="$project->status" /></td>
 
+                        <td><x-project-deadline :project="$project" /></td>
+
+                        <td class="w-44"><x-project-progress :project="$project" /></td>
+
                         <td class="whitespace-nowrap">
                             @if($project->start_date)
                                 <x-date :value="$project->start_date" />
@@ -170,7 +176,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="p-0">
+                        <td colspan="10" class="p-0">
                             @if($search !== '')
                                 <x-ui.empty-state
                                     icon="fa-magnifying-glass"

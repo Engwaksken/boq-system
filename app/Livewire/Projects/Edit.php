@@ -49,6 +49,8 @@ class Edit extends Component
 
     public ?string $description = null;
 
+    public int $progress = 0;
+
     public function mount(Project $project): void
     {
         $user = auth()->user();
@@ -75,6 +77,7 @@ class Edit extends Component
         $this->currency = $project->currency ?: \App\Support\Regional::currency();
         $this->status = $project->status ?: 'draft';
         $this->description = $project->description;
+        $this->progress = (int) ($project->progress ?? 0);
     }
 
     public function save(): void
@@ -113,6 +116,7 @@ class Edit extends Component
             'currency' => ['required', 'string', 'size:3'],
             'status' => ['required', 'string', 'in:draft,active,completed,archived'],
             'description' => ['nullable', 'string', 'max:5000'],
+            'progress' => ['required', 'integer', 'min:0', 'max:100'],
         ]);
 
         $this->project->update([
@@ -135,6 +139,7 @@ class Edit extends Component
             'currency' => $validated['currency'],
             'status' => $validated['status'],
             'description' => $validated['description'],
+            'progress' => $validated['progress'],
         ]);
 
         session()->flash('status', 'Project updated successfully.');

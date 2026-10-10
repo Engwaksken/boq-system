@@ -1947,5 +1947,11 @@
     "One or more selected features are no longer available.": "One or more selected features are no longer available.",
     "See hardware price changes in the notification centre": "See hardware price changes in the notification centre",
     "Show all :count features": "Show all :count features",
-    "Show less": "Show less"
+    "Show less": "Show less",
+    "Due today": "Due today",
+    "Remaining": "Remaining",
+    "Progress": "Progress",
+    "Needs Attention": "Needs Attention",
+    "View projects": "View projects",
+    "How far the project has advanced (0–100%).": "How far the project has advanced (0–100%)."
 }

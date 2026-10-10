@@ -76,6 +76,8 @@
                         <tr>
                             <th>{{ __('Name') }}</th>
                             <th>{{ __('Status') }}</th>
+                            <th>{{ __('Remaining') }}</th>
+                            <th>{{ __('Progress') }}</th>
                             <th>{{ __('BOQs') }}</th>
                             <th class="text-right">{{ __('Contract Value') }}</th>
                         </tr>
@@ -90,6 +92,8 @@
                                     @endif
                                 </td>
                                 <td><x-ui.status :status="$project->status" /></td>
+                                <td><x-project-deadline :project="$project" /></td>
+                                <td class="w-36"><x-project-progress :project="$project" /></td>
                                 <td>{{ \App\Support\Format::number($project->boqs_count ?? 0, 0) }}</td>
                                 <td class="is-numeric font-semibold text-slate-900">
                                     <x-money :amount="$project->contract_value ?? 0" :currency="$project->currency" />
@@ -112,6 +116,29 @@
         </x-ui.card>
 
         <div class="flex flex-col gap-5">
+            @if(isset($attentionProjects) && $attentionProjects->isNotEmpty())
+                <x-ui.card :title="__('Needs Attention')" icon="fa-bell" :padded="false">
+                    <x-slot:actions>
+                        <a href="{{ route('projects.index') }}" class="boq-link-button">{{ __('View projects') }}</a>
+                    </x-slot:actions>
+
+                    <ul class="divide-y divide-slate-100">
+                        @foreach($attentionProjects as $attention)
+                            <li class="px-5 py-3">
+                                <a href="{{ route('projects.show', $attention->id) }}" class="boq-table-link">{{ $attention->name }}</a>
+                                @if($attention->code)
+                                    <span class="boq-table-subtitle">{{ $attention->code }}</span>
+                                @endif
+                                <div class="mt-2 flex flex-col gap-2">
+                                    <x-project-deadline :project="$attention" />
+                                    <x-project-progress :project="$attention" />
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                </x-ui.card>
+            @endif
+
             <x-ui.card :title="__('Quick Actions')" icon="fa-bolt">
                 <div class="grid gap-2">
                     @if($canCreateProject)

@@ -53,6 +53,8 @@ class Create extends Component
 
     public ?string $description = null;
 
+    public int $progress = 0;
+
     public function save(): void
     {
         $validated = $this->validate([
@@ -75,6 +77,7 @@ class Create extends Component
             'currency' => ['required', 'string', 'size:3'],
             'status' => ['required', 'string', 'in:draft,active,completed,archived'],
             'description' => ['nullable', 'string', 'max:5000'],
+            'progress' => ['required', 'integer', 'min:0', 'max:100'],
         ]);
 
         $user = auth()->user();
@@ -99,6 +102,7 @@ class Create extends Component
             'currency' => $validated['currency'],
             'status' => $validated['status'],
             'description' => $validated['description'],
+            'progress' => $validated['progress'],
             'user_id' => $user->id,
             'organisation_id' => $user->organisation_id,
         ]);

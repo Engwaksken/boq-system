@@ -87,6 +87,14 @@
         </div>
 
         <div class="flex min-w-0 flex-col gap-5">
+            <x-ui.card :title="__('Progress')" icon="fa-chart-line">
+                <div class="text-2xl font-bold tracking-tight text-slate-900">{{ $project->progressPercent() }}%</div>
+                <div class="mt-2"><x-project-progress :project="$project" :show-label="false" /></div>
+                <div class="mt-3 border-t border-slate-100 pt-3">
+                    <x-project-deadline :project="$project" />
+                </div>
+            </x-ui.card>
+
             <x-ui.card :title="__('Contract Value')" icon="fa-money-bill-wave">
                 <p class="text-2xl font-bold tracking-tight text-slate-900">
                     <x-money :amount="$project->contract_value ?? 0" :currency="$project->currency" />

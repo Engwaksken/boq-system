@@ -85,6 +85,13 @@
                 <x-ui.field :label="__('Currency')" for="currency" error="currency">
                     <x-currency-select wire:model="currency" id="currency" :current="$currency" />
                 </x-ui.field>
+
+                <x-ui.field :label="__('Progress')" for="progress" error="progress" class="boq-form-span-2" :hint="__('How far the project has advanced (0–100%).')">
+                    <div class="flex items-center gap-3">
+                        <input type="range" min="0" max="100" step="5" wire:model.live="progress" id="progress" class="w-full" aria-describedby="progress-value">
+                        <span id="progress-value" class="min-w-12 text-center text-sm font-semibold text-slate-900">{{ $progress }}%</span>
+                    </div>
+                </x-ui.field>
             </div>
         </x-ui.card>
     </div>

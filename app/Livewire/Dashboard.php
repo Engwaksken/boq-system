@@ -32,6 +32,8 @@ class Dashboard extends Component
 
     public $recentProjects;
 
+    public $attentionProjects;
+
     public function mount(): void
     {
         $user = auth()->user();
@@ -57,7 +59,16 @@ class Dashboard extends Component
             ->withCount('boqs')
             ->latest()
             ->limit(5)
-            ->get(['id', 'name', 'code', 'status', 'contract_value', 'currency']);
+            ->get(['id', 'name', 'code', 'status', 'progress', 'start_date', 'expected_completion_date', 'contract_value', 'currency']);
+
+        // Projects due within 14 days (or already overdue) so they are not lost track of.
+        $this->attentionProjects = Project::accessibleTo($user)
+            ->whereIn('status', ['draft', 'active'])
+            ->whereNotNull('expected_completion_date')
+            ->where('expected_completion_date', '<=', now()->addDays(14)->toDateString())
+            ->orderBy('expected_completion_date')
+            ->limit(5)
+            ->get(['id', 'name', 'code', 'status', 'progress', 'expected_completion_date']);
     }
 
     public function render()

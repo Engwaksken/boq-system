@@ -194,7 +194,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 'permissions' => [
                     'dashboard.view',
                     'projects.view',
-                    'boq.view', 'boq.edit', 'boq.upload',
+                    'boq.view', 'boq.create', 'boq.edit', 'boq.upload',
                     'suppliers.view', 'suppliers.manage',
                     'quotations.view', 'quotations.manage',
                     'rates.view', 'hardware-prices.view',

@@ -286,5 +286,11 @@
     "draft": "Rasimu",
     "expired": "Imeisha muda",
     "or": "au",
-    "Get Prices": "Pata Bei"
+    "Get Prices": "Pata Bei",
+    "Due today": "Inaisha leo",
+    "Remaining": "Zilizobaki",
+    "Progress": "Maendeleo",
+    "Needs Attention": "Inahitaji Uangalifu",
+    "View projects": "Tazama miradi",
+    "How far the project has advanced (0–100%).": "Kiwango cha maendeleo ya mradi (0–100%)."
 }
