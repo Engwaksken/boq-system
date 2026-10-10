@@ -7,7 +7,12 @@
         <x-ui.card><p class="text-sm text-slate-600">{{ __('No assigned projects are available. Ask your organisation administrator to assign a project.') }}</p></x-ui.card>
     @endif
 
-    @if($showForm)
+    <x-ui.tabs :label="__('Expense sections')">
+        <x-ui.tab wire:click="setTab('list')" :active="$activeTab === 'list'" icon="fa-list" :count="$expenses->total()">{{ __('Expenses') }}</x-ui.tab>
+        <x-ui.tab wire:click="setTab('form')" :active="$activeTab === 'form'" icon="fa-file-circle-plus">{{ __('Record expense') }}</x-ui.tab>
+    </x-ui.tabs>
+
+    @if($showForm && $activeTab === 'form')
         <section class="boq-panel p-6 sm:p-8" aria-labelledby="expense-form-heading">
             <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -20,7 +25,15 @@
             <form wire:submit="save" class="space-y-6">
                 <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <x-ui.field :label="__('Assigned project')" for="expense-project" error="project_id" required class="md:col-span-2 lg:col-span-3">
-                        <select id="expense-project" wire:model.live="project_id" class="boq-field" @disabled($expenseId !== null)><option value="">{{ __('Select a project') }}</option>@foreach($projects as $project)<option value="{{ $project->id }}">{{ $project->name }}</option>@endforeach</select>
+                        <x-ui.searchable-select
+                            id="expense-project"
+                            wire:model.live="project_id"
+                            :options="$projects->pluck('name', 'id')->all()"
+                            :value="$project_id"
+                            :placeholder="__('Select a project')"
+                            :disabled="$expenseId !== null"
+                            :search-placeholder="__('Search projects...')"
+                        />
                     </x-ui.field>
                 </div>
 
@@ -124,6 +137,7 @@
         </section>
     @endif
 
+    @if($activeTab === 'list')
     @if($totals->isNotEmpty())
         <div class="grid gap-3 sm:grid-cols-3">
             @foreach($totals as $total)
@@ -134,23 +148,24 @@
     <x-ui.card :padded="false">
         <div class="boq-toolbar">
             <x-ui.field :label="__('Search')" for="expense-search" class="boq-toolbar-grow"><input id="expense-search" type="search" wire:model.live.debounce.300ms="search" class="boq-field" maxlength="255"></x-ui.field>
-            <x-ui.field :label="__('Project')" for="expense-project-filter"><select id="expense-project-filter" wire:model.live="projectFilter" class="boq-field"><option value="">{{ __('All projects') }}</option>@foreach($projects as $project)<option value="{{ $project->id }}">{{ $project->name }}</option>@endforeach</select></x-ui.field>
+            <x-ui.field :label="__('Project')" for="expense-project-filter" class="w-full sm:w-64"><x-ui.searchable-select id="expense-project-filter" wire:model.live="projectFilter" :options="$projects->pluck('name', 'id')->all()" :value="$projectFilter" :empty-label="__('All projects')" :search-placeholder="__('Search projects...')" /></x-ui.field>
         </div>
         <div class="overflow-x-auto"><x-ui.table>
-            <thead><tr><th>{{ __('Date') }}</th><th>{{ __('Project') }}</th><th>{{ __('Description') }}</th><th>{{ __('Supplier') }}</th><th>{{ __('Status') }}</th><th class="is-numeric">{{ __('Total') }}</th><th>{{ __('Actions') }}</th></tr></thead>
+            <thead><tr><th>{{ __('Date') }}</th><th>{{ __('Project') }}</th><th>{{ __('Recorded by') }}</th><th>{{ __('Description') }}</th><th>{{ __('Supplier') }}</th><th>{{ __('Status') }}</th><th class="is-numeric">{{ __('Total') }}</th><th>{{ __('Actions') }}</th></tr></thead>
             <tbody>@forelse($expenses as $expense)
-                <tr wire:key="expense-{{ $expense->id }}"><td class="whitespace-nowrap">{{ \App\Support\Format::date($expense->purchase_date) }}</td><td>{{ $expense->project->name }}</td><td>{{ $expense->description }}</td><td>{{ $expense->supplier ?: '—' }}</td><td><x-ui.badge :color="$expense->is_planned ? 'success' : 'warning'">{{ $expense->is_planned ? __('Planned') : __('Unplanned') }}</x-ui.badge></td><td class="is-numeric"><x-money :amount="$expense->total" :currency="$expense->currency" /></td><td><button type="button" wire:click="show({{ $expense->id }})" class="boq-btn-ghost">{{ __('Details & receipts') }}</button><button type="button" wire:click="edit({{ $expense->id }})" class="boq-btn-ghost">{{ __('Edit') }}</button></td></tr>
-            @empty<tr><td colspan="7"><x-ui.empty-state icon="fa-receipt" :title="__('No expenses recorded.')" :description="__('Record a purchase to start tracking project spending.')" /></td></tr>@endforelse</tbody>
+                <tr wire:key="expense-{{ $expense->id }}"><td class="whitespace-nowrap">{{ \App\Support\Format::date($expense->purchase_date) }}</td><td>{{ $expense->project->name }}</td><td>{{ $expense->creator?->name ?? '—' }}</td><td>{{ $expense->description }}</td><td>{{ $expense->supplier ?: '—' }}</td><td><x-ui.badge :color="$expense->is_planned ? 'success' : 'warning'">{{ $expense->is_planned ? __('Planned') : __('Unplanned') }}</x-ui.badge></td><td class="is-numeric"><x-money :amount="$expense->total" :currency="$expense->currency" /></td><td><button type="button" wire:click="show({{ $expense->id }})" class="boq-btn-ghost">{{ __('Details & receipts') }}</button><button type="button" wire:click="edit({{ $expense->id }})" class="boq-btn-ghost">{{ __('Edit') }}</button></td></tr>
+            @empty<tr><td colspan="8"><x-ui.empty-state icon="fa-receipt" :title="__('No expenses recorded.')" :description="__('Record a purchase to start tracking project spending.')" /></td></tr>@endforelse</tbody>
         </x-ui.table></div>
         <div class="p-4">{{ $expenses->links() }}</div>
     </x-ui.card>
+    @endif
 
     @if($selectedExpense && ! $showForm)
         <x-ui.modal :title="__('Details & receipts')" close="closeDetails" size="lg">
             <h3 class="font-semibold">{{ $selectedExpense->description }}</h3>
             <p class="mt-1 text-sm text-slate-600">{{ $selectedExpense->project->name }} · {{ \App\Support\Format::date($selectedExpense->purchase_date) }}</p>
             <p class="my-4 text-xl font-bold"><x-money :amount="$selectedExpense->total" :currency="$selectedExpense->currency" /></p>
-            <dl class="grid gap-3 text-sm sm:grid-cols-2"><div><dt class="font-semibold">{{ __('Supplier') }}</dt><dd>{{ $selectedExpense->supplier ?: '—' }}</dd></div><div><dt class="font-semibold">{{ __('Payment method') }}</dt><dd>{{ $selectedExpense->payment_method ?: '—' }}</dd></div></dl>
+            <dl class="grid gap-3 text-sm sm:grid-cols-2"><div><dt class="font-semibold">{{ __('Supplier') }}</dt><dd>{{ $selectedExpense->supplier ?: '—' }}</dd></div><div><dt class="font-semibold">{{ __('Payment method') }}</dt><dd>{{ $selectedExpense->payment_method ?: '—' }}</dd></div><div><dt class="font-semibold">{{ __('Recorded by') }}</dt><dd>{{ $selectedExpense->creator?->name ?? '—' }}</dd></div></dl>
             @if($selectedExpense->items->isNotEmpty())
                 <h3 class="mt-4 mb-2 font-semibold">{{ __('Expense items') }}</h3>
                 <div class="overflow-x-auto"><x-ui.table><thead><tr><th>{{ __('Description') }}</th><th>{{ __('Quantity') }}</th><th>{{ __('Unit') }}</th><th class="is-numeric">{{ __('Rate') }}</th><th class="is-numeric">{{ __('Total') }}</th></tr></thead><tbody>

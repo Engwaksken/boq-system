@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateExpenseRequest;
 use App\Models\Boq;
 use App\Models\BoqItem;
 use App\Models\Expense;
+use App\Models\UserNotification;
 use Illuminate\Support\Facades\DB;
 use App\Models\Project;
 use App\Models\User;
@@ -40,7 +41,7 @@ class ExpenseService
             'A matching expense already exists for this project.'
         );
 
-        return DB::transaction(function () use ($data, $items, $first, $project, $user, $total, $deduplicationHash): Expense {
+        $expense = DB::transaction(function () use ($data, $items, $first, $project, $user, $total, $deduplicationHash): Expense {
             $expense = Expense::create(array_merge($data, [
                 'description' => $first['description'],
                 'quantity' => $first['quantity'],
@@ -61,6 +62,42 @@ class ExpenseService
 
             return $expense->load('items');
         });
+
+        $this->notifyProjectTeam($expense, $project, $user);
+
+        return $expense;
+    }
+
+    /**
+     * In-app notice to the project owner and every assigned member (except the
+     * person who recorded the expense), so the whole team sees new spending.
+     */
+    private function notifyProjectTeam(Expense $expense, Project $project, User $recorder): void
+    {
+        $recipients = collect([$project->user_id])
+            ->merge($project->assignments()->pluck('user_id'))
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->reject(fn (int $id) => $id === $recorder->id);
+
+        $amount = \App\Support\Format::money($expense->total, $expense->currency);
+
+        foreach ($recipients as $userId) {
+            UserNotification::create([
+                'user_id' => $userId,
+                'type' => 'expense',
+                'title' => __('Expense recorded'),
+                'message' => sprintf(
+                    '%s recorded %s for %s: %s.',
+                    $recorder->name,
+                    $amount,
+                    $project->name,
+                    $expense->description
+                ),
+                'data' => ['expense_id' => $expense->id, 'project_id' => $project->id],
+            ]);
+        }
     }
 
     public function update(User $user, Expense $expense, array $data): Expense

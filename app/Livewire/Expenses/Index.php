@@ -38,6 +38,9 @@ class Index extends Component
 
     public bool $showForm = false;
 
+    /** Which section is shown: the expense list or the record/edit form. */
+    public string $activeTab = 'list';
+
     #[Locked]
     public ?int $expenseId = null;
 
@@ -124,6 +127,23 @@ class Index extends Component
             $this->selectSingleApprovedBoq();
         }
         $this->showForm = true;
+        $this->activeTab = 'form';
+    }
+
+    /** Tab strip: "Expenses" shows the list; "Record expense" opens a new form (or returns to an open one). */
+    public function setTab(string $tab): void
+    {
+        if ($tab === 'form') {
+            if ($this->showForm) {
+                $this->activeTab = 'form';
+            } else {
+                $this->create();
+            }
+
+            return;
+        }
+
+        $this->activeTab = 'list';
     }
 
     public function updatedProjectId(): void
@@ -174,6 +194,7 @@ class Index extends Component
         $this->is_planned = $expense->is_planned;
         $this->boq_item_id = $expense->boq_item_id;
         $this->showForm = true;
+        $this->activeTab = 'form';
     }
 
     public function save(ExpenseService $service, ExpenseReceiptService $receipts): void
@@ -351,6 +372,7 @@ class Index extends Component
     public function closeForm(): void
     {
         $this->reset(['showForm', 'expenseId', 'project_id', 'boq_id', 'purchase_date', 'supplier', 'description', 'quantity', 'unit', 'rate', 'currency', 'payment_method', 'is_planned', 'explanation', 'extractFile', 'capturePhoto', 'extractFiles', 'activeReceiptIndex', 'receiptDrafts', 'boq_item_id', 'extractionWarnings', 'additionalItems']);
+        $this->activeTab = 'list';
         $this->resetValidation();
     }
 
@@ -392,13 +414,13 @@ class Index extends Component
             ->when(trim($this->search) !== '', fn ($query) => $query->where(fn ($search) => $search
                 ->where('description', 'like', '%'.trim($this->search).'%')
                 ->orWhere('supplier', 'like', '%'.trim($this->search).'%')));
-        $selected = $this->selectedExpenseId ? Expense::with(['project', 'receipts', 'items'])->findOrFail($this->selectedExpenseId) : null;
+        $selected = $this->selectedExpenseId ? Expense::with(['project', 'creator', 'receipts', 'items'])->findOrFail($this->selectedExpenseId) : null;
         if ($selected) {
             $this->authorize('view', $selected);
         }
 
         return view('livewire.expenses.index', [
-            'expenses' => (clone $query)->with('project')->latest('purchase_date')->latest('id')->paginate($this->exportPageSize(15)),
+            'expenses' => (clone $query)->with(['project', 'creator'])->latest('purchase_date')->latest('id')->paginate($this->exportPageSize(15)),
             'totals' => (clone $query)->selectRaw('currency, SUM(total) AS amount')->groupBy('currency')->get(),
             'projects' => $this->projects(), 'selectedExpense' => $selected,
             'boqs' => $this->approvedBoqs(),

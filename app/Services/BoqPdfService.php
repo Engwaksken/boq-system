@@ -23,18 +23,22 @@ class BoqPdfService
         return Str::slug(($boq->reference ?: 'boq-'.$boq->id).' '.$boq->name, '-').'.pdf';
     }
 
-    public function output(Boq $boq): string
+    public function output(Boq $boq, ?string $generatedBy = null): string
     {
-        return $this->pdf($boq)->output();
+        return $this->pdf($boq, $generatedBy)->output();
     }
 
     /** The document's HTML before the PDF layout (also handy for checks). */
-    public function html(Boq $boq): string
+    public function html(Boq $boq, ?string $generatedBy = null): string
     {
         $this->freezeBranding($boq);
 
         $boq->loadMissing(['project', 'owner']);
         $company = $boq->brandingIdentity() ?? [];
+
+        // Who produced this copy (printed in every page footer): the signed-in
+        // user, else the BOQ owner (queued sends and links opened without an account).
+        $generatedBy = $generatedBy ?: auth()->user()?->name ?: $boq->owner?->name ?: config('app.name');
 
         return view('pdf.boq', $this->totals($boq) + [
             'boq' => $boq,
@@ -42,17 +46,18 @@ class BoqPdfService
             'company' => $company,
             'logo' => $this->logoDataUri($company['logo_path'] ?? null),
             'preparedBy' => $boq->owner?->name,
+            'generatedBy' => $generatedBy,
             'signatures' => $this->signatures($boq),
             'generatedAt' => now(),
         ])->render();
     }
 
-    public function pdf(Boq $boq): \Barryvdh\DomPDF\PDF
+    public function pdf(Boq $boq, ?string $generatedBy = null): \Barryvdh\DomPDF\PDF
     {
         ini_set('memory_limit', '1024M');
         set_time_limit(300);
 
-        $pdf = Pdf::loadHTML($this->html($boq))
+        $pdf = Pdf::loadHTML($this->html($boq, $generatedBy))
             ->setPaper('a4', 'portrait')
             ->setOption(['isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans']);
 

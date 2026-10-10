@@ -27,7 +27,7 @@ class BoqShareService
             sender: $sender,
             subjectLine: $subject ?: $this->defaultSubject($boq),
             personalMessage: $message,
-            pdfBytes: $this->pdfs->output($boq),
+            pdfBytes: $this->pdfs->output($boq, $sender->name),
             pdfName: $this->pdfs->filename($boq),
         ));
     }

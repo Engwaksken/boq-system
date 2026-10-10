@@ -323,7 +323,7 @@ class PlatformUpdateTest extends TestCase
         return [
             'boq' => $boq, 'project' => $boq->project, 'company' => $boq->brandingIdentity() ?? [], 'logo' => null,
             'lines' => collect(), 'subtotal' => 0, 'taxRate' => 0, 'taxLabel' => 'VAT', 'tax' => 0, 'total' => 0,
-            'currency' => 'USD', 'preparedBy' => $boq->owner?->name, 'generatedAt' => now(),
+            'currency' => 'USD', 'preparedBy' => $boq->owner?->name, 'generatedBy' => $boq->owner?->name, 'generatedAt' => now(),
         ];
     }
 }
