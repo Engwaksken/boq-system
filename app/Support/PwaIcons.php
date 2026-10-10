@@ -7,8 +7,9 @@ use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 /**
- * App icons made from the system logo (Admin > Settings), falling back to the
- * favicon and then the built-in icons. Generated once per logo and cached.
+ * App icons made from the uploaded site logo (Admin > Settings), falling back
+ * to the built-in icons only when no logo has been uploaded. Generated once per
+ * logo and cached, and regenerated whenever the logo changes.
  */
 class PwaIcons
 {
@@ -67,21 +68,19 @@ class PwaIcons
         }
     }
 
-    /** The uploaded logo (or favicon) as a readable image file, or null. */
+    /** The uploaded site logo as a readable image file, or null. */
     public static function source(): ?string
     {
-        foreach (['logo', 'favicon'] as $key) {
-            $stored = trim((string) SiteSetting::get($key, ''));
-            if ($stored === '') {
-                continue;
-            }
+        $stored = trim((string) SiteSetting::get('logo', ''));
+        if ($stored === '') {
+            return null;
+        }
 
-            $path = Storage::disk('public')->path($stored);
-            $info = is_file($path) ? @getimagesize($path) : false;
+        $path = Storage::disk('public')->path($stored);
+        $info = is_file($path) ? @getimagesize($path) : false;
 
-            if ($info !== false && in_array($info[2], [IMAGETYPE_PNG, IMAGETYPE_JPEG, IMAGETYPE_WEBP, IMAGETYPE_GIF], true)) {
-                return $path;
-            }
+        if ($info !== false && in_array($info[2], [IMAGETYPE_PNG, IMAGETYPE_JPEG, IMAGETYPE_WEBP, IMAGETYPE_GIF], true)) {
+            return $path;
         }
 
         return null;

@@ -3637,12 +3637,12 @@ button.boq-sort-th:hover {
 
 .auth-aside-brand .auth-aside-mark {
     display: inline-flex;
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 3rem;
+    height: 3rem;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    border-radius: 0.7rem;
+    border-radius: 0.75rem;
     background: rgb(255 255 255 / 0.14);
 }
 
@@ -3901,12 +3901,12 @@ select.auth-field {
 
 .auth-badge {
     display: flex;
-    width: 3rem;
-    height: 3rem;
+    width: 3.5rem;
+    height: 3.5rem;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 1rem;
-    border-radius: 0.8rem;
+    margin: 0 auto 1.25rem;
+    border-radius: 0.9rem;
     background: var(--boq-primary-soft);
     color: var(--boq-primary);
 }
@@ -3914,9 +3914,9 @@ select.auth-field {
 .auth-logo {
     display: block;
     width: auto;
-    max-width: 180px;
-    height: 56px;
-    margin: 0 auto 1rem;
+    max-width: 260px;
+    height: 88px;
+    margin: 0 auto 1.25rem;
     object-fit: contain;
 }
 
