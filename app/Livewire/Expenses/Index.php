@@ -74,6 +74,8 @@ class Index extends Component
 
     public $extractFile;
 
+    public $capturePhoto;
+
     public array $extractFiles = [];
 
     public array $receiptFiles = [];
@@ -266,6 +268,18 @@ class Index extends Component
         $this->reviewReceipt(array_key_first($this->extractFiles));
     }
 
+    /** A photo taken with the camera is added to the receipt queue and reviewed. */
+    public function updatedCapturePhoto(): void
+    {
+        if (! $this->capturePhoto) {
+            return;
+        }
+
+        $this->extractFiles[] = $this->capturePhoto;
+        $this->capturePhoto = null;
+        $this->updatedExtractFiles();
+    }
+
     public function reviewReceipt(int $index): void
     {
         abort_unless(isset($this->extractFiles[$index]), 404);
@@ -336,7 +350,7 @@ class Index extends Component
 
     public function closeForm(): void
     {
-        $this->reset(['showForm', 'expenseId', 'project_id', 'boq_id', 'purchase_date', 'supplier', 'description', 'quantity', 'unit', 'rate', 'currency', 'payment_method', 'is_planned', 'explanation', 'extractFile', 'extractFiles', 'activeReceiptIndex', 'receiptDrafts', 'boq_item_id', 'extractionWarnings', 'additionalItems']);
+        $this->reset(['showForm', 'expenseId', 'project_id', 'boq_id', 'purchase_date', 'supplier', 'description', 'quantity', 'unit', 'rate', 'currency', 'payment_method', 'is_planned', 'explanation', 'extractFile', 'capturePhoto', 'extractFiles', 'activeReceiptIndex', 'receiptDrafts', 'boq_item_id', 'extractionWarnings', 'additionalItems']);
         $this->resetValidation();
     }
 

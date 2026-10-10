@@ -101,23 +101,43 @@
                 </p>
             </x-ui.card>
 
-            <x-ui.card :title="__('Project Details')" icon="fa-circle-info">
-                <dl class="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-                    @foreach($details as $label => $value)
-                        <div class="min-w-0">
-                            <dt class="text-xs font-semibold text-slate-500">{{ $label }}</dt>
-                            <dd class="mt-0.5 text-sm text-slate-900 [overflow-wrap:anywhere]">{{ filled($value) ? $value : $dash }}</dd>
-                        </div>
-                    @endforeach
-                </dl>
+            <div x-data="{ detailsOpen: false }">
+                <x-ui.card :padded="false">
+                    <x-slot:header>
+                        <button
+                            type="button"
+                            @click="detailsOpen = ! detailsOpen"
+                            class="flex w-full items-center justify-between gap-3"
+                            :aria-expanded="detailsOpen.toString()"
+                            aria-controls="project-details-body"
+                        >
+                            <span class="boq-card-title">
+                                <i class="fas fa-circle-info" aria-hidden="true"></i>
+                                {{ __('Project Details') }}
+                            </span>
+                            <i class="fas text-slate-400" :class="detailsOpen ? 'fa-chevron-up' : 'fa-chevron-down'" aria-hidden="true"></i>
+                        </button>
+                    </x-slot:header>
 
-                @if(filled($project->description))
-                    <div class="mt-5 border-t border-slate-100 pt-4">
-                        <p class="text-xs font-semibold text-slate-500">{{ __('Description') }}</p>
-                        <p class="mt-1 whitespace-pre-line text-sm text-slate-700">{{ $project->description }}</p>
+                    <div id="project-details-body" x-show="detailsOpen" x-cloak class="boq-card-body">
+                        <dl class="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+                            @foreach($details as $label => $value)
+                                <div class="min-w-0">
+                                    <dt class="text-xs font-semibold text-slate-500">{{ $label }}</dt>
+                                    <dd class="mt-0.5 text-sm text-slate-900 [overflow-wrap:anywhere]">{{ filled($value) ? $value : $dash }}</dd>
+                                </div>
+                            @endforeach
+                        </dl>
+
+                        @if(filled($project->description))
+                            <div class="mt-5 border-t border-slate-100 pt-4">
+                                <p class="text-xs font-semibold text-slate-500">{{ __('Description') }}</p>
+                                <p class="mt-1 whitespace-pre-line text-sm text-slate-700">{{ $project->description }}</p>
+                            </div>
+                        @endif
                     </div>
-                @endif
-            </x-ui.card>
+                </x-ui.card>
+            </div>
         </div>
     </div>
 </div>

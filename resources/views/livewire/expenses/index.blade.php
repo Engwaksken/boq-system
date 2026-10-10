@@ -28,10 +28,15 @@
                     @if($expenseId === null)
                         <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                             <p class="mb-2 text-sm font-semibold">{{ __('Fill from a receipt (optional)') }}</p>
-                            <div class="flex items-end gap-3">
-                                <x-ui.field :label="__('Receipts')" for="expense-extract-file" error="extractFiles" class="flex-1">
+                            <div class="flex flex-wrap items-end gap-3">
+                                <x-ui.field :label="__('Receipts')" for="expense-extract-file" error="extractFiles" class="min-w-48 flex-1">
                                     <input id="expense-extract-file" type="file" multiple wire:model="extractFiles" accept="application/pdf,image/jpeg,image/png,image/webp" class="boq-field">
                                 </x-ui.field>
+                                <label class="boq-btn-secondary cursor-pointer">
+                                    <i class="fas fa-camera" aria-hidden="true"></i>
+                                    {{ __('Take photo') }}
+                                    <input type="file" accept="image/*" capture="environment" wire:model="capturePhoto" class="sr-only">
+                                </label>
                                 <x-ui.button type="button" icon="fa-wand-magic-sparkles" wire:click="extractFromReceipt" loading="extractFiles,extractFromReceipt,reviewReceipt">{{ __('Extract again') }}</x-ui.button>
                             </div>
                             <p class="mt-1 text-xs text-slate-500">{{ __('Choose up to 10 receipts, 10 MB each. Each receipt is extracted and saved separately. Review one receipt, save it, then continue to the next.') }}</p>
@@ -160,7 +165,14 @@
             <h3 class="mt-6 mb-3 font-semibold">{{ __('Receipts') }}</h3>
             @forelse($selectedExpense->receipts as $receipt)<a class="boq-btn-secondary mb-2" href="{{ route('expense-receipts.download', $receipt) }}"><i class="fas fa-download" aria-hidden="true"></i>{{ $receipt->original_filename }}</a>@empty<p class="mb-4 text-sm text-slate-500">{{ __('No receipts attached.') }}</p>@endforelse
             <form wire:submit="uploadReceipt" class="mt-4 space-y-3">
-                <x-ui.field :label="__('Attach receipts')" for="expense-receipt-file" error="receiptFiles"><input id="expense-receipt-file" type="file" multiple wire:model="receiptFiles" accept="application/pdf,image/jpeg,image/png,image/webp" class="boq-field"><p class="mt-1 text-xs text-slate-500">{{ __('Up to 10 PDFs or images, 10 MB each. Attachments here do not change expense items.') }}</p></x-ui.field>
+                <div class="flex flex-wrap items-end gap-3">
+                    <x-ui.field :label="__('Attach receipts')" for="expense-receipt-file" error="receiptFiles" class="min-w-48 flex-1"><input id="expense-receipt-file" type="file" multiple wire:model="receiptFiles" accept="application/pdf,image/jpeg,image/png,image/webp" class="boq-field"><p class="mt-1 text-xs text-slate-500">{{ __('Up to 10 PDFs or images, 10 MB each. Attachments here do not change expense items.') }}</p></x-ui.field>
+                    <label class="boq-btn-secondary cursor-pointer">
+                        <i class="fas fa-camera" aria-hidden="true"></i>
+                        {{ __('Take photo') }}
+                        <input type="file" accept="image/*" capture="environment" wire:model="receiptFile" class="sr-only">
+                    </label>
+                </div>
                 @foreach($errors->get('receiptFiles.*') as $messages) @foreach($messages as $message)<p class="text-sm text-red-600">{{ $message }}</p>@endforeach @endforeach
                 <x-ui.button type="submit" icon="fa-upload" wire:loading.attr="disabled" wire:target="receiptFiles,uploadReceipt">{{ __('Upload receipts') }}</x-ui.button>
                 <span wire:loading wire:target="receiptFiles,uploadReceipt" role="status">{{ __('Uploading...') }}</span>

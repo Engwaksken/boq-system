@@ -1953,5 +1953,11 @@
     "Progress": "Progress",
     "Needs Attention": "Needs Attention",
     "View projects": "View projects",
-    "How far the project has advanced (0–100%).": "How far the project has advanced (0–100%)."
+    "How far the project has advanced (0–100%).": "How far the project has advanced (0–100%).",
+    "Take photo": "Take photo",
+    "Search projects...": "Search projects...",
+    "Last month": "Last month",
+    "This quarter": "This quarter",
+    "Last 30 days": "Last 30 days",
+    "Try adjusting the search, status or period filters.": "Try adjusting the search, status or period filters."
 }

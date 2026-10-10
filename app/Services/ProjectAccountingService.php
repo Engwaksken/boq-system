@@ -7,6 +7,7 @@ use App\Models\Expense;
 use App\Models\Project;
 use App\Models\User;
 use App\Support\Regional;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -26,13 +27,19 @@ class ProjectAccountingService
         return Project::where('organisation_id', $user->organisation_id)
             ->whereHas('assignments', fn ($query) => $query->where('user_id', $user->id)->whereNull('deleted_at'))
             ->orderBy('name')->get()
-            ->map(fn (Project $project) => array_merge([
-                'id' => $project->id, 'name' => $project->name, 'code' => $project->code, 'status' => $project->status,
-            ], $this->totals($project)));
+            ->map(fn (Project $project) => $this->projectTotals($project));
+    }
+
+    /** One row for a single project, rolled up from its approved BOQs. */
+    public function projectTotals(Project $project, ?Carbon $from = null, ?Carbon $to = null): array
+    {
+        return array_merge([
+            'id' => $project->id, 'name' => $project->name, 'code' => $project->code, 'status' => $project->status,
+        ], $this->totals($project, $from, $to));
     }
 
     /** Per-approved-BOQ breakdown plus project totals for the project's currency. */
-    public function breakdown(Project $project): array
+    public function breakdown(Project $project, ?Carbon $from = null, ?Carbon $to = null): array
     {
         $currency = strtoupper((string) ($project->currency ?: Regional::currency()));
 
@@ -41,7 +48,7 @@ class ProjectAccountingService
             ->with(['items' => fn ($query) => $query->select('id', 'boq_id', 'quantity', 'approved_rate', 'reviewed_rate', 'original_rate', 'currency')])
             ->orderBy('name')->get();
 
-        [$itemTotals, $legacyTotals] = $this->spendMaps($project, $currency);
+        [$itemTotals, $legacyTotals] = $this->spendMaps($project, $currency, $from, $to);
 
         $rows = $boqs->where('status', 'approved')->values()->map(function (Boq $boq) use ($itemTotals, $legacyTotals, $currency) {
             $budget = round($boq->items->sum(fn ($item) => (float) $item->quantity
@@ -67,17 +74,17 @@ class ProjectAccountingService
             'currency' => $currency, 'rows' => $rows,
             'excluded_count' => $boqs->where('status', '!=', 'approved')->count(),
             'unlinked_spent' => $unlinked,
-            'other_currency' => $this->otherCurrencySpend($project, $currency),
+            'other_currency' => $this->otherCurrencySpend($project, $currency, $from, $to),
             'budget' => $budget, 'spent' => $spent, 'balance' => round($budget - $spent, 2),
             'progress' => $budget > 0 ? round($spent / $budget * 100, 1) : null,
         ];
     }
 
     /** Approved-BOQ budget and linked expenditure for one project. */
-    private function totals(Project $project): array
+    private function totals(Project $project, ?Carbon $from = null, ?Carbon $to = null): array
     {
         $currency = strtoupper((string) ($project->currency ?: Regional::currency()));
-        [$itemTotals, $legacyTotals] = $this->spendMaps($project, $currency);
+        [$itemTotals, $legacyTotals] = $this->spendMaps($project, $currency, $from, $to);
 
         $budget = $this->approvedBudget($project, $currency);
         $spent = 0.0;
@@ -117,7 +124,7 @@ class ProjectAccountingService
      *
      * @return array{0: array<string, float>, 1: array<string, float>}
      */
-    private function spendMaps(Project $project, string $currency): array
+    private function spendMaps(Project $project, string $currency, ?Carbon $from = null, ?Carbon $to = null): array
     {
         $itemTotals = [];
         foreach (DB::table('expense_items')
@@ -125,6 +132,8 @@ class ProjectAccountingService
             ->where('expenses.project_id', $project->id)
             ->where('expenses.organisation_id', $project->organisation_id)
             ->whereRaw('UPPER(expenses.currency) = ?', [$currency])
+            ->when($from, fn ($query) => $query->where('expenses.purchase_date', '>=', $from->toDateString()))
+            ->when($to, fn ($query) => $query->where('expenses.purchase_date', '<=', $to->toDateString()))
             ->groupBy('expense_items.boq_id')
             ->selectRaw('expense_items.boq_id AS boq_id, SUM(expense_items.total) AS spent')->get() as $row) {
             $itemTotals[(string) ($row->boq_id ?? '')] = (float) $row->spent;
@@ -134,6 +143,8 @@ class ProjectAccountingService
         foreach (Expense::where('project_id', $project->id)
             ->where('organisation_id', $project->organisation_id)
             ->whereRaw('UPPER(currency) = ?', [$currency])
+            ->when($from, fn ($query) => $query->where('purchase_date', '>=', $from->toDateString()))
+            ->when($to, fn ($query) => $query->where('purchase_date', '<=', $to->toDateString()))
             ->whereDoesntHave('items')
             ->groupBy('boq_id')->selectRaw('boq_id, SUM(total) AS spent')->get() as $row) {
             $legacyTotals[(string) ($row->boq_id ?? '')] = (float) $row->spent;
@@ -147,11 +158,13 @@ class ProjectAccountingService
         return ($itemTotals[(string) $boqId] ?? 0) + ($legacyTotals[(string) $boqId] ?? 0);
     }
 
-    private function otherCurrencySpend(Project $project, string $currency): Collection
+    private function otherCurrencySpend(Project $project, string $currency, ?Carbon $from = null, ?Carbon $to = null): Collection
     {
         return DB::table('expenses')
             ->where('project_id', $project->id)->where('organisation_id', $project->organisation_id)
             ->whereRaw('UPPER(currency) != ?', [$currency])
+            ->when($from, fn ($query) => $query->where('purchase_date', '>=', $from->toDateString()))
+            ->when($to, fn ($query) => $query->where('purchase_date', '<=', $to->toDateString()))
             ->groupBy('currency')->selectRaw('currency, SUM(total) AS spent')
             ->pluck('spent', 'currency');
     }

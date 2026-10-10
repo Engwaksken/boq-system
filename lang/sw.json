@@ -292,5 +292,11 @@
     "Progress": "Maendeleo",
     "Needs Attention": "Inahitaji Uangalifu",
     "View projects": "Tazama miradi",
-    "How far the project has advanced (0–100%).": "Kiwango cha maendeleo ya mradi (0–100%)."
+    "How far the project has advanced (0–100%).": "Kiwango cha maendeleo ya mradi (0–100%).",
+    "Take photo": "Piga picha",
+    "Search projects...": "Tafuta miradi...",
+    "Last month": "Mwezi uliopita",
+    "This quarter": "Robo hii",
+    "Last 30 days": "Siku 30 zilizopita",
+    "Try adjusting the search, status or period filters.": "Jaribu kurekebisha vichujio vya utafutaji, hali au kipindi."
 }
