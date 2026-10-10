@@ -43,6 +43,21 @@ class LanguagesSeeder extends Seeder
                 'is_default' => false,
                 'translation_completion' => 100,
             ],
+            [
+                'code' => 'sw',
+                'name' => 'Swahili',
+                'native_name' => 'Kiswahili',
+                'direction' => 'ltr',
+                'date_format' => 'd/m/Y',
+                'time_format' => 'H:i',
+                'number_format' => 'en_US',
+                'decimal_separator' => '.',
+                'thousands_separator' => ',',
+                'currency_format' => ':symbol :value',
+                'is_active' => true,
+                'is_default' => false,
+                'translation_completion' => 100,
+            ],
         ];
 
         foreach ($languages as $language) {

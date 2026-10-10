@@ -27,7 +27,7 @@ class ProfileUpdateRequest extends FormRequest
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
             'phone' => ['nullable', 'string', 'max:30'],
-            'locale' => ['required', Rule::in(['en', 'fr', 'sw'])],
+            'locale' => ['required', Rule::exists('languages', 'code')->where('is_active', true)],
             'timezone' => ['required', 'timezone:all'],
         ];
     }

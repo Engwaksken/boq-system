@@ -82,11 +82,8 @@
 
                     <p class="boq-stat-value" style="font-size:1rem;">
                         {{
-                            match(auth()->user()->locale ?? 'en') {
-                                'sw' => 'Swahili',
-                                'fr' => 'French',
-                                default => 'English',
-                            }
+                            \App\Models\Language::where('code', auth()->user()->locale ?? 'en')
+                                ->value('name') ?? 'English'
                         }}
                     </p>
                 </div>

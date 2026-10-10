@@ -19,7 +19,7 @@ return new class extends Migration
         $now = now();
         $hasDefault = DB::table('languages')->where('is_default', true)->exists();
 
-        foreach ([['en', 'English', 'English', 'Y-m-d'], ['lg', 'Luganda', 'Luganda', 'd/m/Y']] as [$code, $name, $native, $dateFormat]) {
+        foreach ([['en', 'English', 'English', 'Y-m-d'], ['lg', 'Luganda', 'Luganda', 'd/m/Y'], ['sw', 'Swahili', 'Kiswahili', 'd/m/Y']] as [$code, $name, $native, $dateFormat]) {
             if (DB::table('languages')->where('code', $code)->exists()) {
                 continue;
             }

@@ -33,9 +33,9 @@
             <div>
                 <x-input-label for="locale" :value="__('Language')" />
                 <select id="locale" name="locale" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                    <option value="en" @selected(old('locale', $user->locale) === 'en')>English</option>
-                    <option value="fr" @selected(old('locale', $user->locale) === 'fr')>French</option>
-                    <option value="sw" @selected(old('locale', $user->locale) === 'sw')>Swahili</option>
+                    @foreach(\App\Models\Language::where('is_active', true)->orderByDesc('is_default')->orderBy('name')->get() as $language)
+                        <option value="{{ $language->code }}" @selected(old('locale', $user->locale) === $language->code)>{{ $language->name }}</option>
+                    @endforeach
                 </select>
                 <x-input-error class="mt-2" :messages="$errors->get('locale')" />
             </div>

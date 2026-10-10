@@ -131,18 +131,18 @@ class ProductionHardeningTest extends TestCase
         Livewire::actingAs($admin)
             ->test(LanguagesManager::class)
             ->call('create')
-            ->set('form.code', 'sw')
-            ->set('form.name', 'Swahili')
-            ->set('form.native_name', 'Kiswahili')
+            ->set('form.code', 'fr')
+            ->set('form.name', 'French')
+            ->set('form.native_name', 'Français')
             ->call('save')
             ->assertHasNoErrors();
 
-        $swahili = Language::where('code', 'sw')->firstOrFail();
+        $french = Language::where('code', 'fr')->firstOrFail();
 
-        Livewire::actingAs($admin)->test(LanguagesManager::class)->call('setDefault', $swahili->id);
+        Livewire::actingAs($admin)->test(LanguagesManager::class)->call('setDefault', $french->id);
 
-        $this->assertTrue($swahili->fresh()->is_default);
-        $this->assertSame('sw', SiteSetting::get('language'));
+        $this->assertTrue($french->fresh()->is_default);
+        $this->assertSame('fr', SiteSetting::get('language'));
         $this->assertSame(1, Language::where('is_default', true)->count());
     }
 
