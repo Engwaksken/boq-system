@@ -52,6 +52,17 @@ Schedule::command('subscriptions:remind')
     ->timezone(App\Support\Regional::timezone())
     ->withoutOverlapping();
 
+// Email digests for users who chose hourly, daily or weekly notifications.
+Schedule::command('notifications:digest hourly')->hourly()->withoutOverlapping();
+Schedule::command('notifications:digest daily')
+    ->dailyAt('08:00')
+    ->timezone(App\Support\Regional::timezone())
+    ->withoutOverlapping();
+Schedule::command('notifications:digest weekly')
+    ->weeklyOn(1, '08:00')
+    ->timezone(App\Support\Regional::timezone())
+    ->withoutOverlapping();
+
 // Nudge owners and assigned members before (and after) a project deadline.
 Schedule::command('projects:remind')
     ->dailyAt('08:00')

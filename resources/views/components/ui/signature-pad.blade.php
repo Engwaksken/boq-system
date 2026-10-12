@@ -22,7 +22,7 @@
         <canvas data-signature-canvas role="img" aria-label="{{ $label ?? __('Signature pad') }}"></canvas>
 
         <div class="boq-signature-pad-hint" aria-hidden="true">
-            <i class="fas fa-xmark"></i>
+            <i class="fas fa-xmark" aria-hidden="true"></i>
             <span>{{ __('Sign here') }}</span>
         </div>
 

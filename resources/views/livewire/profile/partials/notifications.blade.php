@@ -19,10 +19,14 @@
                 'email_project_updates' => ['fa-envelope', __('Email'), __('Project updates'), __('Receive email when projects are updated')],
                 'email_boq_changes' => ['fa-envelope', __('Email'), __('BOQ changes'), __('Get notified when BOQs are modified')],
                 'email_price_alerts' => ['fa-envelope', __('Email'), __('Price alerts'), __('Alerts when hardware prices change significantly')],
+                'email_expenses' => ['fa-envelope', __('Email'), __('Expenses'), __('Email when a teammate records spending on your projects')],
+                'email_deadlines' => ['fa-envelope', __('Email'), __('Project deadlines'), __('Reminders before and after a project is due')],
                 'in_app_project_updates' => ['fa-bell', __('In-app'), __('Project updates'), __('See project updates in the notification centre')],
                 'in_app_boq_changes' => ['fa-bell', __('In-app'), __('BOQ changes'), __('See BOQ changes in the notification centre')],
                 'in_app_price_alerts' => ['fa-bell', __('In-app'), __('Price alerts'), __('See hardware price changes in the notification centre')],
-                'in_app_approvals' => ['fa-bell', __('In-app'), __('Approvals'), __('Notifications when items need your approval')],
+                'in_app_expenses' => ['fa-bell', __('In-app'), __('Expenses'), __('See spending recorded on your projects in the notification centre')],
+                'in_app_deadlines' => ['fa-bell', __('In-app'), __('Project deadlines'), __('See deadline reminders in the notification centre')],
+                'in_app_approvals' =>['fa-bell', __('In-app'), __('Approvals'), __('Notifications when items need your approval')],
             ] as $key => [$icon, $channel, $title, $description])
                 <label for="pref-{{ $key }}" class="boq-toggle-row" wire:key="pref-{{ $key }}">
                     <span class="flex items-center gap-3">

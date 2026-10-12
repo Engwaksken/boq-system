@@ -1,10 +1,12 @@
 <div>
     <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm text-slate-500">{{ __('Languages available for BOQ translation, reports and user profiles.') }}</p>
-        <button type="button" wire:click="create" class="boq-btn-primary">
-            <i class="fas fa-plus"></i> {{ __('Add Language') }}
-        </button>
-        <div class="flex flex-wrap gap-2"><x-ui.export-buttons /></div>
+        <div class="flex flex-wrap items-center gap-2">
+            <button type="button" wire:click="create" class="boq-btn-primary">
+                <i class="fas fa-plus" aria-hidden="true"></i> {{ __('Add Language') }}
+            </button>
+            <x-ui.export-buttons />
+        </div>
     </div>
 
     @if(session('language-message'))
@@ -13,7 +15,7 @@
 
     <x-bulk-bar :count="count($selected)" class="mb-3">
         <button type="button" wire:click="bulkDelete" wire:confirm="{{ __('Delete the selected languages?') }}" class="boq-btn-danger">
-            <i class="fas fa-trash"></i> {{ __('Delete') }}
+            <i class="fas fa-trash" aria-hidden="true"></i> {{ __('Delete') }}
         </button>
     </x-bulk-bar>
 
@@ -40,7 +42,7 @@
                         <td class="font-mono font-semibold">
                             {{ $language->code }}
                             @if($language->is_default)
-                                <span class="boq-badge boq-badge-warning ml-1"><i class="fas fa-star"></i> {{ __('Default') }}</span>
+                                <span class="boq-badge boq-badge-warning ml-1"><i class="fas fa-star" aria-hidden="true"></i> {{ __('Default') }}</span>
                             @endif
                         </td>
                         <td>
@@ -53,11 +55,11 @@
                         </td>
                         <td>
                             <div class="boq-table-actions justify-end">
-                                <button type="button" wire:click="openTranslations({{ $language->id }})" class="boq-icon-btn" title="{{ __('Translate') }}" aria-label="{{ __('Translate') }}"><i class="fas fa-language"></i></button>
-                                <button type="button" wire:click="edit({{ $language->id }})" class="boq-icon-btn" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><i class="fas fa-pen"></i></button>
+                                <button type="button" wire:click="openTranslations({{ $language->id }})" class="boq-icon-btn" title="{{ __('Translate') }}" aria-label="{{ __('Translate') }}"><i class="fas fa-language" aria-hidden="true"></i></button>
+                                <button type="button" wire:click="edit({{ $language->id }})" class="boq-icon-btn" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><i class="fas fa-pen" aria-hidden="true"></i></button>
                                 @unless($language->is_default)
-                                    <button type="button" wire:click="setDefault({{ $language->id }})" class="boq-icon-btn" title="{{ __('Make default') }}" aria-label="{{ __('Make default') }}"><i class="far fa-star"></i></button>
-                                    <button type="button" wire:click="toggleActive({{ $language->id }})" class="boq-icon-btn" title="{{ $language->is_active ? __('Deactivate') : __('Activate') }}" aria-label="{{ $language->is_active ? __('Deactivate') : __('Activate') }}"><i class="fas {{ $language->is_active ? 'fa-ban' : 'fa-circle-check' }}"></i></button>
+                                    <button type="button" wire:click="setDefault({{ $language->id }})" class="boq-icon-btn" title="{{ __('Make default') }}" aria-label="{{ __('Make default') }}"><i class="far fa-star" aria-hidden="true"></i></button>
+                                    <button type="button" wire:click="toggleActive({{ $language->id }})" class="boq-icon-btn" title="{{ $language->is_active ? __('Deactivate') : __('Activate') }}" aria-label="{{ $language->is_active ? __('Deactivate') : __('Activate') }}"><i class="fas {{ $language->is_active ? 'fa-ban' : 'fa-circle-check' }}" aria-hidden="true"></i></button>
                                 @endunless
                             </div>
                         </td>
@@ -75,8 +77,8 @@
         <div class="boq-modal-backdrop" wire:key="language-modal" x-data x-trap.noscroll="true" @keydown.escape.window="$wire.cancel()" role="dialog" aria-modal="true" aria-labelledby="language-modal-title">
             <form wire:submit="save" class="boq-modal boq-modal-sm">
                 <div class="boq-modal-head">
-                    <h2 id="language-modal-title"><i class="fas fa-language"></i> {{ $editingId ? __('Edit Language') : __('Add Language') }}</h2>
-                    <button type="button" wire:click="cancel" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
+                    <h2 id="language-modal-title"><i class="fas fa-language" aria-hidden="true"></i> {{ $editingId ? __('Edit Language') : __('Add Language') }}</h2>
+                    <button type="button" wire:click="cancel" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
                 </div>
 
                 <div class="boq-modal-body boq-form-grid">
@@ -116,7 +118,7 @@
 
                 <div class="boq-modal-foot">
                     <button type="button" wire:click="cancel" class="boq-btn-secondary">{{ __('Cancel') }}</button>
-                    <button type="submit" class="boq-btn-primary"><i class="fas fa-floppy-disk"></i> {{ __('Save') }}</button>
+                    <button type="submit" class="boq-btn-primary"><i class="fas fa-floppy-disk" aria-hidden="true"></i> {{ __('Save') }}</button>
                 </div>
             </form>
         </div>
@@ -126,8 +128,8 @@
         <div class="boq-modal-backdrop" wire:key="translations-modal" x-data x-trap.noscroll="true" @keydown.escape.window="$wire.closeTranslations()" role="dialog" aria-modal="true" aria-labelledby="translations-title">
             <form wire:submit="saveTranslations" class="boq-modal boq-modal-xl">
                 <div class="boq-modal-head">
-                    <h2 id="translations-title"><i class="fas fa-language"></i> {{ __('Translate') }} · {{ strtoupper($translating) }}</h2>
-                    <button type="button" wire:click="closeTranslations" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
+                    <h2 id="translations-title"><i class="fas fa-language" aria-hidden="true"></i> {{ __('Translate') }} · {{ strtoupper($translating) }}</h2>
+                    <button type="button" wire:click="closeTranslations" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
                 </div>
 
                 <div class="boq-modal-body space-y-3">
@@ -165,16 +167,16 @@
 
                     @if($translationPages > 1)
                         <div class="flex items-center justify-between text-sm text-slate-500">
-                            <button type="button" wire:click="translationPageTo({{ $translationPage - 1 }})" class="boq-btn-secondary" @disabled($translationPage <= 1)><i class="fas fa-chevron-left"></i></button>
+                            <button type="button" wire:click="translationPageTo({{ $translationPage - 1 }})" class="boq-btn-secondary" @disabled($translationPage <= 1)><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
                             <span>{{ __('Page') }} {{ $translationPage }} / {{ $translationPages }}</span>
-                            <button type="button" wire:click="translationPageTo({{ $translationPage + 1 }})" class="boq-btn-secondary" @disabled($translationPage >= $translationPages)><i class="fas fa-chevron-right"></i></button>
+                            <button type="button" wire:click="translationPageTo({{ $translationPage + 1 }})" class="boq-btn-secondary" @disabled($translationPage >= $translationPages)><i class="fas fa-chevron-right" aria-hidden="true"></i></button>
                         </div>
                     @endif
                 </div>
 
                 <div class="boq-modal-foot">
                     <button type="button" wire:click="closeTranslations" class="boq-btn-secondary">{{ __('Close') }}</button>
-                    <button type="submit" class="boq-btn-primary"><i class="fas fa-floppy-disk"></i> {{ __('Save this page') }}</button>
+                    <button type="submit" class="boq-btn-primary"><i class="fas fa-floppy-disk" aria-hidden="true"></i> {{ __('Save this page') }}</button>
                 </div>
             </form>
         </div>

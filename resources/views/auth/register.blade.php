@@ -57,7 +57,7 @@
 
             @error('name')
                 <p class="auth-error">
-                    <i class="fas fa-circle-exclamation mr-1"></i>
+                    <i class="fas fa-circle-exclamation mr-1" aria-hidden="true"></i>
                     {{ $message }}
                 </p>
             @enderror
@@ -96,7 +96,7 @@
 
             @error('email')
                 <p class="auth-error">
-                    <i class="fas fa-circle-exclamation mr-1"></i>
+                    <i class="fas fa-circle-exclamation mr-1" aria-hidden="true"></i>
                     {{ $message }}
                 </p>
             @enderror
@@ -138,7 +138,7 @@
                     data-password-toggle
                     aria-label="{{ __('Show password') }}"
                 >
-                    <i class="fas fa-eye"></i>
+                    <i class="fas fa-eye" aria-hidden="true"></i>
                 </button>
 
             </div>
@@ -151,7 +151,7 @@
 
             @error('password')
                 <p class="auth-error">
-                    <i class="fas fa-circle-exclamation mr-1"></i>
+                    <i class="fas fa-circle-exclamation mr-1" aria-hidden="true"></i>
                     {{ $message }}
                 </p>
             @enderror
@@ -193,7 +193,7 @@
                     data-password-toggle
                     aria-label="{{ __('Show password') }}"
                 >
-                    <i class="fas fa-eye"></i>
+                    <i class="fas fa-eye" aria-hidden="true"></i>
                 </button>
 
             </div>
@@ -247,7 +247,7 @@
 
             @error('terms')
                 <p class="auth-error">
-                    <i class="fas fa-circle-exclamation mr-1"></i>
+                    <i class="fas fa-circle-exclamation mr-1" aria-hidden="true"></i>
                     {{ $message }}
                 </p>
             @enderror
@@ -260,7 +260,7 @@
             type="submit"
             class="auth-primary"
         >
-            <i class="fas fa-user-plus"></i>
+            <i class="fas fa-user-plus" aria-hidden="true"></i>
             {{ __('Create account') }}
         </button>
 

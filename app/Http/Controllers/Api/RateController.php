@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\BoqItem;
 use App\Models\Rate;
 use App\Services\RateLibraryService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -186,6 +187,7 @@ class RateController extends Controller
             'effective_until' => ['nullable', 'date'],
         ]);
 
+        $this->ensureCanModify($request, $rate);
         $rate->update($validated);
         $this->audit($request, 'rate.updated', $rate, null, $rate->fresh()->toArray(), $rate->code);
 
@@ -197,6 +199,7 @@ class RateController extends Controller
      */
     public function approve(Request $request, Rate $rate): JsonResponse
     {
+        $this->ensureCanModify($request, $rate);
         $approved = $this->rates->approve($rate, $request->user());
         $this->audit($request, 'rate.approved', $rate, null, $approved->toArray(), $rate->code);
 
@@ -208,6 +211,8 @@ class RateController extends Controller
      */
     public function reject(Request $request, Rate $rate): JsonResponse
     {
+        $this->ensureCanModify($request, $rate);
+        $request->validate(['reason' => ['nullable', 'string', 'max:1000']]);
         $reason = $request->input('reason');
         $rejected = $this->rates->reject($rate, $request->user(), $reason);
         $this->audit($request, 'rate.rejected', $rate, null, $rejected->toArray(), $rate->code);
@@ -230,5 +235,20 @@ class RateController extends Controller
             'locale' => $request->user()?->locale,
             'reference' => $reference,
         ]);
+    }
+
+    /**
+     * The library is shared by every organisation, so a record may only be changed by a
+     * super admin or by the organisation (or individual account) that created it.
+     */
+    private function ensureCanModify(Request $request, Model $record): void
+    {
+        $user = $request->user();
+        if ($user->isSuperAdmin() || (int) $record->created_by === (int) $user->id) {
+            return;
+        }
+
+        $creatorOrganisation = $record->createdBy?->organisation_id;
+        abort_unless($creatorOrganisation !== null && $creatorOrganisation === $user->organisation_id, 403);
     }
 }

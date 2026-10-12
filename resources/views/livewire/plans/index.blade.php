@@ -131,7 +131,7 @@
                             <ul class="boq-plan-feature-list">
                                 @foreach($features as $index => $feature)
                                     <li class="boq-plan-feature" @if($index >= $visibleFeatures) x-show="showAllFeatures" x-cloak @endif>
-                                        <span class="boq-plan-feature-check" aria-hidden="true"><i class="fas fa-check"></i></span>
+                                        <span class="boq-plan-feature-check" aria-hidden="true"><i class="fas fa-check" aria-hidden="true"></i></span>
                                         <span>{{ $feature->name }}</span>
                                     </li>
                                 @endforeach

@@ -8,7 +8,7 @@
 
 <div class="grid gap-6 lg:grid-cols-5">
     <form wire:submit="saveCompanyProfile" class="boq-panel boq-panel-body lg:col-span-3">
-        <h3 class="boq-section-title mb-1"><i class="fas fa-building"></i> {{ __('Company Profile') }}</h3>
+        <h3 class="boq-section-title mb-1"><i class="fas fa-building" aria-hidden="true"></i> {{ __('Company Profile') }}</h3>
         <p class="boq-section-subtitle mb-4">{{ __('Your business identity. It brands every BOQ you export and is watermarked on each PDF page.') }}</p>
 
         <div class="boq-form-grid">
@@ -26,7 +26,7 @@
                             <i class="fas fa-upload" aria-hidden="true"></i> {{ __('Choose logo') }}
                         </label>
                         @if($previewLogo)
-                            <button type="button" wire:click="$set('removeCompanyLogo', true)" class="boq-btn-secondary text-red-600"><i class="fas fa-trash"></i> {{ __('Remove') }}</button>
+                            <button type="button" wire:click="$set('removeCompanyLogo', true)" class="boq-btn-secondary text-red-600"><i class="fas fa-trash" aria-hidden="true"></i> {{ __('Remove') }}</button>
                         @endif
                     </div>
                 </div>
@@ -74,8 +74,8 @@
 
         <div class="mt-5 flex justify-end">
             <button type="submit" wire:loading.attr="disabled" wire:target="saveCompanyProfile,companyLogo" class="boq-btn-primary">
-                <i wire:loading.remove wire:target="saveCompanyProfile" class="fas fa-floppy-disk"></i>
-                <i wire:loading wire:target="saveCompanyProfile" class="fas fa-spinner fa-spin"></i>
+                <i wire:loading.remove wire:target="saveCompanyProfile" class="fas fa-floppy-disk" aria-hidden="true"></i>
+                <i wire:loading wire:target="saveCompanyProfile" class="fas fa-spinner fa-spin" aria-hidden="true"></i>
                 {{ __('Save Company Profile') }}
             </button>
         </div>
@@ -84,7 +84,7 @@
     {{-- Live preview of the PDF letterhead --}}
     <aside class="lg:col-span-2">
         <div class="boq-panel boq-panel-body lg:sticky lg:top-20">
-            <h3 class="boq-section-title mb-3"><i class="fas fa-eye"></i> {{ __('Preview') }}</h3>
+            <h3 class="boq-section-title mb-3"><i class="fas fa-eye" aria-hidden="true"></i> {{ __('Preview') }}</h3>
             <div class="boq-company-preview">
                 <div class="boq-company-preview-head">
                     @if($previewLogo)

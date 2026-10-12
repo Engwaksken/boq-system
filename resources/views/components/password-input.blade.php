@@ -3,6 +3,6 @@
     <input type="password" {{ $attributes->merge(['class' => 'boq-field']) }}>
 
     <button type="button" class="boq-password-toggle" data-password-toggle aria-label="{{ __('Show password') }}" aria-pressed="false">
-        <i class="fas fa-eye"></i>
+        <i class="fas fa-eye" aria-hidden="true"></i>
     </button>
 </div>

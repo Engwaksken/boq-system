@@ -21,7 +21,7 @@
     <div class="boq-panel">
         <x-bulk-bar :count="count($selected)">
             <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary">
-                <i class="fas fa-circle-check"></i> {{ __('Activate') }}
+                <i class="fas fa-circle-check" aria-hidden="true"></i> {{ __('Activate') }}
             </button>
             <button type="button" wire:click="bulkSetActive(false)" wire:confirm="{{ __('Deactivate the selected gateways?') }}" class="boq-btn-secondary">
                 <i class="fas fa-ban" aria-hidden="true"></i> {{ __('Deactivate') }}
@@ -53,7 +53,7 @@
                                 <div class="boq-table-title">
                                     {{ $gateway->name }}
                                     @if($gateway->is_default)
-                                        <span class="boq-badge boq-badge-warning ml-1"><i class="fas fa-star"></i> {{ __('Default') }}</span>
+                                        <span class="boq-badge boq-badge-warning ml-1"><i class="fas fa-star" aria-hidden="true"></i> {{ __('Default') }}</span>
                                     @endif
                                 </div>
                                 <div class="boq-table-subtitle font-mono">{{ $gateway->code }}</div>
@@ -70,15 +70,15 @@
                             <td>
                                 <div class="boq-table-actions justify-end">
                                     <button type="button" wire:click="edit({{ $gateway->id }})" class="boq-icon-btn" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}">
-                                        <i class="fas fa-pen"></i>
+                                        <i class="fas fa-pen" aria-hidden="true"></i>
                                     </button>
                                     @unless($gateway->is_default)
                                         <button type="button" wire:click="setDefault({{ $gateway->id }})" class="boq-icon-btn" title="{{ __('Make default') }}" aria-label="{{ __('Make default') }}">
-                                            <i class="far fa-star"></i>
+                                            <i class="far fa-star" aria-hidden="true"></i>
                                         </button>
                                     @endunless
                                     <button type="button" wire:click="toggleActive({{ $gateway->id }})" class="boq-icon-btn {{ $gateway->is_active ? 'boq-icon-danger' : '' }}" title="{{ $gateway->is_active ? __('Deactivate') : __('Activate') }}" aria-label="{{ $gateway->is_active ? __('Deactivate') : __('Activate') }}">
-                                        <i class="fas {{ $gateway->is_active ? 'fa-ban' : 'fa-circle-check' }}"></i>
+                                        <i class="fas {{ $gateway->is_active ? 'fa-ban' : 'fa-circle-check' }}" aria-hidden="true"></i>
                                     </button>
                                 </div>
                             </td>
@@ -102,11 +102,11 @@
             <form wire:submit="save" class="boq-modal boq-modal-lg">
                 <div class="boq-modal-head">
                     <h2 id="gateway-modal-title">
-                        <i class="fas {{ $editingId ? 'fa-pen' : 'fa-plus' }}"></i>
+                        <i class="fas {{ $editingId ? 'fa-pen' : 'fa-plus' }}" aria-hidden="true"></i>
                         {{ $editingId ? __('Edit Payment Gateway') : __('New Payment Gateway') }}
                     </h2>
                     <button type="button" wire:click="cancel" class="boq-modal-close" aria-label="{{ __('Close') }}">
-                        <i class="fas fa-xmark"></i>
+                        <i class="fas fa-xmark" aria-hidden="true"></i>
                     </button>
                 </div>
 
@@ -191,7 +191,7 @@
                     @if($config !== [])
                         <div>
                             <h3 class="boq-section-title">
-                                <i class="fas fa-key"></i>
+                                <i class="fas fa-key" aria-hidden="true"></i>
                                 {{ __('Driver Configuration') }}
                             </h3>
                             <p class="boq-field-help mb-3">{{ __('Saved secrets show as') }} <code class="boq-code">{{ __('***stored***') }}</code>; {{ __('leave them unchanged to keep the stored value.') }}</p>
@@ -239,8 +239,8 @@
                 <div class="boq-modal-foot">
                     <button type="button" wire:click="cancel" class="boq-btn-secondary">{{ __('Cancel') }}</button>
                     <button type="submit" wire:loading.attr="disabled" wire:target="save" class="boq-btn-primary">
-                        <i wire:loading.remove wire:target="save" class="fas fa-floppy-disk"></i>
-                        <i wire:loading wire:target="save" class="fas fa-spinner fa-spin"></i>
+                        <i wire:loading.remove wire:target="save" class="fas fa-floppy-disk" aria-hidden="true"></i>
+                        <i wire:loading wire:target="save" class="fas fa-spinner fa-spin" aria-hidden="true"></i>
                         {{ __('Save Gateway') }}
                     </button>
                 </div>

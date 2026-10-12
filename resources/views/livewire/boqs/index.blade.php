@@ -175,13 +175,13 @@
                 @empty
                     <tr>
                         <td colspan="8" class="p-0">
-                            @if($search !== '' || $projectId)
+                            @if($search !== '' || $projectId || $statusTab !== 'all')
                                 <x-ui.empty-state
                                     icon="fa-magnifying-glass"
                                     :title="__('No BOQs found.')"
                                     :description="__('Try a different search term or project.')"
                                 >
-                                    <x-ui.button variant="secondary" size="sm" wire:click="$set('search', '')">{{ __('Clear search') }}</x-ui.button>
+                                    <x-ui.button variant="secondary" size="sm" x-on:click="$wire.set('search', '', false); $wire.set('projectId', null, false); $wire.setStatusTab('all')">{{ __('Clear filters') }}</x-ui.button>
                                 </x-ui.empty-state>
                             @else
                                 <x-ui.empty-state

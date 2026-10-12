@@ -3,15 +3,15 @@
 namespace App\Console\Commands;
 
 use App\Models\Project;
-use App\Models\UserNotification;
+use App\Models\User;
+use App\Services\NotificationDispatcher;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class RemindProjectDeadlines extends Command
 {
     protected $signature = 'projects:remind {--days=30,14,7,3,1 : Comma-separated days before the expected completion date to remind}';
 
-    protected $description = 'Send in-app reminders for projects approaching or past their expected completion date';
+    protected $description = 'Remind owners and assigned members (in-app and/or email) about projects approaching or past their expected completion date';
 
     public function handle(): int
     {
@@ -56,50 +56,38 @@ class RemindProjectDeadlines extends Command
             ->filter()
             ->unique();
 
+        $dispatcher = app(NotificationDispatcher::class);
         $sent = 0;
 
-        foreach ($userIds as $userId) {
-            $key = "project-deadline-{$project->id}-{$day}";
+        User::whereIn('id', $userIds)->get()->each(function (User $member) use ($project, $day, $dispatcher, &$sent) {
+            if ($day === 'overdue') {
+                $title = 'Project deadline passed';
+                $message = sprintf(
+                    '"%s" was due on %s. Update its status or completion date so it is not lost.',
+                    $project->name,
+                    $project->expected_completion_date->toDateString()
+                );
+            } else {
+                $title = $day === 1 ? 'Project due tomorrow' : "Project due in {$day} days";
+                $message = sprintf('"%s" is due on %s.', $project->name, $project->expected_completion_date->toDateString());
+            }
 
-            $created = DB::transaction(function () use ($userId, $project, $day, $key): bool {
-                // A per-user row lock serializes duplicate scheduler runs.
-                \App\Models\User::query()->whereKey($userId)->lockForUpdate()->first();
+            // Once per user per project and reminder, whatever channels are enabled.
+            $delivered = $dispatcher->notify(
+                user: $member,
+                category: 'deadlines',
+                type: 'project',
+                title: $title,
+                message: $message,
+                data: ['project_id' => $project->id],
+                url: route('projects.show', $project),
+                dedupeKey: "project-deadline-{$project->id}-{$day}",
+            );
 
-                if (UserNotification::where('user_id', $userId)->where('data->reminder_key', $key)->exists()) {
-                    return false;
-                }
-
-                if ($day === 'overdue') {
-                    $title = 'Project deadline passed';
-                    $message = sprintf(
-                        '"%s" was due on %s. Update its status or completion date so it is not lost.',
-                        $project->name,
-                        $project->expected_completion_date->toDateString()
-                    );
-                } else {
-                    $title = $day === 1 ? 'Project due tomorrow' : "Project due in {$day} days";
-                    $message = sprintf(
-                        '"%s" is due on %s.',
-                        $project->name,
-                        $project->expected_completion_date->toDateString()
-                    );
-                }
-
-                UserNotification::create([
-                    'user_id' => $userId,
-                    'type' => 'project',
-                    'title' => $title,
-                    'message' => $message,
-                    'data' => ['project_id' => $project->id, 'reminder_key' => $key],
-                ]);
-
-                return true;
-            });
-
-            if ($created) {
+            if ($delivered) {
                 $sent++;
             }
-        }
+        });
 
         return $sent;
     }

@@ -19,7 +19,7 @@
 
     <p class="mt-7 text-center text-sm text-slate-500">
         <a href="{{ auth()->check() ? route('dashboard') : route('register') }}" class="auth-link">
-            <i class="fas fa-arrow-left mr-1"></i>
+            <i class="fas fa-arrow-left mr-1" aria-hidden="true"></i>
             {{ __('Back') }}
         </a>
     </p>

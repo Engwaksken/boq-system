@@ -36,7 +36,7 @@
                     @if($siteLogo)
                         <img src="{{ asset('storage/'.$siteLogo) }}" alt="">
                     @else
-                        <i class="fas fa-file-invoice-dollar"></i>
+                        <i class="fas fa-file-invoice-dollar" aria-hidden="true"></i>
                     @endif
                 </span>
                 <span>{{ $siteName }}</span>
@@ -47,9 +47,9 @@
                 <p class="auth-aside-copy">{{ __('Bills of quantities, live hardware and factory prices, and project costs in one workspace.') }}</p>
 
                 <ul class="auth-aside-points">
-                    <li><i class="fas fa-file-invoice-dollar"></i> {{ __('Upload a BOQ and price every item against current market rates.') }}</li>
-                    <li><i class="fas fa-tags"></i> {{ __('Compare hardware and factory prices by location and brand.') }}</li>
-                    <li><i class="fas fa-file-pdf"></i> {{ __('Share branded BOQ PDFs with clients in one click.') }}</li>
+                    <li><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i> {{ __('Upload a BOQ and price every item against current market rates.') }}</li>
+                    <li><i class="fas fa-tags" aria-hidden="true"></i> {{ __('Compare hardware and factory prices by location and brand.') }}</li>
+                    <li><i class="fas fa-file-pdf" aria-hidden="true"></i> {{ __('Share branded BOQ PDFs with clients in one click.') }}</li>
                 </ul>
             </div>
 

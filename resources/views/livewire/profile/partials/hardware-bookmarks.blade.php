@@ -6,7 +6,7 @@
         </div>
 
         <button wire:click="bookmarkHardware" type="button" class="boq-btn-primary">
-            <i class="fas fa-bookmark"></i>
+            <i class="fas fa-bookmark" aria-hidden="true"></i>
             {{ __('Add Bookmark') }}
         </button>
     </div>
@@ -14,12 +14,12 @@
     @if($bookmarkedHardware->isEmpty())
         <div class="boq-empty-state">
             <span class="boq-empty-icon">
-                <i class="fas fa-bookmark"></i>
+                <i class="fas fa-bookmark" aria-hidden="true"></i>
             </span>
             <h4 class="boq-empty-title">{{ __('No bookmarks yet') }}</h4>
             <p class="boq-empty-description">{{ __('Bookmark hardware prices by location for quick access.') }}</p>
             <button wire:click="bookmarkHardware" type="button" class="boq-btn-primary mt-4">
-                <i class="fas fa-plus"></i>
+                <i class="fas fa-plus" aria-hidden="true"></i>
                 {{ __('Add Your First Bookmark') }}
             </button>
         </div>
@@ -61,7 +61,7 @@
                             <td>
                                 <div class="boq-table-actions justify-end">
                                     <button wire:click="editBookmark({{ $bookmark->id }})" type="button" class="boq-icon-btn" title="{{ __('Edit bookmark') }}" aria-label="{{ __('Edit bookmark') }}">
-                                        <i class="fas fa-pen"></i>
+                                        <i class="fas fa-pen" aria-hidden="true"></i>
                                     </button>
                                     <button
                                         wire:click="deleteBookmark({{ $bookmark->id }})"
@@ -71,7 +71,7 @@
                                         title="{{ __('Remove bookmark') }}"
                                         aria-label="{{ __('Remove bookmark') }}"
                                     >
-                                        <i class="fas fa-trash"></i>
+                                        <i class="fas fa-trash" aria-hidden="true"></i>
                                     </button>
                                 </div>
                             </td>
@@ -99,7 +99,7 @@
                     </h2>
 
                     <button type="button" wire:click="closeBookmarkModal" class="boq-modal-close" aria-label="{{ __('Close') }}">
-                        <i class="fas fa-xmark"></i>
+                        <i class="fas fa-xmark" aria-hidden="true"></i>
                     </button>
                 </div>
 
@@ -146,8 +146,8 @@
                     </button>
 
                     <button type="submit" wire:loading.attr="disabled" wire:target="saveBookmark" class="boq-btn-primary">
-                        <i wire:loading.remove wire:target="saveBookmark" class="fas fa-bookmark"></i>
-                        <i wire:loading wire:target="saveBookmark" class="fas fa-spinner fa-spin"></i>
+                        <i wire:loading.remove wire:target="saveBookmark" class="fas fa-bookmark" aria-hidden="true"></i>
+                        <i wire:loading wire:target="saveBookmark" class="fas fa-spinner fa-spin" aria-hidden="true"></i>
                         {{ $editingBookmarkId ? __('Update Bookmark') : __('Save Bookmark') }}
                     </button>
                 </div>

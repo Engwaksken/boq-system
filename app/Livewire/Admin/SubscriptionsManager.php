@@ -32,7 +32,9 @@ class SubscriptionsManager extends Component
     public string $search = '';
     public string $statusFilter = 'all';
     public int $perPage = 20;
+    #[\Livewire\Attributes\Locked] // only changed via sortBy(), which whitelists columns
     public string $sortBy = 'created_at';
+    #[\Livewire\Attributes\Locked] // only changed via sortBy(), which whitelists columns
     public string $sortDir = 'desc';
 
     public array $perPageOptions = [10, 20, 50, 100];

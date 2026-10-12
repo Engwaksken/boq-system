@@ -101,6 +101,10 @@ class QuotationController extends Controller
             'items.*.source_item_code' => ['nullable', 'string', 'max:255'],
         ]);
 
+        // exists: only proves the record exists somewhere; it must also be one this user
+        // can reach, otherwise quotations could be attached to another tenant's project.
+        $this->ensureLinkedRecordsAccessible($request, $validated);
+
         $quotation ??= new Quotation();
         $quotation->fill([
             'quote_number' => $quotation->exists ? $quotation->quote_number : $this->newQuoteNumber(),
@@ -206,6 +210,33 @@ class QuotationController extends Controller
                 || ($user->organisation_id && $quotation->project && $quotation->project->organisation_id === $user->organisation_id),
             403
         );
+    }
+
+    private function ensureLinkedRecordsAccessible(Request $request, array $validated): void
+    {
+        $user = $request->user();
+        if ($user->isSuperAdmin()) {
+            return;
+        }
+
+        $project = null;
+        if (! empty($validated['project_id'])) {
+            $project = \App\Models\Project::find($validated['project_id']);
+            abort_unless($project && $project->isAccessibleTo($user), 403, 'You cannot attach a quotation to this project.');
+        }
+
+        if (! empty($validated['boq_id'])) {
+            $boq = \App\Models\Boq::with('project')->find($validated['boq_id']);
+            abort_unless($boq && $user->can('view', $boq), 403, 'You cannot attach a quotation to this BOQ.');
+            abort_if($project && $boq->project_id !== $project->id, 422, 'The BOQ does not belong to the selected project.');
+        }
+
+        $boqItemIds = collect($validated['items'] ?? [])->pluck('boq_item_id')->filter()->unique();
+        if ($boqItemIds->isNotEmpty()) {
+            $matching = empty($validated['boq_id']) ? 0 : \App\Models\BoqItem::whereIn('id', $boqItemIds)
+                ->where('boq_id', $validated['boq_id'])->count();
+            abort_unless($matching === $boqItemIds->count(), 422, 'Quotation lines can only be linked to items of the selected BOQ.');
+        }
     }
 
     private function newQuoteNumber(): string

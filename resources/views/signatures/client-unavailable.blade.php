@@ -10,7 +10,7 @@
 <x-layouts.guest :title="$heading">
     <div class="space-y-4 text-center">
         <span class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-2xl text-slate-500" aria-hidden="true">
-            <i class="fas {{ $icon }}"></i>
+            <i class="fas {{ $icon }}" aria-hidden="true"></i>
         </span>
         <h1 class="text-xl font-bold text-slate-900">{{ $heading }}</h1>
         <p class="text-sm text-slate-600">{{ $text }}</p>

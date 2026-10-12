@@ -25,7 +25,6 @@ class User extends Authenticatable implements MustVerifyEmail, WebAuthnAuthentic
      * @var list<string>
      */
     protected $fillable = [
-        'organisation_id',
         'name',
         'email',
         'password',
@@ -36,7 +35,6 @@ class User extends Authenticatable implements MustVerifyEmail, WebAuthnAuthentic
         'location',
         'original_language',
         'report_language',
-        'is_active',
         'last_login_at',
         'avatar_path',
         'preferences',
@@ -159,8 +157,18 @@ class User extends Authenticatable implements MustVerifyEmail, WebAuthnAuthentic
         'in_app_boq_changes' => true,
         'in_app_approvals' => true,
         'in_app_price_alerts' => true,
+        'email_expenses' => true,
+        'in_app_expenses' => true,
+        'email_deadlines' => true,
+        'in_app_deadlines' => true,
         'frequency' => 'immediate',
     ];
+
+    /** Whether the user wants a notification of this category on this channel ("email" or "in_app"). */
+    public function wantsNotification(string $channel, string $category): bool
+    {
+        return ($this->notificationPreferences()[$channel.'_'.$category] ?? false) === true;
+    }
 
     /** Public URL of the profile picture, or null when none was uploaded. */
     public function getAvatarUrlAttribute(): ?string

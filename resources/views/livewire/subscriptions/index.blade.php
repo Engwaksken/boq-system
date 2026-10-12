@@ -332,7 +332,7 @@
                                     <ul class="boq-plan-feature-list">
                                         @foreach($plan->features->take(5) as $feature)
                                             <li class="boq-plan-feature">
-                                                <span class="boq-plan-feature-check" aria-hidden="true"><i class="fas fa-check"></i></span>
+                                                <span class="boq-plan-feature-check" aria-hidden="true"><i class="fas fa-check" aria-hidden="true"></i></span>
                                                 <span>{{ $feature->name }}</span>
                                             </li>
                                         @endforeach

@@ -96,7 +96,7 @@
             </div>
             <div class="flex justify-between gap-3">
                 <dt class="text-slate-500">{{ __('Organisation') }}</dt>
-                <dd class="text-right font-medium text-slate-900">{{ $me->organisation?->name ?? __('Personal') }}</dd>
+                <dd class="min-w-0 text-right font-medium text-slate-900 [overflow-wrap:anywhere]">{{ $me->organisation?->name ?? __('Personal') }}</dd>
             </div>
         </dl>
     </x-ui.card>

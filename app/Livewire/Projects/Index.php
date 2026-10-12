@@ -18,7 +18,9 @@ class Index extends Component
 
     public string $search = '';
     public int $perPage = 15;
+    #[\Livewire\Attributes\Locked] // only changed via sortBy(), which whitelists columns
     public string $sortBy = 'created_at';
+    #[\Livewire\Attributes\Locked] // only changed via sortBy(), which whitelists columns
     public string $sortDir = 'desc';
     public array $perPageOptions = [10, 15, 25, 50, 100];
 

@@ -77,6 +77,16 @@ class SubscriptionPolicy
     }
 
     /**
+     * Searching for proxy beneficiaries exposes other users' contact details, so it is
+     * limited to the people who can actually create proxy subscriptions.
+     */
+    public function searchBeneficiaries(User $user): bool
+    {
+        return $user->isSuperAdmin()
+            || $this->isOrganisationAdmin($user, $user->organisation_id);
+    }
+
+    /**
      * Determine whether the user can create a proxy subscription for another user.
      *
      * Super Admin/Admin only. Beneficiary must not have an active subscription

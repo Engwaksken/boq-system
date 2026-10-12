@@ -7,7 +7,6 @@ use App\Http\Requests\UpdateExpenseRequest;
 use App\Models\Boq;
 use App\Models\BoqItem;
 use App\Models\Expense;
-use App\Models\UserNotification;
 use Illuminate\Support\Facades\DB;
 use App\Models\Project;
 use App\Models\User;
@@ -69,8 +68,9 @@ class ExpenseService
     }
 
     /**
-     * In-app notice to the project owner and every assigned member (except the
-     * person who recorded the expense), so the whole team sees new spending.
+     * Tell the project owner and every assigned member (except the person who
+     * recorded the expense) about new spending. Each person's channels and
+     * timing follow their notification preferences ("expenses" category).
      */
     private function notifyProjectTeam(Expense $expense, Project $project, User $recorder): void
     {
@@ -82,22 +82,17 @@ class ExpenseService
             ->reject(fn (int $id) => $id === $recorder->id);
 
         $amount = \App\Support\Format::money($expense->total, $expense->currency);
+        $dispatcher = app(NotificationDispatcher::class);
 
-        foreach ($recipients as $userId) {
-            UserNotification::create([
-                'user_id' => $userId,
-                'type' => 'expense',
-                'title' => __('Expense recorded'),
-                'message' => sprintf(
-                    '%s recorded %s for %s: %s.',
-                    $recorder->name,
-                    $amount,
-                    $project->name,
-                    $expense->description
-                ),
-                'data' => ['expense_id' => $expense->id, 'project_id' => $project->id],
-            ]);
-        }
+        User::whereIn('id', $recipients)->get()->each(fn (User $member) => $dispatcher->notify(
+            user: $member,
+            category: 'expenses',
+            type: 'expense',
+            title: __('Expense recorded'),
+            message: sprintf('%s recorded %s for %s: %s.', $recorder->name, $amount, $project->name, $expense->description),
+            data: ['expense_id' => $expense->id, 'project_id' => $project->id],
+            url: route('expenses.index'),
+        ));
     }
 
     public function update(User $user, Expense $expense, array $data): Expense

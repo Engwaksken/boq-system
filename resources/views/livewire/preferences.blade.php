@@ -83,7 +83,7 @@
                 @foreach($accents as $value => $label)
                     <label class="boq-swatch-option" wire:key="accent-{{ $value }}">
                         <input type="radio" name="accent" value="{{ $value }}" wire:model="accent" x-on:change="preview('accent', $event.target.value)" class="sr-only">
-                        <span class="boq-swatch" data-accent="{{ $value }}" aria-hidden="true"><i class="fas fa-check"></i></span>
+                        <span class="boq-swatch" data-accent="{{ $value }}" aria-hidden="true"><i class="fas fa-check" aria-hidden="true"></i></span>
                         <span class="boq-swatch-label">{{ $label }}</span>
                     </label>
                 @endforeach

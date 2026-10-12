@@ -4,7 +4,7 @@
     <label for="{{ $name }}" class="mb-1.5 block text-sm font-semibold text-slate-700">{{ $label }}</label>
 
     <div class="auth-input-wrap has-toggle">
-        <i class="fas {{ $icon }} auth-input-icon"></i>
+        <i class="fas {{ $icon }} auth-input-icon" aria-hidden="true"></i>
 
         <input
             id="{{ $name }}"
@@ -17,11 +17,11 @@
         >
 
         <button type="button" class="auth-password-toggle" data-password-toggle aria-label="{{ __('Show password') }}" aria-pressed="false">
-            <i class="fas fa-eye"></i>
+            <i class="fas fa-eye" aria-hidden="true"></i>
         </button>
     </div>
 
     @error($name)
-        <p class="auth-error"><i class="fas fa-circle-exclamation mr-1"></i>{{ $message }}</p>
+        <p class="auth-error"><i class="fas fa-circle-exclamation mr-1" aria-hidden="true"></i>{{ $message }}</p>
     @enderror
 </div>

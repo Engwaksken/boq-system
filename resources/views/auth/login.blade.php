@@ -20,7 +20,7 @@
     @if(session('status'))
 
         <div class="auth-status mt-6" data-autohide="5000">
-            <i class="fas fa-circle-check mr-1"></i>
+            <i class="fas fa-circle-check mr-1" aria-hidden="true"></i>
             {{ session('status') }}
         </div>
 
@@ -67,7 +67,7 @@
 
             @error('email')
                 <p class="auth-error">
-                    <i class="fas fa-circle-exclamation mr-1"></i>
+                    <i class="fas fa-circle-exclamation mr-1" aria-hidden="true"></i>
                     {{ $message }}
                 </p>
             @enderror
@@ -79,7 +79,7 @@
         <div>
 
             <div
-                class="mb-1.5 flex items-center justify-between"
+                class="mb-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1"
             >
 
                 <label
@@ -126,14 +126,14 @@
                     data-password-toggle
                     aria-label="{{ __('Show password') }}"
                 >
-                    <i class="fas fa-eye"></i>
+                    <i class="fas fa-eye" aria-hidden="true"></i>
                 </button>
 
             </div>
 
             @error('password')
                 <p class="auth-error">
-                    <i class="fas fa-circle-exclamation mr-1"></i>
+                    <i class="fas fa-circle-exclamation mr-1" aria-hidden="true"></i>
                     {{ $message }}
                 </p>
             @enderror
@@ -174,7 +174,7 @@
             type="submit"
             class="auth-primary"
         >
-            <i class="fas fa-right-to-bracket"></i>
+            <i class="fas fa-right-to-bracket" aria-hidden="true"></i>
             {{ __('Sign in') }}
         </button>
 
@@ -193,7 +193,7 @@
             data-biometric-login
             class="auth-secondary"
         >
-            <i class="fas fa-fingerprint"></i>
+            <i class="fas fa-fingerprint" aria-hidden="true"></i>
             {{ __('Sign in with biometrics') }}
         </button>
 

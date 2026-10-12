@@ -10,7 +10,12 @@ use Throwable;
 
 class ReconcilePendingPayments extends Command
 {
-    protected $signature = 'payments:reconcile {--hours=48 : Only inspect pending payments created within this many hours}';
+    /** Statuses a customer-initiated payment sits in while waiting on the provider. */
+    public const ABANDONABLE_STATUSES = ['initiated', 'pending'];
+
+    protected $signature = 'payments:reconcile
+        {--hours=48 : Only inspect pending payments created within this many hours}
+        {--abandon-after=48 : Mark initiated/pending payments older than this many hours as abandoned}';
     protected $description = 'Re-query payment providers for pending transactions and safely settle confirmed subscriptions';
 
     public function handle(PaymentManager $payments, PaymentSettlementService $settlements): int
@@ -50,7 +55,21 @@ class ReconcilePendingPayments extends Command
                 }
             });
 
-        $this->info("Checked {$checked}; activated {$activated}; failed {$failed}.");
+        // Payments that never completed within the window are closed out so they stop
+        // looking "in progress" in admin views and reports. Bank transfers awaiting
+        // manual review (under_review) are left for an administrator. A late provider
+        // callback can still settle an abandoned transaction as successful.
+        $abandonCutoff = now()->subHours(max(1, (int) $this->option('abandon-after')));
+        $abandoned = Transaction::query()
+            ->whereIn('status', self::ABANDONABLE_STATUSES)
+            ->where('created_at', '<', $abandonCutoff)
+            ->update([
+                'status' => 'abandoned',
+                'failure_reason' => 'Payment was not completed and has been marked abandoned.',
+                'updated_at' => now(),
+            ]);
+
+        $this->info("Checked {$checked}; activated {$activated}; failed {$failed}; abandoned {$abandoned}.");
         return self::SUCCESS;
     }
 }

@@ -2486,14 +2486,19 @@ button.boq-sort-th:hover {
 }
 
 @media (max-width: 639px) {
+    /* Centred with left/right + auto margins rather than a transform: Alpine's
+       x-transition sets an inline transform while animating, which would
+       override translateX(-50%) and make the panel jump sideways. */
     .boq-notifications-menu {
         position: fixed;
         top: calc(var(--boq-topbar-height) + 0.5rem);
-        left: 50%;
-        right: auto;
-        transform: translateX(-50%);
-        width: min(22rem, calc(100vw - 2rem));
+        left: 1rem;
+        right: 1rem;
+        width: auto;
+        max-width: 22rem;
+        margin-inline: auto;
         max-height: calc(100vh - var(--boq-topbar-height) - 1.5rem);
+        max-height: calc(100dvh - var(--boq-topbar-height) - 1.5rem);
         overflow-y: auto;
     }
 }

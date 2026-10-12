@@ -22,6 +22,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'entitlement' => CheckEntitlement::class,
         ]);
 
+        // Global so web pages, API JSON, health checks and error pages all carry them;
+        // framing/permissions headers are skipped for api/* inside the middleware.
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
         $middleware->appendToGroup('web', \App\Http\Middleware\EnsureUserIsActive::class);
         $middleware->appendToGroup('api', \App\Http\Middleware\EnsureUserIsActive::class);
         $middleware->appendToGroup('web', \App\Http\Middleware\EnforceMaintenanceMode::class);

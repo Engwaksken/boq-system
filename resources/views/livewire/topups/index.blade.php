@@ -68,7 +68,7 @@
                                 <div><i class="fas fa-code-branch" aria-hidden="true"></i> v{{ $item['release_version'] }}</div>
                             @endif
                             @foreach(($item['usage_credits'] ?? []) as $key => $value)
-                                <div><i class="fas fa-coins" aria-hidden="true"></i> {{ __(\Illuminate\Support\Str::headline((string) $key)) }}: {{ is_numeric($value) ? \App\Support\Format::number($value, 0) : $value }}</div>
+                                <div><i class="fas fa-coins" aria-hidden="true"></i> {{ __(\Illuminate\Support\Str::headline((string) $key)) }}: {{ is_numeric($value) ? \App\Support\Format::number($value, 0) : (is_scalar($value) || $value === null ? $value : json_encode($value)) }}</div>
                             @endforeach
                             @foreach(array_slice($item['included_features'], 0, 3) as $feature)
                                 <div><i class="fas fa-check" aria-hidden="true"></i> {{ $feature }}</div>

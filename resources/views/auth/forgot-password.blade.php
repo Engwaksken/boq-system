@@ -21,7 +21,7 @@
 
         <div class="auth-status mt-6" data-autohide="5000">
 
-            <i class="fas fa-circle-check mr-1"></i>
+            <i class="fas fa-circle-check mr-1" aria-hidden="true"></i>
 
             {{ session('status') }}
 
@@ -71,7 +71,7 @@
             @error('email')
                 <p class="auth-error">
 
-                    <i class="fas fa-circle-exclamation mr-1"></i>
+                    <i class="fas fa-circle-exclamation mr-1" aria-hidden="true"></i>
 
                     {{ $message }}
 
@@ -86,7 +86,7 @@
             type="submit"
             class="auth-primary"
         >
-            <i class="fas fa-paper-plane"></i>
+            <i class="fas fa-paper-plane" aria-hidden="true"></i>
             {{ __('Send password reset link') }}
         </button>
 
@@ -101,7 +101,7 @@
             href="{{ route('login') }}"
             class="auth-link inline-flex items-center gap-2 text-sm"
         >
-            <i class="fas fa-arrow-left"></i>
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
             {{ __('Back to sign in') }}
         </a>
 

@@ -1,7 +1,7 @@
 <x-layouts.guest :title="__('Thank you')">
     <div class="space-y-4 text-center">
         <span class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-2xl text-brand-700" aria-hidden="true">
-            <i class="fas fa-circle-check"></i>
+            <i class="fas fa-circle-check" aria-hidden="true"></i>
         </span>
         <h1 class="text-xl font-bold text-slate-900">{{ __('Thank you, the BOQ is signed') }}</h1>
         <p class="text-sm text-slate-600">

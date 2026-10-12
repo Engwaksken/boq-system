@@ -72,7 +72,7 @@
     <div
         x-show="open"
         x-cloak
-        class="absolute z-30 mt-1 w-full min-w-56 rounded-lg border border-slate-200 bg-white p-2 shadow-lg"
+        class="absolute z-30 mt-1 w-full min-w-56 max-w-[calc(100vw-2rem)] rounded-lg border border-slate-200 bg-white p-2 shadow-lg"
     >
         <input
             x-ref="search"

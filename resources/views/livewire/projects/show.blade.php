@@ -64,7 +64,7 @@
                         class="flex flex-col gap-2 border-b border-slate-100 px-5 py-4 last:border-0 hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between"
                     >
                         <div class="min-w-0">
-                            <div class="font-semibold text-slate-900">{{ $boq->name }}</div>
+                            <div class="font-semibold text-slate-900 [overflow-wrap:anywhere]">{{ $boq->name }}</div>
                             <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                                 <span>{{ trans_choice(':count item|:count items', $boqTotals[$boq->id]['items'] ?? 0, ['count' => \App\Support\Format::number($boqTotals[$boq->id]['items'] ?? 0, 0)]) }}</span>
                                 <x-ui.status :status="$boq->status" />
@@ -132,7 +132,7 @@
                         @if(filled($project->description))
                             <div class="mt-5 border-t border-slate-100 pt-4">
                                 <p class="text-xs font-semibold text-slate-500">{{ __('Description') }}</p>
-                                <p class="mt-1 whitespace-pre-line text-sm text-slate-700">{{ $project->description }}</p>
+                                <p class="mt-1 whitespace-pre-line text-sm text-slate-700 [overflow-wrap:anywhere]">{{ $project->description }}</p>
                             </div>
                         @endif
                     </div>

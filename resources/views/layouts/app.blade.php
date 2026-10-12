@@ -340,12 +340,12 @@
                     <ol class="boq-breadcrumb">
                         @if($currentGroup)
                             <li class="hidden sm:block">{{ __($currentGroup['label']) }}</li>
-                            <li class="boq-breadcrumb-sep hidden sm:block" aria-hidden="true"><i class="fas fa-chevron-right"></i></li>
+                            <li class="boq-breadcrumb-sep hidden sm:block" aria-hidden="true"><i class="fas fa-chevron-right" aria-hidden="true"></i></li>
                         @endif
 
                         @if($pageLabel && $subPage && $currentItem)
                             <li class="min-w-0 truncate"><a href="{{ $currentItem['url'] }}">{{ __($pageLabel) }}</a></li>
-                            <li class="boq-breadcrumb-sep" aria-hidden="true"><i class="fas fa-chevron-right"></i></li>
+                            <li class="boq-breadcrumb-sep" aria-hidden="true"><i class="fas fa-chevron-right" aria-hidden="true"></i></li>
                             <li class="boq-breadcrumb-current" aria-current="page">{{ __($subPage) }}</li>
                         @elseif($pageLabel)
                             <li class="boq-breadcrumb-current" aria-current="page">{{ __($pageLabel) }}</li>

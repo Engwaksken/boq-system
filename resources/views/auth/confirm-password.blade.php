@@ -14,7 +14,7 @@
         <x-auth-password name="password" :label="__('Password')" autofocus />
 
         <button type="submit" class="auth-primary">
-            <i class="fas fa-circle-check"></i>
+            <i class="fas fa-circle-check" aria-hidden="true"></i>
             {{ __('Confirm') }}
         </button>
     </form>

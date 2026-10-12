@@ -44,7 +44,7 @@ Before launch:
 | 7 | Operations: single log file with no rotation, no error monitoring, and the `/up` health check doesn't test the database or queue. | ✅ Production examples use daily rotating logs (14 days). `/health` checks the database, cache, storage and queue backlog. ⚠️ Still add an error monitor (Sentry or Flare). |
 | 8 | Web localisation is not wired: no locale middleware, and views don't use `__()`. | ✅ `SetLocale` middleware (user, then guest choice, then browser, then site default). 775 UI strings are wrapped and listed in `lang/en.json`, and `lang/lg.json` has 221 Luganda translations (the rest fall back to English). Admins translate any language under Settings → Languages → Translate; edits are stored in the database and survive deployments. |
 | 9 | Money flows lack tests: verify, webhook, reconcile, expire, proxy subscriptions. | ✅ Added tests for Stripe checkout and return, amount mismatch, checkout authorisation, grace period and expiry, reminders, maintenance mode and health. ⚠️ Mobile money gateway `status()` fakes are still worth adding. |
-| 10 | Mobile: most requests have no timeout, 401s aren't handled centrally, and there are about 168 hard casts that crash on null fields. | ✅ 30s timeout on every request; 401 and `ACCOUNT_DISABLED` clear the token and return to sign-in (with tests). ⚠️ Null-safe JSON parsing is still to do. |
+| 10 | Mobile: most requests have no timeout, 401s aren't handled centrally, and there are about 168 hard casts that crash on null fields. | ✅ 30s timeout on every request; 401 and `ACCOUNT_DISABLED` clear the token and return to sign-in (with tests). JSON parsing is now null-safe through shared helpers in `lib/json_utils.dart` (about 300 hard casts removed). |
 | 11 | Android release build signs silently unsigned when `key.properties` is missing. | ✅ Release builds fail unless `android/key.properties` exists. |
 
 ## P2: improvements
@@ -52,13 +52,13 @@ Before launch:
 | # | Finding | Status |
 |---|---------|--------|
 | 1 | SVG logo and favicon uploads (stored-XSS risk), with extension taken from the client. | ✅ SVG no longer accepted; the extension is detected server-side. |
-| 2 | No security headers (HSTS, X-Frame-Options, CSP, nosniff). | 💡 Add them at the web server or in middleware. |
-| 3 | `User::$fillable` includes `organisation_id` and `is_active`. | 💡 Remove them and set explicitly (the code already does in most places). |
+| 2 | No security headers (HSTS, X-Frame-Options, CSP, nosniff). | ✅ `SecurityHeaders` middleware: nosniff, Referrer-Policy, HSTS on HTTPS; X-Frame-Options, Permissions-Policy and a minimal CSP (`frame-ancestors`, `base-uri`, `object-src`) on web. A script CSP is left out because Livewire/Alpine need inline scripts. |
+| 3 | `User::$fillable` includes `organisation_id` and `is_active`. | ✅ Removed; set explicitly with `forceFill`. |
 | 4 | Account deletion hard-deletes the user, orphans projects and cascades away top-up purchase history. | 💡 Soft-delete users and keep financial records. |
 | 5 | Dead `app/Console/Kernel.php` whose schedule differs from `routes/console.php`. | ✅ Removed. |
-| 6 | Pending transactions older than 48h are never marked abandoned. | 💡 Mark them abandoned in `payments:reconcile`. |
+| 6 | Pending transactions older than 48h are never marked abandoned. | ✅ `payments:reconcile` marks them `abandoned` (`--abandon-after=48`); bank transfers under review are left alone. |
 | 7 | "Enable 2FA (Coming Soon)" placeholder. | ✅ Replaced by working biometric (passkey) sign-in. |
-| 8 | About 100 hard-coded strings in the mobile app outside the translation files. | 💡 Move them into the ARB files. |
+| 8 | About 100 hard-coded strings in the mobile app outside the translation files. | ✅ About 500 strings moved into the ARB files. The new Luganda keys still hold English text, and the error messages built without a `BuildContext` (`app_errors.dart`, `ApiException`) remain in English. |
 
 ---
 

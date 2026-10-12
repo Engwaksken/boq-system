@@ -225,7 +225,9 @@ class PlatformUpdateTest extends TestCase
 
         // Someone else in the same organisation downloads it: still the owner's brand.
         $colleague = $this->customer();
-        $colleague->update(['organisation_id' => $owner->organisation_id]);
+        $colleague->forceFill(['organisation_id' => $owner->organisation_id])->save();
+        // Organisation members reach a BOQ through their project assignment (BoqPolicy).
+        $boq->project->assignments()->create(['user_id' => $colleague->id, 'role' => 'project-manager', 'assigned_by' => $owner->id]);
         $colleague->companyProfile()->create(['company_name' => 'Colleague Ltd']);
 
         $html = view('pdf.boq', $this->pdfData($boq))->render();

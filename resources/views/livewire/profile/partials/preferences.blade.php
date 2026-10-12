@@ -10,7 +10,7 @@
                 <p class="boq-section-subtitle">{{ __('How dates, numbers and money are shown to you. Changes save automatically.') }}</p>
             </div>
             <span x-show="saved" x-transition class="boq-badge boq-badge-success" role="status">
-                <i class="fas fa-check"></i> {{ __('Saved') }}
+                <i class="fas fa-check" aria-hidden="true"></i> {{ __('Saved') }}
             </span>
         </div>
 

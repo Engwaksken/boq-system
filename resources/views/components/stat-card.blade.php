@@ -33,7 +33,7 @@
             </div>
 
             <span class="boq-stat-icon" aria-hidden="true">
-                <i class="fas {{ $icon }}"></i>
+                <i class="fas {{ $icon }}" aria-hidden="true"></i>
             </span>
         </div>
     @if($href)
@@ -52,7 +52,7 @@
         </div>
 
         <span class="boq-stat-icon" aria-hidden="true">
-            <i class="fas {{ $icon }}"></i>
+            <i class="fas {{ $icon }}" aria-hidden="true"></i>
         </span>
     </div>
 @endif

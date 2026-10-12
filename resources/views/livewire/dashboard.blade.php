@@ -124,7 +124,7 @@
 
                     <ul class="divide-y divide-slate-100">
                         @foreach($attentionProjects as $attention)
-                            <li class="px-5 py-3">
+                            <li class="px-5 py-3" wire:key="attention-project-{{ $attention->id }}">
                                 <a href="{{ route('projects.show', $attention->id) }}" class="boq-table-link">{{ $attention->name }}</a>
                                 @if($attention->code)
                                     <span class="boq-table-subtitle">{{ $attention->code }}</span>

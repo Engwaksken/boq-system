@@ -1,10 +1,12 @@
 <div>
     <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm text-slate-500">{{ __('Currencies offered in price, plan, project and supplier forms.') }}</p>
-        <button type="button" wire:click="create" class="boq-btn-primary">
-            <i class="fas fa-plus"></i> {{ __('Add Currency') }}
-        </button>
-        <div class="flex flex-wrap gap-2"><x-ui.export-buttons /></div>
+        <div class="flex flex-wrap items-center gap-2">
+            <button type="button" wire:click="create" class="boq-btn-primary">
+                <i class="fas fa-plus" aria-hidden="true"></i> {{ __('Add Currency') }}
+            </button>
+            <x-ui.export-buttons />
+        </div>
     </div>
 
     @if(session('currency-message'))
@@ -13,7 +15,7 @@
 
     <x-bulk-bar :count="count($selected)" class="mb-3">
         <button type="button" wire:click="bulkDelete" wire:confirm="{{ __('Delete the selected currencies? Existing records keep their currency code.') }}" class="boq-btn-danger">
-            <i class="fas fa-trash"></i> {{ __('Delete') }}
+            <i class="fas fa-trash" aria-hidden="true"></i> {{ __('Delete') }}
         </button>
     </x-bulk-bar>
 
@@ -41,7 +43,7 @@
                         <td class="font-mono font-semibold">
                             {{ $currency->code }}
                             @if($currency->is_default)
-                                <span class="boq-badge boq-badge-warning ml-1"><i class="fas fa-star"></i> {{ __('Default') }}</span>
+                                <span class="boq-badge boq-badge-warning ml-1"><i class="fas fa-star" aria-hidden="true"></i> {{ __('Default') }}</span>
                             @endif
                         </td>
                         <td>{{ $currency->name }}</td>
@@ -52,10 +54,10 @@
                         </td>
                         <td>
                             <div class="boq-table-actions justify-end">
-                                <button type="button" wire:click="edit({{ $currency->id }})" class="boq-icon-btn" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><i class="fas fa-pen"></i></button>
+                                <button type="button" wire:click="edit({{ $currency->id }})" class="boq-icon-btn" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><i class="fas fa-pen" aria-hidden="true"></i></button>
                                 @unless($currency->is_default)
-                                    <button type="button" wire:click="setDefault({{ $currency->id }})" class="boq-icon-btn" title="{{ __('Make default') }}" aria-label="{{ __('Make default') }}"><i class="far fa-star"></i></button>
-                                    <button type="button" wire:click="toggleActive({{ $currency->id }})" class="boq-icon-btn" title="{{ $currency->is_active ? __('Deactivate') : __('Activate') }}" aria-label="{{ $currency->is_active ? __('Deactivate') : __('Activate') }}"><i class="fas {{ $currency->is_active ? 'fa-ban' : 'fa-circle-check' }}"></i></button>
+                                    <button type="button" wire:click="setDefault({{ $currency->id }})" class="boq-icon-btn" title="{{ __('Make default') }}" aria-label="{{ __('Make default') }}"><i class="far fa-star" aria-hidden="true"></i></button>
+                                    <button type="button" wire:click="toggleActive({{ $currency->id }})" class="boq-icon-btn" title="{{ $currency->is_active ? __('Deactivate') : __('Activate') }}" aria-label="{{ $currency->is_active ? __('Deactivate') : __('Activate') }}"><i class="fas {{ $currency->is_active ? 'fa-ban' : 'fa-circle-check' }}" aria-hidden="true"></i></button>
                                 @endunless
                             </div>
                         </td>
@@ -73,8 +75,8 @@
         <div class="boq-modal-backdrop" wire:key="currency-modal" x-data x-trap.noscroll="true" @keydown.escape.window="$wire.cancel()" role="dialog" aria-modal="true" aria-labelledby="currency-modal-title">
             <form wire:submit="save" class="boq-modal boq-modal-sm">
                 <div class="boq-modal-head">
-                    <h2 id="currency-modal-title"><i class="fas fa-coins"></i> {{ $editingId ? __('Edit Currency') : __('Add Currency') }}</h2>
-                    <button type="button" wire:click="cancel" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
+                    <h2 id="currency-modal-title"><i class="fas fa-coins" aria-hidden="true"></i> {{ $editingId ? __('Edit Currency') : __('Add Currency') }}</h2>
+                    <button type="button" wire:click="cancel" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
                 </div>
 
                 <div class="boq-modal-body boq-form-grid">
@@ -111,7 +113,7 @@
 
                 <div class="boq-modal-foot">
                     <button type="button" wire:click="cancel" class="boq-btn-secondary">{{ __('Cancel') }}</button>
-                    <button type="submit" class="boq-btn-primary"><i class="fas fa-floppy-disk"></i> {{ __('Save') }}</button>
+                    <button type="submit" class="boq-btn-primary"><i class="fas fa-floppy-disk" aria-hidden="true"></i> {{ __('Save') }}</button>
                 </div>
             </form>
         </div>

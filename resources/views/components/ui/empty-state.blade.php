@@ -7,7 +7,7 @@
 
 <div {{ $attributes->class('boq-empty-state') }}>
     <span class="boq-empty-icon" aria-hidden="true">
-        <i class="fas {{ $icon }}"></i>
+        <i class="fas {{ $icon }}" aria-hidden="true"></i>
     </span>
 
     @if($title)

@@ -129,7 +129,7 @@
                             </label>
                             @if($logoUrl)
                                 <button type="button" wire:click="removeLogo" class="boq-btn-secondary text-red-600">
-                                    <i class="fas fa-trash"></i>
+                                    <i class="fas fa-trash" aria-hidden="true"></i>
                                     {{ __('Remove') }}
                                 </button>
                             @endif
@@ -157,7 +157,7 @@
                             </label>
                             @if($faviconUrl)
                                 <button type="button" wire:click="removeFavicon" class="boq-btn-secondary text-red-600">
-                                    <i class="fas fa-trash"></i>
+                                    <i class="fas fa-trash" aria-hidden="true"></i>
                                     {{ __('Remove') }}
                                 </button>
                             @endif
@@ -232,14 +232,14 @@
                     <div>
                         <label for="privacy_policy" class="boq-field-label">{{ __('Privacy Policy') }}</label>
                         <textarea id="privacy_policy" wire:model="settings.privacy_policy" rows="10" class="boq-field boq-textarea font-mono text-xs" placeholder="&lt;h2&gt;Privacy Policy&lt;/h2&gt;&lt;p&gt;...&lt;/p&gt; or a full URL"></textarea>
-                        <a href="{{ route('legal.privacy') }}" target="_blank" rel="noopener" class="boq-field-help inline-block"><i class="fas fa-arrow-up-right-from-square"></i> {{ __('Preview saved page') }}</a>
+                        <a href="{{ route('legal.privacy') }}" target="_blank" rel="noopener" class="boq-field-help inline-block"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i> {{ __('Preview saved page') }}</a>
                         @error('settings.privacy_policy') <p class="boq-field-error">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label for="terms_of_use" class="boq-field-label">{{ __('Terms of Use') }}</label>
                         <textarea id="terms_of_use" wire:model="settings.terms_of_use" rows="10" class="boq-field boq-textarea font-mono text-xs" placeholder="&lt;h2&gt;Terms of Use&lt;/h2&gt;&lt;p&gt;...&lt;/p&gt; or a full URL"></textarea>
-                        <a href="{{ route('legal.terms') }}" target="_blank" rel="noopener" class="boq-field-help inline-block"><i class="fas fa-arrow-up-right-from-square"></i> {{ __('Preview saved page') }}</a>
+                        <a href="{{ route('legal.terms') }}" target="_blank" rel="noopener" class="boq-field-help inline-block"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i> {{ __('Preview saved page') }}</a>
                         @error('settings.terms_of_use') <p class="boq-field-error">{{ $message }}</p> @enderror
                     </div>
                 </div>
@@ -324,14 +324,14 @@
         <div class="boq-panel-footer">
             @if($errors->any())
                 <p class="boq-field-error mr-auto">
-                    <i class="fas fa-circle-exclamation"></i>
+                    <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
                     {{ __('Some fields need attention. Check each tab.') }}
                 </p>
             @endif
 
             <button type="submit" wire:loading.attr="disabled" wire:target="save" class="boq-btn-primary">
-                <i wire:loading.remove wire:target="save" class="fas fa-floppy-disk"></i>
-                <i wire:loading wire:target="save" class="fas fa-spinner fa-spin"></i>
+                <i wire:loading.remove wire:target="save" class="fas fa-floppy-disk" aria-hidden="true"></i>
+                <i wire:loading wire:target="save" class="fas fa-spinner fa-spin" aria-hidden="true"></i>
                 {{ __('Save Settings') }}
             </button>
         </div>

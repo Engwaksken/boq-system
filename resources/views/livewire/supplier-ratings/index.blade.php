@@ -69,7 +69,7 @@
                                         </td>
                                         <td class="hidden sm:table-cell"><x-stars :value="$row['average']" :count="$row['count']" /></td>
                                         <td class="hidden text-right sm:table-cell">
-                                            <button type="button" wire:click="openRate({{ $row['supplier']->id }})" class="boq-icon-btn" title="{{ __('Rate') }}" aria-label="{{ __('Rate :name', ['name' => $row['supplier']->name]) }}"><i class="fas fa-star"></i></button>
+                                            <button type="button" wire:click="openRate({{ $row['supplier']->id }})" class="boq-icon-btn" title="{{ __('Rate') }}" aria-label="{{ __('Rate :name', ['name' => $row['supplier']->name]) }}"><i class="fas fa-star" aria-hidden="true"></i></button>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -163,7 +163,7 @@
                                 <td class="text-sm">{{ \App\Support\Format::date($mine->rated_at) }}</td>
                                 <td class="text-right">
                                     @if($mine->supplier?->is_active)
-                                        <button type="button" wire:click="openRate({{ $mine->supplier_id }})" class="boq-icon-btn" title="{{ __('Rate again') }}" aria-label="{{ __('Rate :name again', ['name' => $mine->supplier->name]) }}"><i class="fas fa-rotate"></i></button>
+                                        <button type="button" wire:click="openRate({{ $mine->supplier_id }})" class="boq-icon-btn" title="{{ __('Rate again') }}" aria-label="{{ __('Rate :name again', ['name' => $mine->supplier->name]) }}"><i class="fas fa-rotate" aria-hidden="true"></i></button>
                                     @endif
                                 </td>
                             </tr>
@@ -179,8 +179,8 @@
         <div class="boq-modal-backdrop" wire:key="rate-modal" x-data x-trap.noscroll="true" @keydown.escape.window="$wire.closeRate()" role="dialog" aria-modal="true" aria-labelledby="rate-title">
             <form wire:submit="saveRating" class="boq-modal boq-modal-lg">
                 <div class="boq-modal-head">
-                    <h2 id="rate-title"><i class="fas fa-star"></i> {{ __('Rate a Supplier') }}</h2>
-                    <button type="button" wire:click="closeRate" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
+                    <h2 id="rate-title"><i class="fas fa-star" aria-hidden="true"></i> {{ __('Rate a Supplier') }}</h2>
+                    <button type="button" wire:click="closeRate" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
                 </div>
                 <div class="boq-modal-body space-y-4">
                     @if($rateSupplier)
@@ -241,7 +241,7 @@
                 <div class="boq-modal-foot">
                     <button type="button" wire:click="closeRate" class="boq-btn-secondary">{{ __('Cancel') }}</button>
                     <button type="submit" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="saveRating" @disabled(! $rateSupplier)>
-                        <i class="fas fa-floppy-disk" wire:loading.remove wire:target="saveRating"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="saveRating"></i> {{ __('Save Rating') }}
+                        <i class="fas fa-floppy-disk" wire:loading.remove wire:target="saveRating" aria-hidden="true"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="saveRating" aria-hidden="true"></i> {{ __('Save Rating') }}
                     </button>
                 </div>
             </form>
@@ -253,8 +253,8 @@
         <div class="boq-modal-backdrop" wire:key="supplier-detail-{{ $detail->id }}" x-data x-trap.noscroll="true" @keydown.escape.window="$wire.closeSupplier()" role="dialog" aria-modal="true" aria-labelledby="detail-title">
             <div class="boq-modal boq-modal-xl">
                 <div class="boq-modal-head">
-                    <h2 id="detail-title"><i class="fas {{ $detail->type === 'factory' ? 'fa-industry' : 'fa-store' }}"></i> {{ $detail->name }}</h2>
-                    <button type="button" wire:click="closeSupplier" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
+                    <h2 id="detail-title"><i class="fas {{ $detail->type === 'factory' ? 'fa-industry' : 'fa-store' }}" aria-hidden="true"></i> {{ $detail->name }}</h2>
+                    <button type="button" wire:click="closeSupplier" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
                 </div>
                 <div class="boq-modal-body space-y-4">
                     <p class="text-sm text-slate-600">
@@ -303,7 +303,7 @@
                                     @if($review->is_hidden)<span class="boq-badge boq-badge-warning">{{ __('Hidden') }}</span>@endif
                                     @if($isAdmin)
                                         <button type="button" wire:click="toggleHidden({{ $review->id }})" class="boq-btn-secondary ml-auto text-xs">
-                                            <i class="fas {{ $review->is_hidden ? 'fa-eye' : 'fa-eye-slash' }}"></i> {{ $review->is_hidden ? __('Show') : __('Hide') }}
+                                            <i class="fas {{ $review->is_hidden ? 'fa-eye' : 'fa-eye-slash' }}" aria-hidden="true"></i> {{ $review->is_hidden ? __('Show') : __('Hide') }}
                                         </button>
                                     @endif
                                 </div>
@@ -317,7 +317,7 @@
                 <div class="boq-modal-foot">
                     <button type="button" wire:click="closeSupplier" class="boq-btn-secondary">{{ __('Close') }}</button>
                     @if($detail->is_active)
-                        <button type="button" wire:click="openRate({{ $detail->id }})" class="boq-btn-primary"><i class="fas fa-star"></i> {{ __('Rate') }}</button>
+                        <button type="button" wire:click="openRate({{ $detail->id }})" class="boq-btn-primary"><i class="fas fa-star" aria-hidden="true"></i> {{ __('Rate') }}</button>
                     @endif
                 </div>
             </div>

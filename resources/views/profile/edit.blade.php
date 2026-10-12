@@ -7,7 +7,7 @@
             <div>
 
                 <h1 class="boq-page-title">
-                    <i class="fas fa-user-gear"></i>
+                    <i class="fas fa-user-gear" aria-hidden="true"></i>
                     {{ __('My Profile') }}
                 </h1>
 
@@ -21,7 +21,7 @@
                 href="{{ url('/dashboard') }}"
                 class="boq-btn-secondary"
             >
-                <i class="fas fa-arrow-left"></i>
+                <i class="fas fa-arrow-left" aria-hidden="true"></i>
                 {{ __('Back to Dashboard') }}
             </a>
 
@@ -42,7 +42,7 @@
                 </div>
 
                 <span class="boq-stat-icon">
-                    <i class="fas fa-user"></i>
+                    <i class="fas fa-user" aria-hidden="true"></i>
                 </span>
 
             </div>
@@ -68,7 +68,7 @@
                         auth()->user()->email_verified_at
                             ? 'fa-circle-check'
                             : 'fa-circle-exclamation'
-                    }}"></i>
+                    }}" aria-hidden="true"></i>
                 </span>
 
             </div>
@@ -89,7 +89,7 @@
                 </div>
 
                 <span class="boq-stat-icon">
-                    <i class="fas fa-language"></i>
+                    <i class="fas fa-language" aria-hidden="true"></i>
                 </span>
 
             </div>
@@ -114,7 +114,7 @@
                 </div>
 
                 <span class="boq-stat-icon">
-                    <i class="fas fa-clock"></i>
+                    <i class="fas fa-clock" aria-hidden="true"></i>
                 </span>
 
             </div>
@@ -136,7 +136,7 @@
                     :class="tab === 'profile' ? 'is-active' : ''"
                     class="boq-profile-tab"
                 >
-                    <i class="fas fa-user"></i>
+                    <i class="fas fa-user" aria-hidden="true"></i>
                     {{ __('Profile Information') }}
                 </button>
 
@@ -146,7 +146,7 @@
                     :class="tab === 'security' ? 'is-active' : ''"
                     class="boq-profile-tab"
                 >
-                    <i class="fas fa-lock"></i>
+                    <i class="fas fa-lock" aria-hidden="true"></i>
                     {{ __('Password & Security') }}
                 </button>
 
@@ -156,7 +156,7 @@
                     :class="tab === 'account' ? 'is-active' : ''"
                     class="boq-profile-tab"
                 >
-                    <i class="fas fa-user-xmark"></i>
+                    <i class="fas fa-user-xmark" aria-hidden="true"></i>
                     {{ __('Account') }}
                 </button>
 

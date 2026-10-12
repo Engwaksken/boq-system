@@ -174,7 +174,7 @@
             @endif
         </x-bulk-bar>
 
-        <div class="boq-loading-bar" wire:loading.delay wire:target="search, priceType, category, supplier, location, brand, updated, sort, status, clearFilters, gotoPage, nextPage, previousPage"></div>
+        <div class="boq-loading-bar" wire:loading.delay wire:target="search, priceType, category, supplier, region, location, brand, updated, sort, status, clearFilters, gotoPage, nextPage, previousPage"></div>
 
         <x-ui.table>
             <thead>

@@ -59,7 +59,7 @@
                             @error('extractFile')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                             <div class="mt-3 flex flex-wrap gap-2">
                                 @foreach($extractFiles as $index => $file)
-                                    <button type="button" wire:click="reviewReceipt({{ $index }})" wire:loading.attr="disabled" wire:target="extractFiles,reviewReceipt,extractFromReceipt,save" class="{{ $activeReceiptIndex === $index ? 'boq-btn-primary' : 'boq-btn-secondary' }}">{{ $file->getClientOriginalName() }} @if($activeReceiptIndex === $index) · {{ __('Reviewing') }} @endif</button>
+                                    <button type="button" wire:click="reviewReceipt({{ $index }})" wire:loading.attr="disabled" wire:target="extractFiles,reviewReceipt,extractFromReceipt,save" class="{{ $activeReceiptIndex === $index ? 'boq-btn-primary' : 'boq-btn-secondary' }} max-w-full [overflow-wrap:anywhere]">{{ $file->getClientOriginalName() }} @if($activeReceiptIndex === $index) · {{ __('Reviewing') }} @endif</button>
                                 @endforeach
                             </div>
                             @foreach($extractionWarnings as $warning)<p class="mt-2 text-xs text-amber-600"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> {{ $warning }}</p>@endforeach
@@ -105,13 +105,13 @@
                             </div>
                             @foreach($additionalItems as $index => $line)
                                 <div class="mb-3 grid gap-3 border-b border-slate-100 pb-3 sm:grid-cols-12" wire:key="expense-line-{{ $index }}">
-                                    <div class="sm:col-span-5"><label class="boq-field-label">{{ __('Description') }}</label><input wire:model="additionalItems.{{ $index }}.description" class="boq-field" maxlength="10000"></div>
-                                    <div class="sm:col-span-2"><label class="boq-field-label">{{ __('Quantity') }}</label><input type="number" min="0.001" step="0.001" wire:model.live.debounce.300ms="additionalItems.{{ $index }}.quantity" class="boq-field"></div>
-                                    <div class="sm:col-span-2"><label class="boq-field-label">{{ __('Unit') }}</label><input wire:model.live.debounce.300ms="additionalItems.{{ $index }}.unit" class="boq-field" maxlength="50"></div>
-                                    <div class="sm:col-span-2"><label class="boq-field-label">{{ __('Rate') }}</label><input type="number" min="0" step="0.01" wire:model.live.debounce.300ms="additionalItems.{{ $index }}.rate" class="boq-field"></div>
+                                    <div class="sm:col-span-5"><label for="expense-line-{{ $index }}-description" class="boq-field-label">{{ __('Description') }}</label><input id="expense-line-{{ $index }}-description" wire:model="additionalItems.{{ $index }}.description" class="boq-field" maxlength="10000"></div>
+                                    <div class="sm:col-span-2"><label for="expense-line-{{ $index }}-quantity" class="boq-field-label">{{ __('Quantity') }}</label><input id="expense-line-{{ $index }}-quantity" type="number" min="0.001" step="0.001" wire:model.live.debounce.300ms="additionalItems.{{ $index }}.quantity" class="boq-field"></div>
+                                    <div class="sm:col-span-2"><label for="expense-line-{{ $index }}-unit" class="boq-field-label">{{ __('Unit') }}</label><input id="expense-line-{{ $index }}-unit" wire:model.live.debounce.300ms="additionalItems.{{ $index }}.unit" class="boq-field" maxlength="50"></div>
+                                    <div class="sm:col-span-2"><label for="expense-line-{{ $index }}-rate" class="boq-field-label">{{ __('Rate') }}</label><input id="expense-line-{{ $index }}-rate" type="number" min="0" step="0.01" wire:model.live.debounce.300ms="additionalItems.{{ $index }}.rate" class="boq-field"></div>
                                     <div class="flex items-end sm:col-span-1"><button type="button" class="boq-icon-btn boq-icon-danger" wire:click="removeExpenseItem({{ $index }})" aria-label="{{ __('Remove item') }}"><i class="fas fa-trash" aria-hidden="true"></i></button></div>
                                     @if(auth()->user()->hasPermission('boq.view') && $boq_id)
-                                        <div class="sm:col-span-12"><label class="boq-field-label">{{ __('Project BOQ item') }}</label><select wire:model.live="additionalItems.{{ $index }}.boq_item_id" class="boq-field"><option value="">{{ __('Not linked / outside BOQ') }}</option>@foreach($boqItems as $boqItem)<option value="{{ $boqItem->id }}">{{ $boqItem->item_code }} {{ $boqItem->description }} ({{ $boqItem->unit }})</option>@endforeach</select>
+                                        <div class="sm:col-span-12"><label for="expense-line-{{ $index }}-boq-item" class="boq-field-label">{{ __('Project BOQ item') }}</label><select id="expense-line-{{ $index }}-boq-item" wire:model.live="additionalItems.{{ $index }}.boq_item_id" class="boq-field"><option value="">{{ __('Not linked / outside BOQ') }}</option>@foreach($boqItems as $boqItem)<option value="{{ $boqItem->id }}">{{ $boqItem->item_code }} {{ $boqItem->description }} ({{ $boqItem->unit }})</option>@endforeach</select>
                                             @if(isset($budgetComparisons[$index + 1]))<x-expense-budget :comparison="$budgetComparisons[$index + 1]" />@endif
                                         </div>
                                     @endif
@@ -153,7 +153,7 @@
         <div class="overflow-x-auto"><x-ui.table>
             <thead><tr><th>{{ __('Date') }}</th><th>{{ __('Project') }}</th><th>{{ __('Recorded by') }}</th><th>{{ __('Description') }}</th><th>{{ __('Supplier') }}</th><th>{{ __('Status') }}</th><th class="is-numeric">{{ __('Total') }}</th><th>{{ __('Actions') }}</th></tr></thead>
             <tbody>@forelse($expenses as $expense)
-                <tr wire:key="expense-{{ $expense->id }}"><td class="whitespace-nowrap">{{ \App\Support\Format::date($expense->purchase_date) }}</td><td>{{ $expense->project->name }}</td><td>{{ $expense->creator?->name ?? '—' }}</td><td>{{ $expense->description }}</td><td>{{ $expense->supplier ?: '—' }}</td><td><x-ui.badge :color="$expense->is_planned ? 'success' : 'warning'">{{ $expense->is_planned ? __('Planned') : __('Unplanned') }}</x-ui.badge></td><td class="is-numeric"><x-money :amount="$expense->total" :currency="$expense->currency" /></td><td><button type="button" wire:click="show({{ $expense->id }})" class="boq-btn-ghost">{{ __('Details & receipts') }}</button><button type="button" wire:click="edit({{ $expense->id }})" class="boq-btn-ghost">{{ __('Edit') }}</button></td></tr>
+                <tr wire:key="expense-{{ $expense->id }}"><td class="whitespace-nowrap">{{ \App\Support\Format::date($expense->purchase_date) }}</td><td>{{ $expense->project->name }}</td><td>{{ $expense->creator?->name ?? '—' }}</td><td>{{ $expense->description }}</td><td>{{ $expense->supplier ?: '—' }}</td><td><x-ui.badge :color="$expense->is_planned ? 'success' : 'warning'">{{ $expense->is_planned ? __('Planned') : __('Unplanned') }}</x-ui.badge></td><td class="is-numeric"><x-money :amount="$expense->total" :currency="$expense->currency" /></td><td><div class="flex flex-wrap gap-1"><button type="button" wire:click="show({{ $expense->id }})" class="boq-btn-ghost">{{ __('Details & receipts') }}</button><button type="button" wire:click="edit({{ $expense->id }})" class="boq-btn-ghost">{{ __('Edit') }}</button></div></td></tr>
             @empty<tr><td colspan="8"><x-ui.empty-state icon="fa-receipt" :title="__('No expenses recorded.')" :description="__('Record a purchase to start tracking project spending.')" /></td></tr>@endforelse</tbody>
         </x-ui.table></div>
         <div class="p-4">{{ $expenses->links() }}</div>
@@ -162,7 +162,7 @@
 
     @if($selectedExpense && ! $showForm)
         <x-ui.modal :title="__('Details & receipts')" close="closeDetails" size="lg">
-            <h3 class="font-semibold">{{ $selectedExpense->description }}</h3>
+            <h3 class="font-semibold [overflow-wrap:anywhere]">{{ $selectedExpense->description }}</h3>
             <p class="mt-1 text-sm text-slate-600">{{ $selectedExpense->project->name }} · {{ \App\Support\Format::date($selectedExpense->purchase_date) }}</p>
             <p class="my-4 text-xl font-bold"><x-money :amount="$selectedExpense->total" :currency="$selectedExpense->currency" /></p>
             <dl class="grid gap-3 text-sm sm:grid-cols-2"><div><dt class="font-semibold">{{ __('Supplier') }}</dt><dd>{{ $selectedExpense->supplier ?: '—' }}</dd></div><div><dt class="font-semibold">{{ __('Payment method') }}</dt><dd>{{ $selectedExpense->payment_method ?: '—' }}</dd></div><div><dt class="font-semibold">{{ __('Recorded by') }}</dt><dd>{{ $selectedExpense->creator?->name ?? '—' }}</dd></div></dl>
@@ -178,7 +178,7 @@
             @if($savedBudgetComparisons !== [])<h3 class="mt-4 font-semibold">{{ __('BOQ budget progress') }}</h3>@endif
             @foreach($savedBudgetComparisons as $comparison)<x-expense-budget :comparison="$comparison" />@endforeach
             <h3 class="mt-6 mb-3 font-semibold">{{ __('Receipts') }}</h3>
-            @forelse($selectedExpense->receipts as $receipt)<a class="boq-btn-secondary mb-2" href="{{ route('expense-receipts.download', $receipt) }}"><i class="fas fa-download" aria-hidden="true"></i>{{ $receipt->original_filename }}</a>@empty<p class="mb-4 text-sm text-slate-500">{{ __('No receipts attached.') }}</p>@endforelse
+            @if($selectedExpense->receipts->isNotEmpty())<div class="mb-2 flex flex-wrap gap-2">@foreach($selectedExpense->receipts as $receipt)<a wire:key="expense-receipt-{{ $receipt->id }}" class="boq-btn-secondary max-w-full [overflow-wrap:anywhere]" href="{{ route('expense-receipts.download', $receipt) }}"><i class="fas fa-download" aria-hidden="true"></i>{{ $receipt->original_filename }}</a>@endforeach</div>@else<p class="mb-4 text-sm text-slate-500">{{ __('No receipts attached.') }}</p>@endif
             <form wire:submit="uploadReceipt" class="mt-4 space-y-3">
                 <div class="flex flex-wrap items-end gap-3">
                     <x-ui.field :label="__('Attach receipts')" for="expense-receipt-file" error="receiptFiles" class="min-w-48 flex-1"><input id="expense-receipt-file" type="file" multiple wire:model="receiptFiles" accept="application/pdf,image/jpeg,image/png,image/webp" class="boq-field"><p class="mt-1 text-xs text-slate-500">{{ __('Up to 10 PDFs or images, 10 MB each. Attachments here do not change expense items.') }}</p></x-ui.field>

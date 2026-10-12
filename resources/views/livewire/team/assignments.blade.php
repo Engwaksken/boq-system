@@ -13,7 +13,7 @@
             <x-ui.field :label="__('Team member')" for="assignment-user" error="userId" required><select id="assignment-user" wire:model="userId" class="boq-field"><option value="">{{ __('Select a member') }}</option>@foreach($members as $member)<option value="{{ $member->id }}">{{ $member->name }} ({{ $member->email }})</option>@endforeach</select></x-ui.field>
             <x-ui.field :label="__('Project role')" for="assignment-role" error="role" required><select id="assignment-role" wire:model="role" class="boq-field"><option value="user">{{ __('User') }}</option><option value="project-manager">{{ __('Project Manager') }}</option><option value="procurement-officer">{{ __('Procurement Officer') }}</option><option value="finance">{{ __('Finance') }}</option></select></x-ui.field>
             <p class="text-sm text-slate-500 sm:col-span-3">{{ __('A project assignment grants project access without changing the member\'s organisation role.') }}</p>
-            <x-ui.button type="submit" wire:loading.attr="disabled" wire:target="save">{{ __('Save assignment') }}</x-ui.button>
+            <x-ui.button type="submit" class="justify-self-start" wire:loading.attr="disabled" wire:target="save">{{ __('Save assignment') }}</x-ui.button>
         </form>
     </x-ui.card>
     <x-ui.card :padded="false"><div class="overflow-x-auto"><x-ui.table>

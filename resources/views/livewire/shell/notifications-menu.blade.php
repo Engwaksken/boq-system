@@ -50,9 +50,9 @@
                 >
                     <span class="boq-notification-dot" aria-hidden="true"></span>
                     <span class="min-w-0 flex-1">
-                        <span class="block text-sm font-semibold text-slate-900">{{ $notification->title ?: __('Notification') }}</span>
+                        <span class="block text-sm font-semibold text-slate-900 [overflow-wrap:anywhere]">{{ $notification->title ?: __('Notification') }}</span>
                         @if($notification->message)
-                            <span class="mt-0.5 block text-xs leading-relaxed text-slate-600">{{ $notification->message }}</span>
+                            <span class="mt-0.5 block text-xs leading-relaxed text-slate-600 [overflow-wrap:anywhere]">{{ $notification->message }}</span>
                         @endif
                         <span class="mt-1 block text-[11px] text-slate-400">
                             <x-date :value="$notification->created_at" time />

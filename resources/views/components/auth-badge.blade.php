@@ -13,6 +13,6 @@
     >
 @else
     <div class="auth-badge">
-        <i class="fas {{ $icon }} text-lg"></i>
+        <i class="fas {{ $icon }} text-lg" aria-hidden="true"></i>
     </div>
 @endif

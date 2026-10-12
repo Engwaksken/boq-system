@@ -139,7 +139,7 @@
                     @foreach($documents as $document)
                         <div class="boq-record" wire:key="signed-document-{{ $document->id }}">
                             <span class="boq-record-icon" aria-hidden="true">
-                                <i class="fas {{ $document->isPdf() ? 'fa-file-pdf' : 'fa-file-image' }}"></i>
+                                <i class="fas {{ $document->isPdf() ? 'fa-file-pdf' : 'fa-file-image' }}" aria-hidden="true"></i>
                             </span>
 
                             <div class="min-w-0 flex-1">

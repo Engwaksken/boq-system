@@ -12,7 +12,7 @@
 
     @if (session('status') == 'verification-link-sent')
         <div class="auth-status mt-6" data-autohide="5000" role="status">
-            <i class="fas fa-circle-check mr-1"></i>
+            <i class="fas fa-circle-check mr-1" aria-hidden="true"></i>
             {{ __('A new verification link has been sent to the email address you provided during registration.') }}
         </div>
     @endif
@@ -22,7 +22,7 @@
             @csrf
 
             <button type="submit" class="auth-primary">
-                <i class="fas fa-paper-plane"></i>
+                <i class="fas fa-paper-plane" aria-hidden="true"></i>
                 {{ __('Resend Verification Email') }}
             </button>
         </form>
@@ -31,7 +31,7 @@
             @csrf
 
             <button type="submit" class="auth-secondary">
-                <i class="fas fa-right-from-bracket"></i>
+                <i class="fas fa-right-from-bracket" aria-hidden="true"></i>
                 {{ __('Log Out') }}
             </button>
         </form>

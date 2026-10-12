@@ -58,17 +58,17 @@
                     @click.stop
                 >
                     {{-- Header --}}
-                    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+                    <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-6">
                         <h3
                             id="modal-title"
-                            class="text-lg font-semibold text-slate-900"
+                            class="min-w-0 text-lg font-semibold text-slate-900 [overflow-wrap:anywhere]"
                         >
                             {{ $title }}
                         </h3>
 
                         <button
                             type="button"
-                            class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2"
                             aria-label="{{ __('Close modal') }}"
                             @click="
                                 open = false;

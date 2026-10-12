@@ -45,7 +45,7 @@
                         <i class="fas fa-chevron-down text-[10px]" aria-hidden="true"></i>
                     </button>
 
-                    <div x-show="open" x-cloak x-transition.origin.top.right class="boq-menu w-60" role="menu">
+                    <div x-show="open" x-cloak x-transition.origin.top class="boq-menu left-0 right-auto w-60 sm:left-auto sm:right-0" role="menu">
                         <button type="button" wire:click="openPdfPreview" @click="open = false" class="boq-menu-item" role="menuitem">
                             <i class="fas fa-eye" aria-hidden="true"></i> {{ __('Preview PDF') }}
                         </button>
@@ -214,7 +214,7 @@
             @if($boq->description)
                 <div class="col-span-2 md:col-span-5">
                     <dt class="text-xs font-semibold text-slate-500">{{ __('Description') }}</dt>
-                    <dd class="mt-0.5 whitespace-pre-line text-sm text-slate-700">{{ $boq->description }}</dd>
+                    <dd class="mt-0.5 whitespace-pre-line text-sm text-slate-700 [overflow-wrap:anywhere]">{{ $boq->description }}</dd>
                 </div>
             @endif
         </dl>
@@ -605,7 +605,7 @@
                     <div class="space-y-4">
                         <div>
                             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('Item description') }}</p>
-                            <h3 class="mt-1 text-base font-semibold text-slate-900">{{ $reviewItem->description }}</h3>
+                            <h3 class="mt-1 text-base font-semibold text-slate-900 [overflow-wrap:anywhere]">{{ $reviewItem->description }}</h3>
                             <p class="mt-1 text-sm text-slate-600">{{ __('Code: :code · Unit: :unit · Quantity: :quantity', ['code' => $reviewItem->item_code ?: '—', 'unit' => $reviewItem->unit ?: '—', 'quantity' => \App\Support\Format::number((float) $reviewItem->quantity, 2)]) }}</p>
                         </div>
                         <div class="grid gap-4 sm:grid-cols-2">

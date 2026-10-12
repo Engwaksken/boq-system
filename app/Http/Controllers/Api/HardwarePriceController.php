@@ -240,7 +240,7 @@ class HardwarePriceController extends Controller
     {
         $category = $request->get('category');
         $location = $request->get('location');
-        $limit = $exportAll ? PHP_INT_MAX : min($request->get('limit', 10), 50);
+        $limit = $exportAll ? PHP_INT_MAX : max(1, min((int) $request->get('limit', 10), 50));
 
         $query = HardwarePrice::active()
             ->visibleTo($request->user()->organisation_id);
@@ -253,10 +253,11 @@ class HardwarePriceController extends Controller
             $query->byLocation($location);
         }
 
-        $items = $query->with('priceHistories')->get();
+        // Histories are eager loaded in order; querying them per item was an N+1.
+        $items = $query->with(['priceHistories' => fn ($q) => $q->orderBy('recorded_at')])->get();
 
         $recommendations = $items->map(function ($item) {
-            $histories = $item->priceHistories()->orderBy('recorded_at')->get();
+            $histories = $item->priceHistories;
             $prices = $histories->pluck('price')->toArray();
             $prices[] = $item->price;
 
@@ -275,7 +276,7 @@ class HardwarePriceController extends Controller
                 'location' => $item->location,
                 'region' => $item->region,
                 'source_reference' => $item->source_reference,
-                'fetched_at' => $item->fetched_at->format('Y-m-d H:i'),
+                'fetched_at' => $item->fetched_at?->format('Y-m-d H:i'),
                 'rating' => $rating,
                 'price_history' => [
                     'records' => count($prices),
@@ -329,6 +330,8 @@ class HardwarePriceController extends Controller
         abort_unless($user->can('update', $boqItem->boq), 403);
 
         $hardwarePrice = HardwarePrice::findOrFail($request->hardware_price_id);
+        // Another organisation's private price list must not be readable through a BOQ item.
+        abort_unless($hardwarePrice->isVisibleTo($user->organisation_id), 403);
 
         $this->matchingService->applyManualPrice($boqItem, $hardwarePrice, $user->id);
 
@@ -424,7 +427,8 @@ class HardwarePriceController extends Controller
             ->whereRaw('price < (SELECT AVG(price) FROM hardware_prices hp2 WHERE hp2.category = hardware_prices.category AND (hp2.organisation_id IS NULL OR hp2.organisation_id = ?))', [$orgId])
             ->count();
 
-        $boqItemsWithMatches = BoqItem::whereHas('boq.project', fn ($q) => $q->visibleTo($orgId))
+        // Project has no visibleTo() scope (that is HardwarePrice's); use the project access rules.
+        $boqItemsWithMatches = BoqItem::whereHas('boq.project', fn ($q) => $q->accessibleTo($request->user()))
             ->whereNotNull('ai_rate')
             ->count();
 

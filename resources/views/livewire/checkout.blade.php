@@ -25,7 +25,7 @@
                 <dl class="space-y-3 text-sm">
                     <div class="flex justify-between gap-3">
                         <dt class="text-slate-500">{{ __('Item') }}</dt>
-                        <dd class="text-right font-semibold text-slate-900">{{ $summary['name'] }}</dd>
+                        <dd class="min-w-0 text-right font-semibold text-slate-900 [overflow-wrap:anywhere]">{{ $summary['name'] }}</dd>
                     </div>
                     <div class="flex justify-between gap-3">
                         <dt class="text-slate-500">{{ __('Details') }}</dt>
@@ -105,7 +105,7 @@
                                 <select id="payment-method" wire:model.live="paymentMethod" class="boq-field">
                                     <option value="">{{ __('Default') }}</option>
                                     @foreach($methods as $method)
-                                        <option value="{{ $method }}">{{ ucwords(str_replace('_', ' ', $method)) }}</option>
+                                        <option value="{{ $method }}">{{ __(ucwords(str_replace('_', ' ', $method))) }}</option>
                                     @endforeach
                                 </select>
                             </x-ui.field>

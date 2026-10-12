@@ -79,10 +79,10 @@
         </div>
 
         <x-bulk-bar :count="count($selected)">
-            <button type="button" wire:click="bulkScan" wire:loading.attr="disabled" wire:target="bulkScan" class="boq-btn-secondary"><i class="fas fa-magnifying-glass-dollar"></i> {{ __('Scan prices') }}</button>
-            <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check"></i> {{ __('Activate') }}</button>
-            <button type="button" wire:click="bulkSetActive(false)" wire:confirm="{{ __('Deactivate the selected suppliers? Historical quotations are kept.') }}" class="boq-btn-secondary"><i class="fas fa-ban"></i> {{ __('Deactivate') }}</button>
-            <button type="button" wire:click="bulkDelete" wire:confirm="{{ __('Delete the selected suppliers? Suppliers with rates or quotations are skipped.') }}" class="boq-btn-danger"><i class="fas fa-trash"></i> {{ __('Delete') }}</button>
+            <button type="button" wire:click="bulkScan" wire:loading.attr="disabled" wire:target="bulkScan" class="boq-btn-secondary"><i class="fas fa-magnifying-glass-dollar" aria-hidden="true"></i> {{ __('Scan prices') }}</button>
+            <button type="button" wire:click="bulkSetActive(true)" class="boq-btn-secondary"><i class="fas fa-circle-check" aria-hidden="true"></i> {{ __('Activate') }}</button>
+            <button type="button" wire:click="bulkSetActive(false)" wire:confirm="{{ __('Deactivate the selected suppliers? Historical quotations are kept.') }}" class="boq-btn-secondary"><i class="fas fa-ban" aria-hidden="true"></i> {{ __('Deactivate') }}</button>
+            <button type="button" wire:click="bulkDelete" wire:confirm="{{ __('Delete the selected suppliers? Suppliers with rates or quotations are skipped.') }}" class="boq-btn-danger"><i class="fas fa-trash" aria-hidden="true"></i> {{ __('Delete') }}</button>
         </x-bulk-bar>
 
         <div class="boq-table-wrapper">
@@ -109,7 +109,7 @@
                             <td><div class="boq-table-title">{{ $supplier->name }}</div><div class="boq-table-subtitle">{{ $supplier->code }}</div></td>
                             <td>
                                 <span class="boq-badge {{ $supplier->type === 'factory' ? 'boq-badge-factory' : 'boq-badge-info' }}">
-                                    <i class="fas {{ $supplier->type === 'factory' ? 'fa-industry' : 'fa-store' }}"></i>
+                                    <i class="fas {{ $supplier->type === 'factory' ? 'fa-industry' : 'fa-store' }}" aria-hidden="true"></i>
                                     {{ $supplier->type === 'factory' ? __('Factory') : __('Supplier') }}
                                 </span>
                             </td>
@@ -117,7 +117,7 @@
                             <td class="text-sm">
                                 @if($supplier->website_url)
                                     <a href="{{ $supplier->website_url }}" target="_blank" rel="noopener noreferrer" class="boq-table-link">
-                                        {{ parse_url($supplier->website_url, PHP_URL_HOST) ?: $supplier->website_url }} <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                                        {{ parse_url($supplier->website_url, PHP_URL_HOST) ?: $supplier->website_url }} <i class="fas fa-arrow-up-right-from-square text-xs" aria-hidden="true"></i>
                                     </a>
                                 @else
                                     <span class="text-slate-400">—</span>
@@ -152,8 +152,8 @@
                                             <i class="fas fa-spinner fa-spin" wire:loading wire:target="scanPrices({{ $supplier->id }})" aria-hidden="true"></i>
                                         </button>
                                     @endif
-                                    <button type="button" wire:click="edit({{ $supplier->id }})" class="boq-icon-btn" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><i class="fas fa-pen"></i></button>
-                                    <button type="button" wire:click="toggleActive({{ $supplier->id }})" class="boq-icon-btn" title="{{ $supplier->is_active ? __('Deactivate') : __('Activate') }}" aria-label="{{ $supplier->is_active ? __('Deactivate') : __('Activate') }}"><i class="fas {{ $supplier->is_active ? 'fa-ban' : 'fa-circle-check' }}"></i></button>
+                                    <button type="button" wire:click="edit({{ $supplier->id }})" class="boq-icon-btn" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><i class="fas fa-pen" aria-hidden="true"></i></button>
+                                    <button type="button" wire:click="toggleActive({{ $supplier->id }})" class="boq-icon-btn" title="{{ $supplier->is_active ? __('Deactivate') : __('Activate') }}" aria-label="{{ $supplier->is_active ? __('Deactivate') : __('Activate') }}"><i class="fas {{ $supplier->is_active ? 'fa-ban' : 'fa-circle-check' }}" aria-hidden="true"></i></button>
                                 </div>
                             </td>
                         </tr>
@@ -173,10 +173,10 @@
             <form wire:submit="save" class="boq-modal boq-modal-lg">
                 <div class="boq-modal-head">
                     <h2 id="supplier-form-title">
-                        <i class="fas {{ ($form['type'] ?? '') === 'factory' ? 'fa-industry' : 'fa-store' }}"></i>
+                        <i class="fas {{ ($form['type'] ?? '') === 'factory' ? 'fa-industry' : 'fa-store' }}" aria-hidden="true"></i>
                         {{ $editingId ? __('Edit') : __('Add') }} {{ ($form['type'] ?? '') === 'factory' ? __('Factory') : __('Supplier') }}
                     </h2>
-                    <button type="button" wire:click="cancel" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
+                    <button type="button" wire:click="cancel" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
                 </div>
 
                 <div class="boq-modal-body boq-form-grid">
@@ -252,7 +252,7 @@
 
                 <div class="boq-modal-foot">
                     <button type="button" wire:click="cancel" class="boq-btn-secondary">{{ __('Cancel') }}</button>
-                    <button type="submit" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="save"><i class="fas fa-floppy-disk" wire:loading.remove wire:target="save"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="save"></i> {{ __('Save') }}</button>
+                    <button type="submit" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="save"><i class="fas fa-floppy-disk" wire:loading.remove wire:target="save" aria-hidden="true"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="save" aria-hidden="true"></i> {{ __('Save') }}</button>
                 </div>
             </form>
         </div>
@@ -263,8 +263,8 @@
         <div class="boq-modal-backdrop" wire:key="supplier-location-scan-modal" x-data x-trap.noscroll="true" @keydown.escape.window="$wire.closeLocationScan()" role="dialog" aria-modal="true" aria-labelledby="supplier-location-scan-title">
             <form wire:submit="scanLocationSuppliers" class="boq-modal">
                 <div class="boq-modal-head">
-                    <h2 id="supplier-location-scan-title"><i class="fas fa-location-dot"></i> {{ __('Scan Suppliers by Location') }}</h2>
-                    <button type="button" wire:click="closeLocationScan" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
+                    <h2 id="supplier-location-scan-title"><i class="fas fa-location-dot" aria-hidden="true"></i> {{ __('Scan Suppliers by Location') }}</h2>
+                    <button type="button" wire:click="closeLocationScan" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
                 </div>
                 <div class="boq-modal-body space-y-4">
                     <p class="text-sm text-slate-600">{{ __('Scans the websites of the active suppliers and factories in a location for their prices and adds them to the general prices for that location.') }}</p>
@@ -295,7 +295,7 @@
                 <div class="boq-modal-foot">
                     <button type="button" wire:click="closeLocationScan" class="boq-btn-secondary">{{ __('Cancel') }}</button>
                     <button type="submit" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="scanLocationSuppliers" @disabled($scanCount === 0)>
-                        <i class="fas fa-magnifying-glass-dollar" wire:loading.remove wire:target="scanLocationSuppliers"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="scanLocationSuppliers"></i> {{ __('Scan Prices') }}
+                        <i class="fas fa-magnifying-glass-dollar" wire:loading.remove wire:target="scanLocationSuppliers" aria-hidden="true"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="scanLocationSuppliers" aria-hidden="true"></i> {{ __('Scan Prices') }}
                     </button>
                 </div>
             </form>
@@ -307,8 +307,8 @@
         <div class="boq-modal-backdrop" wire:key="supplier-discover-modal" x-data x-trap.noscroll="true" @keydown.escape.window="$wire.closeDiscover()" role="dialog" aria-modal="true" aria-labelledby="supplier-discover-title">
             <div class="boq-modal boq-modal-xl">
                 <div class="boq-modal-head">
-                    <h2 id="supplier-discover-title"><i class="fas fa-globe"></i> {{ __('Find Suppliers Online') }}</h2>
-                    <button type="button" wire:click="closeDiscover" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
+                    <h2 id="supplier-discover-title"><i class="fas fa-globe" aria-hidden="true"></i> {{ __('Find Suppliers Online') }}</h2>
+                    <button type="button" wire:click="closeDiscover" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
                 </div>
                 <div class="boq-modal-body space-y-4">
                     <p class="text-sm text-slate-600">{{ __('Searches online for hardware shops and factories in a location. Suppliers already in your list are marked and skipped; tick the new ones to add.') }}</p>
@@ -332,7 +332,7 @@
                             <input id="discover-limit" type="number" min="1" max="{{ \App\Services\SupplierDiscovery::MAX_RESULTS }}" wire:model="discoverLimit" class="boq-field">
                         </div>
                         <button type="submit" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="discover">
-                            <i class="fas fa-magnifying-glass" wire:loading.remove wire:target="discover"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="discover"></i> {{ __('Search') }}
+                            <i class="fas fa-magnifying-glass" wire:loading.remove wire:target="discover" aria-hidden="true"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="discover" aria-hidden="true"></i> {{ __('Search') }}
                         </button>
                     </form>
                     @error('discoverLocation') <x-ui.alert type="error">{{ $message }}</x-ui.alert> @enderror
@@ -380,7 +380,7 @@
                                                 </td>
                                                 <td>
                                                     <span class="boq-badge {{ $result['type'] === 'factory' ? 'boq-badge-factory' : 'boq-badge-info' }}">
-                                                        <i class="fas {{ $result['type'] === 'factory' ? 'fa-industry' : 'fa-store' }}"></i>
+                                                        <i class="fas {{ $result['type'] === 'factory' ? 'fa-industry' : 'fa-store' }}" aria-hidden="true"></i>
                                                         {{ $result['type'] === 'factory' ? __('Factory') : __('Supplier') }}
                                                     </span>
                                                 </td>
@@ -390,7 +390,7 @@
                                                 </td>
                                                 <td class="text-sm">
                                                     @if($result['website_url'])
-                                                        <a href="{{ $result['website_url'] }}" target="_blank" rel="noopener noreferrer" class="boq-table-link">{{ parse_url($result['website_url'], PHP_URL_HOST) ?: $result['website_url'] }} <i class="fas fa-arrow-up-right-from-square text-xs"></i></a>
+                                                        <a href="{{ $result['website_url'] }}" target="_blank" rel="noopener noreferrer" class="boq-table-link">{{ parse_url($result['website_url'], PHP_URL_HOST) ?: $result['website_url'] }} <i class="fas fa-arrow-up-right-from-square text-xs" aria-hidden="true"></i></a>
                                                     @else
                                                         <span class="text-slate-400">—</span>
                                                     @endif
@@ -424,7 +424,7 @@
                     @endif
                     <button type="button" wire:click="closeDiscover" class="boq-btn-secondary">{{ __('Cancel') }}</button>
                     <button type="button" wire:click="addDiscovered" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="addDiscovered" @disabled(count($discoverSelected) === 0)>
-                        <i class="fas fa-plus" wire:loading.remove wire:target="addDiscovered"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="addDiscovered"></i> {{ __('Add Selected') }} ({{ count($discoverSelected) }})
+                        <i class="fas fa-plus" wire:loading.remove wire:target="addDiscovered" aria-hidden="true"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="addDiscovered" aria-hidden="true"></i> {{ __('Add Selected') }} ({{ count($discoverSelected) }})
                     </button>
                 </div>
             </div>
@@ -436,16 +436,16 @@
         <div class="boq-modal-backdrop" wire:key="supplier-bulk-add-modal" x-data x-trap.noscroll="true" @keydown.escape.window="$wire.closeBulkAdd()" role="dialog" aria-modal="true" aria-labelledby="supplier-bulk-add-title">
             <form wire:submit="saveBulk" class="boq-modal boq-modal-xl">
                 <div class="boq-modal-head">
-                    <h2 id="supplier-bulk-add-title"><i class="fas fa-table-list"></i> {{ __('Add Many Suppliers') }}</h2>
-                    <button type="button" wire:click="closeBulkAdd" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
+                    <h2 id="supplier-bulk-add-title"><i class="fas fa-table-list" aria-hidden="true"></i> {{ __('Add Many Suppliers') }}</h2>
+                    <button type="button" wire:click="closeBulkAdd" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
                 </div>
                 <div class="boq-modal-body space-y-4">
                     <details class="rounded-lg border border-slate-200 p-3" @if(count(array_filter(array_column($bulkRows, 'name'))) === 0) open @endif>
-                        <summary class="cursor-pointer text-sm font-semibold text-slate-700"><i class="fas fa-paste"></i> {{ __('Paste a list') }}</summary>
+                        <summary class="cursor-pointer text-sm font-semibold text-slate-700"><i class="fas fa-paste" aria-hidden="true"></i> {{ __('Paste a list') }}</summary>
                         <p class="mt-2 text-xs text-slate-500">{{ __('Copy rows from Excel or Google Sheets, or type one supplier per line with the columns separated by commas: name, contact person, phone, email, website, country, district/city, address, type (supplier or factory). A header row may set a different order.') }}</p>
                         <textarea wire:model="bulkPaste" rows="4" class="boq-field boq-textarea mt-2 font-mono text-xs" aria-label="{{ __('Paste a list') }}" placeholder="Example Hardware Ltd, Jane Doe, +256 700 000 001, sales@example.com, example.com, UG, Kampala"></textarea>
                         @error('bulkPaste') <p class="boq-field-error">{{ $message }}</p> @enderror
-                        <button type="button" wire:click="fillFromPaste" class="boq-btn-secondary mt-2"><i class="fas fa-table-cells"></i> {{ __('Add to table') }}</button>
+                        <button type="button" wire:click="fillFromPaste" class="boq-btn-secondary mt-2"><i class="fas fa-table-cells" aria-hidden="true"></i> {{ __('Add to table') }}</button>
                     </details>
 
                     @error('bulkRows') <x-ui.alert type="warning" :autohide="false">{{ $message }}</x-ui.alert> @enderror
@@ -493,7 +493,7 @@
                                             </select>
                                         </td>
                                         <td class="min-w-40"><input wire:model="bulkRows.{{ $i }}.materials" class="boq-field" placeholder="{{ __('cement, steel') }}" aria-label="{{ __('Materials') }} {{ $i + 1 }}"></td>
-                                        <td><button type="button" wire:click="removeBulkRow({{ $i }})" class="boq-icon-btn" title="{{ __('Remove') }}" aria-label="{{ __('Remove row :number', ['number' => $i + 1]) }}"><i class="fas fa-xmark"></i></button></td>
+                                        <td><button type="button" wire:click="removeBulkRow({{ $i }})" class="boq-icon-btn" title="{{ __('Remove') }}" aria-label="{{ __('Remove row :number', ['number' => $i + 1]) }}"><i class="fas fa-xmark" aria-hidden="true"></i></button></td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -502,7 +502,7 @@
                     </div>
 
                     <div class="flex flex-wrap items-center justify-between gap-3">
-                        <button type="button" wire:click="addBulkRow" class="boq-btn-secondary"><i class="fas fa-plus"></i> {{ __('Add row') }}</button>
+                        <button type="button" wire:click="addBulkRow" class="boq-btn-secondary"><i class="fas fa-plus" aria-hidden="true"></i> {{ __('Add row') }}</button>
                         <label class="boq-check">
                             <input type="checkbox" wire:model="bulkScan">
                             {{ __('Scan the websites for prices after adding') }}
@@ -512,7 +512,7 @@
                 <div class="boq-modal-foot">
                     <button type="button" wire:click="closeBulkAdd" class="boq-btn-secondary">{{ __('Cancel') }}</button>
                     <button type="submit" class="boq-btn-primary" wire:loading.attr="disabled" wire:target="saveBulk">
-                        <i class="fas fa-floppy-disk" wire:loading.remove wire:target="saveBulk"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="saveBulk"></i> {{ __('Save All') }}
+                        <i class="fas fa-floppy-disk" wire:loading.remove wire:target="saveBulk" aria-hidden="true"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="saveBulk" aria-hidden="true"></i> {{ __('Save All') }}
                     </button>
                 </div>
             </form>
@@ -524,8 +524,8 @@
         <div class="boq-modal-backdrop" wire:key="supplier-import-modal" x-data x-trap.noscroll="true" @keydown.escape.window="$wire.closeImport()" role="dialog" aria-modal="true" aria-labelledby="supplier-import-title">
             <div class="boq-modal boq-modal-xl">
                 <div class="boq-modal-head">
-                    <h2 id="supplier-import-title"><i class="fas fa-file-csv"></i> {{ __('Import Suppliers from CSV') }}</h2>
-                    <button type="button" wire:click="closeImport" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button>
+                    <h2 id="supplier-import-title"><i class="fas fa-file-csv" aria-hidden="true"></i> {{ __('Import Suppliers from CSV') }}</h2>
+                    <button type="button" wire:click="closeImport" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
                 </div>
 
                 <div class="boq-modal-body space-y-4">
@@ -536,20 +536,20 @@
                     </ol>
 
                     <div class="flex flex-wrap items-end gap-3">
-                        <button type="button" wire:click="downloadTemplate" class="boq-btn-secondary"><i class="fas fa-download"></i> {{ __('Download CSV Template') }}</button>
+                        <button type="button" wire:click="downloadTemplate" class="boq-btn-secondary"><i class="fas fa-download" aria-hidden="true"></i> {{ __('Download CSV Template') }}</button>
 
                         <input id="supplier-import-file" type="file" wire:model="importFile" accept=".csv,text/csv" class="peer sr-only">
                         <label for="supplier-import-file" class="boq-btn-secondary cursor-pointer peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-600">
                             <i class="fas fa-upload" aria-hidden="true"></i> {{ __('Upload CSV') }}
                         </label>
 
-                        <span wire:loading wire:target="importFile" class="text-sm text-slate-500"><i class="fas fa-spinner fa-spin"></i> {{ __('Uploading file...') }}</span>
+                        <span wire:loading wire:target="importFile" class="text-sm text-slate-500"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> {{ __('Uploading file...') }}</span>
                         @if($importFile && ! $errors->has('importFile'))
-                            <span class="text-sm text-slate-600"><i class="fas fa-file"></i> {{ $importFile->getClientOriginalName() }}</span>
+                            <span class="text-sm text-slate-600"><i class="fas fa-file" aria-hidden="true"></i> {{ $importFile->getClientOriginalName() }}</span>
                         @endif
 
                         <button type="button" wire:click="previewImport" wire:loading.attr="disabled" wire:target="previewImport,importFile" class="boq-btn-primary" @disabled(! $importFile)>
-                            <i class="fas fa-eye" wire:loading.remove wire:target="previewImport"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="previewImport"></i> {{ __('Preview Import') }}
+                            <i class="fas fa-eye" wire:loading.remove wire:target="previewImport" aria-hidden="true"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="previewImport" aria-hidden="true"></i> {{ __('Preview Import') }}
                         </button>
                     </div>
                     @error('importFile') <p class="boq-field-error">{{ $message }}</p> @enderror
@@ -605,11 +605,11 @@
 
                 <div class="boq-modal-foot">
                     @if($importPreview && (count($importPreview['failed']) || count($importPreview['duplicates'])))
-                        <button type="button" wire:click="downloadImportErrors" class="boq-btn-secondary mr-auto"><i class="fas fa-file-arrow-down"></i> {{ __('Download Import Errors') }}</button>
+                        <button type="button" wire:click="downloadImportErrors" class="boq-btn-secondary mr-auto"><i class="fas fa-file-arrow-down" aria-hidden="true"></i> {{ __('Download Import Errors') }}</button>
                     @endif
                     <button type="button" wire:click="closeImport" class="boq-btn-secondary">{{ __('Cancel') }}</button>
                     <button type="button" wire:click="confirmImport" wire:loading.attr="disabled" wire:target="confirmImport" class="boq-btn-primary" @disabled(! $importPreview || count($importPreview['valid']) === 0)>
-                        <i class="fas fa-check" wire:loading.remove wire:target="confirmImport"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="confirmImport"></i> {{ __('Confirm Import') }}{{ $importPreview ? ' ('.count($importPreview['valid']).')' : '' }}
+                        <i class="fas fa-check" wire:loading.remove wire:target="confirmImport" aria-hidden="true"></i><i class="fas fa-spinner fa-spin" wire:loading wire:target="confirmImport" aria-hidden="true"></i> {{ __('Confirm Import') }}{{ $importPreview ? ' ('.count($importPreview['valid']).')' : '' }}
                     </button>
                 </div>
             </div>
@@ -618,7 +618,7 @@
 
     <div x-show="confirmDeactivate" x-cloak class="boq-modal-backdrop" @keydown.escape.window="confirmDeactivate=false">
         <div class="boq-modal boq-modal-sm" @click.stop>
-            <div class="boq-modal-head"><h2>{{ __('Deactivate supplier?') }}</h2><button type="button" @click="confirmDeactivate=false" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark"></i></button></div>
+            <div class="boq-modal-head"><h2>{{ __('Deactivate supplier?') }}</h2><button type="button" @click="confirmDeactivate=false" class="boq-modal-close" aria-label="{{ __('Close') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button></div>
             <div class="boq-modal-body text-sm text-slate-600">{{ __('Historical quotations are preserved.') }}</div>
             <div class="boq-modal-foot"><button type="button" @click="confirmDeactivate=false" class="boq-btn-secondary">{{ __('Cancel') }}</button><button type="button" @click="$wire.deactivate(deactivateId); confirmDeactivate=false" class="boq-btn-danger">{{ __('Deactivate') }}</button></div>
         </div>

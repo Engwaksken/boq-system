@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Supplier;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -128,6 +129,7 @@ class SupplierController extends Controller
             'rating' => ['nullable', 'numeric', 'min:0', 'max:5'],
         ]);
 
+        $this->ensureCanModify($request, $supplier);
         $supplier->update($validated);
         $this->audit($request, 'supplier.updated', $supplier, null, $supplier->fresh()->toArray(), $supplier->code);
 
@@ -139,6 +141,7 @@ class SupplierController extends Controller
      */
     public function destroy(Request $request, Supplier $supplier): JsonResponse
     {
+        $this->ensureCanModify($request, $supplier);
         $supplier->update(['is_active' => false]);
         $this->audit($request, 'supplier.deactivated', $supplier, null, $supplier->fresh()->toArray(), $supplier->code);
 
@@ -163,5 +166,20 @@ class SupplierController extends Controller
             'locale' => $request->user()?->locale,
             'reference' => $reference,
         ]);
+    }
+
+    /**
+     * The library is shared by every organisation, so a record may only be changed by a
+     * super admin or by the organisation (or individual account) that created it.
+     */
+    private function ensureCanModify(Request $request, Model $record): void
+    {
+        $user = $request->user();
+        if ($user->isSuperAdmin() || (int) $record->created_by === (int) $user->id) {
+            return;
+        }
+
+        $creatorOrganisation = $record->createdBy?->organisation_id;
+        abort_unless($creatorOrganisation !== null && $creatorOrganisation === $user->organisation_id, 403);
     }
 }

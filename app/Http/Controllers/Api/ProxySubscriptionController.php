@@ -27,7 +27,9 @@ class ProxySubscriptionController extends Controller
      */
     public function searchBeneficiaries(Request $request): JsonResponse
     {
-        $this->authorize('viewAny', Subscription::class);
+        // Not viewAny (always true): without this, any account without an organisation
+        // could enumerate every user's name, email and phone.
+        $this->authorize('searchBeneficiaries', Subscription::class);
 
         $validated = $request->validate([
             'query' => ['required', 'string', 'min:2', 'max:100'],

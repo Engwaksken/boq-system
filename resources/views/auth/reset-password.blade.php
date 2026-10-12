@@ -17,7 +17,7 @@
             <label for="email" class="mb-1.5 block text-sm font-semibold text-slate-700">{{ __('Email address') }}</label>
 
             <div class="auth-input-wrap">
-                <i class="fas fa-envelope auth-input-icon"></i>
+                <i class="fas fa-envelope auth-input-icon" aria-hidden="true"></i>
 
                 <input placeholder="{{ __('e.g. name@example.com') }}"
                     id="email"
@@ -32,7 +32,7 @@
             </div>
 
             @error('email')
-                <p class="auth-error"><i class="fas fa-circle-exclamation mr-1"></i>{{ $message }}</p>
+                <p class="auth-error"><i class="fas fa-circle-exclamation mr-1" aria-hidden="true"></i>{{ $message }}</p>
             @enderror
         </div>
 
@@ -41,7 +41,7 @@
         <x-auth-password name="password_confirmation" :label="__('Confirm new password')" icon="fa-shield-halved" autocomplete="new-password" placeholder="{{ __('Re-enter your new password') }}" />
 
         <button type="submit" class="auth-primary">
-            <i class="fas fa-key"></i>
+            <i class="fas fa-key" aria-hidden="true"></i>
             {{ __('Reset password') }}
         </button>
     </form>

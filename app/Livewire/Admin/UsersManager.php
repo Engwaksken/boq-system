@@ -65,15 +65,19 @@ class UsersManager extends Component
         $this->creating = true;
 
         try {
-            $user = User::create([
+            $user = new User([
                 'name' => $this->newName,
                 'email' => $this->newEmail,
                 'password' => $this->newPassword,
                 'phone' => $this->newPhone !== '' ? $this->newPhone : null,
                 'locale' => 'en',
+            ]);
+            // Not mass-assignable: set tenancy and status explicitly.
+            $user->forceFill([
                 'organisation_id' => $this->newOrganisationId ?: null,
                 'is_active' => true,
             ]);
+            $user->save();
 
             $user->roles()->attach($this->newRoleId, ['organisation_id' => $this->newOrganisationId ?: null]);
 
@@ -93,7 +97,7 @@ class UsersManager extends Component
         $users = User::whereKey($this->selectedIds())->whereKeyNot(auth()->id())->get();
 
         foreach ($users as $user) {
-            $user->update(['is_active' => $active]);
+            $user->forceFill(['is_active' => $active])->save();
 
             if (! $active) {
                 $user->tokens()->delete();
@@ -125,7 +129,7 @@ class UsersManager extends Component
     {
         $user = User::findOrFail($id);
         abort_if($user->id === auth()->id(), 422, 'You cannot disable your own account.');
-        $user->update(['is_active' => ! $user->is_active]);
+        $user->forceFill(['is_active' => ! $user->is_active])->save();
 
         if (! $user->is_active) {
             // Sign the user out of the mobile app too.

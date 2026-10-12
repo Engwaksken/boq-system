@@ -22,13 +22,21 @@ use Illuminate\Support\Facades\Storage;
 
 class BoqController extends Controller
 {
+    /**
+     * The BOQ's project must belong to the user's tenant and be theirs, or an organisation
+     * project they administer or are assigned to (Project::isAccessibleTo).
+     */
     private function canAccess(Boq $boq, int $userId, ?int $organisationId): bool
     {
-        if ($organisationId !== null) {
-            return $boq->organisation_id === $organisationId && $boq->project->organisation_id === $organisationId;
-        }
+        $user = request()->user();
+        $project = $boq->project;
 
-        return $boq->organisation_id === null && $boq->project->organisation_id === null && $boq->project->user_id === $userId;
+        return $user !== null
+            && (int) $user->id === $userId
+            && $project !== null
+            && $boq->organisation_id === $project->organisation_id
+            && $project->organisation_id === $user->organisation_id
+            && ((int) $project->user_id === (int) $user->id || $project->isAccessibleTo($user));
     }
 
     /**
@@ -38,14 +46,24 @@ class BoqController extends Controller
     {
         $user = $request->user();
 
+        // where('organisation_id', null) compiles to IS NULL, so the previous filter let
+        // every user without an organisation list every other personal BOQ. Scope through
+        // the project access rules used by BoqPolicy instead.
         $query = Boq::query()
-            ->where(function ($q) use ($user) {
-                $q->where('organisation_id', $user->organisation_id)
-                    ->orWhere(function ($q2) use ($user) {
-                        $q2->whereNull('organisation_id')
-                            ->whereHas('project', fn ($q3) => $q3->where('user_id', $user->id));
-                    });
-            })
+            ->when(
+                $user->organisation_id === null,
+                fn ($q) => $q->whereNull('organisation_id'),
+                fn ($q) => $q->where('organisation_id', $user->organisation_id),
+            )
+            ->whereHas('project', fn ($q) => $q
+                ->where(fn ($owned) => $owned
+                    ->where(fn ($assigned) => $assigned->accessibleTo($user))
+                    ->orWhere('user_id', $user->id))
+                ->when(
+                    $user->organisation_id === null,
+                    fn ($p) => $p->whereNull('organisation_id'),
+                    fn ($p) => $p->where('organisation_id', $user->organisation_id),
+                ))
             ->with(['project', 'organisation'])
             ->withCount('items')
             ->latest();
