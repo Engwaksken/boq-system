@@ -44,6 +44,7 @@ class BoqWebUploadTest extends TestCase
         Storage::fake(config('filesystems.default'));
         $user = User::factory()->create();
         $project = Project::factory()->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
+        $project->assignments()->create(['user_id' => $user->id, 'role' => 'project-manager', 'assigned_by' => $user->id]);
         $this->entitle($user, 'boq.management');
         $imports = $this->entitle($user, 'boq.import.excel', ['boq_imports' => 5]);
 
@@ -66,6 +67,7 @@ class BoqWebUploadTest extends TestCase
         Storage::fake(config('filesystems.default'));
         $user = User::factory()->create();
         $project = Project::factory()->create(['user_id' => $user->id, 'organisation_id' => $user->organisation_id]);
+        $project->assignments()->create(['user_id' => $user->id, 'role' => 'project-manager', 'assigned_by' => $user->id]);
         $this->entitle($user, 'boq.management');
 
         Livewire::actingAs($user)

@@ -215,6 +215,21 @@ class WebRedesignTest extends TestCase
         $this->assertSame('lg', $user->fresh()->locale);
     }
 
+    public function test_changing_email_on_the_profile_requires_verifying_it_again(): void
+    {
+        \Illuminate\Support\Facades\Notification::fake();
+        $user = $this->customer();
+
+        Livewire::actingAs($user)
+            ->test(\App\Livewire\Profile\Index::class)
+            ->set('form.email', 'new-address@example.com')
+            ->call('updateProfile')
+            ->assertHasNoErrors();
+
+        $this->assertNull($user->fresh()->email_verified_at);
+        \Illuminate\Support\Facades\Notification::assertSentTo($user, \Illuminate\Auth\Notifications\VerifyEmail::class);
+    }
+
     private function superAdmin(): User
     {
         $user = User::factory()->create();

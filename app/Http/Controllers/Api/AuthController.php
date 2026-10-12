@@ -212,11 +212,41 @@ class AuthController extends Controller
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ]);
 
-        if (empty($validated['password'])) {
+        $changingPassword = ! empty($validated['password']);
+        $changingEmail = strcasecmp($validated['email'], (string) $user->email) !== 0;
+
+        // A stolen token alone must not be enough to take over the account.
+        if ($changingPassword || $changingEmail) {
+            $request->validate([
+                'current_password' => ['required', 'string', 'current_password:sanctum'],
+            ], [
+                'current_password.required' => __('Enter your current password to change your email or password.'),
+            ]);
+        }
+
+        if (! $changingPassword) {
             unset($validated['password']);
         }
 
-        $user->update($validated);
+        $user->fill($validated);
+
+        if ($changingEmail) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        if ($changingEmail) {
+            $user->sendEmailVerificationNotification();
+        }
+
+        if ($changingPassword) {
+            // Sign out every other device; keep the session that made the change.
+            $current = $user->currentAccessToken();
+            $user->tokens()
+                ->when($current instanceof \Laravel\Sanctum\PersonalAccessToken, fn ($tokens) => $tokens->whereKeyNot($current->getKey()))
+                ->delete();
+        }
 
         return response()->json([
             'success' => true,

@@ -122,7 +122,14 @@ class RateController extends Controller
         ]);
 
         $user = $request->user();
-        $isVerifying = in_array($validated['verification_status'], ['approved'], true);
+
+        // The library is shared by every customer: only super admins publish rates
+        // directly; anyone else's "approved" submission waits in the review queue.
+        if ($validated['verification_status'] === 'approved' && ! $user->isSuperAdmin()) {
+            $validated['verification_status'] = 'pending';
+        }
+
+        $isVerifying = $validated['verification_status'] === 'approved';
 
         try {
             $rate = Rate::create([
@@ -188,7 +195,22 @@ class RateController extends Controller
         ]);
 
         $this->ensureCanModify($request, $rate);
-        $rate->update($validated);
+        $rate->fill($validated);
+
+        // Changing a published rate's price or scope sends it back for review,
+        // unless a super admin made the change.
+        if (! $request->user()->isSuperAdmin()
+            && $rate->verification_status === 'approved'
+            && $rate->isDirty(['item', 'unit', 'rate', 'currency', 'region', 'country'])) {
+            $rate->forceFill([
+                'verification_status' => 'pending',
+                'verified_by' => null,
+                'verified_at' => null,
+                'is_active' => false,
+            ]);
+        }
+
+        $rate->save();
         $this->audit($request, 'rate.updated', $rate, null, $rate->fresh()->toArray(), $rate->code);
 
         return response()->json(['success' => true, 'data' => $rate->fresh()->load('supplier')]);
@@ -199,7 +221,7 @@ class RateController extends Controller
      */
     public function approve(Request $request, Rate $rate): JsonResponse
     {
-        $this->ensureCanModify($request, $rate);
+        abort_unless($request->user()->isSuperAdmin(), 403, __('Only platform administrators can approve rates in the shared library.'));
         $approved = $this->rates->approve($rate, $request->user());
         $this->audit($request, 'rate.approved', $rate, null, $approved->toArray(), $rate->code);
 
@@ -211,7 +233,7 @@ class RateController extends Controller
      */
     public function reject(Request $request, Rate $rate): JsonResponse
     {
-        $this->ensureCanModify($request, $rate);
+        abort_unless($request->user()->isSuperAdmin(), 403, __('Only platform administrators can approve rates in the shared library.'));
         $request->validate(['reason' => ['nullable', 'string', 'max:1000']]);
         $reason = $request->input('reason');
         $rejected = $this->rates->reject($rate, $request->user(), $reason);

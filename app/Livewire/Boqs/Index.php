@@ -118,11 +118,7 @@ class Index extends Component
         $project = Project::findOrFail($this->editProjectId);
 
         // Only move a BOQ into a project the user can also access.
-        $canUseProject = $user->organisation_id !== null
-            ? $project->organisation_id === $user->organisation_id
-            : $project->user_id === $user->id && $project->organisation_id === null;
-
-        if (! $canUseProject) {
+        if (! $project->isAccessibleTo($user)) {
             $this->addError('editProjectId', __('Choose one of your projects.'));
 
             return;
@@ -178,13 +174,7 @@ class Index extends Component
         $user = auth()->user();
 
         $boqs = Boq::query()
-            ->where(function ($q) use ($user) {
-                $q->whereHas('project', fn ($p) => $p->where('user_id', $user->id));
-
-                if ($user->organisation_id !== null) {
-                    $q->orWhere('organisation_id', $user->organisation_id);
-                }
-            })
+            ->visibleTo($user)
             ->with('project')
             ->withCount('items')
             ->when($this->search !== '', fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
@@ -202,45 +192,16 @@ class Index extends Component
         $boqs = $boqs->paginate($this->exportPageSize($this->perPage));
 
         $projects = Project::query()
-            ->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-
-                if ($user->organisation_id !== null) {
-                    $q->orWhere('organisation_id', $user->organisation_id);
-                }
-            })
+            ->accessibleTo($user)
             ->orderBy('name')
             ->get(['id', 'name', 'code']);
 
+        $visible = Boq::query()->visibleTo($user);
         $stats = [
-            'total_boqs' => Boq::where(function ($q) use ($user) {
-                $q->whereHas('project', fn ($p) => $p->where('user_id', $user->id));
-
-                if ($user->organisation_id !== null) {
-                    $q->orWhere('organisation_id', $user->organisation_id);
-                }
-            })->count(),
-            'uploaded' => Boq::where(function ($q) use ($user) {
-                $q->whereHas('project', fn ($p) => $p->where('user_id', $user->id));
-
-                if ($user->organisation_id !== null) {
-                    $q->orWhere('organisation_id', $user->organisation_id);
-                }
-            })->where('status', 'uploaded')->count(),
-            'under_review' => Boq::where(function ($q) use ($user) {
-                $q->whereHas('project', fn ($p) => $p->where('user_id', $user->id));
-
-                if ($user->organisation_id !== null) {
-                    $q->orWhere('organisation_id', $user->organisation_id);
-                }
-            })->where('status', 'under_review')->count(),
-            'approved' => Boq::where(function ($q) use ($user) {
-                $q->whereHas('project', fn ($p) => $p->where('user_id', $user->id));
-
-                if ($user->organisation_id !== null) {
-                    $q->orWhere('organisation_id', $user->organisation_id);
-                }
-            })->where('status', 'approved')->count(),
+            'total_boqs' => (clone $visible)->count(),
+            'uploaded' => (clone $visible)->where('status', 'uploaded')->count(),
+            'under_review' => (clone $visible)->where('status', 'under_review')->count(),
+            'approved' => (clone $visible)->where('status', 'approved')->count(),
         ];
 
         return view('livewire.boqs.index', [

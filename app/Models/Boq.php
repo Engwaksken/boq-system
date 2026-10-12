@@ -117,6 +117,22 @@ class Boq extends Model
     }
 
     /**
+     * BOQs on projects the user can access (Project::accessibleTo): members see
+     * their assigned projects, organisation administrators see the whole organisation.
+     * Mirrors BoqPolicy so lists never show a BOQ the user cannot open.
+     */
+    public function scopeVisibleTo(\Illuminate\Database\Eloquent\Builder $query, User $user): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query
+            ->when(
+                $user->organisation_id === null,
+                fn ($q) => $q->whereNull('boqs.organisation_id'),
+                fn ($q) => $q->where('boqs.organisation_id', $user->organisation_id),
+            )
+            ->whereHas('project', fn ($project) => $project->accessibleTo($user));
+    }
+
+    /**
      * The project this BOQ belongs to.
      */
     public function project(): BelongsTo

@@ -60,6 +60,17 @@ Before launch:
 | 7 | "Enable 2FA (Coming Soon)" placeholder. | ✅ Replaced by working biometric (passkey) sign-in. |
 | 8 | About 100 hard-coded strings in the mobile app outside the translation files. | ✅ About 500 strings moved into the ARB files. The new Luganda keys still hold English text, and the error messages built without a `BuildContext` (`app_errors.dart`, `ApiException`) remain in English. |
 
+## Audit follow-up (12 October 2026)
+
+| # | Finding | Status |
+|---|---------|--------|
+| 1 | Cross-tenant API access: personal BOQs listed for every user without an organisation; beneficiary search exposed all users' contact details; suppliers, rates, quotations and hardware prices editable or attachable across tenants. | ✅ Fixed, with `ApiTenantIsolationTest`. |
+| 2 | Web BOQ list showed every BOQ in the organisation, while opening one required a project assignment (403). | ✅ `Boq::visibleTo()` applies the `BoqPolicy` boundary (assigned members and organisation administrators) to the web list, its counts, the upload page and the API. |
+| 3 | `PUT /api/v1/auth/profile` changed the password without the current one; email changes (API and web) kept the old verification. | ✅ `current_password` required to change email or password; a new email is unverified and gets a verification link; a password change signs out other devices. The mobile app has a Current password field. Older app builds will get a validation error when changing email or password. |
+| 4 | Any organisation with `rates.manage` could publish approved rates into the shared library. | ✅ Only super admins publish or approve. Organisation submissions are queued as pending (Admin → Rate Library), and repricing a published rate sends it back for review. |
+| 5 | Android themes were not AppCompat, so the biometric prompt can crash on Android 8 and below. | ✅ `LaunchTheme`/`NormalTheme` use AppCompat, with an explicit `androidx.appcompat` dependency. Debug APK builds. Still to do: try fingerprint sign-in on an Android 8 device. |
+| 6 | Luganda text for about 490 new mobile strings. | ⚠️ Open: needs a native speaker. English is shown until it is translated. |
+
 ---
 
 ## Delivered in this release (feature requests)

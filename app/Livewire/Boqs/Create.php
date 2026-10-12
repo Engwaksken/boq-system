@@ -26,13 +26,7 @@ class Create extends Component
         $user = auth()->user();
 
         $this->projects = Project::query()
-            ->where(function ($query) use ($user): void {
-                $query->where('user_id', $user->id);
-
-                if ($user->organisation_id !== null) {
-                    $query->orWhere('organisation_id', $user->organisation_id);
-                }
-            })
+            ->accessibleTo($user)
             ->orderBy('name')
             ->get(['id', 'name', 'code']);
 
@@ -55,13 +49,8 @@ class Create extends Component
         $user = auth()->user();
         $project = Project::findOrFail($validated['projectId']);
 
-        $tenantAccess = $user->organisation_id !== null
-            && $project->organisation_id === $user->organisation_id;
-        $personalAccess = $project->user_id === $user->id
-            && $project->organisation_id === null
-            && $user->organisation_id === null;
-
-        abort_unless($tenantAccess || $personalAccess, 403);
+        // Same boundary as BoqPolicy: members upload only to projects they are assigned to.
+        abort_unless($project->isAccessibleTo($user), 403);
 
         // Detect the real format and convert it to a standard one (.xlsx, .csv, .pdf, .jpg/.png).
         $stored = app(\App\Services\BoqUploadNormalizer::class)->store($this->file, "boqs/{$project->id}");

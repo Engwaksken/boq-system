@@ -360,7 +360,19 @@ class Index extends Component
 
         unset($data['avatar']);
 
-        $user->update($data);
+        $user->fill($data);
+        $emailChanged = $user->isDirty('email');
+
+        if ($emailChanged) {
+            // A new address must be confirmed before it receives account email.
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        if ($emailChanged) {
+            $user->sendEmailVerificationNotification();
+        }
 
         $this->reset('form.avatar');
 

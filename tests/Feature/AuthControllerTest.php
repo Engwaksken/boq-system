@@ -182,10 +182,15 @@ class AuthControllerTest extends TestCase
             'locale' => 'en',
         ]);
 
-        $response = $this->actingAs($user)->putJson('/api/v1/auth/profile', [
+        $user->createToken('other-phone');
+        $token = $user->createToken('this-phone')->plainTextToken;
+        \Illuminate\Support\Facades\Notification::fake();
+
+        $response = $this->withHeader('Authorization', "Bearer $token")->putJson('/api/v1/auth/profile', [
             'name' => 'Updated User',
             'email' => 'after@example.com',
             'locale' => 'lg',
+            'current_password' => 'old-password',
             'password' => 'new-password',
             'password_confirmation' => 'new-password',
         ]);
@@ -198,6 +203,32 @@ class AuthControllerTest extends TestCase
         $this->assertSame('Updated User', $user->name);
         $this->assertSame('lg', $user->locale);
         $this->assertTrue(Hash::check('new-password', $user->password));
+
+        // The new address must be verified again, and other devices are signed out.
+        $this->assertNull($user->email_verified_at);
+        \Illuminate\Support\Facades\Notification::assertSentTo($user, \Illuminate\Auth\Notifications\VerifyEmail::class);
+        $this->assertSame(['this-phone'], $user->tokens()->pluck('name')->all());
+    }
+
+    public function test_changing_email_or_password_requires_the_current_password(): void
+    {
+        $user = User::factory()->create(['email' => 'before@example.com', 'password' => Hash::make('old-password')]);
+
+        foreach ([
+            ['email' => 'after@example.com'],
+            ['email' => 'before@example.com', 'password' => 'new-password', 'password_confirmation' => 'new-password'],
+            ['email' => 'after@example.com', 'current_password' => 'wrong-password'],
+        ] as $change) {
+            $this->actingAs($user)
+                ->putJson('/api/v1/auth/profile', ['name' => $user->name, 'locale' => 'en'] + $change)
+                ->assertStatus(422)
+                ->assertJsonValidationErrors('current_password');
+        }
+
+        $user->refresh();
+        $this->assertSame('before@example.com', $user->email);
+        $this->assertTrue(Hash::check('old-password', $user->password));
+        $this->assertNotNull($user->email_verified_at);
     }
 
     public function test_profile_email_must_be_unique(): void
