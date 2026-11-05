@@ -49,7 +49,7 @@
                 :active="$activeTab === 'subscriptions'"
                 wire:click.prevent="showSubscriptions"
                 wire:loading.attr="disabled"
-                wire:target="showSubscriptions,showPlans,showPriceHistory"
+                wire:target="showSubscriptions,showPlans"
             >{{ __('Subscriptions') }}</x-ui.tab>
 
             <x-ui.tab
@@ -57,19 +57,11 @@
                 :active="$activeTab === 'plans'"
                 wire:click.prevent="showPlans"
                 wire:loading.attr="disabled"
-                wire:target="showSubscriptions,showPlans,showPriceHistory"
+                wire:target="showSubscriptions,showPlans"
             >{{ __('Available Plans') }}</x-ui.tab>
-
-            <x-ui.tab
-                icon="fa-clock-rotate-left"
-                :active="$activeTab === 'price-history'"
-                wire:click.prevent="showPriceHistory"
-                wire:loading.attr="disabled"
-                wire:target="showSubscriptions,showPlans,showPriceHistory"
-            >{{ __('Price History') }}</x-ui.tab>
         </x-ui.tabs>
 
-        <div wire:loading.flex wire:target="showSubscriptions,showPlans,showPriceHistory" class="boq-tab-loading">
+        <div wire:loading.flex wire:target="showSubscriptions,showPlans" class="boq-tab-loading">
             <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
             {{ __('Loading...') }}
         </div>
@@ -235,7 +227,7 @@
                     </div>
                 @endif
             </div>
-        @elseif($activeTab === 'plans')
+        @else
             <div wire:key="plans-tab">
                 <div class="boq-filter-section">
                     <div class="boq-plan-filter-grid">
@@ -396,91 +388,6 @@
                     <div class="boq-pagination">
                         {{ $plans->links() }}
                     </div>
-                @endif
-            </div>
-        @else
-            <div wire:key="price-history-tab">
-                <div class="boq-filter-section">
-                    <p class="text-sm text-slate-600">
-                        {{ __('Every change to a plan\'s price is listed here. Recurring plans (such as monthly) renew at the price in effect on the renewal date.') }}
-                    </p>
-                    <div class="mt-3 max-w-xs">
-                        <x-ui.field :label="__('Show')" for="price-history-scope">
-                            <select id="price-history-scope" wire:model.live="priceHistoryScope" class="boq-field">
-                                <option value="mine">{{ __('My plans') }}</option>
-                                <option value="all">{{ __('All available plans') }}</option>
-                            </select>
-                        </x-ui.field>
-                    </div>
-                </div>
-
-                @if($priceChanges && $priceChanges->isNotEmpty())
-                    <x-ui.table>
-                        <thead>
-                            <tr>
-                                <th>{{ __('Date') }}</th>
-                                <th>{{ __('Plan') }}</th>
-                                <th class="text-right">{{ __('Old Price') }}</th>
-                                <th class="text-right">{{ __('New Price') }}</th>
-                                <th class="text-right">{{ __('Change') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($priceChanges as $change)
-                                @php
-                                    $difference = $change->difference();
-                                    $percent = $change->percentChange();
-                                @endphp
-                                <tr wire:key="plan-price-change-{{ $change->id }}">
-                                    <td class="whitespace-nowrap"><x-date :value="$change->changed_at" /></td>
-                                    <td>
-                                        <div class="boq-table-title">{{ $change->plan?->name ?? __('Unknown plan') }}</div>
-                                        <div class="boq-table-subtitle flex flex-wrap items-center gap-1">
-                                            @if($change->plan?->type)
-                                                <span>{{ __(\Illuminate\Support\Str::headline($change->plan->type)) }}</span>
-                                            @endif
-                                            @if(in_array($change->plan_id, $subscribedPlanIds, true))
-                                                <x-ui.badge color="info">{{ __('Your plan') }}</x-ui.badge>
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td class="is-numeric">
-                                        @if($change->old_price !== null)
-                                            <x-money :amount="$change->old_price" :currency="$change->old_currency ?: $change->new_currency" />
-                                        @else
-                                            <span class="text-slate-400">{{ __('Initial price') }}</span>
-                                        @endif
-                                    </td>
-                                    <td class="is-numeric font-semibold text-slate-900"><x-money :amount="$change->new_price" :currency="$change->new_currency" /></td>
-                                    <td class="is-numeric whitespace-nowrap">
-                                        @if($difference === null)
-                                            <span class="text-slate-400">—</span>
-                                        @elseif($difference == 0)
-                                            <span class="text-slate-500">{{ __('No change') }}</span>
-                                        @else
-                                            <span class="{{ $difference > 0 ? 'text-red-600' : 'text-green-600' }}">
-                                                <i class="fas {{ $difference > 0 ? 'fa-arrow-up' : 'fa-arrow-down' }}" aria-hidden="true"></i>
-                                                {{ ($difference > 0 ? '+' : '').\App\Support\Format::money($difference, $change->new_currency) }}
-                                                @if($percent !== null)
-                                                    ({{ ($percent > 0 ? '+' : '').\App\Support\Format::number($percent, 1) }}%)
-                                                @endif
-                                            </span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </x-ui.table>
-
-                    <div class="boq-pagination">
-                        {{ $priceChanges->links() }}
-                    </div>
-                @else
-                    <x-ui.empty-state
-                        icon="fa-clock-rotate-left"
-                        :title="__('No price changes yet.')"
-                        :description="$priceHistoryScope === 'mine' ? __('Price changes to plans you subscribe to will appear here.') : __('Price changes to available plans will appear here.')"
-                    />
                 @endif
             </div>
         @endif

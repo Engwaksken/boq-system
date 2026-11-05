@@ -179,6 +179,10 @@ class PlansManager extends Component
         return view('livewire.admin.plans-manager', [
             'plans' => Plan::query()->when($this->search, fn($q) => $q->where(fn ($w) => $w->where('name','like','%'.$this->search.'%')->orWhere('code','like','%'.$this->search.'%')))->orderBy('display_order')->orderBy('price')->paginate($this->exportPageSize($this->perPage)),
             'features' => Feature::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'code']),
+            // The edited plan's price changes (an internal record; clients do not see it).
+            'priceChanges' => $this->showForm && $this->editingId
+                ? \App\Models\PlanPriceChange::query()->where('plan_id', $this->editingId)->with('changedBy:id,name')->orderByDesc('changed_at')->orderByDesc('id')->limit(50)->get()
+                : collect(),
             'stats' => [
                 'total' => Plan::count(),
                 'active' => Plan::where('is_active', true)->count(),

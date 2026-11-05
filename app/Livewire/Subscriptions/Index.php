@@ -7,7 +7,6 @@ namespace App\Livewire\Subscriptions;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Services\PlanPriceHistory;
 use App\Services\SubscriptionService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -55,15 +54,6 @@ class Index extends Component
     public string $planPeriodFilter = 'all';
 
     public int $planPerPage = 10;
-
-    /*
-    |--------------------------------------------------------------------------
-    | Plan Price History
-    |--------------------------------------------------------------------------
-    */
-
-    /** "mine" = plans I am (or was) subscribed to, "all" = every available plan. */
-    public string $priceHistoryScope = 'mine';
 
     /*
     |--------------------------------------------------------------------------
@@ -146,11 +136,6 @@ class Index extends Component
             $this->activeTab = 'plans';
         }
 
-        // Plan price-change notifications link here with ?tab=price-history.
-        if (request()->query('tab') === 'price-history') {
-            $this->activeTab = 'price-history';
-        }
-
         $this->refreshCurrentSubscription();
     }
 
@@ -179,28 +164,6 @@ class Index extends Component
 
         $this->resetPage(
             'plansPage'
-        );
-    }
-
-    public function showPriceHistory(): void
-    {
-        $this->activeTab = 'price-history';
-
-        $this->resetValidation();
-
-        $this->resetPage(
-            'priceHistoryPage'
-        );
-    }
-
-    public function updatedPriceHistoryScope(): void
-    {
-        if (! in_array($this->priceHistoryScope, ['mine', 'all'], true)) {
-            $this->priceHistoryScope = 'mine';
-        }
-
-        $this->resetPage(
-            'priceHistoryPage'
         );
     }
 
@@ -1403,31 +1366,9 @@ class Index extends Component
                     'plansPage'
                 );
 
-        $planPrices =
-            app(PlanPriceHistory::class);
-
-        $subscribedPlanIds =
-            $planPrices->subscribedPlanIds($user);
-
-        $priceChanges =
-            $this->activeTab === 'price-history'
-                ? $planPrices
-                    ->query($subscribedPlanIds, $this->priceHistoryScope)
-                    ->paginate(15, ['*'], 'priceHistoryPage')
-                : null;
-
         return view(
             'livewire.subscriptions.index',
             [
-                /*
-                 * Plan price changes (only loaded on the Price History tab).
-                 */
-                'priceChanges' =>
-                    $priceChanges,
-
-                'subscribedPlanIds' =>
-                    $subscribedPlanIds,
-
                 /*
                  * Paginated subscription history.
                  */

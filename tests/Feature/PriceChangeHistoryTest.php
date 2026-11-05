@@ -84,26 +84,26 @@ class PriceChangeHistoryTest extends TestCase
         Queue::assertNotPushed(NotifyPlanPriceChange::class);
     }
 
-    public function test_subscriber_sees_their_plan_price_history_tab(): void
+    public function test_plan_price_history_is_for_admins_only(): void
     {
         Queue::fake();
-        $user = User::factory()->create();
-        $mine = Plan::factory()->create(['name' => 'Monthly Pro', 'price' => 50000, 'is_active' => true, 'is_archived' => false]);
-        $other = Plan::factory()->create(['name' => 'Annual Other', 'price' => 400000, 'is_active' => true, 'is_archived' => false]);
-        $this->subscribe($user, $mine);
-        $mine->update(['price' => 55000]);
-        $other->update(['price' => 450000]);
+        $plan = Plan::factory()->create(['name' => 'Monthly Pro', 'price' => 50000]);
+        $plan->update(['price' => 55000]);
 
-        $component = Livewire::actingAs($user)->test(SubscriptionsIndex::class)
-            ->call('showPriceHistory')
-            ->assertSet('activeTab', 'price-history');
+        // Clients: no Price History tab on Subscriptions (the notice still reaches them).
+        $client = User::factory()->create();
+        $this->subscribe($client, $plan);
+        Livewire::actingAs($client)->test(SubscriptionsIndex::class)
+            ->assertDontSee('Price History')
+            ->assertDontSee('Initial price');
 
-        $mineIds = $component->viewData('priceChanges')->pluck('plan_id')->unique()->all();
-        $this->assertSame([$mine->id], $mineIds);
-
-        $component->set('priceHistoryScope', 'all');
-        $allIds = $component->viewData('priceChanges')->pluck('plan_id')->unique()->sort()->values()->all();
-        $this->assertEqualsCanonicalizing([$mine->id, $other->id], $allIds);
+        // Admins see the record when editing the plan.
+        $admin = User::factory()->create();
+        $admin->roles()->attach(\App\Models\Role::firstOrCreate(['slug' => 'super-admin'], ['name' => 'Super Admin', 'is_system' => true]));
+        Livewire::actingAs($admin)->test(\App\Livewire\Admin\PlansManager::class)
+            ->call('edit', $plan->id)
+            ->assertSee('Price history')
+            ->assertSee('Visible to administrators only');
     }
 
     /* ------------------------------------------------------- Hardware prices */

@@ -126,22 +126,8 @@ class PriceInsightsApiTest extends TestCase
         $this->actingAs($outsider, 'sanctum')->getJson("/api/v1/boqs/{$boq->id}/price-check")->assertForbidden();
     }
 
-    public function test_plan_price_history_endpoint(): void
+    public function test_plan_price_history_is_not_exposed_to_clients(): void
     {
-        Queue::fake();
-        $user = $this->user();
-        $mine = Plan::factory()->create(['price' => 50000, 'is_active' => true, 'is_archived' => false]);
-        $other = Plan::factory()->create(['price' => 90000, 'is_active' => true, 'is_archived' => false]);
-        $subscription = Subscription::factory()->create(['plan_id' => $mine->id]);
-        $subscription->forceFill(['user_id' => $user->id, 'organisation_id' => null, 'status' => 'active'])->save();
-        $mine->update(['price' => 60000]);
-
-        $rows = $this->actingAs($user, 'sanctum')->getJson('/api/v1/plans/price-history')->assertOk()->json('data.data');
-        $this->assertSame([$mine->id], collect($rows)->pluck('plan.id')->unique()->values()->all());
-        $this->assertEquals(10000, $rows[0]['difference']);
-        $this->assertTrue($rows[0]['is_my_plan']);
-
-        $all = $this->actingAs($user, 'sanctum')->getJson('/api/v1/plans/price-history?scope=all')->json('data.data');
-        $this->assertContains($other->id, collect($all)->pluck('plan.id')->all());
+        $this->actingAs($this->user(), 'sanctum')->getJson('/api/v1/plans/price-history')->assertNotFound();
     }
 }

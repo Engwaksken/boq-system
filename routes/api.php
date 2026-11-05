@@ -308,10 +308,7 @@ Route::prefix('v1')->group(function () {
             Route::post('hardware-categories/{category}/toggle-active', [HardwareCategoryController::class, 'toggleActive'])->middleware('throttle:10,1')->name('api.v1.hardware-categories.toggle-active');
         });
 
-        // Plans (price-history before {plan}, which would catch it)
-        Route::get('plans/price-history', [PriceInsightsController::class, 'planPriceHistory'])
-            ->middleware('permission:subscriptions.view')
-            ->name('api.v1.plans.price-history');
+        // Plans
         Route::get('plans/{plan}', [PlanController::class, 'show']);
 
         // Rate Library

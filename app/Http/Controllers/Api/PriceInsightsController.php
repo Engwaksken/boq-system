@@ -5,10 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Boq;
 use App\Models\HardwarePrice;
-use App\Models\PlanPriceChange;
 use App\Services\BoqPriceCheck;
 use App\Services\HardwarePriceChanges;
-use App\Services\PlanPriceHistory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -101,33 +99,6 @@ class PriceInsightsController extends Controller
                     ],
                 ])->values(),
             ],
-        ]);
-    }
-
-    /** GET plans/price-history?scope=mine|all */
-    public function planPriceHistory(Request $request, PlanPriceHistory $history): JsonResponse
-    {
-        $scope = in_array($request->input('scope'), PlanPriceHistory::SCOPES, true) ? $request->input('scope') : 'mine';
-        $subscribedPlanIds = $history->subscribedPlanIds($request->user());
-        $page = $history->query($subscribedPlanIds, $scope)->paginate(min(max($request->integer('per_page', 20), 1), 100));
-
-        $page->getCollection()->transform(fn (PlanPriceChange $change) => [
-            'id' => $change->id,
-            'plan' => $change->plan ? ['id' => $change->plan->id, 'name' => $change->plan->name, 'type' => $change->plan->type] : null,
-            'old_price' => $change->old_price !== null ? (float) $change->old_price : null,
-            'new_price' => (float) $change->new_price,
-            'old_currency' => $change->old_currency,
-            'new_currency' => $change->new_currency,
-            'difference' => $change->difference(),
-            'percent_change' => $change->percentChange(),
-            'changed_at' => $change->changed_at?->toIso8601String(),
-            'is_my_plan' => in_array($change->plan_id, $subscribedPlanIds, true),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'data' => $page,
-            'meta' => ['scope' => $scope],
         ]);
     }
 }

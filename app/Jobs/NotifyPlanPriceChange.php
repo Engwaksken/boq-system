@@ -42,7 +42,7 @@ class NotifyPlanPriceChange implements ShouldQueue
         $title = __('Price change: :plan', ['plan' => $change->plan->name]);
         $message = self::message($change);
         $key = 'plan-price-change:'.$change->id;
-        $url = route('subscriptions.index', ['tab' => 'price-history']);
+        $url = route('subscriptions.index');
 
         $userIds = Subscription::query()
             ->where('plan_id', $change->plan_id)

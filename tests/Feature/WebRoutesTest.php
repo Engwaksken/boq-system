@@ -302,18 +302,13 @@ class WebRoutesTest extends TestCase
         $this->actingAs($user)->get('/plans')->assertOk();
     }
 
-    public function test_sidebar_price_history_link_opens_the_price_history_tab(): void
+    public function test_sidebar_has_no_plan_price_history_link(): void
     {
         $user = $this->userWithPermission('subscriptions.view');
-        $link = route('subscriptions.index', ['tab' => 'price-history']);
 
         $this->actingAs($user)->get('/subscriptions')
             ->assertOk()
-            ->assertSee('href="'.$link.'"', false);
-
-        $this->actingAs($user)->get($link)
-            ->assertOk()
-            ->assertSee('No price changes yet.');
+            ->assertDontSee('tab=price-history', false);
     }
 
     public function test_plans_and_topups_are_forbidden_without_billing_permission(): void

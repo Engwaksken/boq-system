@@ -2060,5 +2060,7 @@
     "Collapse": "Collapse",
     "Expand": "Expand",
     "Expand all": "Expand all",
-    "Collapse all": "Collapse all"
+    "Collapse all": "Collapse all",
+    "Price history": "Price history",
+    "Visible to administrators only. Current subscribers are notified when the price changes.": "Visible to administrators only. Current subscribers are notified when the price changes."
 }

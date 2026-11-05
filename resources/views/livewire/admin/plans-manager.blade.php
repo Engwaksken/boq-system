@@ -171,6 +171,29 @@
                 </div>
             </div>
 
+            {{-- Internal record of this plan's price changes (admins only; not shown to clients). --}}
+            @if($priceChanges->isNotEmpty())
+                <div class="mt-4 rounded-lg border border-slate-200 p-3">
+                    <h3 class="text-sm font-semibold text-slate-900"><i class="fas fa-clock-rotate-left" aria-hidden="true"></i> {{ __('Price history') }}</h3>
+                    <p class="text-xs text-slate-500">{{ __('Visible to administrators only. Current subscribers are notified when the price changes.') }}</p>
+                    <ul class="mt-2 divide-y divide-slate-100 text-sm">
+                        @foreach($priceChanges as $change)
+                            <li class="flex flex-wrap items-center justify-between gap-2 py-1.5" wire:key="plan-price-change-{{ $change->id }}">
+                                <span class="text-slate-500"><x-date :value="$change->changed_at" /> · {{ $change->changedBy?->name ?? __('System') }}</span>
+                                <span class="font-medium text-slate-900">
+                                    @if($change->old_price !== null)
+                                        {{ \App\Support\Format::money($change->old_price, $change->old_currency ?: $change->new_currency) }} →
+                                    @else
+                                        {{ __('Initial price') }}:
+                                    @endif
+                                    {{ \App\Support\Format::money($change->new_price, $change->new_currency) }}
+                                </span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <x-slot:footer>
                 <x-ui.button variant="secondary" wire:click="cancel">{{ __('Cancel') }}</x-ui.button>
                 <x-ui.button type="submit" icon="fa-floppy-disk" loading="save">{{ __('Save Plan') }}</x-ui.button>
