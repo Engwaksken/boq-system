@@ -45,6 +45,7 @@ class HardwarePrice extends Model
         'previous_price' => 'decimal:2',
         'price_change' => 'decimal:2',
         'price_change_percent' => 'decimal:2',
+        'price_changed_at' => 'datetime',
         'fetched_at' => 'datetime',
         'last_verified_at' => 'datetime',
         'is_active' => 'boolean',
@@ -68,6 +69,7 @@ class HardwarePrice extends Model
                     $price->previous_price = $previous;
                     $price->price_change = $change;
                     $price->price_change_percent = $previous != 0.0 ? round($change / $previous * 100, 2) : null;
+                    $price->price_changed_at = now();
                 }
             }
         });

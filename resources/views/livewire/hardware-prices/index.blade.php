@@ -10,6 +10,7 @@
         :subtitle="__('Track hardware supplier prices and manufacturer/factory prices across all construction categories.')"
     >
         <x-slot:actions>
+            <x-ui.button variant="secondary" icon="fa-arrow-trend-up" :href="route('hardware-prices.changes')">{{ __('Price Changes') }}</x-ui.button>
             <x-ui.button variant="secondary" icon="fa-scale-balanced" :href="route('hardware-prices.compare')">{{ __('Compare') }}</x-ui.button>
             <x-ui.button variant="secondary" icon="fa-lightbulb" :href="route('hardware-prices.recommendations')">{{ __('Recommendations') }}</x-ui.button>
             @if($canManage)

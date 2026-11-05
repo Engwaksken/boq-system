@@ -59,7 +59,11 @@
                     $item('Reports', 'reports.accounting', 'fa-chart-pie', $authUser->hasPermission('reports.view'), 'reports.*'),
                     $item('Team Invitations', 'team.index', 'fa-user-plus'),
                     $item('Project Assignments', 'team.assignments', 'fa-users', (bool) $canManageTeam),
-                    $item('Get Prices', 'hardware-prices.index', 'fa-tags', $authUser->hasPermission('hardware-prices.view'), 'hardware-prices.*'),
+                    array_merge(
+                        $item('Get Prices', 'hardware-prices.index', 'fa-tags', $authUser->hasPermission('hardware-prices.view'), 'hardware-prices.*'),
+                        ['active' => request()->routeIs('hardware-prices.*') && ! request()->routeIs('hardware-prices.changes')],
+                    ),
+                    $item('Price Changes', 'hardware-prices.changes', 'fa-arrow-trend-up', $authUser->hasPermission('hardware-prices.view')),
                     $item('Top Suppliers', 'supplier-ratings.index', 'fa-ranking-star', $authUser->hasPermission('hardware-prices.view'), 'supplier-ratings.*'),
                 ],
             ],

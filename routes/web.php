@@ -33,6 +33,7 @@ use App\Livewire\Expenses\Index as ExpensesIndex;
 use App\Livewire\Team\Index as TeamIndex;
 use App\Livewire\Team\Assignments as TeamAssignments;
 
+use App\Livewire\HardwarePrices\Changes as HardwarePricesChanges;
 use App\Livewire\HardwarePrices\Compare as HardwarePricesCompare;
 use App\Livewire\HardwarePrices\Index as HardwarePricesIndex;
 use App\Livewire\SupplierRatings\Index as SupplierRatingsIndex;
@@ -313,6 +314,13 @@ Route::middleware('auth')->group(function (): void {
             '/hardware-prices/compare',
             HardwarePricesCompare::class
         )->name('hardware-prices.compare');
+
+
+        // Recent price changes across all items (before {hardwarePrice}, which would catch it).
+        Route::get(
+            '/hardware-prices/changes',
+            HardwarePricesChanges::class
+        )->name('hardware-prices.changes');
 
 
         Route::get(
