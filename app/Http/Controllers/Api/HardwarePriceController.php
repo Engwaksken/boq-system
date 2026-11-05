@@ -429,7 +429,7 @@ class HardwarePriceController extends Controller
 
         // Project has no visibleTo() scope (that is HardwarePrice's); use the project access rules.
         $boqItemsWithMatches = BoqItem::whereHas('boq.project', fn ($q) => $q->accessibleTo($request->user()))
-            ->whereNotNull('ai_rate')
+            ->whereNotNull('ai_suggested_rate')
             ->count();
 
         return response()->json([

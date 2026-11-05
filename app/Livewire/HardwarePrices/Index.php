@@ -58,6 +58,10 @@ class Index extends Component
 
     public string $status = 'active';
 
+    /** '' = all, 'general' = shared market prices, 'mine' = my organisation's own prices. */
+    #[Url(except: '')]
+    public string $source = '';
+
     public ?int $editingId = null;
 
     public bool $showForm = false;
@@ -116,7 +120,7 @@ class Index extends Component
 
     public function clearFilters(): void
     {
-        $this->reset(['search', 'priceType', 'category', 'supplier', 'location', 'region', 'brand', 'updated', 'sort']);
+        $this->reset(['search', 'priceType', 'category', 'supplier', 'location', 'region', 'brand', 'updated', 'sort', 'source']);
         $this->resetPage();
     }
 
@@ -134,6 +138,15 @@ class Index extends Component
 
     public function updatedStatus(): void
     {
+        $this->resetPage();
+    }
+
+    public function updatedSource(): void
+    {
+        if (! in_array($this->source, ['', 'general', 'mine'], true)) {
+            $this->source = '';
+        }
+
         $this->resetPage();
     }
 
@@ -575,6 +588,14 @@ class Index extends Component
                         )
                 )
                 ->when(
+                    $this->source === 'general',
+                    fn ($query) => $query->whereNull('organisation_id')
+                )
+                ->when(
+                    $this->source === 'mine' && $organisationId !== null,
+                    fn ($query) => $query->where('organisation_id', $organisationId)
+                )
+                ->when(
                     $this->priceType !== '',
                     fn ($query) =>
                         $query->where(
@@ -749,6 +770,10 @@ class Index extends Component
 
                 'canManage' =>
                     $canManage,
+
+                // Only members of an organisation can have prices of their own.
+                'hasOwnPrices' =>
+                    $organisationId !== null,
 
                 'stats' =>
                     $stats,

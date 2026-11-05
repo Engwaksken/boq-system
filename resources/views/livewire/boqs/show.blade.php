@@ -183,6 +183,7 @@
     <x-ui.tabs :label="__('BOQ sections')">
         <x-ui.tab @click="boqTab = 'details'" :active="false" icon="fa-circle-info" x-bind:class="boqTab === 'details' ? 'is-active' : ''" x-bind:aria-pressed="boqTab === 'details' ? 'true' : 'false'">{{ __('Details & totals') }}</x-ui.tab>
         <x-ui.tab @click="boqTab = 'items'" :active="false" icon="fa-list-check" x-bind:class="boqTab === 'items' ? 'is-active' : ''" x-bind:aria-pressed="boqTab === 'items' ? 'true' : 'false'">{{ __('Items & pricing') }}</x-ui.tab>
+        <x-ui.tab @click="boqTab = 'price-check'" :active="false" icon="fa-scale-unbalanced" x-bind:class="boqTab === 'price-check' ? 'is-active' : ''" x-bind:aria-pressed="boqTab === 'price-check' ? 'true' : 'false'">{{ __('Price check') }}</x-ui.tab>
         <x-ui.tab @click="boqTab = 'signatures'" :active="false" icon="fa-signature" x-bind:class="boqTab === 'signatures' ? 'is-active' : ''" x-bind:aria-pressed="boqTab === 'signatures' ? 'true' : 'false'">{{ __('Signatures') }}</x-ui.tab>
     </x-ui.tabs>
 
@@ -637,6 +638,11 @@
     @endif
 
     </div>
+    <div x-show="boqTab === 'price-check'" x-cloak>
+        {{-- Lazy: only queried once the tab is opened. --}}
+        <livewire:boqs.price-check :boq="$boq" lazy wire:key="boq-price-check-{{ $boq->id }}" />
+    </div>
+
     <div x-show="boqTab === 'signatures'" x-cloak>
         <livewire:boqs.signatures :boq="$boq" wire:key="boq-signatures-{{ $boq->id }}" />
     </div>

@@ -1,5 +1,5 @@
 @php
-    $hasFilters = $search !== '' || $priceType !== '' || filled($category) || filled($supplier) || filled($location) || filled($region) || filled($brand) || $updated !== '' || $sort !== 'latest';
+    $hasFilters = $search !== '' || $priceType !== '' || filled($category) || filled($supplier) || filled($location) || filled($region) || filled($brand) || $updated !== '' || $sort !== 'latest' || $source !== '';
 @endphp
 
 <div class="boq-page-stack">
@@ -144,6 +144,17 @@
                         </div>
                     @endif
 
+                    @if($hasOwnPrices)
+                        <div class="boq-segmented" role="radiogroup" aria-label="{{ __('Price source') }}">
+                            @foreach(['' => __('All prices'), 'general' => __('General market'), 'mine' => __('My organisation')] as $value => $label)
+                                <label class="{{ $source === $value ? 'is-active' : '' }} cursor-pointer">
+                                    <input type="radio" wire:model.live="source" value="{{ $value }}" class="sr-only">
+                                    {{ $label }}
+                                </label>
+                            @endforeach
+                        </div>
+                    @endif
+
                     @if($hasFilters)
                         <button type="button" wire:click="clearFilters" class="boq-btn-ghost boq-btn-sm">
                             <i class="fas fa-filter-circle-xmark" aria-hidden="true"></i> {{ __('Clear filters') }}
@@ -210,9 +221,16 @@
                             @if($price->specification)
                                 <div class="boq-table-meta">{{ \Illuminate\Support\Str::limit($price->specification, 80) }}</div>
                             @endif
-                            @if(! $price->is_active)
-                                <x-ui.badge class="mt-1">{{ __('Inactive') }}</x-ui.badge>
-                            @endif
+                            <div class="mt-1 flex flex-wrap gap-1">
+                                @if($price->isGeneral())
+                                    <x-ui.badge icon="fa-globe">{{ __('General') }}</x-ui.badge>
+                                @else
+                                    <x-ui.badge color="brand" icon="fa-building">{{ __('My organisation') }}</x-ui.badge>
+                                @endif
+                                @if(! $price->is_active)
+                                    <x-ui.badge>{{ __('Inactive') }}</x-ui.badge>
+                                @endif
+                            </div>
                         </td>
 
                         <td>
@@ -227,6 +245,13 @@
                             <span class="font-semibold text-slate-900"><x-money :amount="$price->price" :currency="$price->currency" /></span>
                             @if($price->unit)
                                 <div class="boq-table-meta">{{ __('per :unit', ['unit' => $price->unit]) }}</div>
+                            @endif
+                            @if($price->price_change_percent !== null && (float) $price->price_change_percent != 0.0)
+                                @php($up = (float) $price->price_change_percent > 0)
+                                <div class="boq-table-meta {{ $up ? 'text-red-600' : 'text-green-600' }}" title="{{ __('Change from the previous price of :price', ['price' => \App\Support\Format::money($price->previous_price, $price->currency)]) }}">
+                                    <i class="fas {{ $up ? 'fa-arrow-up' : 'fa-arrow-down' }}" aria-hidden="true"></i>
+                                    {{ ($up ? '+' : '').\App\Support\Format::number((float) $price->price_change_percent, 1) }}%
+                                </div>
                             @endif
 
                             @if($extreme && $extreme->offers > 1)
