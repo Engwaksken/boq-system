@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Livewire\Subscriptions;
 
 use App\Models\Plan;
-use App\Models\PlanPriceChange;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Services\PlanPriceHistory;
 use App\Services\SubscriptionService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -202,40 +202,6 @@ class Index extends Component
         $this->resetPage(
             'priceHistoryPage'
         );
-    }
-
-    /** Ids of every plan the user (or their organisation) has subscribed to. */
-    private function subscribedPlanIds(User $user): array
-    {
-        return $this
-            ->applyOwnershipScope(Subscription::query(), $user)
-            ->distinct()
-            ->pluck('plan_id')
-            ->filter()
-            ->map(fn ($id) => (int) $id)
-            ->all();
-    }
-
-    /**
-     * Price changes the user may see: their own plans always (even if since
-     * archived), plus every currently available plan when scope is "all".
-     */
-    private function priceHistoryQuery(User $user, array $subscribedPlanIds): Builder
-    {
-        return PlanPriceChange::query()
-            ->with('plan')
-            ->where(function (Builder $query) use ($subscribedPlanIds) {
-                $query->whereIn('plan_id', $subscribedPlanIds ?: [0]);
-
-                if ($this->priceHistoryScope === 'all') {
-                    $query->orWhereIn(
-                        'plan_id',
-                        Plan::query()->where('is_active', true)->where('is_archived', false)->select('id')
-                    );
-                }
-            })
-            ->orderByDesc('changed_at')
-            ->orderByDesc('id');
     }
 
     /*
@@ -1437,13 +1403,16 @@ class Index extends Component
                     'plansPage'
                 );
 
+        $planPrices =
+            app(PlanPriceHistory::class);
+
         $subscribedPlanIds =
-            $this->subscribedPlanIds($user);
+            $planPrices->subscribedPlanIds($user);
 
         $priceChanges =
             $this->activeTab === 'price-history'
-                ? $this
-                    ->priceHistoryQuery($user, $subscribedPlanIds)
+                ? $planPrices
+                    ->query($subscribedPlanIds, $this->priceHistoryScope)
                     ->paginate(15, ['*'], 'priceHistoryPage')
                 : null;
 

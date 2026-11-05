@@ -53,6 +53,13 @@ class HardwarePriceController extends Controller
             $query->where('brand', $request->input('brand'));
         }
 
+        // source: "general" = shared market prices, "mine" = my organisation's own.
+        if ($request->input('source') === 'general') {
+            $query->whereNull('organisation_id');
+        } elseif ($request->input('source') === 'mine' && $request->user()->organisation_id !== null) {
+            $query->where('organisation_id', $request->user()->organisation_id);
+        }
+
         if ($request->filled('search')) {
             $query->search($request->search);
         }

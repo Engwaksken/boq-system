@@ -509,6 +509,7 @@ public function show(Request $request, Boq $boq): JsonResponse
         abort_unless($user->hasPermission('boq.view'), 403);
 
         $history = $boqItem->priceHistory()
+            ->with('user:id,name')
             ->paginate(min($request->integer('per_page', 50), 100));
 
         return response()->json([

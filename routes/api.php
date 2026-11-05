@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\MobileConfigController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PlanController;
+use App\Http\Controllers\Api\PriceInsightsController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ProxySubscriptionController;
 use App\Http\Controllers\Api\QuotationController;
@@ -162,6 +163,8 @@ Route::prefix('v1')->group(function () {
                 ->name('api.v1.boq-items.show');
             Route::get('boq-items/{boqItem}/price-history', [BoqController::class, 'priceHistory'])
                 ->name('api.v1.boq-items.price-history');
+            Route::get('boqs/{boq}/price-check', [PriceInsightsController::class, 'boqPriceCheck'])
+                ->name('api.v1.boqs.price-check');
         });
 
         Route::middleware(['permission:boq.edit', 'entitlement:boq.management', 'entitlement:boq.import.excel,boq_imports'])
@@ -263,8 +266,11 @@ Route::prefix('v1')->group(function () {
             Route::get('hardware-prices/filters', [HardwarePriceController::class, 'filters']);
             Route::get('hardware-prices/recommendations', [HardwarePriceController::class, 'recommendations']);
             Route::post('hardware-prices/compare', [HardwarePriceController::class, 'compare']);
+            // Latest change of every visible price (before {hardwarePrice}, which would catch it).
+            Route::get('hardware-prices/changes', [PriceInsightsController::class, 'changes'])->name('api.v1.hardware-prices.changes');
             Route::get('hardware-prices/{hardwarePrice}', [HardwarePriceController::class, 'show']);
             Route::get('hardware-prices/{hardwarePrice}/history', [HardwarePriceController::class, 'history']);
+            Route::get('hardware-prices/{hardwarePrice}/monthly', [PriceInsightsController::class, 'monthly'])->name('api.v1.hardware-prices.monthly');
             Route::get('boq-items/{boqItem}/matches', [HardwarePriceController::class, 'matchBoqItem']);
             Route::post('boq-items/{boqItem}/apply-price', [HardwarePriceController::class, 'applyPrice']);
         });
@@ -302,7 +308,10 @@ Route::prefix('v1')->group(function () {
             Route::post('hardware-categories/{category}/toggle-active', [HardwareCategoryController::class, 'toggleActive'])->middleware('throttle:10,1')->name('api.v1.hardware-categories.toggle-active');
         });
 
-        // Plans
+        // Plans (price-history before {plan}, which would catch it)
+        Route::get('plans/price-history', [PriceInsightsController::class, 'planPriceHistory'])
+            ->middleware('permission:subscriptions.view')
+            ->name('api.v1.plans.price-history');
         Route::get('plans/{plan}', [PlanController::class, 'show']);
 
         // Rate Library
