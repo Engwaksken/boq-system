@@ -41,6 +41,8 @@
             'active' => $pattern ? request()->routeIs($pattern) : request()->routeIs($routeName),
         ];
 
+        $onPriceHistory = request()->routeIs('subscriptions.index') && request()->query('tab') === 'price-history';
+
         /*
          * Sidebar navigation, grouped. Visibility rules are unchanged from the
          * previous layout: permission checks for workspace items, super admin
@@ -68,7 +70,15 @@
                     // Billing is for the account owner and billing roles; invited
                     // members (project manager, procurement, ...) do not see it.
                     $item('Plans', 'plans.index', 'fa-layer-group', $authUser->hasPermission('subscriptions.view'), 'plans.*'),
-                    $item('Subscriptions', 'subscriptions.index', 'fa-credit-card', $authUser->hasPermission('subscriptions.view'), 'subscriptions.*'),
+                    array_merge(
+                        $item('Subscriptions', 'subscriptions.index', 'fa-credit-card', $authUser->hasPermission('subscriptions.view'), 'subscriptions.*'),
+                        ['active' => request()->routeIs('subscriptions.*') && ! $onPriceHistory],
+                    ),
+                    // Plan price changes: opens the Subscriptions page on its Price History tab.
+                    array_merge(
+                        $item('Price History', 'subscriptions.index', 'fa-clock-rotate-left', $authUser->hasPermission('subscriptions.view'), null, ['tab' => 'price-history']),
+                        ['active' => $onPriceHistory],
+                    ),
                     $item('Top-ups', 'topups.index', 'fa-gift', $authUser->hasPermission('subscriptions.view'), 'topups.*'),
                 ],
             ],
