@@ -2056,5 +2056,9 @@
     "Try a longer period or clear the filters.": "Try a longer period or clear the filters.",
     "Price changes appear here when the price scanner or your team updates a price.": "Price changes appear here when the price scanner or your team updates a price.",
     "Last 7 days": "Last 7 days",
-    "Last 90 days": "Last 90 days"
+    "Last 90 days": "Last 90 days",
+    "Collapse": "Collapse",
+    "Expand": "Expand",
+    "Expand all": "Expand all",
+    "Collapse all": "Collapse all"
 }

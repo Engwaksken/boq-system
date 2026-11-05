@@ -193,7 +193,11 @@ class SupplierRatingsTest extends TestCase
             ->assertSee('Monthly trend')
             ->assertSee('boq-chart-pie-svg', false)
             ->assertSee('boq-chart-line-svg', false)
-            ->assertDontSee('needing improvement');
+            ->assertDontSee('needing improvement')
+            // Cards collapse and expand from their header to keep the page short.
+            ->assertSee('aria-controls="collapse-ratings-top-hardware"', false)
+            ->assertSee('aria-controls="collapse-ratings-chart-distribution"', false)
+            ->assertSee('Collapse all');
 
         Livewire::actingAs($user)->test(SupplierRatingsPage::class)
             ->call('showSupplier', $shop->id)
@@ -203,6 +207,15 @@ class SupplierRatingsTest extends TestCase
 
         // Sidebar link for users who can see prices.
         $this->actingAs($user)->get(route('dashboard'))->assertSee(route('supplier-ratings.index'));
+    }
+
+    public function test_dashboard_has_no_administration_card(): void
+    {
+        // Administration pages are reached from the sidebar only.
+        $this->actingAs($this->superAdmin())->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('Admin Overview')
+            ->assertDontSee('All administration pages are also available');
     }
 
     public function test_admins_see_who_needs_improvement_and_can_hide_ratings(): void

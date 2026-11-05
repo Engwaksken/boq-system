@@ -37,14 +37,19 @@
         <x-stat-card :label="__('Factory average')" :value="$summary['by_type']['factory']['average'] !== null ? number_format($summary['by_type']['factory']['average'], 1).' / 5' : '—'" :hint="trans_choice(':count rating|:count ratings', $summary['by_type']['factory']['count'], ['count' => $summary['by_type']['factory']['count']])" icon="fa-industry" color="purple" />
     </div>
 
-    {{-- Top 10 rankings --}}
-    <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+    <div class="flex flex-wrap items-center justify-end gap-2">
+        <button type="button" class="boq-btn-ghost boq-btn-sm" x-data @click="$dispatch('collapse-cards', true)">
+            <i class="fas fa-up-right-and-down-left-from-center" aria-hidden="true"></i> {{ __('Expand all') }}
+        </button>
+        <button type="button" class="boq-btn-ghost boq-btn-sm" x-data @click="$dispatch('collapse-cards', false)">
+            <i class="fas fa-down-left-and-up-right-to-center" aria-hidden="true"></i> {{ __('Collapse all') }}
+        </button>
+    </div>
+
+    {{-- Top 10 rankings (open by default) --}}
+    <div class="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
         @foreach([['rows' => $topHardware, 'title' => __('Top 10 Hardware'), 'icon' => 'fa-store', 'key' => 'hardware'], ['rows' => $topFactories, 'title' => __('Top 10 Factories'), 'icon' => 'fa-industry', 'key' => 'factories']] as $board)
-            <section class="boq-card" wire:key="board-{{ $board['key'] }}">
-                <div class="boq-card-header">
-                    <h2 class="boq-card-title"><i class="fas {{ $board['icon'] }}" aria-hidden="true"></i> {{ $board['title'] }}</h2>
-                    <span class="boq-card-subtitle">{{ $periodLabel }}</span>
-                </div>
+            <x-ui.collapse-card :key="'ratings-top-'.$board['key']" :title="$board['title']" :icon="$board['icon']" :subtitle="$periodLabel" :padded="false" wire:key="board-{{ $board['key'] }}">
                 @if($board['rows'] === [])
                     <x-ui.empty-state icon="fa-star" :title="__('No ratings in this period yet.')" :description="__('Be the first to rate one.')" />
                 @else
@@ -77,74 +82,54 @@
                         </table>
                     </div>
                 @endif
-            </section>
+            </x-ui.collapse-card>
         @endforeach
     </div>
     <p class="text-xs text-slate-500">{{ __('Rankings use a weighted score: a supplier needs several good ratings to rank above one with many, so a single 5-star rating does not top the list.') }}</p>
 
-    {{-- Performance charts --}}
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <section class="boq-card">
-            <div class="boq-card-header"><h2 class="boq-card-title"><i class="fas fa-chart-bar" aria-hidden="true"></i> {{ __('Top hardware · average rating') }}</h2></div>
-            <div class="boq-card-body"><x-charts.bar :items="$barItems($topHardware, '#0d9488')" :max="5" :label="__('Top hardware · average rating')" /></div>
-        </section>
-        <section class="boq-card">
-            <div class="boq-card-header"><h2 class="boq-card-title"><i class="fas fa-chart-bar" aria-hidden="true"></i> {{ __('Top factories · average rating') }}</h2></div>
-            <div class="boq-card-body"><x-charts.bar :items="$barItems($topFactories, '#7c3aed')" :max="5" :label="__('Top factories · average rating')" /></div>
-        </section>
-        <section class="boq-card">
-            <div class="boq-card-header"><h2 class="boq-card-title"><i class="fas fa-chart-pie" aria-hidden="true"></i> {{ __('Rating distribution') }}</h2><span class="boq-card-subtitle">{{ $periodLabel }}</span></div>
-            <div class="boq-card-body">
-                <x-charts.pie :label="__('Rating distribution')"
-                    :slices="collect($summary['distribution'])->map(fn ($count, $stars) => ['label' => trans_choice(':count star|:count stars', $stars, ['count' => $stars]), 'value' => $count, 'color' => $starColors[$stars]])->values()->all()"
-                    :center="$summary['average'] !== null ? number_format($summary['average'], 1) : null" :center-label="__('average')" />
-            </div>
-        </section>
-        <section class="boq-card">
-            <div class="boq-card-header"><h2 class="boq-card-title"><i class="fas fa-chart-pie" aria-hidden="true"></i> {{ __('Ratings by type') }}</h2><span class="boq-card-subtitle">{{ $periodLabel }}</span></div>
-            <div class="boq-card-body">
-                <x-charts.pie :label="__('Ratings by type')"
-                    :slices="[['label' => __('Hardware'), 'value' => $summary['by_type']['supplier']['count'], 'color' => '#0d9488'], ['label' => __('Factories'), 'value' => $summary['by_type']['factory']['count'], 'color' => '#7c3aed']]"
-                    :center="\App\Support\Format::number($summary['total'], 0)" :center-label="__('ratings')" />
-            </div>
-        </section>
-        <section class="boq-card">
-            <div class="boq-card-header"><h2 class="boq-card-title"><i class="fas fa-chart-line" aria-hidden="true"></i> {{ __('Monthly trend · hardware') }}</h2><span class="boq-card-subtitle">{{ __('Last 12 months') }}</span></div>
-            <div class="boq-card-body"><x-charts.line :points="$hardwareTrend" :label="__('Monthly trend · hardware')" :value-label="__('Average rating')" :count-label="__('Ratings')" /></div>
-        </section>
-        <section class="boq-card">
-            <div class="boq-card-header"><h2 class="boq-card-title"><i class="fas fa-chart-line" aria-hidden="true"></i> {{ __('Monthly trend · factories') }}</h2><span class="boq-card-subtitle">{{ __('Last 12 months') }}</span></div>
-            <div class="boq-card-body"><x-charts.line :points="$factoryTrend" :label="__('Monthly trend · factories')" :value-label="__('Average rating')" :count-label="__('Ratings')" /></div>
-        </section>
-        <section class="boq-card lg:col-span-2">
-            <div class="boq-card-header"><h2 class="boq-card-title"><i class="fas fa-list-check" aria-hidden="true"></i> {{ __('Scores by area') }}</h2><span class="boq-card-subtitle">{{ $periodLabel }}</span></div>
-            <div class="boq-card-body">
-                <x-charts.bar :max="5" :label="__('Scores by area')" :empty="__('No detailed scores in this period yet.')"
-                    :items="collect($summary['criteria'])->filter(fn ($v) => $v !== null)->map(fn ($v, $field) => ['label' => $criteriaLabels[$field], 'value' => $v, 'color' => '#2563eb'])->values()->all()" />
-            </div>
-        </section>
+    {{-- Performance charts (collapsed by default) --}}
+    <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+        <x-ui.collapse-card key="ratings-chart-top-hardware" :title="__('Top hardware · average rating')" icon="fa-chart-bar" :open="false">
+            <x-charts.bar :items="$barItems($topHardware, '#0d9488')" :max="5" :label="__('Top hardware · average rating')" />
+        </x-ui.collapse-card>
+        <x-ui.collapse-card key="ratings-chart-top-factories" :title="__('Top factories · average rating')" icon="fa-chart-bar" :open="false">
+            <x-charts.bar :items="$barItems($topFactories, '#7c3aed')" :max="5" :label="__('Top factories · average rating')" />
+        </x-ui.collapse-card>
+        <x-ui.collapse-card key="ratings-chart-distribution" :title="__('Rating distribution')" icon="fa-chart-pie" :subtitle="$periodLabel" :open="false">
+            <x-charts.pie :label="__('Rating distribution')"
+                :slices="collect($summary['distribution'])->map(fn ($count, $stars) => ['label' => trans_choice(':count star|:count stars', $stars, ['count' => $stars]), 'value' => $count, 'color' => $starColors[$stars]])->values()->all()"
+                :center="$summary['average'] !== null ? number_format($summary['average'], 1) : null" :center-label="__('average')" />
+        </x-ui.collapse-card>
+        <x-ui.collapse-card key="ratings-chart-by-type" :title="__('Ratings by type')" icon="fa-chart-pie" :subtitle="$periodLabel" :open="false">
+            <x-charts.pie :label="__('Ratings by type')"
+                :slices="[['label' => __('Hardware'), 'value' => $summary['by_type']['supplier']['count'], 'color' => '#0d9488'], ['label' => __('Factories'), 'value' => $summary['by_type']['factory']['count'], 'color' => '#7c3aed']]"
+                :center="\App\Support\Format::number($summary['total'], 0)" :center-label="__('ratings')" />
+        </x-ui.collapse-card>
+        <x-ui.collapse-card key="ratings-chart-trend-hardware" :title="__('Monthly trend · hardware')" icon="fa-chart-line" :subtitle="__('Last 12 months')" :open="false">
+            <x-charts.line :points="$hardwareTrend" :label="__('Monthly trend · hardware')" :value-label="__('Average rating')" :count-label="__('Ratings')" />
+        </x-ui.collapse-card>
+        <x-ui.collapse-card key="ratings-chart-trend-factories" :title="__('Monthly trend · factories')" icon="fa-chart-line" :subtitle="__('Last 12 months')" :open="false">
+            <x-charts.line :points="$factoryTrend" :label="__('Monthly trend · factories')" :value-label="__('Average rating')" :count-label="__('Ratings')" />
+        </x-ui.collapse-card>
+        <x-ui.collapse-card key="ratings-chart-areas" class="lg:col-span-2" :title="__('Scores by area')" icon="fa-list-check" :subtitle="$periodLabel" :open="false">
+            <x-charts.bar :max="5" :label="__('Scores by area')" :empty="__('No detailed scores in this period yet.')"
+                :items="collect($summary['criteria'])->filter(fn ($v) => $v !== null)->map(fn ($v, $field) => ['label' => $criteriaLabels[$field], 'value' => $v, 'color' => '#2563eb'])->values()->all()" />
+        </x-ui.collapse-card>
     </div>
 
-    {{-- Admins: who needs to improve --}}
+    {{-- Admins: who needs to improve (collapsed by default) --}}
     @if($isAdmin)
-        <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            @foreach([['rows' => $lowHardware, 'title' => __('Hardware needing improvement')], ['rows' => $lowFactories, 'title' => __('Factories needing improvement')]] as $board)
-                <section class="boq-card">
-                    <div class="boq-card-header">
-                        <h2 class="boq-card-title"><i class="fas fa-arrow-trend-down" aria-hidden="true"></i> {{ $board['title'] }}</h2>
-                        <span class="boq-card-subtitle">{{ __('Lowest rated') }} · {{ $periodLabel }}</span>
-                    </div>
-                    <div class="boq-card-body">
-                        <x-charts.bar :max="5" :label="$board['title']" :items="$barItems($board['rows'], '#dc2626')" />
-                    </div>
-                </section>
+        <div class="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
+            @foreach([['rows' => $lowHardware, 'title' => __('Hardware needing improvement'), 'key' => 'hardware'], ['rows' => $lowFactories, 'title' => __('Factories needing improvement'), 'key' => 'factories']] as $board)
+                <x-ui.collapse-card :key="'ratings-low-'.$board['key']" :title="$board['title']" icon="fa-arrow-trend-down" :subtitle="__('Lowest rated').' · '.$periodLabel" :open="false">
+                    <x-charts.bar :max="5" :label="$board['title']" :items="$barItems($board['rows'], '#dc2626')" />
+                </x-ui.collapse-card>
             @endforeach
         </div>
     @endif
 
     {{-- My ratings --}}
-    <section class="boq-card">
-        <div class="boq-card-header"><h2 class="boq-card-title"><i class="fas fa-user-check" aria-hidden="true"></i> {{ __('My ratings') }}</h2></div>
+    <x-ui.collapse-card key="ratings-mine" :title="__('My ratings')" icon="fa-user-check" :padded="false">
         @if($myRatings->isEmpty())
             <x-ui.empty-state icon="fa-star" :title="__('You have not rated any supplier yet.')" :description="__('Rate the hardware shops and factories you buy from. You can rate each one again every month.')" />
         @else
@@ -172,7 +157,7 @@
                 </table>
             </div>
         @endif
-    </section>
+    </x-ui.collapse-card>
 
     {{-- Rate a supplier --}}
     @if($showRate)

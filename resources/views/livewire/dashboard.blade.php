@@ -180,19 +180,6 @@
                     @endif
                 </div>
             </x-ui.card>
-
-            @if($user?->isSuperAdmin())
-                <x-ui.card :title="__('Administration')" icon="fa-shield-halved">
-                    <p class="mb-3 text-sm text-slate-500">{{ __('All administration pages are also available under Administration in the sidebar.') }}</p>
-                    <div class="flex flex-wrap gap-2">
-                        <x-ui.button size="sm" :href="route('admin.index')">{{ __('Admin Overview') }}</x-ui.button>
-                        <x-ui.button size="sm" variant="secondary" :href="route('admin.users')">{{ __('Users') }}</x-ui.button>
-                        <x-ui.button size="sm" variant="secondary" :href="route('admin.subscriptions')">{{ __('Subscriptions') }}</x-ui.button>
-                        <x-ui.button size="sm" variant="secondary" :href="route('admin.payment-gateways')">{{ __('Payment Gateways') }}</x-ui.button>
-                        <x-ui.button size="sm" variant="secondary" :href="route('admin.settings')">{{ __('Settings') }}</x-ui.button>
-                    </div>
-                </x-ui.card>
-            @endif
         </div>
     </div>
 </div>
