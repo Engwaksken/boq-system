@@ -20,6 +20,14 @@ class Show extends Component
     }
     public HardwarePrice $hardwarePrice;
 
+    /** How many months of history to summarise (one of MONTH_OPTIONS). */
+    public int $months = 12;
+
+    /** "monthly" summary or the individual "records". */
+    public string $historyView = 'monthly';
+
+    public const MONTH_OPTIONS = [6, 12, 24];
+
     public function mount(HardwarePrice $hardwarePrice): void
     {
         abort_unless(
@@ -32,8 +40,25 @@ class Show extends Component
         ]);
     }
 
+    public function updatedMonths(): void
+    {
+        if (! in_array($this->months, self::MONTH_OPTIONS, true)) {
+            $this->months = 12;
+        }
+    }
+
+    public function updatedHistoryView(): void
+    {
+        if (! in_array($this->historyView, ['monthly', 'records'], true)) {
+            $this->historyView = 'monthly';
+        }
+    }
+
     public function render()
     {
-        return view('livewire.hardware-prices.show');
+        return view('livewire.hardware-prices.show', [
+            'monthly' => $this->hardwarePrice->monthlyHistory($this->months),
+            'monthOptions' => self::MONTH_OPTIONS,
+        ]);
     }
 }

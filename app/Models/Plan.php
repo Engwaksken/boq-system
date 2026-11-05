@@ -82,6 +82,49 @@ class Plan extends Model
     }
 
     /**
+     * Record every price (or currency) change so subscribers can see the plan's
+     * price history, and tell current subscribers when the price of their plan changes.
+     */
+    protected static function booted(): void
+    {
+        static::created(function (self $plan): void {
+            $plan->priceChanges()->create([
+                'old_price' => null,
+                'new_price' => $plan->price ?? 0,
+                'old_currency' => null,
+                'new_currency' => $plan->currency ?: \App\Support\Regional::currency(),
+                'changed_by' => auth()->id(),
+                'changed_at' => now(),
+            ]);
+        });
+
+        static::updated(function (self $plan): void {
+            if (! $plan->wasChanged(['price', 'currency'])) {
+                return;
+            }
+
+            $change = $plan->priceChanges()->create([
+                'old_price' => $plan->getOriginal('price'),
+                'new_price' => $plan->price ?? 0,
+                'old_currency' => $plan->getOriginal('currency'),
+                'new_currency' => $plan->currency ?: \App\Support\Regional::currency(),
+                'changed_by' => auth()->id(),
+                'changed_at' => now(),
+            ]);
+
+            \App\Jobs\NotifyPlanPriceChange::dispatch($change->id)->afterCommit();
+        });
+    }
+
+    /**
+     * Price history, newest first.
+     */
+    public function priceChanges(): HasMany
+    {
+        return $this->hasMany(PlanPriceChange::class)->orderByDesc('changed_at')->orderByDesc('id');
+    }
+
+    /**
      * Features included in this plan.
      */
     public function features(): BelongsToMany

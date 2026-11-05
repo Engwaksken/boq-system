@@ -347,4 +347,57 @@ class HardwarePrice extends Model
             ?? $this->price
         );
     }
+
+    /**
+     * Recorded prices summarised per calendar month, newest month first, so users
+     * can see how the price moved month to month. Months with no recordings are
+     * included (records = 0) so gaps are visible rather than hidden.
+     *
+     * @return \Illuminate\Support\Collection<int, array{month: \Carbon\CarbonImmutable, records: int, low: ?float, high: ?float, average: ?float, opening: ?float, closing: ?float, change: ?float, change_percent: ?float}>
+     */
+    public function monthlyHistory(int $months = 12): \Illuminate\Support\Collection
+    {
+        $months = max(1, min($months, 60));
+        $start = \Carbon\CarbonImmutable::now()->startOfMonth()->subMonths($months - 1);
+
+        $grouped = $this->priceHistories()
+            ->where('recorded_at', '>=', $start)
+            ->orderBy('recorded_at')
+            ->orderBy('id')
+            ->get(['price', 'recorded_at'])
+            ->groupBy(fn (PriceHistory $history) => $history->recorded_at->format('Y-m'));
+
+        // Average of the month before the window, so the oldest month shown has a change too.
+        $previousAverage = $this->priceHistories()
+            ->where('recorded_at', '>=', $start->subMonth())
+            ->where('recorded_at', '<', $start)
+            ->avg('price');
+        $previousAverage = $previousAverage !== null ? (float) $previousAverage : null;
+
+        $rows = collect();
+        for ($month = $start; $month->lessThanOrEqualTo(\Carbon\CarbonImmutable::now()); $month = $month->addMonth()) {
+            $prices = ($grouped->get($month->format('Y-m')) ?? collect())->map(fn ($h) => (float) $h->price);
+            $average = $prices->isNotEmpty() ? $prices->avg() : null;
+
+            $change = $average !== null && $previousAverage !== null ? $average - $previousAverage : null;
+
+            $rows->push([
+                'month' => $month,
+                'records' => $prices->count(),
+                'low' => $prices->isNotEmpty() ? $prices->min() : null,
+                'high' => $prices->isNotEmpty() ? $prices->max() : null,
+                'average' => $average,
+                'opening' => $prices->first(),
+                'closing' => $prices->last(),
+                'change' => $change,
+                'change_percent' => $change !== null && $previousAverage != 0.0 ? $change / $previousAverage * 100 : null,
+            ]);
+
+            if ($average !== null) {
+                $previousAverage = $average;
+            }
+        }
+
+        return $rows->reverse()->values();
+    }
 }

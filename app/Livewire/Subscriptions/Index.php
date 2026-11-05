@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Subscriptions;
 
 use App\Models\Plan;
+use App\Models\PlanPriceChange;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\SubscriptionService;
@@ -54,6 +55,15 @@ class Index extends Component
     public string $planPeriodFilter = 'all';
 
     public int $planPerPage = 10;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Plan Price History
+    |--------------------------------------------------------------------------
+    */
+
+    /** "mine" = plans I am (or was) subscribed to, "all" = every available plan. */
+    public string $priceHistoryScope = 'mine';
 
     /*
     |--------------------------------------------------------------------------
@@ -136,6 +146,11 @@ class Index extends Component
             $this->activeTab = 'plans';
         }
 
+        // Plan price-change notifications link here with ?tab=price-history.
+        if (request()->query('tab') === 'price-history') {
+            $this->activeTab = 'price-history';
+        }
+
         $this->refreshCurrentSubscription();
     }
 
@@ -165,6 +180,62 @@ class Index extends Component
         $this->resetPage(
             'plansPage'
         );
+    }
+
+    public function showPriceHistory(): void
+    {
+        $this->activeTab = 'price-history';
+
+        $this->resetValidation();
+
+        $this->resetPage(
+            'priceHistoryPage'
+        );
+    }
+
+    public function updatedPriceHistoryScope(): void
+    {
+        if (! in_array($this->priceHistoryScope, ['mine', 'all'], true)) {
+            $this->priceHistoryScope = 'mine';
+        }
+
+        $this->resetPage(
+            'priceHistoryPage'
+        );
+    }
+
+    /** Ids of every plan the user (or their organisation) has subscribed to. */
+    private function subscribedPlanIds(User $user): array
+    {
+        return $this
+            ->applyOwnershipScope(Subscription::query(), $user)
+            ->distinct()
+            ->pluck('plan_id')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    /**
+     * Price changes the user may see: their own plans always (even if since
+     * archived), plus every currently available plan when scope is "all".
+     */
+    private function priceHistoryQuery(User $user, array $subscribedPlanIds): Builder
+    {
+        return PlanPriceChange::query()
+            ->with('plan')
+            ->where(function (Builder $query) use ($subscribedPlanIds) {
+                $query->whereIn('plan_id', $subscribedPlanIds ?: [0]);
+
+                if ($this->priceHistoryScope === 'all') {
+                    $query->orWhereIn(
+                        'plan_id',
+                        Plan::query()->where('is_active', true)->where('is_archived', false)->select('id')
+                    );
+                }
+            })
+            ->orderByDesc('changed_at')
+            ->orderByDesc('id');
     }
 
     /*
@@ -1366,9 +1437,28 @@ class Index extends Component
                     'plansPage'
                 );
 
+        $subscribedPlanIds =
+            $this->subscribedPlanIds($user);
+
+        $priceChanges =
+            $this->activeTab === 'price-history'
+                ? $this
+                    ->priceHistoryQuery($user, $subscribedPlanIds)
+                    ->paginate(15, ['*'], 'priceHistoryPage')
+                : null;
+
         return view(
             'livewire.subscriptions.index',
             [
+                /*
+                 * Plan price changes (only loaded on the Price History tab).
+                 */
+                'priceChanges' =>
+                    $priceChanges,
+
+                'subscribedPlanIds' =>
+                    $subscribedPlanIds,
+
                 /*
                  * Paginated subscription history.
                  */
