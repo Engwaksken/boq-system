@@ -229,6 +229,15 @@ class AiProviderService
                 'configuration' => 'Provider configuration is invalid.',
                 default => 'Provider unavailable.',
             };
+            // The provider's own reason ("Invalid API key", "Task not allowed for
+            // this project", ...) tells the admin what to fix; 401 and 403 have
+            // several causes.
+            if ($detail = $this->providerError($exception)) {
+                $message .= ' Provider said: '.$detail;
+            }
+            if ($category === 'authentication' && $hint = $this->authenticationHint($provider, $exception)) {
+                $message .= ' '.$hint;
+            }
 
             $provider->forceFill([
                 'last_tested_at' => now(),
@@ -564,6 +573,52 @@ class AiProviderService
         }
 
         return 'provider_error';
+    }
+
+    /**
+     * HTTP status and error text from a provider's error response, in the
+     * shapes OpenAI-compatible APIs use: {"error": {"code", "message"}},
+     * {"error": "..."}, {"detail": "..."} or {"message": "..."}.
+     */
+    private function providerError(Throwable $exception): ?string
+    {
+        if (! $exception instanceof RequestException) {
+            return null;
+        }
+        $json = $exception->response->json();
+        $text = is_array($json) ? (data_get($json, 'error.message') ?? data_get($json, 'error') ?? data_get($json, 'detail') ?? data_get($json, 'message')) : null;
+        $code = is_array($json) ? data_get($json, 'error.code') : null;
+        $text = is_string($text) ? $text : null;
+
+        $parts = array_filter([
+            'HTTP '.$exception->response->status(),
+            is_string($code) ? $code : null,
+            $text !== null ? mb_substr(preg_replace('/\s+/', ' ', strip_tags($text)) ?? '', 0, 200) : null,
+        ]);
+
+        return implode(' – ', $parts).'.';
+    }
+
+    /**
+     * Likely fixes for a self-hosted gateway refusing the key. WITU AI serves
+     * the OpenAI-compatible API under /gw/v1; a bare host or /v1 reaches an
+     * older service that does not know CMS-issued keys.
+     */
+    private function authenticationHint(AiProvider $provider, Throwable $exception): ?string
+    {
+        $body = $exception instanceof RequestException ? strtolower($exception->response->body()) : '';
+        if (str_contains($body, 'task not allowed')) {
+            return 'Allow the "chat" task for this project in the gateway portal (Projects → Settings → Allowed tasks).';
+        }
+        if (str_contains($body, 'project is not active')) {
+            return 'The project is disabled or archived in the gateway portal.';
+        }
+        $base = rtrim((string) $provider->api_base_url, '/');
+        if (str_contains($base, 'witulibrary.org') && ! str_ends_with($base, '/gw/v1')) {
+            return 'Set the API base URL to https://ai.witulibrary.org/gw/v1.';
+        }
+
+        return 'Check the API key (copied in full, not revoked or expired).';
     }
 
     private function safeMessage(Throwable $exception): string

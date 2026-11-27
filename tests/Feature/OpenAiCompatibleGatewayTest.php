@@ -96,6 +96,31 @@ class OpenAiCompatibleGatewayTest extends TestCase
         }
     }
 
+    public function test_connection_test_explains_why_the_key_was_refused(): void
+    {
+        // Old service on /v1: wrong base URL.
+        $old = $this->gateway();
+        $old->forceFill(['api_base_url' => 'https://ai.witulibrary.org'])->save();
+        Http::fake(['ai.witulibrary.org/*' => Http::response(['detail' => 'Invalid API key'], 401)]);
+
+        $result = app(AiProviderService::class)->test($old);
+        $this->assertFalse($result['ok']);
+        $this->assertStringContainsString('HTTP 401', $result['message']);
+        $this->assertStringContainsString('Invalid API key', $result['message']);
+        $this->assertStringContainsString('https://ai.witulibrary.org/gw/v1', $result['message']);
+        $this->assertStringNotContainsString('uhk_live_secret', $result['message']);
+    }
+
+    public function test_connection_test_names_a_missing_chat_task(): void
+    {
+        $provider = $this->gateway();
+        Http::fake([self::URL.'/*' => Http::response(['error' => ['code' => 'TASK_NOT_ALLOWED', 'message' => 'Task not allowed for this project']], 403)]);
+
+        $message = app(AiProviderService::class)->test($provider)['message'];
+        $this->assertStringContainsString('TASK_NOT_ALLOWED', $message);
+        $this->assertStringContainsString('Allow the "chat" task', $message);
+    }
+
     public function test_a_timeout_is_not_retried(): void
     {
         $this->gateway();
