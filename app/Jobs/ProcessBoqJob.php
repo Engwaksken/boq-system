@@ -36,6 +36,9 @@ class ProcessBoqJob implements ShouldQueue
     /** Seconds of pricing per run; the next run continues where this one stopped. */
     public const QUEUE_BUDGET_SECONDS = 40;
 
+    /** Output cap for one item's price suggestion ({"suggested_rate", "currency", "confidence"}). */
+    public const PRICING_MAX_TOKENS = 200;
+
     /** A shorter run when the BOQ page itself does the work (no queue worker). */
     public const PAGE_BUDGET_SECONDS = 20;
 
@@ -242,6 +245,11 @@ class ProcessBoqJob implements ShouldQueue
                                 'attempt_id' => $attemptId,
                             ],
                         ],
+                        // The answer is one small JSON object: a short cap keeps slow
+                        // (local, CPU) models fast. The time cap keeps one call inside
+                        // this run's $timeout (80 s) or the page request.
+                        maxTokens: self::PRICING_MAX_TOKENS,
+                        deadlineSeconds: $this->budgetSeconds !== null ? 30 : 60,
                     );
 
                     $usage = $this->successfulUsage($attemptId);

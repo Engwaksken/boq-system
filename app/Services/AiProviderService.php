@@ -8,11 +8,22 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 
 class AiProviderService
 {
+    /**
+     * Options of the json() call in progress: an output-token cap, an overall
+     * time limit, and one Idempotency-Key reused by every HTTP retry so an
+     * OpenAI-compatible gateway (WITU AI) keeps waiting for the same job
+     * instead of queueing a duplicate.
+     *
+     * @var array{max_tokens: ?int, deadline: ?int, idempotency_key: ?string}
+     */
+    private array $call = ['max_tokens' => null, 'deadline' => null, 'idempotency_key' => null];
+
     public function __construct(private ?AiUsageMonitor $monitor = null)
     {
         $this->monitor ??= new AiUsageMonitor();
@@ -23,8 +34,25 @@ class AiProviderService
         string $operation,
         ?int $organisationId = null,
         ?string $requestedProvider = null,
-        array $context = []
+        array $context = [],
+        ?int $maxTokens = null,
+        ?int $deadlineSeconds = null,
     ): array {
+        $this->call = [
+            'max_tokens' => $maxTokens !== null ? max(1, $maxTokens) : null,
+            'deadline' => $deadlineSeconds !== null ? max(5, $deadlineSeconds) : null,
+            'idempotency_key' => (string) Str::uuid(),
+        ];
+
+        try {
+            return $this->attempt($prompt, $operation, $organisationId, $requestedProvider, $context);
+        } finally {
+            $this->call = ['max_tokens' => null, 'deadline' => null, 'idempotency_key' => null];
+        }
+    }
+
+    private function attempt(string $prompt, string $operation, ?int $organisationId, ?string $requestedProvider, array $context): array
+    {
         $enabled = $this->candidates($organisationId, $requestedProvider);
 
         if ($enabled->isEmpty()) {
@@ -134,11 +162,19 @@ class AiProviderService
         );
     }
 
-    /** Only connection problems and server errors are worth retrying (not 4xx such as "no balance"). */
+    /**
+     * Only connection problems and server errors are worth retrying (not 4xx such
+     * as "no balance"). A timeout is not retried: the same prompt would very
+     * likely time out again, tripling the wait.
+     */
     private function isTransient(Throwable $exception): bool
     {
-        return $exception instanceof ConnectionException
-            || ($exception instanceof RequestException && $exception->response->serverError());
+        if ($exception instanceof ConnectionException) {
+            return ! str_contains($exception->getMessage(), 'cURL error 28')
+                && stripos($exception->getMessage(), 'timed out') === false;
+        }
+
+        return $exception instanceof RequestException && $exception->response->serverError();
     }
 
     private function afterSuccess(AiProvider $provider): void
@@ -237,6 +273,9 @@ class AiProviderService
         $type = strtolower($provider->provider_type);
         $settings = $provider->settings ?? [];
         $timeout = max(5, (int) ($settings['timeout'] ?? 45));
+        if ($this->call['deadline'] !== null) {
+            $timeout = min($timeout, $this->call['deadline']);
+        }
 
         return match ($type) {
             'gemini', 'google_gemini' => $this->gemini($provider, $prompt, $timeout, $webSearchOverride),
@@ -332,7 +371,12 @@ class AiProviderService
             ? "{$base}/chat/completions"
             : "{$base}/v1/chat/completions");
 
-        $request = Http::timeout($timeout)->retry(2, 400, fn (Throwable $e): bool => $this->isTransient($e), throw: false);
+        // With a deadline there is no time for a second attempt.
+        $request = Http::timeout($timeout)
+            ->retry($this->call['deadline'] === null ? 2 : 1, 400, fn (Throwable $e): bool => $this->isTransient($e), throw: false);
+        if ($this->call['idempotency_key'] !== null) {
+            $request = $request->withHeaders(['Idempotency-Key' => $this->call['idempotency_key']]);
+        }
 
         if (filled($provider->api_key)) {
             $request = $request->withToken($provider->api_key);
@@ -354,8 +398,12 @@ class AiProviderService
         if ($preset['json_mode'] ?? true) {
             $body['response_format'] = ['type' => 'json_object'];
         }
-        if (filled(data_get($provider->settings, 'max_tokens'))) {
-            $body['max_tokens'] = (int) data_get($provider->settings, 'max_tokens');
+        $maxTokens = array_filter([
+            filled(data_get($provider->settings, 'max_tokens')) ? (int) data_get($provider->settings, 'max_tokens') : null,
+            $this->call['max_tokens'],
+        ]);
+        if ($maxTokens !== []) {
+            $body['max_tokens'] = min($maxTokens);
         }
         $response = $request->post($endpoint, $body);
 
@@ -364,11 +412,13 @@ class AiProviderService
         }
 
         $payload = $response->json();
-        $content = data_get($payload, 'choices.0.message.content');
-        $result = json_decode((string) $content, true);
+        $content = (string) data_get($payload, 'choices.0.message.content');
+        $result = $this->decodeJson($content);
 
         if (! is_array($result)) {
-            throw new RuntimeException('AI provider returned invalid JSON.');
+            throw new RuntimeException(data_get($payload, 'choices.0.finish_reason') === 'length'
+                ? 'The AI answer was cut off at its token limit. Raise "Max tokens" for this provider, or ask for fewer items.'
+                : 'AI provider returned invalid JSON.');
         }
 
         $result['_usage'] = [
@@ -425,6 +475,27 @@ class AiProviderService
             'output_units' => (int) data_get($payload, 'usage.completion_tokens', 0)];
 
         return $result;
+    }
+
+    /**
+     * JSON from a model answer. Small and local models often wrap it in a
+     * ```json fence or add a sentence around it; take the outermost object.
+     */
+    private function decodeJson(string $content): ?array
+    {
+        $decoded = json_decode(trim($content), true);
+        if (is_array($decoded)) {
+            return $decoded;
+        }
+
+        $start = strpos($content, '{');
+        $end = strrpos($content, '}');
+        if ($start === false || $end === false || $end <= $start) {
+            return null;
+        }
+        $decoded = json_decode(substr($content, $start, $end - $start + 1), true);
+
+        return is_array($decoded) ? $decoded : null;
     }
 
     private function recordUsage(
